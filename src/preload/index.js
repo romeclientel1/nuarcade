@@ -8,10 +8,18 @@ contextBridge.exposeInMainWorld('nuarcade', {
   runUpdater: () => ipcRenderer.invoke('run-updater'),
 
   // Game library scan
-  scanGames: (gamesPath) => ipcRenderer.invoke('scan-games', gamesPath),
+  scanGames: (teknoParrotPath, gamesFolderPath) =>
+    ipcRenderer.invoke('scan-games', { teknoParrotPath, gamesFolderPath }),
 
   // Windows security exclusions
   addExclusions: (paths) => ipcRenderer.invoke('add-exclusions', paths),
+
+  // Config
+  getConfig: () => ipcRenderer.invoke('get-config'),
+  setConfig: (updates) => ipcRenderer.invoke('set-config', updates),
+
+  // Display/monitor detection
+  getDisplays: () => ipcRenderer.invoke('get-displays'),
 
   // Platform info
   platform: process.platform,
