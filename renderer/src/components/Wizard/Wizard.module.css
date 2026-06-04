@@ -1,0 +1,109 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+
+.shell {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Share Tech Mono', monospace;
+  color: #fff;
+  overflow: hidden;
+}
+
+.grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,200,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,200,255,0.03) 1px, transparent 1px);
+  background-size: 44px 44px;
+  pointer-events: none;
+}
+
+.header {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 36px;
+  border-bottom: 1px solid rgba(0,200,255,0.12);
+  flex-shrink: 0;
+}
+
+.logo {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+}
+.logoNu { color: #00c8ff; }
+.logoArcade { color: #fff; }
+
+.stepTrack {
+  display: flex;
+  align-items: center;
+}
+
+.stepItem {
+  display: flex;
+  align-items: center;
+}
+
+.stepDot {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid rgba(0,200,255,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-family: 'Orbitron', sans-serif;
+  transition: all 0.2s;
+}
+
+.dotDone {
+  background: rgba(0,200,255,0.15);
+  border-color: #00c8ff;
+  color: #00c8ff;
+}
+
+.dotActive {
+  background: rgba(0,200,255,0.2);
+  border-color: #00c8ff;
+  color: #00c8ff;
+  box-shadow: 0 0 12px rgba(0,200,255,0.3);
+}
+
+.dotWait {
+  color: rgba(255,255,255,0.2);
+  border-color: rgba(255,255,255,0.1);
+}
+
+.stepLine {
+  width: 28px;
+  height: 1px;
+  background: rgba(255,255,255,0.1);
+  transition: background 0.3s;
+}
+
+.lineDone { background: #00c8ff; }
+
+.stepLabel {
+  font-size: 11px;
+  color: rgba(255,255,255,0.3);
+  letter-spacing: 0.1em;
+  min-width: 80px;
+  text-align: right;
+}
+
+.body {
+  flex: 1;
+  position: relative;
+  z-index: 2;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
