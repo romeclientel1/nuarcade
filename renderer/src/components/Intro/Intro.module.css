@@ -1,0 +1,179 @@
+.stage {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  transition: opacity 0.6s ease;
+}
+
+.grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 200, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 200, 255, 0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  z-index: 0;
+}
+
+.vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 90% 90% at 50% 50%, transparent 30%, rgba(0,0,0,0.9) 100%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Screen flicker on coin drop */
+.flicker {
+  animation: flicker 0.2s steps(2) forwards;
+}
+
+@keyframes flicker {
+  0%   { opacity: 1; background: #000; }
+  25%  { opacity: 0.3; background: #001a2a; }
+  50%  { opacity: 1; background: #000; }
+  75%  { opacity: 0.6; background: #00080f; }
+  100% { opacity: 1; background: #000; }
+}
+
+.fadeOut {
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+/* Logo container */
+.logoWrap {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0;
+  transform: scale(0.85);
+  transition: none;
+}
+
+.logoIn {
+  animation: logoSlam 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes logoSlam {
+  0% {
+    opacity: 0;
+    transform: scale(0.7) translateY(20px);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.04) translateY(-4px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Bloom glow behind logo */
+.logoGlow {
+  position: absolute;
+  width: 600px;
+  height: 200px;
+  background: radial-gradient(ellipse at center, rgba(0, 200, 255, 0.18) 0%, transparent 70%);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: bloomPulse 2s ease-in-out infinite;
+}
+
+@keyframes bloomPulse {
+  0%, 100% { opacity: 0.7; }
+  50%       { opacity: 1; }
+}
+
+/* The actual logo text */
+.logoText {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(64px, 10vw, 110px);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  position: relative;
+}
+
+.logoNu {
+  color: #00c8ff;
+  text-shadow:
+    0 0 40px rgba(0, 200, 255, 0.8),
+    0 0 80px rgba(0, 200, 255, 0.4),
+    0 0 120px rgba(0, 200, 255, 0.2);
+}
+
+.logoArcade {
+  color: #ffffff;
+  text-shadow:
+    0 0 20px rgba(255, 255, 255, 0.4),
+    0 0 60px rgba(0, 200, 255, 0.2);
+}
+
+/* Scanline sweep */
+.scanline {
+  position: absolute;
+  top: 0;
+  left: -10%;
+  width: 120%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, rgba(0, 200, 255, 0.8), transparent);
+  animation: scanSweep 1.2s ease-in-out 0.3s forwards;
+  opacity: 0;
+}
+
+@keyframes scanSweep {
+  0%   { top: -10px; opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { top: 110%; opacity: 0; }
+}
+
+/* Tagline */
+.tagline {
+  position: relative;
+  z-index: 10;
+  margin-top: 24px;
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
+  font-size: clamp(12px, 1.5vw, 16px);
+  color: rgba(0, 200, 255, 0.6);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  opacity: 0;
+}
+
+.taglineIn {
+  animation: taglineFade 0.8s ease forwards;
+}
+
+@keyframes taglineFade {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Skip hint */
+.skipHint {
+  position: absolute;
+  bottom: 32px;
+  right: 40px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.18);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  z-index: 20;
+  animation: hintFade 1s ease 2s both;
+}
+
+@keyframes hintFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}

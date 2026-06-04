@@ -1,0 +1,46 @@
+{
+  "name": "nuarcade",
+  "version": "1.0.0",
+  "description": "NuArcade — Modern arcade frontend for TeknoParrot and Visual Pinball X",
+  "main": "src/main/index.js",
+  "author": "Jerome Emanuel",
+  "license": "MIT",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:renderer\" \"wait-on http://localhost:5173 && npm run dev:electron\"",
+    "dev:renderer": "cd renderer && npm run dev",
+    "dev:electron": "electron .",
+    "build": "cd renderer && npm run build && electron-builder",
+    "build:win": "cd renderer && npm run build && electron-builder --win",
+    "preview": "electron ."
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3",
+    "wait-on": "^7.2.0"
+  },
+  "build": {
+    "appId": "com.nuarcade.app",
+    "productName": "NuArcade",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "renderer/dist/**/*",
+      "assets/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icons/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "assets/icons/icon.ico",
+      "installerHeaderIcon": "assets/icons/icon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}
