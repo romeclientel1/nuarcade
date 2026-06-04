@@ -7,3 +7,4 @@ renderer/dist/
 .DS_Store
 out/
 release/
+renderer/public/sounds/
