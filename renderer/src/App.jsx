@@ -2,27 +2,14 @@ import { useState, useEffect } from 'react'
 import Intro from './components/Intro/Intro'
 import Wizard from './components/Wizard/Wizard'
 import Wheel from './components/Wheel/Wheel'
+import Updater from './components/Updater/Updater'
 import './index.css'
 
 export default function App() {
-  const [phase, setPhase] = useState('intro') // 'intro' | 'wizard' | 'wheel'
-
-  useEffect(() => {
-    // Check if setup is already complete
-    const checkSetup = async () => {
-      if (window.nuarcade) {
-        const config = await window.nuarcade.getConfig()
-        if (config.setupComplete) {
-          // Skip wizard on subsequent launches
-          return
-        }
-      }
-    }
-    checkSetup()
-  }, [])
+  const [phase, setPhase] = useState('intro')
+  const [showUpdater, setShowUpdater] = useState(false)
 
   const handleIntroComplete = async () => {
-    // Check if setup wizard needs to run
     if (window.nuarcade && window.nuarcade.platform === 'win32') {
       const config = await window.nuarcade.getConfig()
       if (!config.setupComplete) {
@@ -31,6 +18,7 @@ export default function App() {
       }
     }
     setPhase('wheel')
+    setShowUpdater(true)
   }
 
   useEffect(() => {
@@ -46,6 +34,9 @@ export default function App() {
       {phase === 'intro'  && <Intro onComplete={handleIntroComplete} />}
       {phase === 'wizard' && <Wizard onComplete={() => setPhase('wheel')} />}
       {phase === 'wheel'  && <Wheel />}
+      {phase === 'wheel' && showUpdater && (
+        <Updater onDismiss={() => setShowUpdater(false)} />
+      )}
     </div>
   )
 }

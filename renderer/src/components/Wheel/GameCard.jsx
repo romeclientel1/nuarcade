@@ -10,7 +10,7 @@ const GENRE_COLORS = {
   Rhythm:   { bg: '#0a001a', accent: '#6600cc' },
   Flying:   { bg: '#000d1a', accent: '#0099cc' },
   Sports:   { bg: '#001a00', accent: '#009900' },
-  Pinball:  { bg: '#1a0d00', accent: '#cc6600' },
+  Pinball:  { bg: '#1a0a00', accent: '#ff6600' },
   Other:    { bg: '#0a0a0a', accent: '#444444' },
 }
 
@@ -32,7 +32,7 @@ const STATUS_COLORS = {
   Unverified: '#888888',
 }
 
-export default function GameCard({ game, isCenter, onClick }) {
+export default function GameCard({ game, isCenter, onClick, isFavorite }) {
   const [imgLoaded, setImgLoaded] = useState(false)
   const [imgError, setImgError] = useState(false)
   const [videoReady, setVideoReady] = useState(false)
@@ -41,10 +41,13 @@ export default function GameCard({ game, isCenter, onClick }) {
 
   const colors = GENRE_COLORS[game.genre] || GENRE_COLORS.Other
   const fallbackIcon = game.icon || GENRE_ICONS[game.genre] || '🎮'
-  const imgUrl = game.id ? `${THUMBNAIL_BASE}${game.id}.png` : null
   const statusColor = STATUS_COLORS[game.status] || '#888888'
 
-  const videoId = game.id || game.profile?.replace('.xml', '')
+  const imgUrl = game.isPinball
+    ? null
+    : game.id ? `${THUMBNAIL_BASE}${game.id}.png` : null
+
+  const videoId = game.id || game.profile?.replace('.xml', '').replace('.vpx', '')
   const videoUrl = game.videoPath ||
     (window.nuarcade?.platform === 'win32'
       ? `file:///F:/Media/Videos/${videoId}.mp4`
@@ -95,7 +98,24 @@ export default function GameCard({ game, isCenter, onClick }) {
           />
         )}
 
-        {(!imgUrl || !imgLoaded || imgError) && !showVideo && (
+        {/* Pinball table styled fallback */}
+        {game.isPinball && !showVideo && (
+          <div className={styles.pinballFallback} style={{ borderColor: colors.accent + '44' }}>
+            <div className={styles.pinballDots}>
+              {[...Array(12)].map((_, i) => (
+                <div key={i} className={styles.pinballDot} style={{ background: colors.accent, animationDelay: `${i * 0.15}s` }} />
+              ))}
+            </div>
+            <div className={styles.pinballIcon}>🎱</div>
+            <div className={styles.pinballName} style={{ color: colors.accent }}>
+              {game.title}
+            </div>
+            <div className={styles.pinballSys}>Visual Pinball X</div>
+          </div>
+        )}
+
+        {/* Regular fallback */}
+        {!game.isPinball && (!imgUrl || !imgLoaded || imgError) && !showVideo && (
           <div className={styles.artFallback} style={{ background: colors.bg }}>
             <div className={styles.fallbackIcon}>{fallbackIcon}</div>
             <div
@@ -105,10 +125,7 @@ export default function GameCard({ game, isCenter, onClick }) {
           </div>
         )}
 
-        {showVideo && (
-          <div className={styles.videoBadge}>▶ LIVE</div>
-        )}
-
+        {showVideo && <div className={styles.videoBadge}>▶ LIVE</div>}
       </div>
 
       <div className={styles.gradient} />
@@ -119,14 +136,22 @@ export default function GameCard({ game, isCenter, onClick }) {
         title={game.status}
       />
 
-      <div className={styles.info}>
-        <div className={styles.title}>{game.title}</div>
-        <div className={styles.system}>{game.system}</div>
-      </div>
+      {isFavorite && (
+        <div className={styles.favIndicator}>♥</div>
+      )}
+
+      {!game.isPinball && (
+        <div className={styles.info}>
+          <div className={styles.title}>{game.title}</div>
+          <div className={styles.system}>{game.system}</div>
+        </div>
+      )}
 
       {isCenter && (
         <div className={styles.playOverlay}>
-          <div className={styles.playBtn} style={{ borderColor: colors.accent, color: colors.accent }}>▶</div>
+          <div className={styles.playBtn} style={{ borderColor: colors.accent, color: colors.accent }}>
+            {game.isPinball ? '🎱' : '▶'}
+          </div>
         </div>
       )}
 

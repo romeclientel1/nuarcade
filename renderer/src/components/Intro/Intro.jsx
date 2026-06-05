@@ -3,12 +3,22 @@ import styles from './Intro.module.css'
 
 const PHASE_TIMINGS = [800, 200, 600, 1200, 800, 600]
 
+const PARTICLES = Array.from({ length: 24 }, (_, i) => ({
+  id: i,
+  left: `${Math.random() * 100}%`,
+  duration: `${2 + Math.random() * 4}s`,
+  delay: `${Math.random() * 3}s`,
+  size: `${1 + Math.random() * 3}px`,
+  opacity: 0.3 + Math.random() * 0.7,
+}))
+
 export default function Intro({ onComplete }) {
   const [waiting, setWaiting] = useState(true)
   const [logoVisible, setLogoVisible] = useState(false)
   const [taglineVisible, setTaglineVisible] = useState(false)
   const [fadeOut, setFadeOut] = useState(false)
   const [flicker, setFlicker] = useState(false)
+  const [showParticles, setShowParticles] = useState(false)
   const coinAudioRef = useRef(null)
   const ambientAudioRef = useRef(null)
   const timeoutsRef = useRef([])
@@ -24,22 +34,29 @@ export default function Intro({ onComplete }) {
     if (startedRef.current) return
     startedRef.current = true
     setWaiting(false)
+
     coinAudioRef.current = new Audio('/sounds/coin.wav')
     coinAudioRef.current.volume = 0.9
+
     ambientAudioRef.current = new Audio('/sounds/arcade-ambient.wav')
     ambientAudioRef.current.volume = 0
     ambientAudioRef.current.loop = true
     ambientAudioRef.current.play().catch(() => {})
+
     addTimeout(() => {
       setFlicker(true)
       coinAudioRef.current.play().catch(() => {})
       fadeAudio(ambientAudioRef.current, 0, 0.35, 3000)
+
       addTimeout(() => {
         setFlicker(false)
         setLogoVisible(true)
+        setShowParticles(true)
+
         addTimeout(() => {
           addTimeout(() => {
             setTaglineVisible(true)
+
             addTimeout(() => {
               setFadeOut(true)
               addTimeout(() => onComplete(), PHASE_TIMINGS[5])
@@ -68,11 +85,33 @@ export default function Intro({ onComplete }) {
     >
       <div className={styles.grid} />
       <div className={styles.vignette} />
+
+      {showParticles && (
+        <div className={styles.particles}>
+          {PARTICLES.map(p => (
+            <div
+              key={p.id}
+              className={styles.particle}
+              style={{
+                left: p.left,
+                bottom: '-10px',
+                width: p.size,
+                height: p.size,
+                animationDuration: p.duration,
+                animationDelay: p.delay,
+                opacity: p.opacity,
+              }}
+            />
+          ))}
+        </div>
+      )}
+
       {waiting && (
         <div className={styles.pressStart}>
           Press any key or click to start
         </div>
       )}
+
       {!waiting && logoVisible && (
         <div className={`${styles.logoWrap} ${styles.logoIn}`}>
           <div className={styles.logoGlow} />
@@ -83,11 +122,13 @@ export default function Intro({ onComplete }) {
           <div className={styles.scanline} />
         </div>
       )}
+
       {taglineVisible && (
         <div className={`${styles.tagline} ${styles.taglineIn}`}>
           Modern arcade. One cabinet. Zero compromises.
         </div>
       )}
+
       {!waiting && (
         <div className={styles.skipHint}>Press any key to skip</div>
       )}
