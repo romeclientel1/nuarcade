@@ -1,21 +1,21 @@
 import { useState, useEffect } from 'react'
 
 const SAMPLE_GAMES = [
-  { id: 'WMMT5DX',      title: 'Wangan Midnight MT 5DX+',    genre: 'Racing',   system: 'SEGA Nu',        status: 'Perfect', profile: 'WMMT5DX.xml',      icon: '🏎️' },
-  { id: 'InitialD8',    title: 'Initial D Arcade Stage 8',   genre: 'Racing',   system: 'SEGA Nu',        status: 'Perfect', profile: 'InitialD8.xml',     icon: '🚗' },
-  { id: 'HotD4',        title: 'House of the Dead 4',        genre: 'Shooter',  system: 'SEGA Lindbergh', status: 'Perfect', profile: 'HotD4.xml',         icon: '🧟' },
-  { id: 'DOA5',         title: 'Dead or Alive 5 Ultimate',   genre: 'Fighting', system: 'SEGA RingEdge2', status: 'Perfect', profile: 'DOA5.xml',          icon: '⚔️' },
-  { id: 'DaytonaUSA',   title: 'Daytona Championship USA',   genre: 'Racing',   system: 'SEGA PC',        status: 'Perfect', profile: 'DaytonaUSA.xml',    icon: '🏁' },
-  { id: 'BBCF',         title: 'BlazBlue Central Fiction',   genre: 'Fighting', system: 'NESiCAxLive',    status: 'Perfect', profile: 'BBCF.xml',          icon: '🌀' },
-  { id: 'ABC',          title: 'After Burner Climax',        genre: 'Flying',   system: 'SEGA Lindbergh', status: 'Perfect', profile: 'ABC.xml',           icon: '✈️' },
-  { id: 'CruisnBlast',  title: "Cruis'n Blast",              genre: 'Racing',   system: 'Raw Thrills',    status: 'Perfect', profile: 'CruisnBlast.xml',   icon: '💥' },
-  { id: 'Aliens',       title: 'Aliens Armageddon',          genre: 'Shooter',  system: 'Raw Thrills',    status: 'Perfect', profile: 'Aliens.xml',        icon: '👾' },
-  { id: 'TC5',          title: 'Time Crisis 5',              genre: 'Shooter',  system: 'Namco 369',      status: 'Great',   profile: 'TC5.xml',           icon: '🎯' },
-  { id: 'DBZB',         title: 'Dragon Ball Zenkai BR',      genre: 'Fighting', system: 'Namco 369',      status: 'Perfect', profile: 'DBZB.xml',          icon: '🐉' },
-  { id: 'CrossbeatsRev',title: 'Crossbeats Rev Sunshine',    genre: 'Rhythm',   system: 'SEGA Nu',        status: 'Perfect', profile: 'CrossbeatsRev.xml', icon: '🎵' },
-  { id: 'F0AX',         title: 'F-Zero AX',                  genre: 'Racing',   system: 'Sega Triforce',  status: 'Perfect', profile: 'FZeroAX.xml',       icon: '🚀' },
-  { id: 'GhostSquad',   title: 'Ghost Squad Evolution',      genre: 'Shooter',  system: 'SEGA Lindbergh', status: 'Great',   profile: 'GhostSquadEvo.xml', icon: '🔫' },
-  { id: 'Dariusburst',  title: 'Dariusburst Another Chron.', genre: 'Shooter',  system: 'Taito Type X2',  status: 'Perfect', profile: 'DariusBurst.xml',   icon: '🐟' },
+  { id: 'WanganMidnightMaximumTune5DX',  title: 'Wangan Midnight MT 5DX+',    genre: 'Racing',   system: 'SEGA Nu',        status: 'Perfect', profile: 'WanganMidnightMaximumTune5DX.xml',  icon: '🏎️' },
+  { id: 'InitialDArcadeStage8InfinityPC', title: 'Initial D Arcade Stage 8',   genre: 'Racing',   system: 'SEGA Nu',        status: 'Perfect', profile: 'InitialDArcadeStage8InfinityPC.xml', icon: '🚗' },
+  { id: 'HouseOfTheDead4Special',         title: 'House of the Dead 4',        genre: 'Shooter',  system: 'SEGA Lindbergh', status: 'Perfect', profile: 'HouseOfTheDead4Special.xml',         icon: '🧟' },
+  { id: 'DeadOrAlive5UltimateArcade',     title: 'Dead or Alive 5 Ultimate',   genre: 'Fighting', system: 'SEGA RingEdge2', status: 'Perfect', profile: 'DeadOrAlive5UltimateArcade.xml',     icon: '⚔️' },
+  { id: 'DaytonaChampionshipUSA',         title: 'Daytona Championship USA',   genre: 'Racing',   system: 'SEGA PC',        status: 'Perfect', profile: 'DaytonaChampionshipUSA.xml',         icon: '🏁' },
+  { id: 'BlazBlueCentralFiction',         title: 'BlazBlue Central Fiction',   genre: 'Fighting', system: 'NESiCAxLive',    status: 'Perfect', profile: 'BlazBlueCentralFiction.xml',         icon: '🌀' },
+  { id: 'AfterBurnerClimax',              title: 'After Burner Climax',        genre: 'Flying',   system: 'SEGA Lindbergh', status: 'Perfect', profile: 'AfterBurnerClimax.xml',              icon: '✈️' },
+  { id: 'CruisnBlast',                    title: "Cruis'n Blast",              genre: 'Racing',   system: 'Raw Thrills',    status: 'Perfect', profile: 'CruisnBlast.xml',                    icon: '💥' },
+  { id: 'AliensArmageddon',               title: 'Aliens Armageddon',          genre: 'Shooter',  system: 'Raw Thrills',    status: 'Perfect', profile: 'AliensArmageddon.xml',               icon: '👾' },
+  { id: 'TimeCrisis5',                    title: 'Time Crisis 5',              genre: 'Shooter',  system: 'Namco 369',      status: 'Great',   profile: 'TimeCrisis5.xml',                    icon: '🎯' },
+  { id: 'DragonBallZenkaiBattleRoyale',   title: 'Dragon Ball Zenkai BR',      genre: 'Fighting', system: 'Namco 369',      status: 'Perfect', profile: 'DragonBallZenkaiBattleRoyale.xml',   icon: '🐉' },
+  { id: 'crossbeatsREVSUNRISE',           title: 'Crossbeats Rev Sunrise',     genre: 'Rhythm',   system: 'SEGA Nu',        status: 'Perfect', profile: 'crossbeatsREVSUNRISE.xml',           icon: '🎵' },
+  { id: 'FZeroAX',                        title: 'F-Zero AX',                  genre: 'Racing',   system: 'Sega Triforce',  status: 'Perfect', profile: 'FZeroAX.xml',                        icon: '🚀' },
+  { id: 'GhostSquadEvolution',            title: 'Ghost Squad Evolution',      genre: 'Shooter',  system: 'SEGA Lindbergh', status: 'Great',   profile: 'GhostSquadEvolution.xml',            icon: '🔫' },
+  { id: 'DariusBurstAnotherChronicle',    title: 'Dariusburst Another Chron.', genre: 'Shooter',  system: 'Taito Type X2',  status: 'Perfect', profile: 'DariusBurstAnotherChronicle.xml',    icon: '🐟' },
 ]
 
 export function useGameLibrary() {
