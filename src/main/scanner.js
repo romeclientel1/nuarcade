@@ -54,7 +54,6 @@ function parseProfile(xmlPath) {
                            profile.Patreon === true ||
                            SUBSCRIPTION_PROFILES.has(fileName)
 
-    // Normalize status
     let status = rawStatus
     if (BROKEN_STATUS.includes(status)) {
       status = 'Broken'
@@ -144,21 +143,18 @@ function scanGames(teknoParrotPath, gamesFolderPath) {
       continue
     }
 
-    // Filter 1: subscription games
     if (game.isSubscription) {
       stats.hidden++
       stats.reasons.subscription++
       continue
     }
 
-    // Filter 2: only hide confirmed broken
     if (game.status === 'Broken') {
       stats.hidden++
       stats.reasons.broken++
       continue
     }
 
-    // Filter 3: game files must exist locally
     const resolvedPath = resolveExePath(game, gamesFolderPath)
     if (!resolvedPath) {
       stats.hidden++
@@ -174,7 +170,6 @@ function scanGames(teknoParrotPath, gamesFolderPath) {
 
   stats.hidden = stats.total - stats.visible
 
-  // Sort: Perfect first, then Great, then Playable, then Unverified, alpha within
   const statusOrder = { Perfect: 0, Great: 1, Playable: 2, Unverified: 3 }
   games.sort((a, b) => {
     const diff = (statusOrder[a.status] ?? 4) - (statusOrder[b.status] ?? 4)
@@ -184,4 +179,47 @@ function scanGames(teknoParrotPath, gamesFolderPath) {
   return { games, stats }
 }
 
-module.exports = { scanGames, parseProfile }
+function scanPinballTables(tablesPath) {
+  if (!fs.existsSync(tablesPath)) {
+    return {
+      games: [],
+      stats: { total: 0, visible: 0 },
+      error: `Pinball tables folder not found at: ${tablesPath}`
+    }
+  }
+
+  const vpxFiles = fs.readdirSync(tablesPath)
+    .filter(f => f.toLowerCase().endsWith('.vpx'))
+
+  const games = vpxFiles.map(file => {
+    const title = file
+      .replace('.vpx', '')
+      .replace(/[_-]/g, ' ')
+      .replace(/\b\w/g, c => c.toUpperCase())
+      .trim()
+
+    return {
+      id: file.replace('.vpx', ''),
+      profile: file,
+      profilePath: path.join(tablesPath, file),
+      title,
+      exePath: path.join(tablesPath, file),
+      genre: 'Pinball',
+      system: 'Visual Pinball X',
+      status: 'Perfect',
+      isSubscription: false,
+      visible: true,
+      icon: '🎱',
+      isPinball: true,
+    }
+  })
+
+  games.sort((a, b) => a.title.localeCompare(b.title))
+
+  return {
+    games,
+    stats: { total: games.length, visible: games.length }
+  }
+}
+
+module.exports = { scanGames, parseProfile, scanPinballTables }

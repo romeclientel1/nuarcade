@@ -205,17 +205,19 @@ export default function Wheel() {
       {filteredGames.length === 0 ? (
         <div className={styles.emptyState}>
           <div className={styles.emptyIcon}>
-            {activeCategory === 'Favorites' ? '♥' : activeCategory === 'Recent' ? '🕐' : '🕹️'}
+            {activeCategory === 'Favorites' ? '♥' : activeCategory === 'Recent' ? '🕐' : activeCategory === 'Pinball' ? '🎱' : '🕹️'}
           </div>
           <div className={styles.emptyTitle}>
             {activeCategory === 'Favorites' ? 'No favorites yet' :
              activeCategory === 'Recent' ? 'No recently played games' :
+             activeCategory === 'Pinball' ? 'No pinball tables found' :
              search ? `No results for "${search}"` :
              'No games in this category'}
           </div>
           <div className={styles.emptySub}>
             {activeCategory === 'Favorites' ? 'Press F on any game to add it' :
              activeCategory === 'Recent' ? 'Launch a game to see it here' :
+             activeCategory === 'Pinball' ? 'Add .vpx files to F:\\PinballTables\\' :
              'Try selecting a different category'}
           </div>
         </div>
@@ -268,12 +270,13 @@ export default function Wheel() {
               </button>
             </div>
             <div className={styles.infoExe}>
-              TeknoParrotUi.exe --profile=<span>{current.profile}</span>
+              {current.isPinball ? 'VPX: ' : 'TeknoParrotUi.exe --profile='}
+              <span>{current.profile}</span>
             </div>
           </div>
           <div className={styles.infoRight}>
             <button className={styles.launchBtn} onClick={handleLaunch} disabled={launching}>
-              {launching ? '⏳ Launching...' : '▶ Launch Game'}
+              {launching ? '⏳ Launching...' : current.isPinball ? '🎱 Launch Table' : '▶ Launch Game'}
             </button>
           </div>
         </div>

@@ -16,6 +16,9 @@ const SAMPLE_GAMES = [
   { id: null, title: 'After Burner Climax',      genre: 'Flying',   system: 'SEGA Lindbergh', status: 'Perfect', profile: 'AfterBurnerClimax.xml',          icon: '✈️' },
   { id: null, title: 'Time Crisis 5',            genre: 'Shooter',  system: 'Namco 369',      status: 'Great',   profile: 'TimeCrisis5.xml',                icon: '🎯' },
   { id: null, title: 'Dragon Ball Zenkai BR',    genre: 'Fighting', system: 'Namco 369',      status: 'Perfect', profile: 'DragonBallZenkaiBattleRoyale.xml',icon: '🐉' },
+  { id: 'Medieval_Madness',  title: 'Medieval Madness',  genre: 'Pinball', system: 'Visual Pinball X', status: 'Perfect', profile: 'Medieval_Madness.vpx',  icon: '🏰', isPinball: true },
+  { id: 'Attack_From_Mars',  title: 'Attack From Mars',  genre: 'Pinball', system: 'Visual Pinball X', status: 'Perfect', profile: 'Attack_From_Mars.vpx',  icon: '🛸', isPinball: true },
+  { id: 'The_Addams_Family', title: 'The Addams Family', genre: 'Pinball', system: 'Visual Pinball X', status: 'Perfect', profile: 'The_Addams_Family.vpx', icon: '👻', isPinball: true },
 ]
 
 const FAVORITES_KEY = 'nuarcade_favorites'
@@ -43,17 +46,48 @@ export function useGameLibrary() {
       if (window.nuarcade && window.nuarcade.platform === 'win32') {
         const cfg = await window.nuarcade.getConfig()
         setConfig(cfg)
+
         if (cfg.setupComplete) {
-          const result = await window.nuarcade.scanGames(cfg.teknoParrotPath, cfg.gamesFolderPath)
-          if (result.error) { setError(result.error); setGames(SAMPLE_GAMES) }
-          else { setGames(result.games); setStats(result.stats) }
-        } else { setGames(SAMPLE_GAMES) }
+          const result = await window.nuarcade.scanGames(
+            cfg.teknoParrotPath,
+            cfg.gamesFolderPath
+          )
+
+          let allGames = []
+          if (result.error) {
+            setError(result.error)
+            allGames = SAMPLE_GAMES
+          } else {
+            allGames = result.games
+            setStats(result.stats)
+          }
+
+          if (cfg.mode !== 'arcade' && cfg.tablesPath) {
+            const pinball = await window.nuarcade.scanPinball(cfg.tablesPath)
+            if (pinball.games && pinball.games.length > 0) {
+              allGames = [...allGames, ...pinball.games]
+            }
+          }
+
+          setGames(allGames)
+        } else {
+          setGames(SAMPLE_GAMES)
+        }
       } else {
         setGames(SAMPLE_GAMES)
-        setStats({ total: SAMPLE_GAMES.length, visible: SAMPLE_GAMES.length, hidden: 0, devMode: true })
+        setStats({
+          total: SAMPLE_GAMES.length,
+          visible: SAMPLE_GAMES.length,
+          hidden: 0,
+          devMode: true,
+        })
       }
-    } catch (err) { setError(err.message); setGames(SAMPLE_GAMES) }
-    finally { setLoading(false) }
+    } catch (err) {
+      setError(err.message)
+      setGames(SAMPLE_GAMES)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const toggleFavorite = (gameId) => {
@@ -76,7 +110,6 @@ export function useGameLibrary() {
   }
 
   const isFavorite = (gameId) => favorites.includes(gameId)
-
   const refreshLibrary = () => loadLibrary()
 
   return {

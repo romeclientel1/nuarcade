@@ -44,7 +44,6 @@ function createWindow() {
   return win
 }
 
-// Launch a TeknoParrot game
 ipcMain.handle('launch-game', async (event, profilePath) => {
   return new Promise((resolve) => {
     const cfg = config.load()
@@ -56,7 +55,6 @@ ipcMain.handle('launch-game', async (event, profilePath) => {
   })
 })
 
-// Run TeknoParrot updater silently
 ipcMain.handle('run-updater', async () => {
   return new Promise((resolve) => {
     const cfg = config.load()
@@ -67,13 +65,16 @@ ipcMain.handle('run-updater', async () => {
   })
 })
 
-// Scan games folder and read TeknoParrot profiles
 ipcMain.handle('scan-games', async (event, { teknoParrotPath, gamesFolderPath }) => {
   const { scanGames } = require('./scanner')
   return scanGames(teknoParrotPath, gamesFolderPath)
 })
 
-// Add Windows Defender exclusions via PowerShell
+ipcMain.handle('scan-pinball', async (event, tablesPath) => {
+  const { scanPinballTables } = require('./scanner')
+  return scanPinballTables(tablesPath)
+})
+
 ipcMain.handle('add-exclusions', async (event, paths) => {
   return new Promise((resolve) => {
     const ps = paths
@@ -85,11 +86,9 @@ ipcMain.handle('add-exclusions', async (event, paths) => {
   })
 })
 
-// Config read/write
 ipcMain.handle('get-config', () => config.load())
 ipcMain.handle('set-config', (event, updates) => config.update(updates))
 
-// Screen detection for pinball multi-monitor setup
 ipcMain.handle('get-displays', () => {
   return screen.getAllDisplays().map((d, i) => ({
     id: d.id,
@@ -101,7 +100,6 @@ ipcMain.handle('get-displays', () => {
 })
 
 app.whenReady().then(() => {
-  // Set dock icon on Mac in dev mode
   if (process.platform === 'darwin') {
     app.dock.setIcon(path.join(__dirname, '../../assets/icons/icon.png'))
   }

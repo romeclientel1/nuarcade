@@ -5,6 +5,7 @@ contextBridge.exposeInMainWorld('nuarcade', {
   runUpdater: () => ipcRenderer.invoke('run-updater'),
   scanGames: (teknoParrotPath, gamesFolderPath) =>
     ipcRenderer.invoke('scan-games', { teknoParrotPath, gamesFolderPath }),
+  scanPinball: (tablesPath) => ipcRenderer.invoke('scan-pinball', tablesPath),
   addExclusions: (paths) => ipcRenderer.invoke('add-exclusions', paths),
   getConfig: () => ipcRenderer.invoke('get-config'),
   setConfig: (updates) => ipcRenderer.invoke('set-config', updates),
