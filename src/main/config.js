@@ -5,10 +5,11 @@ const { app } = require('electron')
 const CONFIG_PATH = path.join(app.getPath('userData'), 'nuarcade-config.json')
 
 const DEFAULTS = {
-  teknoParrotPath:  'C:\\TeknoParrot\\',
-  gamesFolderPath:  'D:\\ArcadeGames\\',
-  pinballPath:      'C:\\vPinball\\',
-  tablesPath:       'D:\\PinballTables\\',
+  teknoParrotPath:  'F:\\TeknoParrot\\',
+  gamesFolderPath:  'F:\\ArcadeGames\\',
+  pinballPath:      'F:\\vPinball\\',
+  tablesPath:       'F:\\PinballTables\\',
+  mediaPath:        'F:\\Media\\',
   setupComplete:    false,
   displayMode:      'fullscreen',
   controllers: {
