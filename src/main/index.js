@@ -46,7 +46,7 @@ function createWindow() {
 
 // Launch a TeknoParrot game
 ipcMain.handle('launch-game', async (event, profilePath) => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const cfg = config.load()
     const teknoParrotExe = path.join(cfg.teknoParrotPath, 'TeknoParrotUi.exe')
     const args = [`--profile=${profilePath}`, '--startMinimized']
@@ -101,6 +101,10 @@ ipcMain.handle('get-displays', () => {
 })
 
 app.whenReady().then(() => {
+  // Set dock icon on Mac in dev mode
+  if (process.platform === 'darwin') {
+    app.dock.setIcon(path.join(__dirname, '../../assets/icons/icon.png'))
+  }
   createWindow()
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
