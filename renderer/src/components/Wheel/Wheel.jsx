@@ -7,11 +7,16 @@ import Settings from '../Settings/Settings'
 import GameDetail from '../GameDetail/GameDetail'
 import styles from './Wheel.module.css'
 
-const CATEGORIES = ['All', 'Racing', 'Fighting', 'Shooter', 'Rhythm', 'Flying', 'Sports', 'Pinball']
+const CATEGORIES = ['All', 'Favorites', 'Recent', 'Racing', 'Fighting', 'Shooter', 'Rhythm', 'Flying', 'Sports', 'Pinball']
 const ATTRACT_TIMEOUT = 120000
 
 export default function Wheel() {
-  const { games, stats, loading } = useGameLibrary()
+  const {
+    games, stats, loading,
+    toggleFavorite, isFavorite,
+    recentlyPlayed, addRecentlyPlayed,
+  } = useGameLibrary()
+
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [activeCategory, setActiveCategory] = useState('All')
   const [launching, setLaunching] = useState(false)
@@ -19,15 +24,35 @@ export default function Wheel() {
   const [showMediaManager, setShowMediaManager] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [showDetail, setShowDetail] = useState(false)
+  const [search, setSearch] = useState('')
+  const [showSearch, setShowSearch] = useState(false)
+  const searchRef = useRef(null)
   const idleTimer = useRef(null)
 
-  const filteredGames = activeCategory === 'All'
-    ? games
-    : games.filter(g => g.genre === activeCategory)
+  const getFilteredGames = () => {
+    let list = games
+    if (activeCategory === 'Favorites') {
+      list = games.filter(g => isFavorite(g.id || g.profile))
+    } else if (activeCategory === 'Recent') {
+      list = recentlyPlayed
+    } else if (activeCategory !== 'All') {
+      list = games.filter(g => g.genre === activeCategory)
+    }
+    if (search.trim()) {
+      const q = search.toLowerCase()
+      list = list.filter(g =>
+        g.title?.toLowerCase().includes(q) ||
+        g.system?.toLowerCase().includes(q) ||
+        g.genre?.toLowerCase().includes(q)
+      )
+    }
+    return list
+  }
 
+  const filteredGames = getFilteredGames()
   const current = filteredGames[selectedIndex] || filteredGames[0]
 
-  useEffect(() => { setSelectedIndex(0) }, [activeCategory])
+  useEffect(() => { setSelectedIndex(0) }, [activeCategory, search])
 
   const resetIdleTimer = useCallback(() => {
     setAttractMode(false)
@@ -50,18 +75,27 @@ export default function Wheel() {
 
   useEffect(() => {
     const handler = (e) => {
+      if (showSearch) return
       if (e.key === 'ArrowLeft')  setSelectedIndex(i => Math.max(0, i - 1))
       if (e.key === 'ArrowRight') setSelectedIndex(i => Math.min(filteredGames.length - 1, i + 1))
       if (e.key === 'Enter')      setShowDetail(true)
-      if (e.key === 'Escape')     setShowDetail(false)
+      if (e.key === 'Escape')     { setShowDetail(false); setShowSearch(false); setSearch('') }
+      if (e.key === 'f' || e.key === 'F') {
+        if (current) toggleFavorite(current.id || current.profile)
+      }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [filteredGames, selectedIndex])
+  }, [filteredGames, selectedIndex, showSearch, current])
+
+  useEffect(() => {
+    if (showSearch && searchRef.current) searchRef.current.focus()
+  }, [showSearch])
 
   const handleLaunch = async () => {
     if (launching || !current) return
     setLaunching(true)
+    addRecentlyPlayed(current)
     if (window.nuarcade) {
       await window.nuarcade.launchGame(current.profilePath || current.profile)
     } else {
@@ -119,20 +153,28 @@ export default function Wheel() {
           <span className={styles.logoArcade}>Arcade</span>
         </div>
         <div className={styles.headerRight}>
-          {stats && (
+          {showSearch ? (
+            <div className={styles.searchWrap}>
+              <input
+                ref={searchRef}
+                className={styles.searchInput}
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search games..."
+                onKeyDown={e => {
+                  if (e.key === 'Escape') { setShowSearch(false); setSearch('') }
+                }}
+              />
+              <button className={styles.searchClose} onClick={() => { setShowSearch(false); setSearch('') }}>✕</button>
+            </div>
+          ) : (
             <div className={styles.statsRow}>
-              {stats.devMode && <span className={styles.devBadge}>DEV MODE</span>}
+              {stats?.devMode && <span className={styles.devBadge}>DEV MODE</span>}
               {attractMode && <span className={styles.attractBadge}>ATTRACT</span>}
               <span className={styles.gameCount}>{filteredGames.length} games</span>
-              {stats.hidden > 0 && (
-                <span className={styles.hiddenCount}>{stats.hidden} hidden</span>
-              )}
-              <button className={styles.mediaBtn} onClick={() => setShowMediaManager(true)}>
-                🎬 Media
-              </button>
-              <button className={styles.settingsBtn} onClick={() => setShowSettings(true)}>
-                ⚙ Settings
-              </button>
+              <button className={styles.searchBtn} onClick={() => setShowSearch(true)}>🔍 Search</button>
+              <button className={styles.mediaBtn} onClick={() => setShowMediaManager(true)}>🎬 Media</button>
+              <button className={styles.settingsBtn} onClick={() => setShowSettings(true)}>⚙ Settings</button>
             </div>
           )}
         </div>
@@ -145,16 +187,27 @@ export default function Wheel() {
             className={`${styles.catPill} ${activeCategory === cat ? styles.catActive : ''}`}
             onClick={() => setActiveCategory(cat)}
           >
-            {cat}
+            {cat === 'Favorites' ? '♥ Favorites' : cat === 'Recent' ? '🕐 Recent' : cat}
           </button>
         ))}
       </div>
 
       {filteredGames.length === 0 ? (
         <div className={styles.emptyState}>
-          <div className={styles.emptyIcon}>🕹️</div>
-          <div className={styles.emptyTitle}>No games in this category</div>
-          <div className={styles.emptySub}>Try selecting a different category above</div>
+          <div className={styles.emptyIcon}>
+            {activeCategory === 'Favorites' ? '♥' : activeCategory === 'Recent' ? '🕐' : '🕹️'}
+          </div>
+          <div className={styles.emptyTitle}>
+            {activeCategory === 'Favorites' ? 'No favorites yet' :
+             activeCategory === 'Recent' ? 'No recently played games' :
+             search ? `No results for "${search}"` :
+             'No games in this category'}
+          </div>
+          <div className={styles.emptySub}>
+            {activeCategory === 'Favorites' ? 'Press F on any game to add it' :
+             activeCategory === 'Recent' ? 'Launch a game to see it here' :
+             'Try selecting a different category'}
+          </div>
         </div>
       ) : (
         <div className={styles.wheelArea}>
@@ -169,6 +222,7 @@ export default function Wheel() {
                   game={game}
                   isCenter={index === selectedIndex}
                   isAttract={attractMode}
+                  isFavorite={isFavorite(game.id || game.profile)}
                   onClick={() => {
                     if (index === selectedIndex) setShowDetail(true)
                     else setSelectedIndex(index)
@@ -195,6 +249,13 @@ export default function Wheel() {
               }>
                 {current.status}
               </span>
+              <button
+                className={`${styles.favBtn} ${isFavorite(current.id || current.profile) ? styles.favActive : ''}`}
+                onClick={() => toggleFavorite(current.id || current.profile)}
+                title="Toggle favorite (F)"
+              >
+                {isFavorite(current.id || current.profile) ? '♥' : '♡'}
+              </button>
             </div>
             <div className={styles.infoExe}>
               TeknoParrotUi.exe --profile=<span>{current.profile}</span>
@@ -208,14 +269,8 @@ export default function Wheel() {
         </div>
       )}
 
-      {showMediaManager && (
-        <MediaManager onClose={() => setShowMediaManager(false)} />
-      )}
-
-      {showSettings && (
-        <Settings onClose={() => setShowSettings(false)} />
-      )}
-
+      {showMediaManager && <MediaManager onClose={() => setShowMediaManager(false)} />}
+      {showSettings && <Settings onClose={() => setShowSettings(false)} />}
       {showDetail && current && (
         <GameDetail
           game={current}
@@ -224,7 +279,6 @@ export default function Wheel() {
           launching={launching}
         />
       )}
-
     </div>
   )
 }
