@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useGameLibrary } from '../../hooks/useGameLibrary'
+import GameCard from './GameCard'
 import styles from './Wheel.module.css'
 
 const CATEGORIES = ['All', 'Racing', 'Fighting', 'Shooter', 'Rhythm', 'Flying', 'Sports', 'Pinball']
 
 export default function Wheel() {
-  const { games, stats, loading, error } = useGameLibrary()
+  const { games, stats, loading } = useGameLibrary()
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [activeCategory, setActiveCategory] = useState('All')
   const [launching, setLaunching] = useState(false)
@@ -112,24 +113,16 @@ export default function Wheel() {
             {filteredGames.map((game, index) => (
               <div
                 key={game.id || game.profile}
-                className={`${styles.card} ${getCardClass(index)}`}
-                onClick={() => {
-                  if (index === selectedIndex) handleLaunch()
-                  else setSelectedIndex(index)
-                }}
+                className={`${styles.cardSlot} ${getCardClass(index)}`}
               >
-                <div className={styles.cardArt}>{game.icon || '🎮'}</div>
-                <div className={styles.cardGradient} />
-                <div className={styles.cardStatus} style={{ background: game.status === 'Perfect' ? '#00ff88' : '#ffaa00' }} />
-                <div className={styles.cardBody}>
-                  <div className={styles.cardTitle}>{game.title}</div>
-                  <div className={styles.cardSys}>{game.system}</div>
-                </div>
-                {index === selectedIndex && (
-                  <div className={styles.playOverlay}>
-                    <div className={styles.playIcon}>▶</div>
-                  </div>
-                )}
+                <GameCard
+                  game={game}
+                  isCenter={index === selectedIndex}
+                  onClick={() => {
+                    if (index === selectedIndex) handleLaunch()
+                    else setSelectedIndex(index)
+                  }}
+                />
               </div>
             ))}
           </div>

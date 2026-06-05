@@ -1,0 +1,142 @@
+.card {
+  position: absolute;
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  border: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  flex-direction: column;
+}
+
+.center {
+  border: 2px solid #00c8ff;
+  box-shadow: 0 0 40px rgba(0,200,255,0.3), 0 0 80px rgba(0,200,255,0.12);
+}
+
+/* Art area */
+.artWrap {
+  width: 100%;
+  height: 58%;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.artImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.artLoaded { opacity: 1; }
+
+.artFallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fallbackIcon {
+  font-size: 48px;
+  position: relative;
+  z-index: 2;
+  filter: drop-shadow(0 0 12px rgba(255,255,255,0.2));
+}
+
+.fallbackGlow {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+/* Gradient */
+.gradient {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 65%;
+  background: linear-gradient(transparent, rgba(0,0,0,0.97));
+  pointer-events: none;
+}
+
+/* Status dot */
+.statusDot {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: 0 0 6px currentColor;
+}
+
+/* Info */
+.info {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 10px 12px 12px;
+}
+
+.title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.3;
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.system {
+  font-size: 9px;
+  color: rgba(255,255,255,0.35);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* Play overlay */
+.playOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+  background: rgba(0,0,0,0.15);
+}
+
+.card:hover .playOverlay { opacity: 1; }
+
+.playBtn {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 2px solid #00c8ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #00c8ff;
+  font-size: 20px;
+  padding-left: 4px;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(4px);
+}
+
+/* Accent border */
+.accentBorder {
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  pointer-events: none;
+}
