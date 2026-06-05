@@ -1,21 +1,64 @@
 {
-  "name": "renderer",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
+  "name": "nuarcade",
+  "version": "1.0.0",
+  "description": "NuArcade — Modern arcade frontend for TeknoParrot and Visual Pinball X",
+  "main": "src/main/index.js",
+  "author": "Jerome Emanuel",
+  "license": "MIT",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "@fontsource/orbitron": "^5.0.0",
-    "howler": "^2.2.4"
+    "dev": "concurrently \"npm run dev:renderer\" \"wait-on http://localhost:5173 && npm run dev:electron\"",
+    "dev:renderer": "cd renderer && npm run dev",
+    "dev:electron": "electron .",
+    "build": "npm run build:renderer && npx electron-builder",
+    "build:renderer": "cd renderer && npm run build",
+    "build:win": "npm run build:renderer && npx electron-builder --win --publish never",
+    "build:mac": "npm run build:renderer && npx electron-builder --mac --publish never",
+    "preview": "electron ."
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^4.2.1",
-    "vite": "^5.2.0"
+    "concurrently": "^8.2.2",
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3",
+    "wait-on": "^7.2.0"
+  },
+  "dependencies": {
+    "fast-xml-parser": "^4.4.0"
+  },
+  "build": {
+    "appId": "com.nuarcade.app",
+    "productName": "NuArcade",
+    "copyright": "Copyright © 2026 Jerome Emanuel",
+    "electronVersion": "31.0.0",
+    "directories": {
+      "output": "dist",
+      "app": "."
+    },
+    "files": [
+      "src/**/*",
+      "renderer/dist/**/*",
+      "assets/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "assets/icons/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "NuArcade"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icons/icon.icns"
+    }
   }
 }
