@@ -5,6 +5,7 @@ import AttractMode from './AttractMode'
 import MediaManager from '../MediaManager/MediaManager'
 import Settings from '../Settings/Settings'
 import GameDetail from '../GameDetail/GameDetail'
+import { useGamepad } from './useGamepad'
 import styles from './Wheel.module.css'
 
 const CATEGORIES = ['All', 'Favorites', 'Recent', 'Racing', 'Fighting', 'Shooter', 'Rhythm', 'Flying', 'Sports', 'Pinball']
@@ -91,6 +92,15 @@ export default function Wheel() {
   useEffect(() => {
     if (showSearch && searchRef.current) searchRef.current.focus()
   }, [showSearch])
+
+  useGamepad({
+    enabled: !showDetail && !showMediaManager && !showSettings && !showSearch,
+    onLeft:     () => setSelectedIndex(i => Math.max(0, i - 1)),
+    onRight:    () => setSelectedIndex(i => Math.min(filteredGames.length - 1, i + 1)),
+    onConfirm:  () => setShowDetail(true),
+    onBack:     () => { setShowDetail(false); setSearch(''); setShowSearch(false) },
+    onFavorite: () => { if (current) toggleFavorite(current.id || current.profile) },
+  })
 
   const handleLaunch = async () => {
     if (launching || !current) return
