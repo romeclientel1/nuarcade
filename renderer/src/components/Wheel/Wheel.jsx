@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useGameLibrary } from '../../hooks/useGameLibrary'
 import GameCard from './GameCard'
 import AttractMode from './AttractMode'
+import MediaManager from '../MediaManager/MediaManager'
 import styles from './Wheel.module.css'
 
 const CATEGORIES = ['All', 'Racing', 'Fighting', 'Shooter', 'Rhythm', 'Flying', 'Sports', 'Pinball']
@@ -13,6 +14,7 @@ export default function Wheel() {
   const [activeCategory, setActiveCategory] = useState('All')
   const [launching, setLaunching] = useState(false)
   const [attractMode, setAttractMode] = useState(false)
+  const [showMediaManager, setShowMediaManager] = useState(false)
   const idleTimer = useRef(null)
 
   const filteredGames = activeCategory === 'All'
@@ -120,6 +122,9 @@ export default function Wheel() {
               {stats.hidden > 0 && (
                 <span className={styles.hiddenCount}>{stats.hidden} hidden</span>
               )}
+              <button className={styles.mediaBtn} onClick={() => setShowMediaManager(true)}>
+                🎬 Media
+              </button>
             </div>
           )}
         </div>
@@ -189,6 +194,10 @@ export default function Wheel() {
             </button>
           </div>
         </div>
+      )}
+
+      {showMediaManager && (
+        <MediaManager onClose={() => setShowMediaManager(false)} />
       )}
     </div>
   )
