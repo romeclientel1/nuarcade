@@ -1,0 +1,242 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+
+.panel {
+  width: 680px;
+  max-width: 95vw;
+  max-height: 85vh;
+  background: #050508;
+  border: 1px solid rgba(0,200,255,0.2);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 0 60px rgba(0,200,255,0.1);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 24px 28px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  flex-shrink: 0;
+}
+
+.title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 18px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.sub {
+  font-size: 11px;
+  color: rgba(255,255,255,0.35);
+}
+
+.closeBtn {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.4);
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.15s;
+}
+
+.closeBtn:hover {
+  border-color: rgba(255,255,255,0.3);
+  color: #fff;
+}
+
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.section {
+  padding-bottom: 24px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.section:last-child { border-bottom: none; }
+
+.sectionTitle {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(0,200,255,0.7);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+.inputRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.inputRow:last-child { margin-bottom: 0; }
+
+.inputLabel {
+  font-size: 11px;
+  color: rgba(255,255,255,0.4);
+  min-width: 110px;
+  flex-shrink: 0;
+}
+
+.input {
+  flex: 1;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(0,200,255,0.2);
+  border-radius: 3px;
+  padding: 8px 12px;
+  color: #fff;
+  font-size: 11px;
+  outline: none;
+  font-family: 'Share Tech Mono', monospace;
+  transition: border-color 0.15s;
+}
+
+.input:focus { border-color: #00c8ff; }
+
+.toggleGroup {
+  display: flex;
+  gap: 4px;
+}
+
+.toggleBtn {
+  padding: 7px 18px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: transparent;
+  color: rgba(255,255,255,0.35);
+  font-size: 11px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.15s;
+  font-family: 'Share Tech Mono', monospace;
+}
+
+.toggleBtn:hover {
+  border-color: rgba(0,200,255,0.3);
+  color: rgba(0,200,255,0.6);
+}
+
+.toggleActive {
+  border-color: #00c8ff !important;
+  color: #00c8ff !important;
+  background: rgba(0,200,255,0.08);
+}
+
+.sliderWrap {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+}
+
+.slider {
+  flex: 1;
+  accent-color: #00c8ff;
+  height: 4px;
+  cursor: pointer;
+}
+
+.sliderVal {
+  font-size: 12px;
+  color: #00c8ff;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  min-width: 40px;
+}
+
+.aboutGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.aboutRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 3px;
+}
+
+.aboutLabel {
+  font-size: 10px;
+  color: rgba(255,255,255,0.35);
+  min-width: 80px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.aboutVal {
+  font-size: 11px;
+  color: rgba(0,200,255,0.6);
+  font-family: 'Share Tech Mono', monospace;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 28px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  flex-shrink: 0;
+}
+
+.resetBtn {
+  padding: 9px 20px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: transparent;
+  color: rgba(255,255,255,0.3);
+  font-size: 11px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.15s;
+  font-family: 'Share Tech Mono', monospace;
+}
+
+.resetBtn:hover {
+  border-color: rgba(255,100,100,0.3);
+  color: rgba(255,100,100,0.6);
+}
+
+.saveBtn {
+  padding: 10px 28px;
+  border: 1px solid #00c8ff;
+  background: rgba(0,200,255,0.1);
+  color: #00c8ff;
+  font-size: 11px;
+  cursor: pointer;
+  border-radius: 3px;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  transition: all 0.2s;
+}
+
+.saveBtn:hover { background: rgba(0,200,255,0.2); }
