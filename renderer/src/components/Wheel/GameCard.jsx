@@ -33,7 +33,7 @@ export default function GameCard({ game, isCenter, onClick }) {
   const fallbackIcon = game.icon || GENRE_ICONS[game.genre] || '🎮'
 
   // Try multiple image formats from TeknoParrot thumbnail repo
-  const imgUrl = `${THUMBNAIL_BASE}${game.id || game.profile?.replace('.xml', '')}.png`
+  const imgUrl = game.id ? `${THUMBNAIL_BASE}${game.id}.png` : null
 
   return (
     <div
@@ -43,7 +43,7 @@ export default function GameCard({ game, isCenter, onClick }) {
     >
       {/* Artwork area */}
       <div className={styles.artWrap}>
-        {!imgError && (
+        {imgUrl && !imgError {!imgError && ({!imgError && ( (
           <img
             src={imgUrl}
             alt={game.title}
