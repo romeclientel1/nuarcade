@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import styles from './GameCard.module.css'
 
 const THUMBNAIL_BASE = 'https://raw.githubusercontent.com/teknogods/TeknoParrotUIThumbnails/master/Icons/'
@@ -28,10 +28,36 @@ const GENRE_ICONS = {
 export default function GameCard({ game, isCenter, onClick }) {
   const [imgLoaded, setImgLoaded] = useState(false)
   const [imgError, setImgError] = useState(false)
+  const [videoReady, setVideoReady] = useState(false)
+  const [videoError, setVideoError] = useState(false)
+  const videoRef = useRef(null)
 
   const colors = GENRE_COLORS[game.genre] || GENRE_COLORS.Other
   const fallbackIcon = game.icon || GENRE_ICONS[game.genre] || '🎮'
   const imgUrl = game.id ? `${THUMBNAIL_BASE}${game.id}.png` : null
+
+  // Video path — local file on Windows cabinet
+  // On Mac dev mode this will just fail silently and show artwork instead
+  const videoId = game.id || game.profile?.replace('.xml', '')
+  const videoUrl = game.videoPath || 
+    (window.nuarcade?.platform === 'win32' 
+      ? `file:///F:/Media/Videos/${videoId}.mp4`
+      : null)
+
+  // Play video when card becomes center
+  useEffect(() => {
+    if (!videoRef.current) return
+    if (isCenter && videoUrl && !videoError) {
+      videoRef.current.currentTime = 0
+      videoRef.current.play().catch(() => setVideoError(true))
+    } else {
+      videoRef.current.pause()
+      videoRef.current.currentTime = 0
+      setVideoReady(false)
+    }
+  }, [isCenter, videoUrl, videoError])
+
+  const showVideo = isCenter && videoUrl && !videoError && videoReady
 
   return (
     <div
@@ -40,16 +66,34 @@ export default function GameCard({ game, isCenter, onClick }) {
       onClick={onClick}
     >
       <div className={styles.artWrap}>
+
+        {/* Video layer — only on center card, only on Windows */}
+        {isCenter && videoUrl && !videoError && (
+          <video
+            ref={videoRef}
+            className={`${styles.videoEl} ${videoReady ? styles.videoVisible : ''}`}
+            src={videoUrl}
+            muted
+            loop
+            playsInline
+            onCanPlay={() => setVideoReady(true)}
+            onError={() => setVideoError(true)}
+          />
+        )}
+
+        {/* Artwork layer — shows while video loads or if no video */}
         {imgUrl && !imgError && (
           <img
             src={imgUrl}
             alt={game.title}
-            className={`${styles.artImg} ${imgLoaded ? styles.artLoaded : ''}`}
+            className={`${styles.artImg} ${imgLoaded ? styles.artLoaded : ''} ${showVideo ? styles.artHidden : ''}`}
             onLoad={() => setImgLoaded(true)}
             onError={() => setImgError(true)}
           />
         )}
-        {(!imgUrl || !imgLoaded || imgError) && (
+
+        {/* Fallback — genre icon with glow */}
+        {(!imgUrl || !imgLoaded || imgError) && !showVideo && (
           <div className={styles.artFallback} style={{ background: colors.bg }}>
             <div className={styles.fallbackIcon}>{fallbackIcon}</div>
             <div
@@ -58,6 +102,12 @@ export default function GameCard({ game, isCenter, onClick }) {
             />
           </div>
         )}
+
+        {/* Video indicator badge */}
+        {showVideo && (
+          <div className={styles.videoBadge}>▶ LIVE</div>
+        )}
+
       </div>
 
       <div className={styles.gradient} />

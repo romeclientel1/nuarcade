@@ -146,6 +146,8 @@
 .cardSlot {
   position: absolute;
   transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  width: 240px;
+  height: 320px;
 }
 
 .cardCenter {

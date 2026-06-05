@@ -140,3 +140,35 @@
   border-radius: 6px;
   pointer-events: none;
 }
+.videoEl {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  z-index: 2;
+}
+
+.videoVisible {
+  opacity: 1;
+}
+
+.artHidden {
+  opacity: 0;
+}
+
+.videoBadge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-size: 9px;
+  padding: 2px 8px;
+  border: 1px solid rgba(0,255,136,0.5);
+  color: #00ff88;
+  border-radius: 2px;
+  letter-spacing: 0.1em;
+  z-index: 3;
+  background: rgba(0,0,0,0.5);
+}
