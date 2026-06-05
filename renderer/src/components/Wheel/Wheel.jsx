@@ -4,6 +4,7 @@ import GameCard from './GameCard'
 import AttractMode from './AttractMode'
 import MediaManager from '../MediaManager/MediaManager'
 import Settings from '../Settings/Settings'
+import GameDetail from '../GameDetail/GameDetail'
 import styles from './Wheel.module.css'
 
 const CATEGORIES = ['All', 'Racing', 'Fighting', 'Shooter', 'Rhythm', 'Flying', 'Sports', 'Pinball']
@@ -17,6 +18,7 @@ export default function Wheel() {
   const [attractMode, setAttractMode] = useState(false)
   const [showMediaManager, setShowMediaManager] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [showDetail, setShowDetail] = useState(false)
   const idleTimer = useRef(null)
 
   const filteredGames = activeCategory === 'All'
@@ -50,7 +52,8 @@ export default function Wheel() {
     const handler = (e) => {
       if (e.key === 'ArrowLeft')  setSelectedIndex(i => Math.max(0, i - 1))
       if (e.key === 'ArrowRight') setSelectedIndex(i => Math.min(filteredGames.length - 1, i + 1))
-      if (e.key === 'Enter')      handleLaunch()
+      if (e.key === 'Enter')      setShowDetail(true)
+      if (e.key === 'Escape')     setShowDetail(false)
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
@@ -167,7 +170,7 @@ export default function Wheel() {
                   isCenter={index === selectedIndex}
                   isAttract={attractMode}
                   onClick={() => {
-                    if (index === selectedIndex) handleLaunch()
+                    if (index === selectedIndex) setShowDetail(true)
                     else setSelectedIndex(index)
                   }}
                 />
@@ -211,6 +214,15 @@ export default function Wheel() {
 
       {showSettings && (
         <Settings onClose={() => setShowSettings(false)} />
+      )}
+
+      {showDetail && current && (
+        <GameDetail
+          game={current}
+          onClose={() => setShowDetail(false)}
+          onLaunch={() => { setShowDetail(false); handleLaunch() }}
+          launching={launching}
+        />
       )}
 
     </div>
