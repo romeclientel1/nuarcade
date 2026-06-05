@@ -335,3 +335,38 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+.attractBanner {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 75%;
+  z-index: 50;
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(32px, 5vw, 64px);
+  font-weight: 900;
+  color: #00c8ff;
+  letter-spacing: 0.3em;
+  text-shadow: 0 0 40px rgba(0,200,255,0.8), 0 0 80px rgba(0,200,255,0.4);
+  animation: insertCoin 1.2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes insertCoin {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.1; }
+}
+
+.attractBadge {
+  padding: 3px 8px;
+  border: 1px solid rgba(0,200,255,0.4);
+  color: #00c8ff;
+  border-radius: 2px;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  animation: insertCoin 1.2s ease-in-out infinite;
+}
+
+.infoPanelAttract {
+  opacity: 0.4;
+  transition: opacity 0.5s;
+}

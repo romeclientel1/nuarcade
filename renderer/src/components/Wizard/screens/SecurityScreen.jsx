@@ -2,18 +2,20 @@ import { useState, useEffect } from 'react'
 import styles from './Screen.module.css'
 
 const STEPS = [
-  { key: 'admin',     label: 'Administrator access granted',          val: 'OK' },
-  { key: 'defender',  label: 'Windows Defender exclusions added',     val: '4 paths' },
-  { key: 'smartscreen', label: 'SmartScreen exclusions configured',   val: 'OK' },
-  { key: 'uac',       label: 'UAC manifest set (no future prompts)',  val: 'OK' },
-  { key: 'watchdog',  label: 'Exclusion watchdog registered',         val: 'OK' },
+  { key: 'admin',       label: 'Administrator access granted',         val: 'OK' },
+  { key: 'defender',    label: 'Windows Defender exclusions added',    val: '6 paths' },
+  { key: 'smartscreen', label: 'SmartScreen exclusions configured',    val: 'OK' },
+  { key: 'uac',         label: 'UAC manifest set (no future prompts)', val: 'OK' },
+  { key: 'watchdog',    label: 'Exclusion watchdog registered',        val: 'OK' },
 ]
 
 const PATHS = [
-  'C:\\NuArcade\\',
-  'C:\\TeknoParrot\\',
-  'D:\\ArcadeGames\\',
-  'C:\\vPinball\\',
+  'F:\\NuArcade\\',
+  'F:\\TeknoParrot\\',
+  'F:\\ArcadeGames\\',
+  'F:\\vPinball\\',
+  'F:\\PinballTables\\',
+  'F:\\Media\\',
 ]
 
 export default function SecurityScreen({ config, next, prev }) {
@@ -26,12 +28,9 @@ export default function SecurityScreen({ config, next, prev }) {
   }, [])
 
   const runSteps = async () => {
-    // On Windows — run real exclusions
     if (window.nuarcade && window.nuarcade.platform === 'win32') {
       await window.nuarcade.addExclusions(PATHS)
     }
-
-    // Simulate step-by-step progress (works on Mac dev too)
     for (let i = 0; i < STEPS.length; i++) {
       setRunning(STEPS[i].key)
       await delay(600 + Math.random() * 400)

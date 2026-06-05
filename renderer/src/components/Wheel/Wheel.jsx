@@ -1,15 +1,19 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useGameLibrary } from '../../hooks/useGameLibrary'
 import GameCard from './GameCard'
+import AttractMode from './AttractMode'
 import styles from './Wheel.module.css'
 
 const CATEGORIES = ['All', 'Racing', 'Fighting', 'Shooter', 'Rhythm', 'Flying', 'Sports', 'Pinball']
+const ATTRACT_TIMEOUT = 120000
 
 export default function Wheel() {
   const { games, stats, loading } = useGameLibrary()
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [activeCategory, setActiveCategory] = useState('All')
   const [launching, setLaunching] = useState(false)
+  const [attractMode, setAttractMode] = useState(false)
+  const idleTimer = useRef(null)
 
   const filteredGames = activeCategory === 'All'
     ? games
@@ -18,6 +22,25 @@ export default function Wheel() {
   const current = filteredGames[selectedIndex] || filteredGames[0]
 
   useEffect(() => { setSelectedIndex(0) }, [activeCategory])
+
+  const resetIdleTimer = useCallback(() => {
+    setAttractMode(false)
+    clearTimeout(idleTimer.current)
+    idleTimer.current = setTimeout(() => setAttractMode(true), ATTRACT_TIMEOUT)
+  }, [])
+
+  useEffect(() => {
+    resetIdleTimer()
+    window.addEventListener('keydown', resetIdleTimer)
+    window.addEventListener('mousemove', resetIdleTimer)
+    window.addEventListener('click', resetIdleTimer)
+    return () => {
+      clearTimeout(idleTimer.current)
+      window.removeEventListener('keydown', resetIdleTimer)
+      window.removeEventListener('mousemove', resetIdleTimer)
+      window.removeEventListener('click', resetIdleTimer)
+    }
+  }, [resetIdleTimer])
 
   useEffect(() => {
     const handler = (e) => {
@@ -70,6 +93,19 @@ export default function Wheel() {
       <div className={styles.bgGrid} />
       <div className={styles.bgVignette} />
 
+      <AttractMode
+        games={filteredGames}
+        isActive={attractMode}
+        onSelect={setSelectedIndex}
+        onWake={resetIdleTimer}
+      />
+
+      {attractMode && (
+        <div className={styles.attractBanner}>
+          <span>INSERT COIN</span>
+        </div>
+      )}
+
       <div className={styles.header}>
         <div className={styles.logo}>
           <span className={styles.logoNu}>Nu</span>
@@ -79,6 +115,7 @@ export default function Wheel() {
           {stats && (
             <div className={styles.statsRow}>
               {stats.devMode && <span className={styles.devBadge}>DEV MODE</span>}
+              {attractMode && <span className={styles.attractBadge}>ATTRACT</span>}
               <span className={styles.gameCount}>{filteredGames.length} games</span>
               {stats.hidden > 0 && (
                 <span className={styles.hiddenCount}>{stats.hidden} hidden</span>
@@ -118,6 +155,7 @@ export default function Wheel() {
                 <GameCard
                   game={game}
                   isCenter={index === selectedIndex}
+                  isAttract={attractMode}
                   onClick={() => {
                     if (index === selectedIndex) handleLaunch()
                     else setSelectedIndex(index)
@@ -131,7 +169,7 @@ export default function Wheel() {
       )}
 
       {current && filteredGames.length > 0 && (
-        <div className={styles.infoPanel}>
+        <div className={`${styles.infoPanel} ${attractMode ? styles.infoPanelAttract : ''}`}>
           <div className={styles.infoLeft}>
             <div className={styles.infoTitle}>{current.title}</div>
             <div className={styles.infoMeta}>
