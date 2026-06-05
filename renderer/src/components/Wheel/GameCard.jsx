@@ -25,6 +25,13 @@ const GENRE_ICONS = {
   Other:    '🎮',
 }
 
+const STATUS_COLORS = {
+  Perfect:    '#00ff88',
+  Great:      '#ffaa00',
+  Playable:   '#ffaa00',
+  Unverified: '#888888',
+}
+
 export default function GameCard({ game, isCenter, onClick }) {
   const [imgLoaded, setImgLoaded] = useState(false)
   const [imgError, setImgError] = useState(false)
@@ -35,16 +42,14 @@ export default function GameCard({ game, isCenter, onClick }) {
   const colors = GENRE_COLORS[game.genre] || GENRE_COLORS.Other
   const fallbackIcon = game.icon || GENRE_ICONS[game.genre] || '🎮'
   const imgUrl = game.id ? `${THUMBNAIL_BASE}${game.id}.png` : null
+  const statusColor = STATUS_COLORS[game.status] || '#888888'
 
-  // Video path — local file on Windows cabinet
-  // On Mac dev mode this will just fail silently and show artwork instead
   const videoId = game.id || game.profile?.replace('.xml', '')
-  const videoUrl = game.videoPath || 
-    (window.nuarcade?.platform === 'win32' 
+  const videoUrl = game.videoPath ||
+    (window.nuarcade?.platform === 'win32'
       ? `file:///F:/Media/Videos/${videoId}.mp4`
       : null)
 
-  // Play video when card becomes center
   useEffect(() => {
     if (!videoRef.current) return
     if (isCenter && videoUrl && !videoError) {
@@ -67,7 +72,6 @@ export default function GameCard({ game, isCenter, onClick }) {
     >
       <div className={styles.artWrap}>
 
-        {/* Video layer — only on center card, only on Windows */}
         {isCenter && videoUrl && !videoError && (
           <video
             ref={videoRef}
@@ -81,7 +85,6 @@ export default function GameCard({ game, isCenter, onClick }) {
           />
         )}
 
-        {/* Artwork layer — shows while video loads or if no video */}
         {imgUrl && !imgError && (
           <img
             src={imgUrl}
@@ -92,7 +95,6 @@ export default function GameCard({ game, isCenter, onClick }) {
           />
         )}
 
-        {/* Fallback — genre icon with glow */}
         {(!imgUrl || !imgLoaded || imgError) && !showVideo && (
           <div className={styles.artFallback} style={{ background: colors.bg }}>
             <div className={styles.fallbackIcon}>{fallbackIcon}</div>
@@ -103,7 +105,6 @@ export default function GameCard({ game, isCenter, onClick }) {
           </div>
         )}
 
-        {/* Video indicator badge */}
         {showVideo && (
           <div className={styles.videoBadge}>▶ LIVE</div>
         )}
@@ -114,7 +115,7 @@ export default function GameCard({ game, isCenter, onClick }) {
 
       <div
         className={styles.statusDot}
-        style={{ background: game.status === 'Perfect' ? '#00ff88' : '#ffaa00' }}
+        style={{ background: statusColor }}
         title={game.status}
       />
 

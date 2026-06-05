@@ -389,3 +389,13 @@
   background: rgba(0,200,255,0.1);
   color: #00c8ff;
 }
+.tagUnverified {
+  border-color: rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.4);
+  font-size: 10px;
+  padding: 3px 10px;
+  border: 1px solid;
+  border-radius: 2px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}

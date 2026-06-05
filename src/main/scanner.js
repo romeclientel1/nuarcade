@@ -9,26 +9,26 @@ const parser = new XMLParser({
 })
 
 const GENRE_MAP = {
-  'Racer':      'Racing',
-  'Racing':     'Racing',
-  'Fighter':    'Fighting',
-  'Fighting':   'Fighting',
-  'Shooter':    'Shooter',
-  'Shoot':      'Shooter',
+  'Racer':        'Racing',
+  'Racing':       'Racing',
+  'Fighter':      'Fighting',
+  'Fighting':     'Fighting',
+  'Shooter':      'Shooter',
+  'Shoot':        'Shooter',
   "Shoot 'Em Up": 'Shooter',
-  'Shooting':   'Shooter',
-  'Rhythm':     'Rhythm',
-  'Music':      'Rhythm',
-  'Flying':     'Flying',
-  'Sports':     'Sports',
-  'Action':     'Action',
-  'Platform':   'Action',
-  'Puzzle':     'Puzzle',
-  'Multiplayer':'Multiplayer',
-  'Strategy':   'Strategy',
+  'Shooting':     'Shooter',
+  'Rhythm':       'Rhythm',
+  'Music':        'Rhythm',
+  'Flying':       'Flying',
+  'Sports':       'Sports',
+  'Action':       'Action',
+  'Platform':     'Action',
+  'Puzzle':       'Puzzle',
+  'Multiplayer':  'Multiplayer',
+  'Strategy':     'Strategy',
 }
 
-const ALLOWED_STATUS = ['Perfect', 'Great']
+const BROKEN_STATUS = ['Broken', 'Nothing', 'DoesNotBoot']
 
 const SUBSCRIPTION_PROFILES = new Set([
   'SWDC.xml', 'Wangan6R.xml', 'MK11.xml', 'DOA6.xml',
@@ -44,18 +44,26 @@ function parseProfile(xmlPath) {
     if (!profile) return null
 
     const fileName = path.basename(xmlPath)
-    const title     = profile.GameName || profile.Description || fileName.replace('.xml', '')
-    const gamePath  = profile.GamePath || profile.ExecutablePath || ''
-    const exeName   = profile.ExecutableName || profile.Executable || ''
-    const status    = profile.GameStatus || profile.Status || 'Unknown'
-    const genre     = normalizeGenre(profile.Genre || profile.GameType || '')
-    const system    = profile.EmulationProfile || profile.System || 'Unknown'
+    const title    = profile.GameName || profile.Description || fileName.replace('.xml', '')
+    const gamePath = profile.GamePath || profile.ExecutablePath || ''
+    const exeName  = profile.ExecutableName || profile.Executable || ''
+    const rawStatus = profile.GameStatus || profile.Status || 'Unknown'
+    const genre    = normalizeGenre(profile.Genre || profile.GameType || '')
+    const system   = profile.EmulationProfile || profile.System || 'Unknown'
     const isSubscription = profile.RequiresSubscription === true ||
                            profile.Patreon === true ||
                            SUBSCRIPTION_PROFILES.has(fileName)
 
+    // Normalize status
+    let status = rawStatus
+    if (BROKEN_STATUS.includes(status)) {
+      status = 'Broken'
+    } else if (!['Perfect', 'Great', 'Playable'].includes(status)) {
+      status = 'Unverified'
+    }
+
     const exePath = gamePath ||
-                    (profile.GameLocation ? path.join(profile.GameLocation, exeName) : '')
+      (profile.GameLocation ? path.join(profile.GameLocation, exeName) : '')
 
     return {
       id: fileName.replace('.xml', ''),
@@ -121,7 +129,7 @@ function scanGames(teknoParrotPath, gamesFolderPath) {
     total: xmlFiles.length,
     visible: 0,
     hidden: 0,
-    reasons: { subscription: 0, badStatus: 0, missingFiles: 0, parseError: 0 }
+    reasons: { subscription: 0, broken: 0, missingFiles: 0, parseError: 0 }
   }
 
   const games = []
@@ -136,18 +144,21 @@ function scanGames(teknoParrotPath, gamesFolderPath) {
       continue
     }
 
+    // Filter 1: subscription games
     if (game.isSubscription) {
       stats.hidden++
       stats.reasons.subscription++
       continue
     }
 
-    if (!ALLOWED_STATUS.includes(game.status)) {
+    // Filter 2: only hide confirmed broken
+    if (game.status === 'Broken') {
       stats.hidden++
-      stats.reasons.badStatus++
+      stats.reasons.broken++
       continue
     }
 
+    // Filter 3: game files must exist locally
     const resolvedPath = resolveExePath(game, gamesFolderPath)
     if (!resolvedPath) {
       stats.hidden++
@@ -163,10 +174,11 @@ function scanGames(teknoParrotPath, gamesFolderPath) {
 
   stats.hidden = stats.total - stats.visible
 
+  // Sort: Perfect first, then Great, then Playable, then Unverified, alpha within
+  const statusOrder = { Perfect: 0, Great: 1, Playable: 2, Unverified: 3 }
   games.sort((a, b) => {
-    if (a.status === 'Perfect' && b.status !== 'Perfect') return -1
-    if (a.status !== 'Perfect' && b.status === 'Perfect') return 1
-    return a.title.localeCompare(b.title)
+    const diff = (statusOrder[a.status] ?? 4) - (statusOrder[b.status] ?? 4)
+    return diff !== 0 ? diff : a.title.localeCompare(b.title)
   })
 
   return { games, stats }

@@ -180,7 +180,11 @@ export default function Wheel() {
             <div className={styles.infoMeta}>
               <span className={styles.tagSystem}>{current.system}</span>
               <span className={styles.tagGenre}>{current.genre}</span>
-              <span className={current.status === 'Perfect' ? styles.tagPerfect : styles.tagGreat}>
+              <span className={
+                current.status === 'Perfect' ? styles.tagPerfect :
+                current.status === 'Great' || current.status === 'Playable' ? styles.tagGreat :
+                styles.tagUnverified
+              }>
                 {current.status}
               </span>
             </div>
