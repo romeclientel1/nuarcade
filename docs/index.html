@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NuArcade — Modern Arcade Frontend</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --cyan: #00c8ff;
+  --cyan-dim: rgba(0,200,255,0.15);
+  --green: #00ff88;
+  --amber: #ffaa00;
+  --bg: #000;
+  --bg2: #050510;
+}
+
+body {
+  background: var(--bg);
+  color: #fff;
+  font-family: "Share Tech Mono", monospace;
+  overflow-x: hidden;
+}
+
+.grid-bg {
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,200,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,200,255,0.03) 1px, transparent 1px);
+  background-size: 44px 44px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 48px;
+  border-bottom: 1px solid rgba(0,200,255,0.1);
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(8px);
+}
+
+.nav-logo {
+  font-family: Orbitron, sans-serif;
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.nav-logo span:first-child { color: var(--cyan); }
+
+.nav-links { display: flex; gap: 32px; }
+
+.nav-links a {
+  color: rgba(255,255,255,0.45);
+  text-decoration: none;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  transition: color 0.2s;
+}
+
+.nav-links a:hover { color: var(--cyan); }
+
+.hero {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 120px 24px 80px;
+}
+
+.hero-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  color: var(--cyan);
+  text-transform: uppercase;
+  margin-bottom: 24px;
+  opacity: 0.7;
+}
+
+.hero-title {
+  font-family: Orbitron, sans-serif;
+  font-size: clamp(48px, 8vw, 96px);
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: 16px;
+}
+
+.hero-title .nu { color: var(--cyan); text-shadow: 0 0 60px rgba(0,200,255,0.5); }
+.hero-title .arcade { color: #fff; }
+
+.hero-sub {
+  font-size: clamp(13px, 2vw, 16px);
+  color: rgba(255,255,255,0.45);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 48px;
+  max-width: 500px;
+}
+
+.hero-btns {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 80px;
+}
+
+.btn-primary {
+  padding: 14px 36px;
+  border: 2px solid var(--cyan);
+  background: rgba(0,200,255,0.12);
+  color: var(--cyan);
+  font-family: Orbitron, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  cursor: pointer;
+  text-decoration: none;
+  border-radius: 3px;
+  transition: all 0.2s;
+  display: inline-block;
+}
+
+.btn-primary:hover {
+  background: rgba(0,200,255,0.22);
+  box-shadow: 0 0 30px rgba(0,200,255,0.25);
+}
+
+.btn-secondary {
+  padding: 14px 36px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: transparent;
+  color: rgba(255,255,255,0.5);
+  font-family: Orbitron, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  cursor: pointer;
+  text-decoration: none;
+  border-radius: 3px;
+  transition: all 0.2s;
+  display: inline-block;
+}
+
+.btn-secondary:hover {
+  border-color: rgba(255,255,255,0.4);
+  color: rgba(255,255,255,0.8);
+}
+
+.hero-stats {
+  display: flex;
+  gap: 48px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.stat { text-align: center; }
+
+.stat-num {
+  font-family: Orbitron, sans-serif;
+  font-size: 32px;
+  font-weight: 900;
+  color: var(--cyan);
+  margin-bottom: 6px;
+}
+
+.stat-lbl {
+  font-size: 10px;
+  color: rgba(255,255,255,0.3);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.divider {
+  width: 1px;
+  height: 40px;
+  background: rgba(255,255,255,0.1);
+  align-self: center;
+}
+
+section {
+  position: relative;
+  z-index: 1;
+  padding: 100px 48px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.section-label {
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  color: var(--cyan);
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  opacity: 0.7;
+}
+
+.section-title {
+  font-family: Orbitron, sans-serif;
+  font-size: clamp(28px, 4vw, 48px);
+  font-weight: 900;
+  margin-bottom: 48px;
+  line-height: 1.2;
+}
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.feature {
+  padding: 28px;
+  border: 1px solid rgba(0,200,255,0.12);
+  border-radius: 6px;
+  background: rgba(0,200,255,0.02);
+  transition: all 0.2s;
+}
+
+.feature:hover {
+  border-color: rgba(0,200,255,0.3);
+  background: rgba(0,200,255,0.05);
+}
+
+.feature-icon { font-size: 28px; margin-bottom: 14px; }
+
+.feature-title {
+  font-family: Orbitron, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 10px;
+  letter-spacing: 0.05em;
+}
+
+.feature-desc {
+  font-size: 12px;
+  color: rgba(255,255,255,0.4);
+  line-height: 1.7;
+}
+
+.categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 32px;
+}
+
+.cat-pill {
+  padding: 8px 18px;
+  border: 1px solid rgba(0,200,255,0.2);
+  border-radius: 2px;
+  color: rgba(0,200,255,0.6);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-family: Orbitron, sans-serif;
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2px;
+  counter-reset: steps;
+}
+
+.step {
+  padding: 32px 28px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: var(--bg2);
+  position: relative;
+  counter-increment: steps;
+}
+
+.step::before {
+  content: "0" counter(steps);
+  font-family: Orbitron, sans-serif;
+  font-size: 11px;
+  color: var(--cyan);
+  opacity: 0.5;
+  letter-spacing: 0.1em;
+  display: block;
+  margin-bottom: 16px;
+}
+
+.step-title {
+  font-family: Orbitron, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 10px;
+}
+
+.step-desc {
+  font-size: 11px;
+  color: rgba(255,255,255,0.35);
+  line-height: 1.7;
+}
+
+.cta {
+  text-align: center;
+  padding: 100px 48px;
+  position: relative;
+  z-index: 1;
+  border-top: 1px solid rgba(0,200,255,0.1);
+}
+
+.cta-title {
+  font-family: Orbitron, sans-serif;
+  font-size: clamp(28px, 4vw, 52px);
+  font-weight: 900;
+  margin-bottom: 16px;
+}
+
+.cta-sub {
+  font-size: 13px;
+  color: rgba(255,255,255,0.35);
+  margin-bottom: 40px;
+  letter-spacing: 0.1em;
+}
+
+footer {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 32px 48px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  font-size: 10px;
+  color: rgba(255,255,255,0.2);
+  letter-spacing: 0.15em;
+}
+
+.scanline {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+  opacity: 0.3;
+  margin: 0 auto 60px;
+  max-width: 600px;
+}
+</style>
+</head>
+<body>
+
+<div class="grid-bg"></div>
+
+<nav>
+  <div class="nav-logo">
+    <span>Nu</span><span style="color:#fff">Arcade</span>
+  </div>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#howto">Setup</a>
+    <a href="https://github.com/romeclientel1/nuarcade" target="_blank">GitHub</a>
+    <a href="https://github.com/romeclientel1/nuarcade/releases" target="_blank">Download</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-eyebrow">Modern arcade frontend</div>
+  <div class="hero-title">
+    <span class="nu">Nu</span><span class="arcade">Arcade</span>
+  </div>
+  <div class="hero-sub">Modern arcade. One cabinet. Zero compromises.</div>
+
+  <div class="hero-btns">
+    <a href="https://github.com/romeclientel1/nuarcade/releases" class="btn-primary">Download for Windows</a>
+    <a href="https://github.com/romeclientel1/nuarcade" class="btn-secondary">View on GitHub</a>
+  </div>
+
+  <div class="scanline"></div>
+
+  <div class="hero-stats">
+    <div class="stat">
+      <div class="stat-num">500+</div>
+      <div class="stat-lbl">Supported games</div>
+    </div>
+    <div class="divider"></div>
+    <div class="stat">
+      <div class="stat-num">6</div>
+      <div class="stat-lbl">Game categories</div>
+    </div>
+    <div class="divider"></div>
+    <div class="stat">
+      <div class="stat-num">10</div>
+      <div class="stat-lbl">Min setup time</div>
+    </div>
+    <div class="divider"></div>
+    <div class="stat">
+      <div class="stat-num">Free</div>
+      <div class="stat-lbl">Always</div>
+    </div>
+  </div>
+</div>
+
+<section id="features">
+  <div class="section-label">What it does</div>
+  <div class="section-title">Everything your cabinet needs.</div>
+  <div class="features">
+    <div class="feature">
+      <div class="feature-icon">🎡</div>
+      <div class="feature-title">HyperSpin-style wheel</div>
+      <div class="feature-desc">Beautiful perspective wheel with real arcade artwork, smooth animations, and instant category filtering.</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">⚡</div>
+      <div class="feature-title">Auto-configuration</div>
+      <div class="feature-desc">Point NuArcade at your games folder. It finds every game, configures controllers, and sets up Windows security — automatically.</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🎮</div>
+      <div class="feature-title">Smart controller mapping</div>
+      <div class="feature-desc">Racing games get the wheel. Shooters get the light gun. Fighting games get the gamepad. Override per-game when needed.</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🎱</div>
+      <div class="feature-title">Pinball included</div>
+      <div class="feature-desc">Visual Pinball X tables live alongside your arcade games. One frontend, two worlds.</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🔄</div>
+      <div class="feature-title">Always up to date</div>
+      <div class="feature-desc">TeknoParrot updates silently on launch. New games appear automatically. No manual maintenance.</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🎬</div>
+      <div class="feature-title">Video previews</div>
+      <div class="feature-desc">Gameplay videos play on the center card. Download via built-in EmuMovies integration or drop your own .mp4 files.</div>
+    </div>
+  </div>
+
+  <div style="margin-top: 60px;">
+    <div class="section-label">Game categories</div>
+    <div class="categories">
+      <div class="cat-pill">Racing</div>
+      <div class="cat-pill">Fighting</div>
+      <div class="cat-pill">Shooters</div>
+      <div class="cat-pill">Rhythm</div>
+      <div class="cat-pill">Flying</div>
+      <div class="cat-pill">Sports</div>
+      <div class="cat-pill">Pinball</div>
+    </div>
+  </div>
+</section>
+
+<section id="howto" style="border-top: 1px solid rgba(255,255,255,0.06);">
+  <div class="section-label">Getting started</div>
+  <div class="section-title">Up and running in 10 minutes.</div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-title">Install TeknoParrot</div>
+      <div class="step-desc">Download and install TeknoParrot. Add your game files to F:/ArcadeGames/</div>
+    </div>
+    <div class="step">
+      <div class="step-title">Download NuArcade</div>
+      <div class="step-desc">Download the Windows installer from GitHub releases and run it.</div>
+    </div>
+    <div class="step">
+      <div class="step-title">Run the wizard</div>
+      <div class="step-desc">The 6-screen setup wizard configures everything — security, paths, and controllers.</div>
+    </div>
+    <div class="step">
+      <div class="step-title">Play</div>
+      <div class="step-desc">Your full game library appears on the wheel, configured and ready to launch.</div>
+    </div>
+  </div>
+</section>
+
+<div class="cta">
+  <div class="cta-title">Ready to build your cabinet?</div>
+  <div class="cta-sub">Free and open source. Always.</div>
+  <div class="hero-btns">
+    <a href="https://github.com/romeclientel1/nuarcade/releases" class="btn-primary">Download NuArcade</a>
+    <a href="https://github.com/romeclientel1/nuarcade" class="btn-secondary">Star on GitHub</a>
+  </div>
+</div>
+
+<footer>
+  NuArcade &nbsp;|&nbsp; Built by Jerome Emanuel &nbsp;|&nbsp; 
+  <a href="https://github.com/romeclientel1/nuarcade" style="color: rgba(0,200,255,0.4); text-decoration: none;">github.com/romeclientel1/nuarcade</a>
+</footer>
+
+</body>
+</html>
