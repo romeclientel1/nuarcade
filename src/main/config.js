@@ -17,6 +17,7 @@ const DEFAULTS = {
     lightgun: null,
     gamepad:  null,
   },
+  gameControllerOverrides: {},
   genreControllers: {
     Racing:   'wheel',
     Shooter:  'lightgun',

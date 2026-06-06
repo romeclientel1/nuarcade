@@ -87,6 +87,22 @@ ipcMain.handle('add-exclusions', async (event, paths) => {
 })
 
 ipcMain.handle('get-config', () => config.load())
+
+ipcMain.handle('get-controller-override', (event, gameId) => {
+  const cfg = config.load()
+  return cfg.gameControllerOverrides?.[gameId] || null
+})
+
+ipcMain.handle('set-controller-override', (event, gameId, controller) => {
+  const cfg = config.load()
+  if (!cfg.gameControllerOverrides) cfg.gameControllerOverrides = {}
+  if (controller === null) {
+    delete cfg.gameControllerOverrides[gameId]
+  } else {
+    cfg.gameControllerOverrides[gameId] = controller
+  }
+  return config.save(cfg)
+})
 ipcMain.handle('set-config', (event, updates) => config.update(updates))
 
 ipcMain.handle('get-displays', () => {

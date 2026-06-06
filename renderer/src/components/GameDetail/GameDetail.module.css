@@ -239,3 +239,35 @@
   color: rgba(255,255,255,0.5);
   line-height: 1.3;
 }
+.controllerGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.controllerBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 4px;
+  color: rgba(255,255,255,0.45);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: Share Tech Mono, monospace;
+  text-align: left;
+}
+
+.controllerBtn:hover {
+  border-color: rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.7);
+  background: rgba(255,255,255,0.06);
+}
+
+.controllerActive {
+  font-weight: 600;
+}

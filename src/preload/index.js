@@ -10,6 +10,8 @@ contextBridge.exposeInMainWorld('nuarcade', {
   getConfig: () => ipcRenderer.invoke('get-config'),
   setConfig: (updates) => ipcRenderer.invoke('set-config', updates),
   getDisplays: () => ipcRenderer.invoke('get-displays'),
+  getControllerOverride: (gameId) => ipcRenderer.invoke('get-controller-override', gameId),
+  setControllerOverride: (gameId, controller) => ipcRenderer.invoke('set-controller-override', gameId, controller),
   platform: process.platform,
   isDev: process.env.NODE_ENV === 'development',
 })
