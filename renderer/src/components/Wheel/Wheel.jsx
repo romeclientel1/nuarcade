@@ -8,6 +8,7 @@ import GameDetail from "../GameDetail/GameDetail"
 import Help from "../Help/Help"
 import SortMenu from "./SortMenu"
 import { useGamepad } from "./useGamepad"
+import Splash from "../Splash/Splash"
 import styles from "./Wheel.module.css"
 
 const CATEGORIES = ["All", "Favorites", "Recent", "Racing", "Fighting", "Shooter", "Rhythm", "Flying", "Sports", "Pinball"]
@@ -31,6 +32,7 @@ export default function Wheel() {
     games, stats, loading,
     toggleFavorite, isFavorite,
     recentlyPlayed, addRecentlyPlayed,
+    newGameCount,
   } = useGameLibrary()
 
   const [selectedIndex, setSelectedIndex] = useState(0)
@@ -154,15 +156,7 @@ export default function Wheel() {
     return styles.cardHidden
   }
 
-  if (loading) return (
-    <div className={styles.stage}>
-      <div className={styles.bgGrid} />
-      <div className={styles.loadingMsg}>
-        <div className={styles.loadingSpinner} />
-        <div>Scanning game library...</div>
-      </div>
-    </div>
-  )
+  if (loading) return <Splash message="Scanning game library..." />
 
   return (
     <div className={styles.stage}>
@@ -207,6 +201,9 @@ export default function Wheel() {
               {stats?.devMode && <span className={styles.devBadge}>DEV MODE</span>}
               {attractMode && <span className={styles.attractBadge}>ATTRACT</span>}
               <span className={styles.gameCount}>{filteredGames.length} games</span>
+              {newGameCount > 0 && (
+                <span className={styles.newBadge}>+{newGameCount} new</span>
+              )}
               <button className={styles.searchBtn} onClick={() => setShowSearch(true)}>Search</button>
               <button className={sortBy !== "default" ? styles.sortActive : styles.sortBtn} onClick={() => setShowSort(s => !s)}>Sort</button>
               <button className={styles.mediaBtn} onClick={() => setShowMediaManager(true)}>Media</button>

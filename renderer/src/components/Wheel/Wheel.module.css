@@ -552,3 +552,19 @@
   font-weight: 700;
 }
 .helpBtn:hover { border-color: rgba(0,200,255,0.4); color: #00c8ff; }
+
+.newBadge {
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(0,255,136,0.15);
+  border: 1px solid rgba(0,255,136,0.4);
+  color: #00ff88;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  font-family: Share Tech Mono, monospace;
+  animation: badgePulse 2s ease-in-out infinite;
+}
+@keyframes badgePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}

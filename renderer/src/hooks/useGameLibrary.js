@@ -112,9 +112,21 @@ export function useGameLibrary() {
   const isFavorite = (gameId) => favorites.includes(gameId)
   const refreshLibrary = () => loadLibrary()
 
+  // Check for new games since last launch
+  const getNewGameCount = () => {
+    try {
+      const lastCount = parseInt(localStorage.getItem('nuarcade_last_game_count') || '0')
+      const current = games.length
+      if (lastCount > 0 && current > lastCount) return current - lastCount
+      localStorage.setItem('nuarcade_last_game_count', current)
+      return 0
+    } catch { return 0 }
+  }
+
   return {
     games, stats, loading, error, config, refreshLibrary,
     favorites, toggleFavorite, isFavorite,
     recentlyPlayed, addRecentlyPlayed,
+    newGameCount: games.length > 0 ? getNewGameCount() : 0,
   }
 }
