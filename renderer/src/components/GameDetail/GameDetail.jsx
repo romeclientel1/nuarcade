@@ -176,7 +176,7 @@ export default function GameDetail({ game, onClose, onLaunch, launching, playCou
             <div className={styles.title}>{game.title}</div>
 
             <div className={styles.statusRow}>
-              {playCount > 0 && (
+              {playCount !== undefined && playCount > 0 && (
                 <span className={styles.statusBadge} style={{ borderColor: "rgba(0,200,255,0.3)", color: "#00c8ff", background: "rgba(0,200,255,0.08)" }}>
                   Played {playCount}x
                 </span>
