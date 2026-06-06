@@ -249,7 +249,7 @@ export default function Wheel() {
           <div className={styles.emptySub}>
             {activeCategory === "Favorites" ? "Press F on any game to add it" :
              activeCategory === "Recent" ? "Launch a game to see it here" :
-             activeCategory === "Pinball" ? "Add .vpx files to F:\PinballTables\" :
+             activeCategory === "Pinball" ? "Add .vpx files to F:/PinballTables/" :
              "Try selecting a different category"}
           </div>
         </div>
