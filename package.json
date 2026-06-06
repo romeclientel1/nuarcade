@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "NuArcade — Modern arcade frontend for TeknoParrot and Visual Pinball X",
   "main": "src/main/index.js",
-  "author": "Jerome Emanuel",
+  "author": "Rome Clientel",
   "license": "MIT",
   "scripts": {
     "dev": "concurrently \"npm run dev:renderer\" \"wait-on http://localhost:5173 && npm run dev:electron\"",
