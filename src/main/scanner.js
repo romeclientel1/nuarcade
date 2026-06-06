@@ -50,6 +50,10 @@ function parseProfile(xmlPath) {
     const rawStatus = profile.GameStatus || profile.Status || 'Unknown'
     const genre    = normalizeGenre(profile.Genre || profile.GameType || '')
     const system   = profile.EmulationProfile || profile.System || 'Unknown'
+    const year       = profile.Year || profile.ReleaseYear || ''
+    const manufacturer = profile.Manufacturer || profile.Developer || ''
+    const players    = profile.MaxPlayers || profile.Players || 1
+    const description = profile.Description2 || profile.Notes || ''
     const isSubscription = profile.RequiresSubscription === true ||
                            profile.Patreon === true ||
                            SUBSCRIPTION_PROFILES.has(fileName)
@@ -66,6 +70,7 @@ function parseProfile(xmlPath) {
 
     return {
       id: fileName.replace('.xml', ''),
+      year, manufacturer, players, description,
       profile: fileName,
       profilePath: xmlPath,
       title, exePath, exeName,

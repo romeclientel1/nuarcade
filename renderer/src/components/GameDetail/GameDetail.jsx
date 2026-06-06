@@ -190,6 +190,24 @@ export default function GameDetail({ game, onClose, onLaunch, launching }) {
                 <div className={styles.metaLabel}>Status</div>
                 <div className={styles.metaVal} style={{ color: statusColor }}>{game.status || "-"}</div>
               </div>
+              {game.year && (
+                <div className={styles.metaItem}>
+                  <div className={styles.metaLabel}>Year</div>
+                  <div className={styles.metaVal}>{game.year}</div>
+                </div>
+              )}
+              {game.manufacturer && (
+                <div className={styles.metaItem}>
+                  <div className={styles.metaLabel}>Manufacturer</div>
+                  <div className={styles.metaVal}>{game.manufacturer}</div>
+                </div>
+              )}
+              {game.players && (
+                <div className={styles.metaItem}>
+                  <div className={styles.metaLabel}>Players</div>
+                  <div className={styles.metaVal}>{game.players}P</div>
+                </div>
+              )}
             </div>
 
             <div className={styles.exeSection}>
