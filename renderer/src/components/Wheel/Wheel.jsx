@@ -77,8 +77,8 @@ export default function Wheel() {
   useEffect(() => {
     const handler = (e) => {
       if (showSearch) return
-      if (e.key === 'ArrowLeft')  setSelectedIndex(i => Math.max(0, i - 1))
-      if (e.key === 'ArrowRight') setSelectedIndex(i => Math.min(filteredGames.length - 1, i + 1))
+      if (e.key === 'ArrowLeft')  setSelectedIndex(i => (i - 1 + filteredGames.length) % filteredGames.length)
+      if (e.key === 'ArrowRight') setSelectedIndex(i => (i + 1) % filteredGames.length)
       if (e.key === 'Enter')      setShowDetail(true)
       if (e.key === 'Escape')     { setShowDetail(false); setShowSearch(false); setSearch('') }
       if (e.key === 'f' || e.key === 'F') {
