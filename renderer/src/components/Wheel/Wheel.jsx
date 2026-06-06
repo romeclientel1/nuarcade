@@ -27,7 +27,7 @@ function sortGames(games, sortBy) {
   }
 }
 
-export default function Wheel() {
+export default function Wheel({ onCRTChange, crtEnabled }) {
   const {
     games, stats, loading,
     toggleFavorite, isFavorite,
@@ -318,7 +318,7 @@ export default function Wheel() {
       {showSort && <SortMenu current={sortBy} onChange={setSortBy} onClose={() => setShowSort(false)} />}
       {showHelp && <Help onClose={() => setShowHelp(false)} />}
       {showMediaManager && <MediaManager onClose={() => setShowMediaManager(false)} />}
-      {showSettings && <Settings onClose={() => setShowSettings(false)} />}
+      {showSettings && <Settings onClose={() => setShowSettings(false)} onCRTChange={onCRTChange} crtEnabled={crtEnabled} />}
       {showDetail && current && (
         <GameDetail
           game={current}

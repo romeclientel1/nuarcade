@@ -1,9 +1,12 @@
-import { useState, useEffect } from 'react'
-import styles from './Settings.module.css'
+import { useState, useEffect } from "react"
+import styles from "./Settings.module.css"
+import { useVersionCheck } from "../../hooks/useVersionCheck"
 
-export default function Settings({ onClose }) {
+export default function Settings({ onClose, onCRTChange, crtEnabled }) {
   const [config, setConfig] = useState(null)
   const [saved, setSaved] = useState(false)
+  const [exporting, setExporting] = useState(false)
+  const { newVersion, releaseUrl } = useVersionCheck()
 
   useEffect(() => {
     loadConfig()
@@ -15,13 +18,15 @@ export default function Settings({ onClose }) {
       setConfig(cfg)
     } else {
       setConfig({
-        teknoParrotPath: 'F:\\TeknoParrot\\',
-        gamesFolderPath: 'F:\\ArcadeGames\\',
-        pinballPath:     'F:\\vPinball\\',
-        tablesPath:      'F:\\PinballTables\\',
-        mediaPath:       'F:\\Media\\',
-        displayMode:     'fullscreen',
+        teknoParrotPath: "F:/TeknoParrot/",
+        gamesFolderPath: "F:/ArcadeGames/",
+        pinballPath:     "F:/vPinball/",
+        tablesPath:      "F:/PinballTables/",
+        mediaPath:       "F:/Media/",
+        displayMode:     "fullscreen",
         attractTimeout:  120,
+        ambientVolume:   35,
+        crtEffect:       false,
       })
     }
   }
@@ -34,38 +39,70 @@ export default function Settings({ onClose }) {
     setTimeout(() => setSaved(false), 2000)
   }
 
-  const update = (key, val) => setConfig(c => ({ ...c, [key]: val }))
+  const handleExport = async () => {
+    setExporting(true)
+    try {
+      const games = JSON.parse(localStorage.getItem("nuarcade_games") || "[]")
+      const lines = [
+        "NuArcade Game List",
+        "Generated: " + new Date().toLocaleDateString(),
+        "=".repeat(50),
+        "",
+        ...games.map((g, i) => i + 1 + ". " + g.title + " (" + g.system + ") - " + g.status)
+      ]
+      const blob = new Blob([lines.join("\n")], { type: "text/plain" })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = "nuarcade-games.txt"
+      a.click()
+    } catch (e) {
+      console.error("Export failed:", e)
+    }
+    setTimeout(() => setExporting(false), 1000)
+  }
+
+  const update = (key, val) => {
+    setConfig(c => ({ ...c, [key]: val }))
+    if (key === "crtEffect") onCRTChange?.(val)
+  }
 
   if (!config) return null
 
   return (
     <div className={styles.overlay}>
       <div className={styles.panel}>
-
         <div className={styles.header}>
           <div className={styles.headerLeft}>
             <div className={styles.title}>Settings</div>
             <div className={styles.sub}>NuArcade configuration</div>
           </div>
-          <button className={styles.closeBtn} onClick={onClose}>✕</button>
+          <button className={styles.closeBtn} onClick={onClose}>x</button>
         </div>
 
         <div className={styles.body}>
 
+          {newVersion && (
+            <div className={styles.updateBanner}>
+              <span>NuArcade {newVersion} is available!</span>
+              <a href={releaseUrl} target="_blank" rel="noreferrer" className={styles.updateLink}>Download</a>
+            </div>
+          )}
+
           <div className={styles.section}>
             <div className={styles.sectionTitle}>Paths</div>
             {[
-              { key: 'teknoParrotPath', label: 'TeknoParrot' },
-              { key: 'gamesFolderPath', label: 'Games folder' },
-              { key: 'pinballPath',     label: 'VPX engine' },
-              { key: 'tablesPath',      label: 'Pinball tables' },
-              { key: 'mediaPath',       label: 'Media folder' },
+              { key: "teknoParrotPath", label: "TeknoParrot" },
+              { key: "gamesFolderPath", label: "Games folder" },
+              { key: "pinballPath",     label: "VPX engine" },
+              { key: "tablesPath",      label: "Pinball tables" },
+              { key: "mediaPath",       label: "Media folder" },
             ].map(p => (
               <div key={p.key} className={styles.inputRow}>
                 <label className={styles.inputLabel}>{p.label}</label>
                 <input
                   className={styles.input}
-                  value={config[p.key] || ''}
+                  value={config[p.key] || ""}
                   onChange={e => update(p.key, e.target.value)}
                   spellCheck={false}
                 />
@@ -78,15 +115,48 @@ export default function Settings({ onClose }) {
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>Mode</label>
               <div className={styles.toggleGroup}>
-                {['fullscreen', 'windowed'].map(m => (
+                {["fullscreen", "windowed"].map(m => (
                   <button
                     key={m}
-                    className={`${styles.toggleBtn} ${config.displayMode === m ? styles.toggleActive : ''}`}
-                    onClick={() => update('displayMode', m)}
+                    className={styles.toggleBtn + (config.displayMode === m ? " " + styles.toggleActive : "")}
+                    onClick={() => update("displayMode", m)}
                   >
                     {m.charAt(0).toUpperCase() + m.slice(1)}
                   </button>
                 ))}
+              </div>
+            </div>
+            <div className={styles.inputRow}>
+              <label className={styles.inputLabel}>CRT effect</label>
+              <div className={styles.toggleGroup}>
+                {["off", "on"].map(m => (
+                  <button
+                    key={m}
+                    className={styles.toggleBtn + (!!config.crtEffect === (m === "on") ? " " + styles.toggleActive : "")}
+                    onClick={() => update("crtEffect", m === "on")}
+                  >
+                    {m.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.section}>
+            <div className={styles.sectionTitle}>Audio</div>
+            <div className={styles.inputRow}>
+              <label className={styles.inputLabel}>Attract volume</label>
+              <div className={styles.sliderWrap}>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="5"
+                  value={config.ambientVolume ?? 35}
+                  onChange={e => update("ambientVolume", parseInt(e.target.value))}
+                  className={styles.slider}
+                />
+                <span className={styles.sliderVal}>{config.ambientVolume ?? 35}%</span>
               </div>
             </div>
           </div>
@@ -102,13 +172,21 @@ export default function Settings({ onClose }) {
                   max="600"
                   step="30"
                   value={config.attractTimeout || 120}
-                  onChange={e => update('attractTimeout', parseInt(e.target.value))}
+                  onChange={e => update("attractTimeout", parseInt(e.target.value))}
                   className={styles.slider}
                 />
-                <span className={styles.sliderVal}>
-                  {config.attractTimeout || 120}s
-                </span>
+                <span className={styles.sliderVal}>{config.attractTimeout || 120}s</span>
               </div>
+            </div>
+          </div>
+
+          <div className={styles.section}>
+            <div className={styles.sectionTitle}>Library</div>
+            <div className={styles.inputRow}>
+              <label className={styles.inputLabel}>Export game list</label>
+              <button className={styles.exportBtn} onClick={handleExport} disabled={exporting}>
+                {exporting ? "Exporting..." : "Export to .txt"}
+              </button>
             </div>
           </div>
 
@@ -117,11 +195,15 @@ export default function Settings({ onClose }) {
             <div className={styles.aboutGrid}>
               <div className={styles.aboutRow}>
                 <span className={styles.aboutLabel}>Version</span>
-                <span className={styles.aboutVal}>1.0.0</span>
+                <span className={styles.aboutVal}>1.0.0 {newVersion ? "(update available)" : "(latest)"}</span>
               </div>
               <div className={styles.aboutRow}>
                 <span className={styles.aboutLabel}>Platform</span>
-                <span className={styles.aboutVal}>{window.nuarcade?.platform || 'mac (dev)'}</span>
+                <span className={styles.aboutVal}>{window.nuarcade?.platform || "mac (dev)"}</span>
+              </div>
+              <div className={styles.aboutRow}>
+                <span className={styles.aboutLabel}>Built by</span>
+                <span className={styles.aboutVal}>Rome Clientel</span>
               </div>
               <div className={styles.aboutRow}>
                 <span className={styles.aboutLabel}>GitHub</span>
@@ -134,12 +216,12 @@ export default function Settings({ onClose }) {
 
         <div className={styles.footer}>
           <button className={styles.resetBtn} onClick={() => {
-            if (window.confirm('Reset all settings to defaults?')) loadConfig()
+            if (window.confirm("Reset all settings to defaults?")) loadConfig()
           }}>
             Reset to defaults
           </button>
           <button className={styles.saveBtn} onClick={handleSave}>
-            {saved ? '✓ Saved!' : 'Save settings'}
+            {saved ? "Saved!" : "Save settings"}
           </button>
         </div>
 
