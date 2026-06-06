@@ -1,100 +1,81 @@
 # NuArcade
 
-Modern arcade frontend for TeknoParrot and Visual Pinball X.
+> Modern arcade frontend for TeknoParrot and Visual Pinball X
 
-Built with Electron + React + Vite.
-
----
-
-## Quick start (Mac development)
-
-```bash
-# 1. Clone the repo
-git clone https://github.com/romeclientel1/nuarcade.git
-cd nuarcade
-
-# 2. Install root dependencies (Electron etc.)
-npm install
-
-# 3. Install renderer dependencies
-cd renderer && npm install && cd ..
-
-# 4. Drop your sound files in:
-#    renderer/public/sounds/coin.mp3
-#    renderer/public/sounds/arcade-ambient.mp3
-
-# 5. Start dev mode
-npm run dev
-```
-
-This opens a windowed version on your Mac for development.
-On Windows it runs fullscreen automatically.
+**[Website](https://romeclientel1.github.io/nuarcade/)** | Built by Rome Clientel
 
 ---
 
-## Sound files needed
+## What is NuArcade?
 
-Place these in `renderer/public/sounds/`:
+NuArcade is a HyperSpin-style arcade cabinet frontend that replaces TeknoParrot's default UI with a beautiful, modern game wheel. Supports 500+ TeknoParrot arcade games and Visual Pinball X tables in one unified interface.
 
-- `coin.mp3` — arcade coin insert sound
-- `arcade-ambient.mp3` — looping arcade room ambience
+## Features
 
-Both available free at freesound.org.
+- HyperSpin-style wheel with real arcade artwork
+- Auto-configuration — finds all games automatically
+- Smart controller mapping by genre
+- Visual Pinball X pinball tables
+- Search, Favorites, Recently Played
+- Attract mode with INSERT COIN
+- Video previews via EmuMovies
+- TeknoParrot auto-updater on launch
+
+## Requirements
+
+- Windows 10/11 x64
+- TeknoParrot installed
+- Node.js 22+
+- Git
+
+## Quick Start
+
+    git clone https://github.com/romeclientel1/nuarcade.git
+    cd nuarcade
+    npm install
+    cd renderer && npm install && cd ..
+    npm run dev
+
+Or double-click update.bat to pull, build, and install automatically.
+
+## Default Paths
+
+    F:/TeknoParrot/        TeknoParrot installation
+    F:/ArcadeGames/        Game files
+    F:/vPinball/           Visual Pinball X engine
+    F:/PinballTables/      VPX table files
+    F:/Media/Videos/       Gameplay video previews
+
+## Keyboard Shortcuts
+
+| Key | Action |
+|-----|--------|
+| Left/Right | Navigate wheel |
+| Enter | Open game detail |
+| Space | Quick launch |
+| Escape | Close / go back |
+| F | Toggle favorite |
+| ? | Keyboard shortcuts |
+
+## Gamepad
+
+| Button | Action |
+|--------|--------|
+| D-pad left/right | Navigate |
+| A | Open detail |
+| Hold A | Quick launch |
+| B | Back |
+| Y | Toggle favorite |
+
+## Building
+
+    npm run build:win
+    Output: dist/NuArcade Setup 1.0.0.exe
+
+## License
+
+MIT - Free forever.
 
 ---
 
-## Project structure
-
-```
-nuarcade/
-├── src/
-│   ├── main/
-│   │   └── index.js          ← Electron main process
-│   └── preload/
-│       └── index.js          ← Secure IPC bridge
-├── renderer/                 ← React/Vite frontend
-│   ├── public/
-│   │   └── sounds/           ← coin.mp3, arcade-ambient.mp3
-│   └── src/
-│       ├── App.jsx
-│       └── components/
-│           ├── Intro/        ← Coin drop intro sequence
-│           └── Wheel/        ← HyperSpin-style game wheel
-├── assets/
-│   ├── sounds/
-│   ├── fonts/
-│   └── icons/
-└── package.json
-```
-
----
-
-## Building for Windows
-
-```bash
-npm run build:win
-```
-
-Outputs a Windows installer `.exe` to `dist/`.
-
----
-
-## What's built so far
-
-- [x] Electron shell (fullscreen on Windows, windowed on Mac for dev)
-- [x] Coin drop intro sequence with sound + logo animation
-- [x] HyperSpin-style perspective wheel
-- [x] Category filtering (Racing, Fighting, Shooter, Rhythm, Flying, Pinball)
-- [x] Keyboard navigation (arrow keys + Enter to launch)
-- [x] Game launch via TeknoParrotUi.exe --profile=
-- [x] IPC bridge for Windows system calls
-
-## Coming next
-
-- [ ] Setup wizard (security exclusions, path config, controller mapping)
-- [ ] TeknoParrot XML scanner (auto game detection)
-- [ ] Controller auto-assignment
-- [ ] Arcade ambient audio with ducking
-- [ ] Game artwork + video previews
-- [ ] Visual Pinball X integration
-- [ ] Auto-updater (TeknoParrot + NuArcade)
+*Built by Rome Clientel*

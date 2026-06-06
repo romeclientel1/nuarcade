@@ -5,6 +5,7 @@ const SHORTCUTS = [
   { key: 'Enter', desc: 'Open game detail' },
   { key: 'Escape', desc: 'Close / go back' },
   { key: 'F', desc: 'Toggle favorite' },
+  { key: 'Space', desc: 'Quick launch (skip detail screen)' },
   { key: '?', desc: 'Show this help' },
   { key: 'A (gamepad)', desc: 'Open game detail' },
   { key: 'B (gamepad)', desc: 'Go back' },

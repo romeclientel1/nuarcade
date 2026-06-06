@@ -227,9 +227,15 @@
 
 .favIndicator {
   position: absolute;
-  top: 10px;
-  left: 10px;
-  font-size: 12px;
+  top: 8px;
+  left: 8px;
+  font-size: 14px;
   color: #ff4466;
   z-index: 5;
+  text-shadow: 0 0 8px rgba(255,68,102,0.8);
+  animation: favPulse 2s ease-in-out infinite;
+}
+@keyframes favPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
 }

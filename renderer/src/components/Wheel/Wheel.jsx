@@ -111,6 +111,7 @@ export default function Wheel() {
         if (current) toggleFavorite(current.id || current.profile)
       }
       if (e.key === "?") setShowHelp(h => !h)
+      if (e.key === " ") { e.preventDefault(); if (current) handleLaunch() }
     }
     window.addEventListener("keydown", handler)
     return () => window.removeEventListener("keydown", handler)
@@ -222,6 +223,9 @@ export default function Wheel() {
             onClick={() => setActiveCategory(cat)}
           >
             {cat === "Favorites" ? "Favorites" : cat === "Recent" ? "Recent" : cat}
+            {cat === "Recent" && recentlyPlayed.length > 0 && (
+              <span className={styles.catCount}>{recentlyPlayed.length}</span>
+            )}
             {cat !== "Favorites" && cat !== "Recent" && (
               <span className={styles.catCount}>
                 {cat === "All" ? games.length : games.filter(g => g.genre === cat).length}
