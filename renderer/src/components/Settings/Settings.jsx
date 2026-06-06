@@ -9,9 +9,7 @@ export default function Settings({ onClose, onCRTChange, crtEnabled, themeId, on
   const [exporting, setExporting] = useState(false)
   const { newVersion, releaseUrl } = useVersionCheck()
 
-  useEffect(() => {
-    loadConfig()
-  }, [])
+  useEffect(() => { loadConfig() }, [])
 
   const loadConfig = async () => {
     if (window.nuarcade) {
@@ -28,14 +26,13 @@ export default function Settings({ onClose, onCRTChange, crtEnabled, themeId, on
         attractTimeout:  120,
         ambientVolume:   35,
         crtEffect:       false,
+        autoLaunchLast:  false,
       })
     }
   }
 
   const handleSave = async () => {
-    if (window.nuarcade) {
-      await window.nuarcade.setConfig(config)
-    }
+    if (window.nuarcade) await window.nuarcade.setConfig(config)
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
@@ -43,13 +40,14 @@ export default function Settings({ onClose, onCRTChange, crtEnabled, themeId, on
   const handleExport = async () => {
     setExporting(true)
     try {
-      const games = JSON.parse(localStorage.getItem("nuarcade_games") || "[]")
+      const recent = JSON.parse(localStorage.getItem("nuarcade_recent") || "[]")
+      const counts = JSON.parse(localStorage.getItem("nuarcade_play_counts") || "{}")
       const lines = [
         "NuArcade Game List",
         "Generated: " + new Date().toLocaleDateString(),
         "=".repeat(50),
         "",
-        ...games.map((g, i) => i + 1 + ". " + g.title + " (" + g.system + ") - " + g.status)
+        ...recent.map((g, i) => (i+1) + ". " + g.title + " (" + (g.system||"") + ") - played " + (counts[g.id||g.profile]||0) + "x")
       ]
       const blob = new Blob([lines.join("\n")], { type: "text/plain" })
       const url = URL.createObjectURL(blob)
@@ -57,9 +55,7 @@ export default function Settings({ onClose, onCRTChange, crtEnabled, themeId, on
       a.href = url
       a.download = "nuarcade-games.txt"
       a.click()
-    } catch (e) {
-      console.error("Export failed:", e)
-    }
+    } catch (e) { console.error(e) }
     setTimeout(() => setExporting(false), 1000)
   }
 
@@ -142,7 +138,7 @@ export default function Settings({ onClose, onCRTChange, crtEnabled, themeId, on
               </div>
             </div>
             <div className={styles.inputRow}>
-              <label className={styles.inputLabel}>Auto-launch last game</label>
+              <label className={styles.inputLabel}>Auto-launch last</label>
               <div className={styles.toggleGroup}>
                 {["off", "on"].map(m => (
                   <button
@@ -171,32 +167,6 @@ export default function Settings({ onClose, onCRTChange, crtEnabled, themeId, on
                   {t.name}
                 </button>
               ))}
-            </div>
-          </div>
-
-          <div className={styles.section}>
-            <div className={styles.sectionTitle}>Community</div>
-            <div className={styles.inputRow}>
-              <label className={styles.inputLabel}>Discord</label>
-              
-                href="https://discord.gg/nuarcade"
-                target="_blank"
-                rel="noreferrer"
-                className={styles.communityLink}
-              >
-                Join NuArcade Discord
-              </a>
-            </div>
-            <div className={styles.inputRow}>
-              <label className={styles.inputLabel}>GitHub</label>
-              
-                href="https://github.com/romeclientel1/nuarcade"
-                target="_blank"
-                rel="noreferrer"
-                className={styles.communityLink}
-              >
-                Star on GitHub
-              </a>
             </div>
           </div>
 
@@ -235,6 +205,22 @@ export default function Settings({ onClose, onCRTChange, crtEnabled, themeId, on
                 />
                 <span className={styles.sliderVal}>{config.attractTimeout || 120}s</span>
               </div>
+            </div>
+          </div>
+
+          <div className={styles.section}>
+            <div className={styles.sectionTitle}>Community</div>
+            <div className={styles.inputRow}>
+              <label className={styles.inputLabel}>Discord</label>
+              <a href="https://discord.gg/nuarcade" target="_blank" rel="noreferrer" className={styles.communityLink}>
+                Join NuArcade Discord
+              </a>
+            </div>
+            <div className={styles.inputRow}>
+              <label className={styles.inputLabel}>GitHub</label>
+              <a href="https://github.com/romeclientel1/nuarcade" target="_blank" rel="noreferrer" className={styles.communityLink}>
+                Star on GitHub
+              </a>
             </div>
           </div>
 
