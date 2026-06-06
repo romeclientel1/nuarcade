@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react"
+import { useState, useEffect, useCallback } from "react"
 
 const THEME_KEY = "nuarcade_theme"
 
@@ -10,25 +10,26 @@ export const THEMES = {
   red:    { name: "Red",    accent: "#ff4444", dim: "rgba(255,68,68,0.15)"  },
 }
 
+function applyTheme(id) {
+  const theme = THEMES[id] || THEMES.cyan
+  document.documentElement.style.setProperty("--accent", theme.accent)
+  document.documentElement.style.setProperty("--accent-dim", theme.dim)
+}
+
 export function useTheme() {
   const [themeId, setThemeId] = useState(() => {
     try { return localStorage.getItem(THEME_KEY) || "cyan" } catch { return "cyan" }
   })
 
+  useEffect(() => {
+    applyTheme(themeId)
+  }, [themeId])
+
   const setTheme = useCallback((id) => {
     setThemeId(id)
     localStorage.setItem(THEME_KEY, id)
-    const theme = THEMES[id] || THEMES.cyan
-    document.documentElement.style.setProperty("--accent", theme.accent)
-    document.documentElement.style.setProperty("--accent-dim", theme.dim)
+    applyTheme(id)
   }, [])
-
-  // Apply on mount
-  useState(() => {
-    const theme = THEMES[themeId] || THEMES.cyan
-    document.documentElement.style.setProperty("--accent", theme.accent)
-    document.documentElement.style.setProperty("--accent-dim", theme.dim)
-  })
 
   return { themeId, setTheme, theme: THEMES[themeId] || THEMES.cyan }
 }

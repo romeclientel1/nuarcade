@@ -28,3 +28,8 @@ html, body, #root {
   --bg: #000000;
   --bg2: #050508;
 }
+
+:root {
+  --accent: #00c8ff;
+  --accent-dim: rgba(0,200,255,0.15);
+}
