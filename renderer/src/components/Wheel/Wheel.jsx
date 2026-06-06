@@ -8,6 +8,7 @@ import GameDetail from "../GameDetail/GameDetail"
 import Help from "../Help/Help"
 import SortMenu from "./SortMenu"
 import { useGamepad } from "./useGamepad"
+import { useNavSound } from "../../hooks/useNavSound"
 import Splash from "../Splash/Splash"
 import styles from "./Wheel.module.css"
 
@@ -48,6 +49,7 @@ export default function Wheel({ onCRTChange, crtEnabled }) {
   const [search, setSearch] = useState("")
   const [showSearch, setShowSearch] = useState(false)
   const searchRef = useRef(null)
+  const { playClick, playSelect } = useNavSound(0.2)
   const idleTimer = useRef(null)
 
   const getFilteredGames = () => {
@@ -97,9 +99,9 @@ export default function Wheel({ onCRTChange, crtEnabled }) {
   useEffect(() => {
     const handler = (e) => {
       if (showSearch) return
-      if (e.key === "ArrowLeft")  setSelectedIndex(i => (i - 1 + filteredGames.length) % filteredGames.length)
-      if (e.key === "ArrowRight") setSelectedIndex(i => (i + 1) % filteredGames.length)
-      if (e.key === "Enter")      setShowDetail(true)
+      if (e.key === "ArrowLeft")  { playClick(); setSelectedIndex(i => (i - 1 + filteredGames.length) % filteredGames.length) }
+      if (e.key === "ArrowRight") { playClick(); setSelectedIndex(i => (i + 1) % filteredGames.length) }
+      if (e.key === "Enter")      { playSelect(); setShowDetail(true) }
       if (e.key === "Escape") {
         setShowDetail(false)
         setShowSearch(false)
@@ -111,6 +113,10 @@ export default function Wheel({ onCRTChange, crtEnabled }) {
         if (current) toggleFavorite(current.id || current.profile)
       }
       if (e.key === "?") setShowHelp(h => !h)
+      if (e.key === "r" || e.key === "R") {
+        const randomIndex = Math.floor(Math.random() * filteredGames.length)
+        setSelectedIndex(randomIndex)
+      }
       if (e.key === " ") { e.preventDefault(); if (current) handleLaunch() }
     }
     window.addEventListener("keydown", handler)
