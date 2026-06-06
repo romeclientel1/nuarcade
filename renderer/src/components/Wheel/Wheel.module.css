@@ -574,3 +574,18 @@
 .screenshotMode .header { opacity: 0; }
 .screenshotMode .categoryStrip { opacity: 0; }
 .screenshotMode .infoPanel { opacity: 0; }
+
+@keyframes marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.marqueeWrap {
+  overflow: hidden;
+  white-space: nowrap;
+  width: 100%;
+}
+.marqueeInner {
+  display: inline-block;
+  animation: marquee 8s linear infinite;
+}
+.marqueeInner.short { animation: none; }

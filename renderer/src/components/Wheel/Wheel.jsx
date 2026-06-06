@@ -29,7 +29,7 @@ function sortGames(games, sortBy) {
   }
 }
 
-export default function Wheel({ onCRTChange, crtEnabled }) {
+export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange }) {
   const {
     games, stats, loading,
     toggleFavorite, isFavorite,
@@ -147,6 +147,16 @@ export default function Wheel({ onCRTChange, crtEnabled }) {
     setLaunching(true)
     addRecentlyPlayed(current)
     recordPlay(current)
+    // Gamepad rumble on launch
+    try {
+      const gp = navigator.getGamepads()[0]
+      if (gp && gp.vibrationActuator) {
+        gp.vibrationActuator.playEffect("dual-rumble", {
+          startDelay: 0, duration: 300,
+          weakMagnitude: 0.5, strongMagnitude: 1.0
+        })
+      }
+    } catch (e) {}
     if (window.nuarcade) {
       await window.nuarcade.launchGame(current.profilePath || current.profile)
     } else {
@@ -296,7 +306,11 @@ export default function Wheel({ onCRTChange, crtEnabled }) {
       {current && filteredGames.length > 0 && (
         <div className={styles.infoPanel + (attractMode ? " " + styles.infoPanelAttract : "")}>
           <div className={styles.infoLeft}>
-            <div className={styles.infoTitle}>{current.title}</div>
+            <div className={styles.marqueeWrap}>
+              <div className={styles.marqueeInner + (current.title.length < 20 ? " " + styles.short : "")}>
+                {current.title}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{current.title.length >= 20 ? current.title : ""}
+              </div>
+            </div>
             <div className={styles.infoMeta}>
               <span className={styles.tagSystem}>{current.system}</span>
               <span className={styles.tagGenre}>{current.genre}</span>
@@ -331,7 +345,7 @@ export default function Wheel({ onCRTChange, crtEnabled }) {
       {showSort && <SortMenu current={sortBy} onChange={setSortBy} onClose={() => setShowSort(false)} />}
       {showHelp && <Help onClose={() => setShowHelp(false)} />}
       {showMediaManager && <MediaManager onClose={() => setShowMediaManager(false)} />}
-      {showSettings && <Settings onClose={() => setShowSettings(false)} onCRTChange={onCRTChange} crtEnabled={crtEnabled} />}
+      {showSettings && <Settings onClose={() => setShowSettings(false)} onCRTChange={onCRTChange} crtEnabled={crtEnabled} themeId={themeId} onThemeChange={onThemeChange} />}
       {showDetail && current && (
         <GameDetail
           game={current}

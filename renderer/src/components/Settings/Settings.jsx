@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react"
 import styles from "./Settings.module.css"
 import { useVersionCheck } from "../../hooks/useVersionCheck"
+import { THEMES } from "../../hooks/useTheme"
 
-export default function Settings({ onClose, onCRTChange, crtEnabled }) {
+export default function Settings({ onClose, onCRTChange, crtEnabled, themeId, onThemeChange }) {
   const [config, setConfig] = useState(null)
   const [saved, setSaved] = useState(false)
   const [exporting, setExporting] = useState(false)
@@ -153,6 +154,49 @@ export default function Settings({ onClose, onCRTChange, crtEnabled }) {
                   </button>
                 ))}
               </div>
+            </div>
+          </div>
+
+          <div className={styles.section}>
+            <div className={styles.sectionTitle}>Theme color</div>
+            <div className={styles.themeGrid}>
+              {Object.entries(THEMES).map(([id, t]) => (
+                <button
+                  key={id}
+                  className={styles.themeBtn + (themeId === id ? " " + styles.themeBtnActive : "")}
+                  style={{ borderColor: themeId === id ? t.accent : "rgba(255,255,255,0.1)", color: t.accent }}
+                  onClick={() => onThemeChange?.(id)}
+                >
+                  <span className={styles.themeDot} style={{ background: t.accent }} />
+                  {t.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className={styles.section}>
+            <div className={styles.sectionTitle}>Community</div>
+            <div className={styles.inputRow}>
+              <label className={styles.inputLabel}>Discord</label>
+              
+                href="https://discord.gg/nuarcade"
+                target="_blank"
+                rel="noreferrer"
+                className={styles.communityLink}
+              >
+                Join NuArcade Discord
+              </a>
+            </div>
+            <div className={styles.inputRow}>
+              <label className={styles.inputLabel}>GitHub</label>
+              
+                href="https://github.com/romeclientel1/nuarcade"
+                target="_blank"
+                rel="noreferrer"
+                className={styles.communityLink}
+              >
+                Star on GitHub
+              </a>
             </div>
           </div>
 

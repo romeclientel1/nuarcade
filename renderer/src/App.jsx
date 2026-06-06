@@ -4,11 +4,13 @@ import Wizard from "./components/Wizard/Wizard"
 import Wheel from "./components/Wheel/Wheel"
 import Updater from "./components/Updater/Updater"
 import CRT from "./components/CRT/CRT"
+import { useTheme } from "./hooks/useTheme"
 import "./index.css"
 
 export default function App() {
   const [phase, setPhase] = useState("intro")
   const [showUpdater, setShowUpdater] = useState(false)
+  const { themeId, setTheme } = useTheme()
   const [crtEnabled, setCrtEnabled] = useState(() => {
     try { return localStorage.getItem("nuarcade_crt") === "true" } catch { return false }
   })
@@ -42,7 +44,7 @@ export default function App() {
     <div style={{ width: "100vw", height: "100vh", background: "#000", overflow: "hidden" }}>
       {phase === "intro"  && <Intro onComplete={handleIntroComplete} />}
       {phase === "wizard" && <Wizard onComplete={() => setPhase("wheel")} />}
-      {phase === "wheel"  && <Wheel onCRTChange={handleCRTChange} crtEnabled={crtEnabled} />}
+      {phase === "wheel"  && <Wheel onCRTChange={handleCRTChange} crtEnabled={crtEnabled} themeId={themeId} onThemeChange={setTheme} />}
       {phase === "wheel" && showUpdater && (
         <Updater onDismiss={() => setShowUpdater(false)} />
       )}

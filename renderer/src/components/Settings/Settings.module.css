@@ -280,3 +280,47 @@
 
 .exportBtn:hover:not(:disabled) { background: rgba(0,200,255,0.1); }
 .exportBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.themeGrid {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.themeBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid;
+  background: transparent;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: Share Tech Mono, monospace;
+}
+
+.themeBtn:hover { background: rgba(255,255,255,0.05); }
+.themeBtnActive { background: rgba(255,255,255,0.06); }
+
+.themeDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.communityLink {
+  padding: 7px 16px;
+  border: 1px solid rgba(0,200,255,0.3);
+  border-radius: 3px;
+  color: #00c8ff;
+  text-decoration: none;
+  font-size: 11px;
+  font-family: Share Tech Mono, monospace;
+  transition: all 0.15s;
+  letter-spacing: 0.05em;
+}
+
+.communityLink:hover { background: rgba(0,200,255,0.08); }
