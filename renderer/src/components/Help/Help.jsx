@@ -7,6 +7,8 @@ const SHORTCUTS = [
   { key: 'F', desc: 'Toggle favorite' },
   { key: 'Space', desc: 'Quick launch (skip detail screen)' },
   { key: 'R', desc: 'Pick a random game' },
+  { key: 'C', desc: 'Cabinet mode (hide UI chrome)' },
+  { key: 'S', desc: 'Screenshot mode (hide all UI)' },
   { key: '?', desc: 'Show this help' },
   { key: 'A (gamepad)', desc: 'Open game detail' },
   { key: 'B (gamepad)', desc: 'Go back' },

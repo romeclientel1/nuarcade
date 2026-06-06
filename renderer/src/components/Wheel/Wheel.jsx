@@ -9,6 +9,7 @@ import Help from "../Help/Help"
 import SortMenu from "./SortMenu"
 import { useGamepad } from "./useGamepad"
 import { useNavSound } from "../../hooks/useNavSound"
+import { usePlayTracking } from "../../hooks/usePlayTracking"
 import Splash from "../Splash/Splash"
 import styles from "./Wheel.module.css"
 
@@ -50,6 +51,9 @@ export default function Wheel({ onCRTChange, crtEnabled }) {
   const [showSearch, setShowSearch] = useState(false)
   const searchRef = useRef(null)
   const { playClick, playSelect } = useNavSound(0.2)
+  const { recordPlay, getCount, getLastPlayedTime } = usePlayTracking()
+  const [cabinetMode, setCabinetMode] = useState(false)
+  const [screenshotMode, setScreenshotMode] = useState(false)
   const idleTimer = useRef(null)
 
   const getFilteredGames = () => {
@@ -113,6 +117,8 @@ export default function Wheel({ onCRTChange, crtEnabled }) {
         if (current) toggleFavorite(current.id || current.profile)
       }
       if (e.key === "?") setShowHelp(h => !h)
+      if (e.key === "c" || e.key === "C") setCabinetMode(m => !m)
+      if (e.key === "s" || e.key === "S") setScreenshotMode(m => !m)
       if (e.key === "r" || e.key === "R") {
         const randomIndex = Math.floor(Math.random() * filteredGames.length)
         setSelectedIndex(randomIndex)
@@ -140,6 +146,7 @@ export default function Wheel({ onCRTChange, crtEnabled }) {
     if (launching || !current) return
     setLaunching(true)
     addRecentlyPlayed(current)
+    recordPlay(current)
     if (window.nuarcade) {
       await window.nuarcade.launchGame(current.profilePath || current.profile)
     } else {
@@ -166,7 +173,7 @@ export default function Wheel({ onCRTChange, crtEnabled }) {
   if (loading) return <Splash message="Scanning game library..." />
 
   return (
-    <div className={styles.stage}>
+    <div className={styles.stage + (cabinetMode ? " " + styles.cabinetMode : "") + (screenshotMode ? " " + styles.screenshotMode : "")}>
       <div className={styles.bgGrid} />
       <div className={styles.bgVignette} />
 
@@ -331,6 +338,8 @@ export default function Wheel({ onCRTChange, crtEnabled }) {
           onClose={() => setShowDetail(false)}
           onLaunch={() => { setShowDetail(false); handleLaunch() }}
           launching={launching}
+          playCount={getCount(current)}
+          lastPlayed={getLastPlayedTime(current)}
         />
       )}
     </div>

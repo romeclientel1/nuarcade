@@ -140,6 +140,20 @@ export default function Settings({ onClose, onCRTChange, crtEnabled }) {
                 ))}
               </div>
             </div>
+            <div className={styles.inputRow}>
+              <label className={styles.inputLabel}>Auto-launch last game</label>
+              <div className={styles.toggleGroup}>
+                {["off", "on"].map(m => (
+                  <button
+                    key={m}
+                    className={styles.toggleBtn + (!!config.autoLaunchLast === (m === "on") ? " " + styles.toggleActive : "")}
+                    onClick={() => update("autoLaunchLast", m === "on")}
+                  >
+                    {m.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
           <div className={styles.section}>

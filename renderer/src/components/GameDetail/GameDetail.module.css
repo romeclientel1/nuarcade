@@ -271,3 +271,21 @@
 .controllerActive {
   font-weight: 600;
 }
+
+.noteArea {
+  width: 100%;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(0,200,255,0.15);
+  border-radius: 4px;
+  padding: 10px 12px;
+  color: rgba(255,255,255,0.7);
+  font-size: 12px;
+  font-family: Share Tech Mono, monospace;
+  resize: vertical;
+  outline: none;
+  line-height: 1.6;
+  transition: border-color 0.15s;
+  margin-top: 6px;
+}
+.noteArea:focus { border-color: rgba(0,200,255,0.4); }
+.noteArea::placeholder { color: rgba(255,255,255,0.2); }

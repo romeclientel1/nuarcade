@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
+import { useGameNotes } from "../../hooks/useGameNotes"
 import styles from "./GameDetail.module.css"
 
 const GENRE_COLORS = {
@@ -86,11 +87,14 @@ function getControls(genre) {
   ]
 }
 
-export default function GameDetail({ game, onClose, onLaunch, launching }) {
+export default function GameDetail({ game, onClose, onLaunch, launching, playCount, lastPlayed }) {
   const [imgError, setImgError] = useState(false)
   const [controllerOverride, setControllerOverride] = useState("auto")
   const [savingController, setSavingController] = useState(false)
 
+  const { getNote, saveNote } = useGameNotes()
+  const [note, setNote] = useState("")
+  const noteTimer = useRef(null)
   const colors = GENRE_COLORS[game.genre] || GENRE_COLORS.Other
   const statusColor = STATUS_COLORS[game.status] || "#888888"
   const imgUrl = game.id && !game.isPinball ? THUMBNAIL_BASE + game.id + ".png" : null
@@ -98,6 +102,7 @@ export default function GameDetail({ game, onClose, onLaunch, launching }) {
 
   useEffect(() => {
     loadControllerOverride()
+    setNote(getNote(game))
   }, [game.id])
 
   const loadControllerOverride = async () => {
@@ -117,6 +122,12 @@ export default function GameDetail({ game, onClose, onLaunch, launching }) {
       )
     }
     setTimeout(() => setSavingController(false), 800)
+  }
+
+  const handleNoteChange = (val) => {
+    setNote(val)
+    clearTimeout(noteTimer.current)
+    noteTimer.current = setTimeout(() => saveNote(game, val), 800)
   }
 
   return (
@@ -165,6 +176,16 @@ export default function GameDetail({ game, onClose, onLaunch, launching }) {
             <div className={styles.title}>{game.title}</div>
 
             <div className={styles.statusRow}>
+              {playCount > 0 && (
+                <span className={styles.statusBadge} style={{ borderColor: "rgba(0,200,255,0.3)", color: "#00c8ff", background: "rgba(0,200,255,0.08)" }}>
+                  Played {playCount}x
+                </span>
+              )}
+              {lastPlayed && (
+                <span className={styles.statusBadge} style={{ borderColor: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.4)" }}>
+                  {lastPlayed}
+                </span>
+              )}
               <span
                 className={styles.statusBadge}
                 style={{ borderColor: statusColor + "66", color: statusColor, background: statusColor + "11" }}
@@ -249,6 +270,16 @@ export default function GameDetail({ game, onClose, onLaunch, launching }) {
                   </div>
                 ))}
               </div>
+            </div>
+            <div className={styles.exeSection}>
+              <div className={styles.exeLabel}>Personal notes <span style={{color:"rgba(255,255,255,0.2)",fontSize:9}}>(auto-saved)</span></div>
+              <textarea
+                className={styles.noteArea}
+                value={note}
+                onChange={e => handleNoteChange(e.target.value)}
+                placeholder="Add notes about this game..."
+                rows={3}
+              />
             </div>
           </div>
         </div>

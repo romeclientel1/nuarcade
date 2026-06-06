@@ -568,3 +568,9 @@
   0%, 100% { opacity: 1; }
   50% { opacity: 0.6; }
 }
+
+.cabinetMode .header { display: none; }
+.cabinetMode .categoryStrip { display: none; }
+.screenshotMode .header { opacity: 0; }
+.screenshotMode .categoryStrip { opacity: 0; }
+.screenshotMode .infoPanel { opacity: 0; }
