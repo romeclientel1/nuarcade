@@ -131,7 +131,13 @@ export function useGameLibrary() {
           }
 
           // Fall back to samples if nothing found
-          setGames(allGames.length > 0 ? allGames : SAMPLE_GAMES)
+          const prevCount = parseInt(localStorage.getItem('nuarcade_last_game_count') || '0')
+          const markedGames = (allGames.length > 0 ? allGames : SAMPLE_GAMES).map((g, i) => ({
+            ...g,
+            isNew: allGames.length > 0 && prevCount > 0 && i >= prevCount
+          }))
+          localStorage.setItem('nuarcade_last_game_count', markedGames.length)
+          setGames(markedGames)
         } else {
           // Setup not complete — show samples
           setGames(SAMPLE_GAMES)

@@ -10,6 +10,8 @@ import "./index.css"
 export default function App() {
   const [phase, setPhase] = useState("intro")
   const [showUpdater, setShowUpdater] = useState(false)
+  const [splashDone, setSplashDone]   = useState(false)
+  const [lastLaunch, setLastLaunch]   = useState(null)
   const { themeId, setTheme } = useTheme()
   const [crtEnabled, setCrtEnabled] = useState(() => {
     try { return localStorage.getItem("nuarcade_crt") === "true" } catch { return false }
@@ -54,5 +56,7 @@ export default function App() {
       )}
       <CRT enabled={crtEnabled} />
     </div>
+    </div>
+    </>
   )
 }
