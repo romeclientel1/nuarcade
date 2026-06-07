@@ -5,13 +5,13 @@ const MODES = [
     id: 'arcade+pinball',
     icon: '🕹️',
     title: 'Arcade + Pinball',
-    sub: 'TeknoParrot games and Visual Pinball X tables in one library',
+    sub: 'TeknoParrot & RPCS3 arcade games plus Visual Pinball X tables',
   },
   {
     id: 'arcade',
     icon: '🏎️',
     title: 'Arcade only',
-    sub: 'TeknoParrot games only, no pinball module',
+    sub: 'TeknoParrot & RPCS3 arcade games — no pinball module',
   },
   {
     id: 'pinball',

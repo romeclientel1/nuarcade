@@ -20,10 +20,10 @@ export default function Wizard({ onComplete }) {
   const [step, setStep] = useState(0)
   const [config, setConfig] = useState({
     mode: 'arcade+pinball',
-    teknoParrotPath: 'C:\\TeknoParrot\\',
-    gamesFolderPath: 'D:\\ArcadeGames\\',
-    pinballPath: 'C:\\vPinball\\',
-    tablesPath: 'D:\\PinballTables\\',
+    teknoParrotPath: 'F:\\TeknoParrot\\',
+    gamesFolderPath: 'F:\\ArcadeGames\\',
+    pinballPath: 'F:\\vPinball\\',
+    tablesPath: 'F:\\PinballTables\\',
     controllers: { wheel: null, lightgun: null, gamepad: null },
     setupComplete: false,
   })

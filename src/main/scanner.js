@@ -228,3 +228,57 @@ function scanPinballTables(tablesPath) {
 }
 
 module.exports = { scanGames, parseProfile, scanPinballTables }
+
+// ── RPCS3 Game Scanner ──────────────────────────────────────────────────────
+// RPCS3 stores games in folders named by their serial (e.g. BLES01807)
+// Each folder contains a PS3_GAME subfolder with PARAM.SFO holding the title
+async function scanPs3Games(ps3GamesPath) {
+  const fs = require('fs')
+  const path = require('path')
+
+  const games = []
+
+  if (!fs.existsSync(ps3GamesPath)) {
+    return { games, count: 0, path: ps3GamesPath, error: 'Folder not found' }
+  }
+
+  let entries
+  try {
+    entries = fs.readdirSync(ps3GamesPath, { withFileTypes: true })
+  } catch (e) {
+    return { games, count: 0, error: e.message }
+  }
+
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue
+    const gameDir = path.join(ps3GamesPath, entry.name)
+    const paramSfo = path.join(gameDir, 'PS3_GAME', 'PARAM.SFO')
+    const paramSfoAlt = path.join(gameDir, 'PARAM.SFO')
+
+    // Try to read game title from PARAM.SFO (binary format — extract ASCII title)
+    let title = entry.name
+    const sfoPath = fs.existsSync(paramSfo) ? paramSfo : fs.existsSync(paramSfoAlt) ? paramSfoAlt : null
+    if (sfoPath) {
+      try {
+        const buf = fs.readFileSync(sfoPath)
+        // PARAM.SFO: find TITLE key — it's a UTF-8 string after the data table
+        const titleMatch = buf.toString('latin1').match(/TITLE\x00[\s\S]{4,20}([A-Za-z0-9][\x20-\x7E]{2,80})/)
+        if (titleMatch) title = titleMatch[1].replace(/\x00.*/, '').trim()
+      } catch (e) {}
+    }
+
+    games.push({
+      id: 'ps3_' + entry.name,
+      title,
+      serial: entry.name,
+      path: gameDir,
+      emulator: 'rpcs3',
+      genre: 'PS3',
+      artwork: null,
+    })
+  }
+
+  return { games, count: games.length, path: ps3GamesPath }
+}
+
+module.exports = { ...module.exports, scanPs3Games }

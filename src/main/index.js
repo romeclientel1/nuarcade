@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, screen } = require('electron')
+const { app, BrowserWindow, ipcMain, screen, dialog } = require('electron')
 const path = require('path')
 const { exec, spawn } = require('child_process')
 const config = require('./config')
@@ -35,15 +35,39 @@ function createWindow() {
     win.loadFile(path.join(__dirname, '../../renderer/dist/index.html'))
   }
 
+  // Cursor: hidden in production, visible during wizard setup
+  let cursorHidden = false
+  const hideCursor = () => {
+    if (!cursorHidden) {
+      win.webContents.insertCSS('body.cabinet-mode * { cursor: none !important; }')
+      cursorHidden = true
+    }
+  }
+
   if (!isDev) {
-    win.webContents.on('did-finish-load', () => {
-      win.webContents.insertCSS('* { cursor: none !important; }')
-    })
+    // Hide cursor only after setup wizard completes
+    ipcMain.once('setup-complete', () => hideCursor())
+    // Also hide if app restarts with setup already done
+    const cfg = config.load()
+    if (cfg.setupComplete) {
+      win.webContents.on('did-finish-load', () => hideCursor())
+    }
   }
 
   return win
 }
 
+// ── Browse folder dialog ────────────────────────────────────────────────────
+ipcMain.handle('browse-folder', async () => {
+  const result = await dialog.showOpenDialog({
+    properties: ['openDirectory'],
+    title: 'Select folder',
+  })
+  if (result.canceled || !result.filePaths.length) return null
+  return result.filePaths[0]
+})
+
+// ── Launch TeknoParrot game ─────────────────────────────────────────────────
 ipcMain.handle('launch-game', async (event, profilePath) => {
   return new Promise((resolve) => {
     const cfg = config.load()
@@ -55,6 +79,18 @@ ipcMain.handle('launch-game', async (event, profilePath) => {
   })
 })
 
+// ── Launch RPCS3 game ───────────────────────────────────────────────────────
+ipcMain.handle('launch-ps3-game', async (event, gamePath) => {
+  return new Promise((resolve) => {
+    const cfg = config.load()
+    const rpcs3Exe = path.join(cfg.rpcs3Path || 'F:\\RPCS3\\', 'rpcs3.exe')
+    const child = spawn(rpcs3Exe, ['--no-gui', gamePath], { detached: true, stdio: 'ignore' })
+    child.unref()
+    resolve({ success: true })
+  })
+})
+
+// ── Run TeknoParrot updater ─────────────────────────────────────────────────
 ipcMain.handle('run-updater', async () => {
   return new Promise((resolve) => {
     const cfg = config.load()
@@ -65,17 +101,25 @@ ipcMain.handle('run-updater', async () => {
   })
 })
 
+// ── Scan TeknoParrot games ──────────────────────────────────────────────────
 ipcMain.handle('scan-games', async (event, { teknoParrotPath, gamesFolderPath }) => {
   const { scanGames } = require('./scanner')
   return scanGames(teknoParrotPath, gamesFolderPath)
 })
 
+// ── Scan RPCS3 games ────────────────────────────────────────────────────────
+ipcMain.handle('scan-ps3-games', async (event, ps3GamesPath) => {
+  const { scanPs3Games } = require('./scanner')
+  return scanPs3Games(ps3GamesPath)
+})
+
+// ── Scan pinball tables ─────────────────────────────────────────────────────
 ipcMain.handle('scan-pinball', async (event, tablesPath) => {
   const { scanPinballTables } = require('./scanner')
   return scanPinballTables(tablesPath)
 })
 
-// Auto-install yt-dlp if not present
+// ── yt-dlp helpers ──────────────────────────────────────────────────────────
 async function ensureYtDlp() {
   const { execSync } = require('child_process')
   try {
@@ -83,11 +127,9 @@ async function ensureYtDlp() {
     return true
   } catch (e) {
     try {
-      // Install via pip (Python usually comes with Windows)
       execSync('pip install yt-dlp --quiet', { stdio: 'ignore' })
       return true
     } catch (e2) {
-      // Try winget
       try {
         execSync('winget install yt-dlp --silent', { stdio: 'ignore' })
         return true
@@ -98,7 +140,6 @@ async function ensureYtDlp() {
   }
 }
 
-// Search YouTube for gameplay video
 ipcMain.handle('search-video', async (event, gameTitle) => {
   try {
     const query = encodeURIComponent(gameTitle + ' arcade gameplay TeknoParrot')
@@ -119,7 +160,6 @@ ipcMain.handle('search-video', async (event, gameTitle) => {
   }
 })
 
-// Download video via yt-dlp
 ipcMain.handle('download-video', async (event, { videoUrl, outputPath, gameId }) => {
   return new Promise(async (resolve) => {
     const installed = await ensureYtDlp()
@@ -127,14 +167,11 @@ ipcMain.handle('download-video', async (event, { videoUrl, outputPath, gameId })
       resolve({ success: false, error: 'yt-dlp not available' })
       return
     }
-
     const cfg = config.load()
     const videosDir = (cfg.mediaPath || 'F:\\Media\\') + 'Videos\\'
     const outputFile = videosDir + gameId + '.mp4'
-
     const cmd = 'yt-dlp -f "bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/mp4" --merge-output-format mp4 -o "' + outputFile + '" "' + videoUrl + '"'
-
-    exec(cmd, (error, stdout, stderr) => {
+    exec(cmd, (error) => {
       if (error) {
         resolve({ success: false, error: error.message })
       } else {
@@ -144,11 +181,10 @@ ipcMain.handle('download-video', async (event, { videoUrl, outputPath, gameId })
   })
 })
 
+// ── Config & misc ───────────────────────────────────────────────────────────
 ipcMain.handle('add-exclusions', async (event, paths) => {
   return new Promise((resolve) => {
-    const ps = paths
-      .map(p => `Add-MpPreference -ExclusionPath "${p}"`)
-      .join('; ')
+    const ps = paths.map(p => `Add-MpPreference -ExclusionPath "${p}"`).join('; ')
     exec(`powershell -Command "${ps}"`, (error) => {
       resolve({ success: !error })
     })
@@ -172,6 +208,7 @@ ipcMain.handle('set-controller-override', (event, gameId, controller) => {
   }
   return config.save(cfg)
 })
+
 ipcMain.handle('set-config', (event, updates) => config.update(updates))
 
 ipcMain.handle('get-displays', () => {

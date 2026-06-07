@@ -43,7 +43,11 @@ export default function App() {
   return (
     <div style={{ width: "100vw", height: "100vh", background: "#000", overflow: "hidden" }}>
       {phase === "intro"  && <Intro onComplete={handleIntroComplete} />}
-      {phase === "wizard" && <Wizard onComplete={() => setPhase("wheel")} />}
+      {phase === "wizard" && <Wizard onComplete={() => {
+  if (window.nuarcade?.setupComplete) window.nuarcade.setupComplete()
+  setPhase("wheel")
+  setShowUpdater(true)
+}} />}
       {phase === "wheel"  && <Wheel onCRTChange={handleCRTChange} crtEnabled={crtEnabled} themeId={themeId} onThemeChange={setTheme} />}
       {phase === "wheel" && showUpdater && (
         <Updater onDismiss={() => setShowUpdater(false)} />
