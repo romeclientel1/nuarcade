@@ -206,7 +206,7 @@ export default function SetupGuideScreen({ config, next, prev }) {
                   target="_blank"
                   rel="noreferrer"
                 >
-                  ↗ Download {emu.name}
+                  {'↗ Download ' + emu.name}
                 </a>
               </div>
             )}
