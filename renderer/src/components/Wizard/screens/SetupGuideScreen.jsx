@@ -52,9 +52,9 @@ const EMULATORS = [
       'Download Xenia from xenia.jp',
       'Extract to F:\\Xenia\\',
       'No BIOS or firmware required',
-      'Add Xbox 360 ISO / XEX files to F:\\Xbox360Games\\',
+      'Add Xbox 360 ISO or XEX files to F:\\Xbox360Games\\',
     ],
-    note: 'Easiest setup — no BIOS needed.',
+    note: 'Easiest setup - no BIOS needed.',
   },
   {
     id: 'dolphin',
@@ -72,7 +72,7 @@ const EMULATORS = [
       'No BIOS required for most titles',
       'Add GCN / Wii ISOs or RVZ files to F:\\GCWiiGames\\',
     ],
-    note: 'RVZ format is recommended — smaller and faster than ISO.',
+    note: 'RVZ format is recommended - smaller and faster than ISO.',
   },
   {
     id: 'pcsx2',
@@ -91,7 +91,7 @@ const EMULATORS = [
       'Place BIOS files in F:\\PCSX2\\bios\\',
       'Add PS2 ISOs or CHD files to F:\\PS2Games\\',
     ],
-    note: '⚠️ Requires PS2 BIOS files from your own console.',
+    note: 'Requires PS2 BIOS files from your own console.',
   },
   {
     id: 'ryujinx',
@@ -106,12 +106,12 @@ const EMULATORS = [
     steps: [
       'Download Ryujinx from ryujinx.org',
       'Extract to F:\\Ryujinx\\',
-      'Obtain Switch firmware + prod.keys from your own console',
-      'Install firmware via Tools → Install Firmware in Ryujinx',
+      'Obtain Switch firmware and prod.keys from your own console',
+      'Install firmware via Tools > Install Firmware in Ryujinx',
       'Place prod.keys in F:\\Ryujinx\\system\\',
-      'Add Switch NSP / XCI files to F:\\SwitchGames\\',
+      'Add Switch NSP or XCI files to F:\\SwitchGames\\',
     ],
-    note: '⚠️ Requires Switch firmware and prod.keys from your own console.',
+    note: 'Requires Switch firmware and prod.keys from your own console.',
   },
   {
     id: 'vpx',
@@ -129,32 +129,28 @@ const EMULATORS = [
       'Download VPX tables (.vpx files) from vpuniverse.com',
       'Place table files in F:\\PinballTables\\',
     ],
-    note: 'VPX tables often include their own assets — just drop the whole folder.',
+    note: 'VPX tables often include their own assets - drop the whole folder.',
   },
 ]
 
 export default function SetupGuideScreen({ config, next, prev }) {
   const [expanded, setExpanded] = useState(null)
-
   const toggle = (id) => setExpanded(e => e === id ? null : id)
 
   return (
     <div className={styles.screen}>
-      <div className={styles.eyebrow}>Step 4 — Emulator Setup</div>
+      <div className={styles.eyebrow}>Step 4 -- Emulator Setup</div>
       <div className={styles.title}>Install your emulators</div>
       <div className={styles.sub}>
-        NuArcade manages your library automatically — but each emulator needs
+        NuArcade manages your library automatically -- but each emulator needs
         to be installed separately. Tap any emulator below for setup instructions.
-        You can always come back to this later via Settings.
+        You can skip this and come back via Settings anytime.
       </div>
 
       <div className={styles.guideList}>
         {EMULATORS.map(emu => (
           <div key={emu.id} className={styles.guideCard}>
-            <div
-              className={styles.guideHeader}
-              onClick={() => toggle(emu.id)}
-            >
+            <div className={styles.guideHeader} onClick={() => toggle(emu.id)}>
               <div className={styles.guideLeft}>
                 <span className={styles.guideIcon}>{emu.icon}</span>
                 <div>
@@ -165,12 +161,8 @@ export default function SetupGuideScreen({ config, next, prev }) {
                 </div>
               </div>
               <div className={styles.guideRight}>
-                {emu.bios && (
-                  <span className={styles.biosTag}>BIOS req.</span>
-                )}
-                <span className={styles.guideChevron}>
-                  {expanded === emu.id ? '▲' : '▼'}
-                </span>
+                {emu.bios && <span className={styles.biosTag}>BIOS req.</span>}
+                <span className={styles.guideChevron}>{expanded === emu.id ? 'v' : '>'}</span>
               </div>
             </div>
 
@@ -200,13 +192,8 @@ export default function SetupGuideScreen({ config, next, prev }) {
                   </div>
                 </div>
 
-                
-                  className={styles.guideLink}
-                  href={emu.url}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {'↗ Download ' + emu.name}
+                <a className={styles.guideLink} href={emu.url} target="_blank" rel="noreferrer">
+                  Download {emu.name}
                 </a>
               </div>
             )}
@@ -215,10 +202,8 @@ export default function SetupGuideScreen({ config, next, prev }) {
       </div>
 
       <div className={styles.footer}>
-        <button className={styles.btnBack} onClick={prev}>← Back</button>
-        <button className={styles.btnNext} onClick={next}>
-          Continue →
-        </button>
+        <button className={styles.btnBack} onClick={prev}>Back</button>
+        <button className={styles.btnNext} onClick={next}>Continue</button>
       </div>
     </div>
   )
