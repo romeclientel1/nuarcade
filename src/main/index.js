@@ -251,6 +251,44 @@ ipcMain.handle('scan-switch-games', async (event, switchGamesPath) => {
   return scanSwitchGames(switchGamesPath)
 })
 
+
+// ── Create F: drive folder structure ────────────────────────────────────────
+ipcMain.handle('create-folder-structure', async () => {
+  const fs = require('fs')
+  const folders = [
+    'F:\\TeknoParrot',
+    'F:\\ArcadeGames',
+    'F:\\RPCS3',
+    'F:\\PS3Games',
+    'F:\\Xenia',
+    'F:\\Xbox360Games',
+    'F:\\Dolphin',
+    'F:\\GCWiiGames',
+    'F:\\PCSX2',
+    'F:\\PCSX2\\bios',
+    'F:\\PS2Games',
+    'F:\\Ryujinx',
+    'F:\\Ryujinx\\system',
+    'F:\\SwitchGames',
+    'F:\\vPinball',
+    'F:\\PinballTables',
+    'F:\\NuArcade',
+    'F:\\Media',
+    'F:\\Media\\Videos',
+    'F:\\Media\\Artwork',
+  ]
+  const results = []
+  for (const folder of folders) {
+    try {
+      fs.mkdirSync(folder, { recursive: true })
+      results.push({ folder, created: true })
+    } catch (e) {
+      results.push({ folder, created: false, error: e.message })
+    }
+  }
+  return { success: true, results }
+})
+
 // ── Config & misc ───────────────────────────────────────────────────────────
 ipcMain.handle('add-exclusions', async (event, paths) => {
   return new Promise((resolve) => {

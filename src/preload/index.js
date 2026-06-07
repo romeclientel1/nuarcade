@@ -37,6 +37,9 @@ contextBridge.exposeInMainWorld('nuarcade', {
   // Windows Defender exclusions
   addExclusions: (paths) => ipcRenderer.invoke('add-exclusions', paths),
 
+  // Folder structure
+  createFolderStructure: () => ipcRenderer.invoke('create-folder-structure'),
+
   // Controller overrides
   getControllerOverride: (gameId)             => ipcRenderer.invoke('get-controller-override', gameId),
   setControllerOverride: (gameId, controller) => ipcRenderer.invoke('set-controller-override', gameId, controller),
