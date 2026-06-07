@@ -26,7 +26,7 @@ export default function VolumeOverlay() {
 
   return (
     <div className={styles.overlay}>
-      <div className={styles.icon}>{volume === 0 ? 'X' : volume < 40 ? '~' : '♪'}</div>
+      <div className={styles.icon}>{volume === 0 ? 'MUTE' : volume < 40 ? 'LOW' : 'VOL'}</div>
       <div className={styles.track}>
         <div className={styles.fill} style={{ width: `${volume}%` }} />
       </div>
