@@ -1,5 +1,5 @@
-// useArcadeSounds — procedural arcade sound effects via Web Audio API
-// No audio files needed — all generated in the browser
+// useArcadeSounds -- procedural arcade sound effects via Web Audio API
+// No audio files needed -- all generated in the browser
 
 import { useRef, useCallback } from 'react'
 
