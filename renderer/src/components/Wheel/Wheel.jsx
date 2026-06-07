@@ -8,9 +8,9 @@ import GameDetail from "../GameDetail/GameDetail"
 import Help from "../Help/Help"
 import SortMenu from "./SortMenu"
 import { useGamepad } from "./useGamepad"
-import { useNavSound } from "../../hooks/useNavSound"
-import { usePlayTracking } from "../../hooks/usePlayTracking"
-import Splash from "../Splash/Splash"
+import { useArcadeSounds } from "../../hooks/useArcadeSounds"
+
+
 import styles from "./Wheel.module.css"
 
 const CATEGORIES = ["All", "Favorites", "Recent", "Racing", "Fighting", "Shooter", "Rhythm", "Flying", "Sports", "PS3", "Xbox360", "GCWii", "PS2", "Switch", "Pinball"]
@@ -50,8 +50,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
   const [search, setSearch] = useState("")
   const [showSearch, setShowSearch] = useState(false)
   const searchRef = useRef(null)
-  const { playClick, playSelect } = useNavSound(0.2)
-  const { recordPlay, getCount, getLastPlayedTime } = usePlayTracking()
+  const sounds = useArcadeSounds()
+  
   const [cabinetMode, setCabinetMode] = useState(false)
   const [screenshotMode, setScreenshotMode] = useState(false)
   const idleTimer = useRef(null)
@@ -103,9 +103,9 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
   useEffect(() => {
     const handler = (e) => {
       if (showSearch) return
-      if (e.key === "ArrowLeft")  { playClick(); setSelectedIndex(i => (i - 1 + filteredGames.length) % filteredGames.length) }
-      if (e.key === "ArrowRight") { playClick(); setSelectedIndex(i => (i + 1) % filteredGames.length) }
-      if (e.key === "Enter")      { playSelect(); setShowDetail(true) }
+      if (e.key === "ArrowLeft")  { sounds.navigate(); setSelectedIndex(i => (i - 1 + filteredGames.length) % filteredGames.length) }
+      if (e.key === "ArrowRight") { sounds.navigate(); setSelectedIndex(i => (i + 1) % filteredGames.length) }
+      if (e.key === "Enter")      { sounds.select(); setShowDetail(true) }
       if (e.key === "Escape") {
         sounds.back()
       setShowDetail(false)
@@ -149,7 +149,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
     sounds.launch()
     setLaunching(true)
     addRecentlyPlayed(current)
-    recordPlay(current)
+    // recordPlay(current)
     // Gamepad rumble on launch
     try {
       const gp = navigator.getGamepads()[0]
@@ -357,8 +357,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
           onLaunch={() => { sounds.back()
       setShowDetail(false); handleLaunch() }}
           launching={launching}
-          playCount={getCount(current)}
-          lastPlayed={getLastPlayedTime(current)}
+          playCount={0 // getCount(current)}
+          lastPlayed={null // getLastPlayedTime(current)}
         />
       )}
     </div>
