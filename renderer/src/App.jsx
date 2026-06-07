@@ -56,7 +56,6 @@ export default function App() {
       )}
       <CRT enabled={crtEnabled} />
     </div>
-    </div>
     </>
   )
 }
