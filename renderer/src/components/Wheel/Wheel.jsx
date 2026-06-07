@@ -107,8 +107,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
       if (e.key === "ArrowRight") { sounds.navigate(); setSelectedIndex(i => (i + 1) % filteredGames.length) }
       if (e.key === "Enter")      { sounds.select(); setShowDetail(true) }
       if (e.key === "Escape") {
-        sounds.back()
-      setShowDetail(false)
+        sounds.back(); setShowDetail(false)
         setShowSearch(false)
         setSearch("")
         setShowHelp(false)
@@ -139,8 +138,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
     onLeft:     () => setSelectedIndex(i => (i - 1 + filteredGames.length) % filteredGames.length),
     onRight:    () => setSelectedIndex(i => (i + 1) % filteredGames.length),
     onConfirm:  () => setShowDetail(true),
-    onBack:     () => { sounds.back()
-      setShowDetail(false); setSearch(""); setShowSearch(false) },
+    onBack:     () => { sounds.back(); setShowDetail(false); setSearch(""); setShowSearch(false) },
     onFavorite: () => { if (current) toggleFavorite(current.id || current.profile) },
   })
 
@@ -352,13 +350,11 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
       {showDetail && current && (
         <GameDetail
           game={current}
-          onClose={() => sounds.back()
-      setShowDetail(false)}
-          onLaunch={() => { sounds.back()
-      setShowDetail(false); handleLaunch() }}
+          onClose={() => { sounds.back(); setShowDetail(false) }}
+          onLaunch={() => { sounds.back(); setShowDetail(false); handleLaunch() }}
           launching={launching}
-          playCount={0 // getCount(current)}
-          lastPlayed={null // getLastPlayedTime(current)}
+          playCount={0}
+          lastPlayed={null}
         />
       )}
     </div>
