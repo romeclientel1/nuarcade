@@ -15,14 +15,14 @@ const GENRE_COLORS = {
 }
 
 const GENRE_ICONS = {
-  Racing:   '🏎️',
-  Fighting: '⚔️',
-  Shooter:  '🎯',
-  Rhythm:   '🎵',
-  Flying:   '✈️',
-  Sports:   '🏆',
-  Pinball:  '🎱',
-  Other:    '🎮',
+  Racing:   '??',
+  Fighting: '??',
+  Shooter:  '?',
+  Rhythm:   '?',
+  Flying:   '??',
+  Sports:   '?',
+  Pinball:  '?',
+  Other:    '?',
 }
 
 const STATUS_COLORS = {
@@ -40,7 +40,7 @@ export default function GameCard({ game, isCenter, onClick, isFavorite }) {
   const videoRef = useRef(null)
 
   const colors = GENRE_COLORS[game.genre] || GENRE_COLORS.Other
-  const fallbackIcon = game.icon || GENRE_ICONS[game.genre] || '🎮'
+  const fallbackIcon = game.icon || GENRE_ICONS[game.genre] || '?'
   const statusColor = STATUS_COLORS[game.status] || '#888888'
 
   const imgUrl = game.isPinball
@@ -106,7 +106,7 @@ export default function GameCard({ game, isCenter, onClick, isFavorite }) {
                 <div key={i} className={styles.pinballDot} style={{ background: colors.accent, animationDelay: `${i * 0.15}s` }} />
               ))}
             </div>
-            <div className={styles.pinballIcon}>🎱</div>
+            <div className={styles.pinballIcon}>?</div>
             <div className={styles.pinballName} style={{ color: colors.accent }}>
               {game.title}
             </div>
@@ -125,7 +125,7 @@ export default function GameCard({ game, isCenter, onClick, isFavorite }) {
           </div>
         )}
 
-        {showVideo && <div className={styles.videoBadge}>▶ LIVE</div>}
+        {showVideo && <div className={styles.videoBadge}>? LIVE</div>}
       </div>
 
       <div className={styles.gradient} />
@@ -137,7 +137,7 @@ export default function GameCard({ game, isCenter, onClick, isFavorite }) {
       />
 
       {isFavorite && (
-        <div className={styles.favIndicator}>♥</div>
+        <div className={styles.favIndicator}>?</div>
       )}
 
       {!game.isPinball && (
@@ -150,7 +150,7 @@ export default function GameCard({ game, isCenter, onClick, isFavorite }) {
       {isCenter && (
         <div className={styles.playOverlay}>
           <div className={styles.playBtn} style={{ borderColor: colors.accent, color: colors.accent }}>
-            {game.isPinball ? '🎱' : '▶'}
+            {game.isPinball ? '?' : '?'}
           </div>
         </div>
       )}

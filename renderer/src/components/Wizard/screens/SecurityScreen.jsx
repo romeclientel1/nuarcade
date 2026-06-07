@@ -48,11 +48,11 @@ export default function SecurityScreen({ config, next, prev }) {
 
   return (
     <div className={styles.screen}>
-      <div className={styles.eyebrow}>Step 1 — Security</div>
+      <div className={styles.eyebrow}>Step 1 ? Security</div>
       <div className={styles.title}>Configuring Windows security.</div>
       <div className={styles.sub}>
         Adding folder exclusions to Windows Defender and SmartScreen so game
-        files are never quarantined. Your system stays protected — only
+        files are never quarantined. Your system stays protected ? only
         NuArcade and game folders are excluded.
       </div>
 
@@ -61,7 +61,7 @@ export default function SecurityScreen({ config, next, prev }) {
           const status = getStatus(s.key)
           return (
             <div key={s.key} className={`${styles.statusItem} ${styles[status]}`}>
-              {status === 'done'    && <span className={styles.siDone}>✓</span>}
+              {status === 'done'    && <span className={styles.siDone}>?</span>}
               {status === 'running' && <div className={styles.spinner} />}
               {status === 'wait'    && <div style={{ width: 16, height: 16, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.15)' }} />}
               <span className={styles.siText}>{s.label}</span>
@@ -72,14 +72,14 @@ export default function SecurityScreen({ config, next, prev }) {
       </div>
 
       <div className={styles.infoNote}>
-        Excluded: {PATHS.join(' · ')}
+        Excluded: {PATHS.join(' ? ')}
       </div>
 
       <div className={styles.footer}>
         <button className={styles.btnBack} onClick={prev}>Back</button>
         <button className={styles.btnNext} onClick={next} disabled={!done}
           style={{ opacity: done ? 1 : 0.4, cursor: done ? 'pointer' : 'not-allowed' }}>
-          {done ? 'Continue →' : 'Configuring...'}
+          {done ? 'Continue ?' : 'Configuring...'}
         </button>
       </div>
     </div>

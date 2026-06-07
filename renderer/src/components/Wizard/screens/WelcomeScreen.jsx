@@ -3,19 +3,19 @@ import styles from './Screen.module.css'
 const MODES = [
   {
     id: 'arcade+pinball',
-    icon: '🕹️',
+    icon: '??',
     title: 'Arcade + Pinball',
     sub: 'TeknoParrot & RPCS3 arcade games plus Visual Pinball X tables',
   },
   {
     id: 'arcade',
-    icon: '🏎️',
+    icon: '??',
     title: 'Arcade only',
-    sub: 'TeknoParrot & RPCS3 arcade games — no pinball module',
+    sub: 'TeknoParrot & RPCS3 arcade games ? no pinball module',
   },
   {
     id: 'pinball',
-    icon: '🎱',
+    icon: '?',
     title: 'Pinball only',
     sub: 'Visual Pinball X tables only',
   },
@@ -27,7 +27,7 @@ export default function WelcomeScreen({ config, updateConfig, next }) {
       <div className={styles.eyebrow}>Welcome</div>
       <div className={styles.title}>Let's get your cabinet ready.</div>
       <div className={styles.sub}>
-        NuArcade will configure everything automatically — security exclusions,
+        NuArcade will configure everything automatically ? security exclusions,
         game detection, and controller mapping. This takes about 5 minutes
         and you'll never have to do it again.
       </div>
@@ -47,7 +47,7 @@ export default function WelcomeScreen({ config, updateConfig, next }) {
       </div>
 
       <div className={styles.notice}>
-        <span className={styles.noticeIcon}>⚠</span>
+        <span className={styles.noticeIcon}>?</span>
         NuArcade will request administrator access to configure Windows
         security exclusions. This happens once.
       </div>
@@ -55,7 +55,7 @@ export default function WelcomeScreen({ config, updateConfig, next }) {
       <div className={styles.footer}>
         <div />
         <button className={styles.btnNext} onClick={next}>
-          Continue →
+          Continue ?
         </button>
       </div>
     </div>

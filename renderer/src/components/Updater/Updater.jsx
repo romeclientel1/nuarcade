@@ -14,17 +14,17 @@ export default function Updater({ onDismiss }) {
     setPhase('checking')
 
     try {
-      // Step 1 — run ParrotPatcher silently
+      // Step 1 ? run ParrotPatcher silently
       if (window.nuarcade && window.nuarcade.platform === 'win32') {
         setProgress('Running TeknoParrot updater...')
         setPhase('updating')
         await window.nuarcade.runUpdater()
       } else {
-        // Mac dev mode — simulate
+        // Mac dev mode ? simulate
         await delay(800)
       }
 
-      // Step 2 — check GitHub for new profiles
+      // Step 2 ? check GitHub for new profiles
       setProgress('Checking for new games...')
       const newlyAdded = await checkForNewGames()
 
@@ -85,12 +85,12 @@ export default function Updater({ onDismiss }) {
   if (phase === 'newgames') {
     return (
       <div className={styles.banner} style={{ borderColor: 'rgba(0,200,255,0.4)', background: 'rgba(0,200,255,0.06)' }}>
-        <div className={styles.icon}>🎮</div>
+        <div className={styles.icon}>?</div>
         <div className={styles.content}>
           <div className={styles.title}>{newGames.length} new game{newGames.length > 1 ? 's' : ''} added to TeknoParrot!</div>
           <div className={styles.sub}>{newGames[0]}{newGames.length > 1 ? ` and ${newGames.length - 1} more` : ''}</div>
         </div>
-        <button className={styles.dismissBtn} onClick={onDismiss}>✕</button>
+        <button className={styles.dismissBtn} onClick={onDismiss}>?</button>
       </div>
     )
   }
@@ -98,7 +98,7 @@ export default function Updater({ onDismiss }) {
   if (phase === 'uptodate') {
     return (
       <div className={styles.banner} style={{ borderColor: 'rgba(0,255,136,0.3)', background: 'rgba(0,255,136,0.04)' }}>
-        <div className={styles.icon} style={{ color: '#00ff88' }}>✓</div>
+        <div className={styles.icon} style={{ color: '#00ff88' }}>?</div>
         <div className={styles.text} style={{ color: 'rgba(0,255,136,0.8)' }}>TeknoParrot is up to date</div>
       </div>
     )

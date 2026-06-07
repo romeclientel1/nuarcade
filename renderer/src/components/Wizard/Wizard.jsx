@@ -82,7 +82,7 @@ export default function Wizard({ onComplete }) {
           {SCREENS.map((s, i) => (
             <div key={s} className={styles.stepItem}>
               <div className={`${styles.stepDot} ${i < step ? styles.dotDone : i === step ? styles.dotActive : styles.dotWait}`}>
-                {i < step ? '✓' : i + 1}
+                {i < step ? '?' : i + 1}
               </div>
               {i < SCREENS.length - 1 && (
                 <div className={`${styles.stepLine} ${i < step ? styles.lineDone : ''}`} />

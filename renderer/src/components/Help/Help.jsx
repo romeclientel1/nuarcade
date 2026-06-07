@@ -1,7 +1,7 @@
 import styles from './Help.module.css'
 
 const SHORTCUTS = [
-  { key: '← →', desc: 'Navigate wheel' },
+  { key: '? ?', desc: 'Navigate wheel' },
   { key: 'Enter', desc: 'Open game detail' },
   { key: 'Escape', desc: 'Close / go back' },
   { key: 'F', desc: 'Toggle favorite' },

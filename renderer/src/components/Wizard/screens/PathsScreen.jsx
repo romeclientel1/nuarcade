@@ -62,11 +62,11 @@ export default function PathsScreen({ config, updateConfig, next, prev }) {
 
   return (
     <div className={styles.screen}>
-      <div className={styles.eyebrow}>Step 3 — Paths</div>
+      <div className={styles.eyebrow}>Step 3 ? Paths</div>
       <div className={styles.title}>Where are your files?</div>
       <div className={styles.sub}>
         Point NuArcade to each emulator and its games folder.
-        All paths default to your F: drive — browse or type to update.
+        All paths default to your F: drive ? browse or type to update.
       </div>
 
       <div className={styles.pathsScroll}>
@@ -81,19 +81,19 @@ export default function PathsScreen({ config, updateConfig, next, prev }) {
               spellCheck={false}
             />
             <button className={styles.pathBtn} onClick={() => handleBrowse(p.key)}>
-              📁 Browse
+              ? Browse
             </button>
           </div>
         ))}
       </div>
 
       <div className={styles.infoNote}>
-        💡 Only install the emulators you plan to use — empty folders are fine and can be set up later via Settings → Rescan.
+        ? Only install the emulators you plan to use ? empty folders are fine and can be set up later via Settings ? Rescan.
       </div>
 
       <div className={styles.footer}>
-        <button className={styles.btnBack} onClick={prev}>← Back</button>
-        <button className={styles.btnNext} onClick={handleContinue}>Continue →</button>
+        <button className={styles.btnBack} onClick={prev}>? Back</button>
+        <button className={styles.btnNext} onClick={handleContinue}>Continue ?</button>
       </div>
     </div>
   )

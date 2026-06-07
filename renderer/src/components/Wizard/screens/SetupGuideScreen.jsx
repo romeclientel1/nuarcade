@@ -4,7 +4,7 @@ import styles from './Screen.module.css'
 const EMULATORS = [
   {
     id: 'teknoparrot',
-    icon: '🕹️',
+    icon: '??',
     name: 'TeknoParrot',
     system: 'Arcade',
     color: '#00ff88',
@@ -22,7 +22,7 @@ const EMULATORS = [
   },
   {
     id: 'rpcs3',
-    icon: '🎮',
+    icon: '?',
     name: 'RPCS3',
     system: 'PlayStation 3',
     color: '#0070d1',
@@ -40,7 +40,7 @@ const EMULATORS = [
   },
   {
     id: 'xenia',
-    icon: '⚙️',
+    icon: '??',
     name: 'Xenia',
     system: 'Xbox 360',
     color: '#107c10',
@@ -58,7 +58,7 @@ const EMULATORS = [
   },
   {
     id: 'dolphin',
-    icon: '🐬',
+    icon: '?',
     name: 'Dolphin',
     system: 'GameCube / Wii',
     color: '#6b21a8',
@@ -76,7 +76,7 @@ const EMULATORS = [
   },
   {
     id: 'pcsx2',
-    icon: '💿',
+    icon: '?',
     name: 'PCSX2',
     system: 'PlayStation 2',
     color: '#003791',
@@ -95,7 +95,7 @@ const EMULATORS = [
   },
   {
     id: 'ryujinx',
-    icon: '🔴',
+    icon: '?',
     name: 'Ryujinx',
     system: 'Nintendo Switch',
     color: '#e4000f',
@@ -115,7 +115,7 @@ const EMULATORS = [
   },
   {
     id: 'vpx',
-    icon: '🎱',
+    icon: '?',
     name: 'Visual Pinball X',
     system: 'Pinball',
     color: '#cc44ff',

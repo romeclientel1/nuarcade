@@ -1,10 +1,10 @@
 import styles from "./SortMenu.module.css"
 
 const SORT_OPTIONS = [
-  { id: "default", label: "Default",  icon: "★" },
+  { id: "default", label: "Default",  icon: "?" },
   { id: "name",    label: "Name A-Z", icon: "A" },
-  { id: "system",  label: "System",   icon: "⚙" },
-  { id: "status",  label: "Status",   icon: "●" },
+  { id: "system",  label: "System",   icon: "?" },
+  { id: "status",  label: "Status",   icon: "?" },
 ]
 
 export default function SortMenu({ current, onChange, onClose }) {
@@ -20,7 +20,7 @@ export default function SortMenu({ current, onChange, onClose }) {
           >
             <span className={styles.icon}>{opt.icon}</span>
             <span className={styles.label}>{opt.label}</span>
-            {current === opt.id && <span className={styles.check}>✓</span>}
+            {current === opt.id && <span className={styles.check}>?</span>}
           </button>
         ))}
       </div>

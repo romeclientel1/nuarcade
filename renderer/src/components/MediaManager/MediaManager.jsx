@@ -199,16 +199,16 @@ export default function MediaManager({ onClose }) {
                     <div className={styles.gameThumb}>
                       {game.id
                         ? <img src={THUMBNAIL_BASE + game.id + ".png"} alt="" onError={e => e.target.style.display="none"} />
-                        : <span style={{ fontSize: 20 }}>{game.icon || "🎮"}</span>
+                        : <span style={{ fontSize: 20 }}>{game.icon || "?"}</span>
                       }
                     </div>
                     <div className={styles.gameInfo}>
                       <div className={styles.gameName}>{game.title}</div>
-                      <div className={styles.gameMeta}>{game.system} · {game.genre}</div>
+                      <div className={styles.gameMeta}>{game.system} ? {game.genre}</div>
                     </div>
                     <div className={styles.gameStatus}>
                       <span className={styles.statusBadge + " " + (game.hasVideo ? styles.badgeGreen : styles.badgeAmber)}>
-                        {game.hasVideo ? "✓ Video" : "✗ Video"}
+                        {game.hasVideo ? "? Video" : "? Video"}
                       </span>
                     </div>
                     <div className={styles.gameAction}>
@@ -222,7 +222,7 @@ export default function MediaManager({ onClose }) {
                       ) : downloading[game.id] === "done" ? (
                         <span className={styles.readyLabel}>Downloaded!</span>
                       ) : downloading[game.id] === "error" ? (
-                        <span style={{ color: "#ff4444", fontSize: 10 }}>Error — try again</span>
+                        <span style={{ color: "#ff4444", fontSize: 10 }}>Error ? try again</span>
                       ) : previewing[game.id] === "searching" ? (
                         <div className={styles.dlProgress}>
                           <div className={styles.spinner} />

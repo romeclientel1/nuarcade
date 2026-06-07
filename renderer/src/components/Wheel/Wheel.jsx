@@ -264,7 +264,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
       {filteredGames.length === 0 ? (
         <div className={styles.emptyState}>
           <div className={styles.emptyIcon}>
-            {activeCategory === "Favorites" ? "♥" : activeCategory === "Recent" ? "🕐" : activeCategory === "Pinball" ? "🎱" : activeCategory === "PS3" ? "🎮" : activeCategory === "Xbox360" ? "🎮" : activeCategory === "GCWii" ? "🟣" : activeCategory === "PS2" ? "💿" : "🕹️"}
+            {activeCategory === "Favorites" ? "?" : activeCategory === "Recent" ? "?" : activeCategory === "Pinball" ? "?" : activeCategory === "PS3" ? "?" : activeCategory === "Xbox360" ? "?" : activeCategory === "GCWii" ? "?" : activeCategory === "PS2" ? "?" : "??"}
           </div>
           <div className={styles.emptyTitle}>
             {activeCategory === "Favorites" ? "No favorites yet" :
@@ -329,7 +329,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
                 onClick={() => toggleFavorite(current.id || current.profile)}
                 title="Toggle favorite (F)"
               >
-                {isFavorite(current.id || current.profile) ? "♥" : "♡"}
+                {isFavorite(current.id || current.profile) ? "?" : "?"}
               </button>
             </div>
             <div className={styles.infoExe}>

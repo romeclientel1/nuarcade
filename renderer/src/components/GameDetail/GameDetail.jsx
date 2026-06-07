@@ -23,67 +23,67 @@ const STATUS_COLORS = {
 const THUMBNAIL_BASE = "https://raw.githubusercontent.com/teknogods/TeknoParrotUIThumbnails/master/Icons/"
 
 const GENRE_ICONS = {
-  Racing:   "🏎️",
-  Fighting: "⚔️",
-  Shooter:  "🎯",
-  Rhythm:   "🎵",
-  Flying:   "✈️",
-  Sports:   "🏆",
-  Pinball:  "🎱",
-  Other:    "🎮",
+  Racing:   "??",
+  Fighting: "??",
+  Shooter:  "?",
+  Rhythm:   "?",
+  Flying:   "??",
+  Sports:   "?",
+  Pinball:  "?",
+  Other:    "?",
 }
 
 const CONTROLLERS = [
-  { id: "auto",     label: "Auto",         icon: "⚡", desc: "Use genre default" },
-  { id: "wheel",    label: "Racing Wheel",  icon: "🏎️", desc: "DirectInput wheel" },
-  { id: "lightgun", label: "Light Gun",     icon: "🎯", desc: "Sinden / GUN4IR" },
-  { id: "gamepad",  label: "Xbox Gamepad",  icon: "🎮", desc: "XInput controller" },
+  { id: "auto",     label: "Auto",         icon: "?", desc: "Use genre default" },
+  { id: "wheel",    label: "Racing Wheel",  icon: "??", desc: "DirectInput wheel" },
+  { id: "lightgun", label: "Light Gun",     icon: "?", desc: "Sinden / GUN4IR" },
+  { id: "gamepad",  label: "Xbox Gamepad",  icon: "?", desc: "XInput controller" },
 ]
 
 function getControls(genre) {
   const maps = {
     Racing:   [
-      { icon: "🏎️", label: "Steering wheel" },
-      { icon: "🦶", label: "Gas pedal" },
-      { icon: "🦶", label: "Brake pedal" },
-      { icon: "⬆️", label: "Shift up" },
-      { icon: "⬇️", label: "Shift down" },
-      { icon: "👁️", label: "View change" },
+      { icon: "??", label: "Steering wheel" },
+      { icon: "?", label: "Gas pedal" },
+      { icon: "?", label: "Brake pedal" },
+      { icon: "??", label: "Shift up" },
+      { icon: "??", label: "Shift down" },
+      { icon: "??", label: "View change" },
     ],
     Shooter:  [
-      { icon: "🎯", label: "Light gun aim" },
-      { icon: "🔫", label: "Trigger - fire" },
-      { icon: "↩️", label: "Reload" },
-      { icon: "▶️", label: "Start" },
+      { icon: "?", label: "Light gun aim" },
+      { icon: "?", label: "Trigger - fire" },
+      { icon: "??", label: "Reload" },
+      { icon: "??", label: "Start" },
     ],
     Fighting: [
-      { icon: "🕹️", label: "Left stick - move" },
-      { icon: "🅰️", label: "A - punch" },
-      { icon: "🅱️", label: "B - kick" },
-      { icon: "🆇", label: "X - heavy" },
-      { icon: "🆈", label: "Y - special" },
+      { icon: "??", label: "Left stick - move" },
+      { icon: "??", label: "A - punch" },
+      { icon: "??", label: "B - kick" },
+      { icon: "?", label: "X - heavy" },
+      { icon: "?", label: "Y - special" },
     ],
     Rhythm:   [
-      { icon: "🎵", label: "Face buttons - notes" },
-      { icon: "🕹️", label: "Stick - navigation" },
-      { icon: "▶️", label: "Start" },
+      { icon: "?", label: "Face buttons - notes" },
+      { icon: "??", label: "Stick - navigation" },
+      { icon: "??", label: "Start" },
     ],
     Flying:   [
-      { icon: "🕹️", label: "Left stick - pitch/roll" },
-      { icon: "🔫", label: "RT - fire" },
-      { icon: "🚀", label: "LT - afterburner" },
+      { icon: "??", label: "Left stick - pitch/roll" },
+      { icon: "?", label: "RT - fire" },
+      { icon: "?", label: "LT - afterburner" },
     ],
     Pinball:  [
-      { icon: "⬅️", label: "LB - left flipper" },
-      { icon: "➡️", label: "RB - right flipper" },
-      { icon: "⬆️", label: "Up - plunge" },
+      { icon: "??", label: "LB - left flipper" },
+      { icon: "??", label: "RB - right flipper" },
+      { icon: "??", label: "Up - plunge" },
     ],
   }
   return maps[genre] || [
-    { icon: "🕹️", label: "Left stick - move" },
-    { icon: "🅰️", label: "A - confirm" },
-    { icon: "🅱️", label: "B - back" },
-    { icon: "▶️", label: "Start" },
+    { icon: "??", label: "Left stick - move" },
+    { icon: "??", label: "A - confirm" },
+    { icon: "??", label: "B - back" },
+    { icon: "??", label: "Start" },
   ]
 }
 
@@ -98,7 +98,7 @@ export default function GameDetail({ game, onClose, onLaunch, launching, playCou
   const colors = GENRE_COLORS[game.genre] || GENRE_COLORS.Other
   const statusColor = STATUS_COLORS[game.status] || "#888888"
   const imgUrl = game.id && !game.isPinball ? THUMBNAIL_BASE + game.id + ".png" : null
-  const fallbackIcon = game.icon || GENRE_ICONS[game.genre] || "🎮"
+  const fallbackIcon = game.icon || GENRE_ICONS[game.genre] || "?"
 
   useEffect(() => {
     loadControllerOverride()

@@ -14,7 +14,7 @@ export default function ReadyScreen({ config, finish }) {
         updates silently on each launch.
       </div>
 
-      <div className={styles.readyRing}>✓</div>
+      <div className={styles.readyRing}>?</div>
 
       <div className={styles.readyStats}>
         <div className={styles.rsStat}>
@@ -36,14 +36,14 @@ export default function ReadyScreen({ config, finish }) {
       </div>
 
       <div className={styles.successNote}>
-        ✓ NuArcade will re-verify security exclusions and check for
+        ? NuArcade will re-verify security exclusions and check for
         new games on every launch automatically.
       </div>
 
       <div className={styles.footer}>
         <div />
         <button className={styles.btnLaunch} onClick={finish}>
-          ▶ Launch NuArcade
+          ? Launch NuArcade
         </button>
       </div>
     </div>

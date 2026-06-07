@@ -29,17 +29,17 @@ export function useGamepad({ onLeft, onRight, onConfirm, onBack, onFavorite, ena
             lastInput.current = now
             onRight?.()
           }
-          // A button — confirm/launch
+          // A button ? confirm/launch
           else if (gp.buttons[0]?.pressed) {
             lastInput.current = now
             onConfirm?.()
           }
-          // B button — back
+          // B button ? back
           else if (gp.buttons[1]?.pressed) {
             lastInput.current = now
             onBack?.()
           }
-          // Y button — favorite
+          // Y button ? favorite
           else if (gp.buttons[3]?.pressed) {
             lastInput.current = now
             onFavorite?.()

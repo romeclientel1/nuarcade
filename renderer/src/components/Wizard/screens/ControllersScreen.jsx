@@ -2,19 +2,19 @@ import { useState, useEffect } from 'react'
 import styles from './Screen.module.css'
 
 const GENRE_ASSIGNMENTS = [
-  { genre: 'Racing',   icon: '🏎️', ctrl: 'wheel',    label: 'Racing wheel' },
-  { genre: 'Shooter',  icon: '🎯', ctrl: 'lightgun',  label: 'Light gun' },
-  { genre: 'Fighting', icon: '⚔️', ctrl: 'gamepad',   label: 'Xbox controller' },
-  { genre: 'Rhythm',   icon: '🎵', ctrl: 'gamepad',   label: 'Xbox controller' },
-  { genre: 'Flying',   icon: '✈️', ctrl: 'gamepad',   label: 'Xbox controller' },
-  { genre: 'Pinball',  icon: '🎱', ctrl: 'gamepad',   label: 'Xbox controller' },
+  { genre: 'Racing',   icon: '??', ctrl: 'wheel',    label: 'Racing wheel' },
+  { genre: 'Shooter',  icon: '?', ctrl: 'lightgun',  label: 'Light gun' },
+  { genre: 'Fighting', icon: '??', ctrl: 'gamepad',   label: 'Xbox controller' },
+  { genre: 'Rhythm',   icon: '?', ctrl: 'gamepad',   label: 'Xbox controller' },
+  { genre: 'Flying',   icon: '??', ctrl: 'gamepad',   label: 'Xbox controller' },
+  { genre: 'Pinball',  icon: '?', ctrl: 'gamepad',   label: 'Xbox controller' },
 ]
 
 const CONTROLLER_CARDS = [
-  { key: 'wheel',    icon: '🏎️', name: 'Racing wheel',    sub: 'DirectInput · Force feedback' },
-  { key: 'lightgun', icon: '🎯', name: 'Light gun',        sub: 'RawInput · Sinden / GUN4IR' },
-  { key: 'gamepad',  icon: '🎮', name: 'Xbox controller',  sub: 'XInput · controller 1' },
-  { key: 'joystick', icon: '🕹️', name: 'Flight stick',     sub: 'Connect to enable flying games' },
+  { key: 'wheel',    icon: '??', name: 'Racing wheel',    sub: 'DirectInput ? Force feedback' },
+  { key: 'lightgun', icon: '?', name: 'Light gun',        sub: 'RawInput ? Sinden / GUN4IR' },
+  { key: 'gamepad',  icon: '?', name: 'Xbox controller',  sub: 'XInput ? controller 1' },
+  { key: 'joystick', icon: '??', name: 'Flight stick',     sub: 'Connect to enable flying games' },
 ]
 
 export default function ControllersScreen({ config, updateConfig, next, prev }) {
@@ -55,7 +55,7 @@ export default function ControllersScreen({ config, updateConfig, next, prev }) 
 
   return (
     <div className={styles.screen}>
-      <div className={styles.eyebrow}>Step 3 — Controllers</div>
+      <div className={styles.eyebrow}>Step 3 ? Controllers</div>
       <div className={styles.title}>Controllers detected.</div>
       <div className={styles.sub}>
         NuArcade found the following devices. Each genre is automatically
@@ -90,7 +90,7 @@ export default function ControllersScreen({ config, updateConfig, next, prev }) 
               <span>{a.genre}</span>
             </div>
             <div className={styles.assignCtrl}>
-              → {detected.includes(a.ctrl) ? a.label : 'Xbox controller'}
+              ? {detected.includes(a.ctrl) ? a.label : 'Xbox controller'}
             </div>
           </div>
         ))}
@@ -98,7 +98,7 @@ export default function ControllersScreen({ config, updateConfig, next, prev }) 
 
       <div className={styles.footer}>
         <button className={styles.btnBack} onClick={prev}>Back</button>
-        <button className={styles.btnNext} onClick={next}>Continue →</button>
+        <button className={styles.btnNext} onClick={next}>Continue ?</button>
       </div>
     </div>
   )
