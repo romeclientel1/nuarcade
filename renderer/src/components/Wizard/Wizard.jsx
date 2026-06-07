@@ -4,6 +4,7 @@ import WelcomeScreen from './screens/WelcomeScreen'
 import SecurityScreen from './screens/SecurityScreen'
 import PathsScreen from './screens/PathsScreen'
 import ControllersScreen from './screens/ControllersScreen'
+import SetupGuideScreen from './screens/SetupGuideScreen'
 import ScanScreen from './screens/ScanScreen'
 import ReadyScreen from './screens/ReadyScreen'
 
@@ -62,7 +63,8 @@ export default function Wizard({ onComplete }) {
     <WelcomeScreen {...screenProps} />,
     <SecurityScreen {...screenProps} />,
     <PathsScreen {...screenProps} />,
-    <ControllersScreen {...screenProps} />,
+    <SetupGuideScreen {...screenProps} />,
+<ControllersScreen {...screenProps} />,
     <ScanScreen {...screenProps} />,
     <ReadyScreen {...screenProps} />,
   ]
