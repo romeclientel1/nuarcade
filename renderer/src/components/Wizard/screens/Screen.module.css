@@ -470,3 +470,23 @@
   margin-bottom: 16px;
   line-height: 1.6;
 }
+/* ── Empty scan state ─────────────────────────────────── */
+.emptyHint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px;
+  margin: 8px 0;
+  border: 1px dashed rgba(255,255,255,0.12);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.03);
+}
+.emptyIcon { font-size: 2.5rem; }
+.emptyText {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.5);
+  text-align: center;
+  max-width: 420px;
+  line-height: 1.5;
+}

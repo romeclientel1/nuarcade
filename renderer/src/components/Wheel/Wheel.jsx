@@ -13,7 +13,7 @@ import { usePlayTracking } from "../../hooks/usePlayTracking"
 import Splash from "../Splash/Splash"
 import styles from "./Wheel.module.css"
 
-const CATEGORIES = ["All", "Favorites", "Recent", "Racing", "Fighting", "Shooter", "Rhythm", "Flying", "Sports", "Pinball"]
+const CATEGORIES = ["All", "Favorites", "Recent", "Racing", "Fighting", "Shooter", "Rhythm", "Flying", "Sports", "PS3", "Pinball"]
 const ATTRACT_TIMEOUT = 120000
 
 function sortGames(games, sortBy) {
@@ -261,7 +261,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
       {filteredGames.length === 0 ? (
         <div className={styles.emptyState}>
           <div className={styles.emptyIcon}>
-            {activeCategory === "Favorites" ? "♥" : activeCategory === "Recent" ? "🕐" : activeCategory === "Pinball" ? "🎱" : "🕹️"}
+            {activeCategory === "Favorites" ? "♥" : activeCategory === "Recent" ? "🕐" : activeCategory === "Pinball" ? "🎱" : activeCategory === "PS3" ? "🎮" : "🕹️"}
           </div>
           <div className={styles.emptyTitle}>
             {activeCategory === "Favorites" ? "No favorites yet" :
