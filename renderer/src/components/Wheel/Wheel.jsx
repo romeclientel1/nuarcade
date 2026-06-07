@@ -13,7 +13,7 @@ import { usePlayTracking } from "../../hooks/usePlayTracking"
 import Splash from "../Splash/Splash"
 import styles from "./Wheel.module.css"
 
-const CATEGORIES = ["All", "Favorites", "Recent", "Racing", "Fighting", "Shooter", "Rhythm", "Flying", "Sports", "PS3", "Xbox360", "GCWii", "PS2", "Pinball"]
+const CATEGORIES = ["All", "Favorites", "Recent", "Racing", "Fighting", "Shooter", "Rhythm", "Flying", "Sports", "PS3", "Xbox360", "GCWii", "PS2", "Switch", "Pinball"]
 const ATTRACT_TIMEOUT = 120000
 
 function sortGames(games, sortBy) {

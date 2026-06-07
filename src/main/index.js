@@ -233,6 +233,24 @@ ipcMain.handle('scan-ps2-games', async (event, ps2GamesPath) => {
   return scanPs2Games(ps2GamesPath)
 })
 
+
+// ── Launch Ryujinx / Switch ──────────────────────────────────────────────────
+ipcMain.handle('launch-switch-game', async (event, gamePath) => {
+  return new Promise((resolve) => {
+    const cfg = config.load()
+    const ryujinxExe = path.join(cfg.ryujinxPath || 'F:\\Ryujinx\\', 'Ryujinx.exe')
+    const child = spawn(ryujinxExe, [gamePath], { detached: true, stdio: 'ignore' })
+    child.unref()
+    resolve({ success: true })
+  })
+})
+
+// ── Scan Switch games ────────────────────────────────────────────────────────
+ipcMain.handle('scan-switch-games', async (event, switchGamesPath) => {
+  const { scanSwitchGames } = require('./scanner')
+  return scanSwitchGames(switchGamesPath)
+})
+
 // ── Config & misc ───────────────────────────────────────────────────────────
 ipcMain.handle('add-exclusions', async (event, paths) => {
   return new Promise((resolve) => {

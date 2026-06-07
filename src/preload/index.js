@@ -16,6 +16,7 @@ contextBridge.exposeInMainWorld('nuarcade', {
   launchXbox360Game:(gamePath)    => ipcRenderer.invoke('launch-xbox360-game', gamePath),
   launchGCWiiGame:  (gamePath)    => ipcRenderer.invoke('launch-gcwii-game', gamePath),
   launchPs2Game:    (gamePath)    => ipcRenderer.invoke('launch-ps2-game', gamePath),
+  launchSwitchGame: (gamePath)    => ipcRenderer.invoke('launch-switch-game', gamePath),
 
   // Scanning
   scanGames:       (opts)           => ipcRenderer.invoke('scan-games', opts),
@@ -23,6 +24,7 @@ contextBridge.exposeInMainWorld('nuarcade', {
   scanXbox360Games:(xbox360Path)    => ipcRenderer.invoke('scan-xbox360-games', xbox360Path),
   scanGCWiiGames:  (gcWiiPath)      => ipcRenderer.invoke('scan-gcwii-games', gcWiiPath),
   scanPs2Games:    (ps2GamesPath)   => ipcRenderer.invoke('scan-ps2-games', ps2GamesPath),
+  scanSwitchGames: (switchGamesPath) => ipcRenderer.invoke('scan-switch-games', switchGamesPath),
   scanPinball:     (tablesPath)     => ipcRenderer.invoke('scan-pinball', tablesPath),
 
   // TeknoParrot updater

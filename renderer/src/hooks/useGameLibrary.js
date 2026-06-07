@@ -21,6 +21,10 @@ const SAMPLE_GAMES = [
   { id: 'ps3_tekken6',          title: 'Tekken 6',                    genre: 'PS3',      system: 'RPCS3',          status: 'Perfect', profile: 'BLES00494',                              icon: '🥊',  emulator: 'rpcs3' },
   { id: 'ps3_blazblue',         title: 'BlazBlue Calamity Trigger',   genre: 'PS3',      system: 'RPCS3',          status: 'Perfect', profile: 'BLES00535',                              icon: '🌀',  emulator: 'rpcs3' },
   { id: 'ps3_sf4',              title: 'Street Fighter IV',           genre: 'PS3',      system: 'RPCS3',          status: 'Great',   profile: 'BLES00374',                              icon: '👊',  emulator: 'rpcs3' },
+  // Nintendo Switch (Ryujinx)
+  { id: 'switch_ZeldaTotK',     title: 'Zelda: Tears of the Kingdom', genre: 'Switch',   system: 'Nintendo Switch', status:'Perfect', profile: 'ZeldaTotK.nsp',                          icon: '🔴',  emulator: 'ryujinx' },
+  { id: 'switch_MarioKart8',    title: 'Mario Kart 8 Deluxe',         genre: 'Racing',   system: 'Nintendo Switch', status:'Perfect', profile: 'MarioKart8.nsp',                         icon: '🏁',  emulator: 'ryujinx' },
+  { id: 'switch_SSBU',          title: 'Super Smash Bros. Ultimate',   genre: 'Fighting', system: 'Nintendo Switch', status:'Perfect', profile: 'SSBU.nsp',                               icon: '💥',  emulator: 'ryujinx' },
   // Xbox 360 (Xenia)
   { id: 'xbox360_Halo3',        title: 'Halo 3',                      genre: 'Xbox360',  system: 'Xbox 360',        status:'Perfect', profile: 'Halo3.iso',                              icon: '🎮',  emulator: 'xenia' },
   { id: 'xbox360_Gears',        title: 'Gears of War',                genre: 'Xbox360',  system: 'Xbox 360',        status:'Great',   profile: 'GearsOfWar.iso',                         icon: '⚙️',  emulator: 'xenia' },
@@ -84,6 +88,14 @@ export function useGameLibrary() {
               const ps3Result = await window.nuarcade.scanPs3Games(cfg.ps3GamesPath)
               if (ps3Result.games?.length) allGames = [...allGames, ...ps3Result.games]
             } catch (e) { console.warn('RPCS3 scan error:', e) }
+          }
+
+          // ── Ryujinx / Switch ──────────────────────────────────
+          if (cfg.mode !== 'pinball' && cfg.switchGamesPath) {
+            try {
+              const swResult = await window.nuarcade.scanSwitchGames(cfg.switchGamesPath)
+              if (swResult.games?.length) allGames = [...allGames, ...swResult.games]
+            } catch (e) { console.warn('Ryujinx scan error:', e) }
           }
 
           // ── Xenia / Xbox 360 ─────────────────────────────────

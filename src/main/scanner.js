@@ -406,3 +406,41 @@ async function scanPs2Games(ps2GamesPath) {
 }
 
 module.exports = { ...module.exports, scanXbox360Games, scanGCWiiGames, scanPs2Games }
+
+
+// ── Ryujinx / Nintendo Switch Scanner ───────────────────────────────────────
+async function scanSwitchGames(switchGamesPath) {
+  const fs = require('fs')
+  const path = require('path')
+  const games = []
+
+  if (!fs.existsSync(switchGamesPath)) {
+    return { games, count: 0, path: switchGamesPath, error: 'Folder not found' }
+  }
+
+  const EXTS = ['.nsp', '.xci', '.nca', '.nsz', '.xcz']
+  let entries
+  try { entries = fs.readdirSync(switchGamesPath, { withFileTypes: true }) }
+  catch (e) { return { games, count: 0, error: e.message } }
+
+  for (const entry of entries) {
+    if (!entry.isFile()) continue
+    const ext = path.extname(entry.name).toLowerCase()
+    if (!EXTS.includes(ext)) continue
+    const title = entry.name.replace(/\.[^.]+$/, '').replace(/_/g, ' ').replace(/\s*\[.*?\]/g, '').trim()
+    games.push({
+      id: 'switch_' + title.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, ''),
+      title,
+      path: path.join(switchGamesPath, entry.name),
+      emulator: 'ryujinx',
+      genre: 'Switch',
+      system: 'Nintendo Switch',
+      status: 'Playable',
+      icon: '🔴',
+      artwork: null,
+    })
+  }
+  return { games, count: games.length, path: switchGamesPath }
+}
+
+module.exports = { ...module.exports, scanSwitchGames }

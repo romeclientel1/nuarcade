@@ -11,6 +11,7 @@ const SAMPLE_FOUND = [
   { title: 'Halo 3',           genre: 'Xbox360'  },
   { title: 'Mario Kart Wii',   genre: 'GCWii'    },
   { title: 'God of War II',    genre: 'PS2'      },
+  { title: 'Zelda: TotK',      genre: 'Switch'   },
   { title: 'Medieval Madness', genre: 'Pinball'  },
 ]
 
@@ -20,12 +21,13 @@ const STATUS_STEPS = [
   { key: 'xbox360', label: 'Xenia Xbox 360 games scanned'    },
   { key: 'gcwii',   label: 'Dolphin GameCube/Wii games scanned' },
   { key: 'ps2',     label: 'PCSX2 PS2 games scanned'         },
+  { key: 'switch',  label: 'Ryujinx Switch games scanned'    },
   { key: 'pinball', label: 'Visual Pinball X tables scanned' },
 ]
 
 export default function ScanScreen({ config, updateConfig, next, prev }) {
   const [progress,     setProgress    ] = useState(0)
-  const [counts,       setCounts      ] = useState({ tp:0, ps3:0, xbox360:0, gcwii:0, ps2:0, pinball:0 })
+  const [counts,       setCounts      ] = useState({ tp:0, ps3:0, xbox360:0, gcwii:0, ps2:0, switch:0, pinball:0 })
   const [completed,    setCompleted   ] = useState([])
   const [running,      setRunning     ] = useState(null)
   const [done,         setDone        ] = useState(false)
@@ -79,6 +81,14 @@ export default function ScanScreen({ config, updateConfig, next, prev }) {
         }
         setCompleted(c => [...c, 'ps2']); setRunning(null)
 
+        // Ryujinx
+        setRunning('switch')
+        if (config.mode !== 'pinball' && config.switchGamesPath) {
+          const sw = await window.nuarcade.scanSwitchGames(config.switchGamesPath)
+          if (sw.games?.length) { allGames = [...allGames, ...sw.games]; addCount('switch', sw.games.length) }
+        }
+        setCompleted(c => [...c, 'switch']); setRunning(null)
+
         // Pinball
         setRunning('pinball')
         if (config.mode !== 'arcade' && config.tablesPath) {
@@ -108,7 +118,7 @@ export default function ScanScreen({ config, updateConfig, next, prev }) {
       setCompleted(c => [...c, STATUS_STEPS[i].key])
       setRunning(null)
     }
-    setCounts({ tp: 15, ps3: 3, xbox360: 4, gcwii: 6, ps2: 8, pinball: 3 })
+    setCounts({ tp: 15, ps3: 3, xbox360: 4, gcwii: 6, ps2: 8, switch: 5, pinball: 3 })
     setDone(true)
   }
 
@@ -148,6 +158,7 @@ export default function ScanScreen({ config, updateConfig, next, prev }) {
           <div>X360 <span>{counts.xbox360}</span></div>
           <div>GC/Wii <span>{counts.gcwii}</span></div>
           <div>PS2 <span>{counts.ps2}</span></div>
+          <div>Switch <span>{counts.switch}</span></div>
           <div>Pinball <span>{counts.pinball}</span></div>
         </div>
       </div>

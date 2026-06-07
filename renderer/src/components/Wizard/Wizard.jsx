@@ -30,6 +30,8 @@ export default function Wizard({ onComplete }) {
     gcWiiGamesPath: 'F:\\GCWiiGames\\',
     pcsx2Path: 'F:\\PCSX2\\',
     ps2GamesPath: 'F:\\PS2Games\\',
+    ryujinxPath: 'F:\\Ryujinx\\',
+    switchGamesPath: 'F:\\SwitchGames\\',
     pinballPath: 'F:\\vPinball\\',
     tablesPath: 'F:\\PinballTables\\',
     controllers: { wheel: null, lightgun: null, gamepad: null },

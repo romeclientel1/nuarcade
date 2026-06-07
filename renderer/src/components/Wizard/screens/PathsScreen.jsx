@@ -12,6 +12,8 @@ const ALL_PATHS = [
   { key: 'gcWiiGamesPath',  label: 'GameCube/Wii Games',placeholder: 'F:\\GCWiiGames\\',     emulators: ['arcade', 'arcade+pinball'] },
   { key: 'pcsx2Path',       label: 'PCSX2 (PS2)',        placeholder: 'F:\\PCSX2\\',          emulators: ['arcade', 'arcade+pinball'] },
   { key: 'ps2GamesPath',    label: 'PS2 Games',          placeholder: 'F:\\PS2Games\\',       emulators: ['arcade', 'arcade+pinball'] },
+  { key: 'ryujinxPath',     label: 'Ryujinx (Switch)',  placeholder: 'F:\\Ryujinx\\',         emulators: ['arcade', 'arcade+pinball'] },
+  { key: 'switchGamesPath', label: 'Switch Games',       placeholder: 'F:\\SwitchGames\\',      emulators: ['arcade', 'arcade+pinball'] },
   { key: 'pinballPath',     label: 'VPX Engine',         placeholder: 'F:\\vPinball\\',       emulators: ['pinball', 'arcade+pinball'] },
   { key: 'tablesPath',      label: 'Pinball Tables',     placeholder: 'F:\\PinballTables\\',  emulators: ['pinball', 'arcade+pinball'] },
 ]
@@ -30,6 +32,8 @@ export default function PathsScreen({ config, updateConfig, next, prev }) {
     gcWiiGamesPath:   'F:\\GCWiiGames\\',
     pcsx2Path:        'F:\\PCSX2\\',
     ps2GamesPath:     'F:\\PS2Games\\',
+    ryujinxPath:      'F:\\Ryujinx\\',
+    switchGamesPath:  'F:\\SwitchGames\\',
     pinballPath:      'F:\\vPinball\\',
     tablesPath:       'F:\\PinballTables\\',
   }
