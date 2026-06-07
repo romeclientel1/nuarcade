@@ -181,6 +181,58 @@ ipcMain.handle('download-video', async (event, { videoUrl, outputPath, gameId })
   })
 })
 
+
+// ── Launch Xenia / Xbox 360 ─────────────────────────────────────────────────
+ipcMain.handle('launch-xbox360-game', async (event, gamePath) => {
+  return new Promise((resolve) => {
+    const cfg = config.load()
+    const xeniaExe = path.join(cfg.xeniaPath || 'F:\\Xenia\\', 'xenia.exe')
+    const child = spawn(xeniaExe, [gamePath], { detached: true, stdio: 'ignore' })
+    child.unref()
+    resolve({ success: true })
+  })
+})
+
+// ── Launch Dolphin / GC+Wii ─────────────────────────────────────────────────
+ipcMain.handle('launch-gcwii-game', async (event, gamePath) => {
+  return new Promise((resolve) => {
+    const cfg = config.load()
+    const dolphinExe = path.join(cfg.dolphinPath || 'F:\\Dolphin\\', 'Dolphin.exe')
+    const child = spawn(dolphinExe, ['-e', gamePath, '--batch'], { detached: true, stdio: 'ignore' })
+    child.unref()
+    resolve({ success: true })
+  })
+})
+
+// ── Launch PCSX2 / PS2 ──────────────────────────────────────────────────────
+ipcMain.handle('launch-ps2-game', async (event, gamePath) => {
+  return new Promise((resolve) => {
+    const cfg = config.load()
+    const pcsx2Exe = path.join(cfg.pcsx2Path || 'F:\\PCSX2\\', 'pcsx2.exe')
+    const child = spawn(pcsx2Exe, [gamePath, '--nogui'], { detached: true, stdio: 'ignore' })
+    child.unref()
+    resolve({ success: true })
+  })
+})
+
+// ── Scan Xbox 360 games ─────────────────────────────────────────────────────
+ipcMain.handle('scan-xbox360-games', async (event, xbox360GamesPath) => {
+  const { scanXbox360Games } = require('./scanner')
+  return scanXbox360Games(xbox360GamesPath)
+})
+
+// ── Scan GameCube/Wii games ─────────────────────────────────────────────────
+ipcMain.handle('scan-gcwii-games', async (event, gcWiiGamesPath) => {
+  const { scanGCWiiGames } = require('./scanner')
+  return scanGCWiiGames(gcWiiGamesPath)
+})
+
+// ── Scan PS2 games ──────────────────────────────────────────────────────────
+ipcMain.handle('scan-ps2-games', async (event, ps2GamesPath) => {
+  const { scanPs2Games } = require('./scanner')
+  return scanPs2Games(ps2GamesPath)
+})
+
 // ── Config & misc ───────────────────────────────────────────────────────────
 ipcMain.handle('add-exclusions', async (event, paths) => {
   return new Promise((resolve) => {

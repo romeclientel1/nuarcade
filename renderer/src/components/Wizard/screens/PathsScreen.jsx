@@ -1,28 +1,46 @@
 import { useState } from 'react'
 import styles from './Screen.module.css'
 
-const PATHS = [
-  { key: 'teknoParrotPath', label: 'TeknoParrot', placeholder: 'F:\\TeknoParrot\\' },
-  { key: 'gamesFolderPath', label: 'Games folder', placeholder: 'F:\\ArcadeGames\\' },
-  { key: 'rpcs3Path', label: 'RPCS3', placeholder: 'F:\\RPCS3\\' },
-  { key: 'ps3GamesPath', label: 'PS3 Games folder', placeholder: 'F:\\PS3Games\\' },
-  { key: 'pinballPath', label: 'VPX engine', placeholder: 'F:\\vPinball\\' },
-  { key: 'tablesPath', label: 'Pinball tables', placeholder: 'F:\\PinballTables\\' },
+const ALL_PATHS = [
+  { key: 'teknoParrotPath', label: 'TeknoParrot',      placeholder: 'F:\\TeknoParrot\\',    emulators: ['arcade', 'arcade+pinball'] },
+  { key: 'gamesFolderPath', label: 'Arcade Games',     placeholder: 'F:\\ArcadeGames\\',    emulators: ['arcade', 'arcade+pinball'] },
+  { key: 'rpcs3Path',       label: 'RPCS3 (PS3)',       placeholder: 'F:\\RPCS3\\',          emulators: ['arcade', 'arcade+pinball'] },
+  { key: 'ps3GamesPath',    label: 'PS3 Games',         placeholder: 'F:\\PS3Games\\',       emulators: ['arcade', 'arcade+pinball'] },
+  { key: 'xeniaPath',       label: 'Xenia (Xbox 360)',  placeholder: 'F:\\Xenia\\',          emulators: ['arcade', 'arcade+pinball'] },
+  { key: 'xbox360GamesPath',label: 'Xbox 360 Games',    placeholder: 'F:\\Xbox360Games\\',   emulators: ['arcade', 'arcade+pinball'] },
+  { key: 'dolphinPath',     label: 'Dolphin (GC/Wii)',  placeholder: 'F:\\Dolphin\\',        emulators: ['arcade', 'arcade+pinball'] },
+  { key: 'gcWiiGamesPath',  label: 'GameCube/Wii Games',placeholder: 'F:\\GCWiiGames\\',     emulators: ['arcade', 'arcade+pinball'] },
+  { key: 'pcsx2Path',       label: 'PCSX2 (PS2)',        placeholder: 'F:\\PCSX2\\',          emulators: ['arcade', 'arcade+pinball'] },
+  { key: 'ps2GamesPath',    label: 'PS2 Games',          placeholder: 'F:\\PS2Games\\',       emulators: ['arcade', 'arcade+pinball'] },
+  { key: 'pinballPath',     label: 'VPX Engine',         placeholder: 'F:\\vPinball\\',       emulators: ['pinball', 'arcade+pinball'] },
+  { key: 'tablesPath',      label: 'Pinball Tables',     placeholder: 'F:\\PinballTables\\',  emulators: ['pinball', 'arcade+pinball'] },
 ]
 
 export default function PathsScreen({ config, updateConfig, next, prev }) {
-  const [values, setValues] = useState({
-    teknoParrotPath: config.teknoParrotPath || 'F:\\TeknoParrot\\',
-    gamesFolderPath: config.gamesFolderPath || 'F:\\ArcadeGames\\',
-    rpcs3Path: config.rpcs3Path || 'F:\\RPCS3\\',
-    ps3GamesPath: config.ps3GamesPath || 'F:\\PS3Games\\',
-    pinballPath: config.pinballPath || 'F:\\vPinball\\',
-    tablesPath: config.tablesPath || 'F:\\PinballTables\\',
+  const mode = config.mode || 'arcade+pinball'
+
+  const defaults = {
+    teknoParrotPath:  'F:\\TeknoParrot\\',
+    gamesFolderPath:  'F:\\ArcadeGames\\',
+    rpcs3Path:        'F:\\RPCS3\\',
+    ps3GamesPath:     'F:\\PS3Games\\',
+    xeniaPath:        'F:\\Xenia\\',
+    xbox360GamesPath: 'F:\\Xbox360Games\\',
+    dolphinPath:      'F:\\Dolphin\\',
+    gcWiiGamesPath:   'F:\\GCWiiGames\\',
+    pcsx2Path:        'F:\\PCSX2\\',
+    ps2GamesPath:     'F:\\PS2Games\\',
+    pinballPath:      'F:\\vPinball\\',
+    tablesPath:       'F:\\PinballTables\\',
+  }
+
+  const [values, setValues] = useState(() => {
+    const v = {}
+    Object.keys(defaults).forEach(k => { v[k] = config[k] || defaults[k] })
+    return v
   })
 
-  const handleChange = (key, val) => {
-    setValues(v => ({ ...v, [key]: val }))
-  }
+  const handleChange = (key, val) => setValues(v => ({ ...v, [key]: val }))
 
   const handleBrowse = async (key) => {
     if (window.nuarcade?.browseFolder) {
@@ -31,48 +49,42 @@ export default function PathsScreen({ config, updateConfig, next, prev }) {
     }
   }
 
+  const visiblePaths = ALL_PATHS.filter(p => p.emulators.includes(mode))
+
   const handleContinue = () => {
     updateConfig(values)
     next()
   }
-
-  const mode = config.mode || 'arcade+pinball'
-  const showPinball = mode !== 'arcade'
-  const showRpcs3 = mode !== 'pinball'
-
-  const visiblePaths = PATHS.filter(p => {
-    if ((p.key === 'pinballPath' || p.key === 'tablesPath') && !showPinball) return false
-    if ((p.key === 'rpcs3Path' || p.key === 'ps3GamesPath') && !showRpcs3) return false
-    return true
-  })
 
   return (
     <div className={styles.screen}>
       <div className={styles.eyebrow}>Step 3 — Paths</div>
       <div className={styles.title}>Where are your files?</div>
       <div className={styles.sub}>
-        Point NuArcade to your emulator folders and game libraries.
-        It will find and configure every game automatically.
+        Point NuArcade to each emulator and its games folder.
+        All paths default to your F: drive — browse or type to update.
       </div>
 
-      {visiblePaths.map(p => (
-        <div key={p.key} className={styles.pathRow}>
-          <div className={styles.pathLabel}>{p.label}</div>
-          <input
-            className={styles.pathInput}
-            value={values[p.key] || ''}
-            onChange={e => handleChange(p.key, e.target.value)}
-            placeholder={p.placeholder}
-            spellCheck={false}
-          />
-          <button className={styles.pathBtn} onClick={() => handleBrowse(p.key)}>
-            📁 Browse
-          </button>
-        </div>
-      ))}
+      <div className={styles.pathsScroll}>
+        {visiblePaths.map(p => (
+          <div key={p.key} className={styles.pathRow}>
+            <div className={styles.pathLabel}>{p.label}</div>
+            <input
+              className={styles.pathInput}
+              value={values[p.key] || ''}
+              onChange={e => handleChange(p.key, e.target.value)}
+              placeholder={p.placeholder}
+              spellCheck={false}
+            />
+            <button className={styles.pathBtn} onClick={() => handleBrowse(p.key)}>
+              📁 Browse
+            </button>
+          </div>
+        ))}
+      </div>
 
       <div className={styles.infoNote}>
-        💡 All paths default to your F: drive. Use Browse or type manually to update.
+        💡 Only install the emulators you plan to use — empty folders are fine and can be set up later via Settings → Rescan.
       </div>
 
       <div className={styles.footer}>

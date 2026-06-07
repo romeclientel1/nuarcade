@@ -490,3 +490,17 @@
   max-width: 420px;
   line-height: 1.5;
 }
+
+/* ── Scrollable paths list ────────────────────────────────── */
+.pathsScroll {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 4px;
+  margin-bottom: 8px;
+}
+.pathsScroll::-webkit-scrollbar { width: 4px; }
+.pathsScroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 2px; }
+.pathsScroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }

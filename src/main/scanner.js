@@ -282,3 +282,127 @@ async function scanPs3Games(ps3GamesPath) {
 }
 
 module.exports = { ...module.exports, scanPs3Games }
+
+
+// ── Xenia / Xbox 360 Scanner ────────────────────────────────────────────────
+async function scanXbox360Games(xbox360GamesPath) {
+  const fs = require('fs')
+  const path = require('path')
+  const games = []
+
+  if (!fs.existsSync(xbox360GamesPath)) {
+    return { games, count: 0, path: xbox360GamesPath, error: 'Folder not found' }
+  }
+
+  const EXTS = ['.iso', '.xex', '.zar']
+  let entries
+  try { entries = fs.readdirSync(xbox360GamesPath, { withFileTypes: true }) }
+  catch (e) { return { games, count: 0, error: e.message } }
+
+  for (const entry of entries) {
+    if (entry.isDirectory()) {
+      // Folder-based game — look for default.xex inside
+      const xex = path.join(xbox360GamesPath, entry.name, 'default.xex')
+      if (fs.existsSync(xex)) {
+        games.push({
+          id: 'xbox360_' + entry.name.replace(/\s+/g, '_'),
+          title: entry.name,
+          path: xex,
+          emulator: 'xenia',
+          genre: 'Xbox360',
+          system: 'Xbox 360',
+          status: 'Playable',
+          icon: '🎮',
+          artwork: null,
+        })
+      }
+    } else if (EXTS.includes(path.extname(entry.name).toLowerCase())) {
+      const title = entry.name.replace(/\.[^.]+$/, '').replace(/_/g, ' ')
+      games.push({
+        id: 'xbox360_' + title.replace(/\s+/g, '_'),
+        title,
+        path: path.join(xbox360GamesPath, entry.name),
+        emulator: 'xenia',
+        genre: 'Xbox360',
+        system: 'Xbox 360',
+        status: 'Playable',
+        icon: '🎮',
+        artwork: null,
+      })
+    }
+  }
+  return { games, count: games.length, path: xbox360GamesPath }
+}
+
+// ── Dolphin / GameCube + Wii Scanner ────────────────────────────────────────
+async function scanGCWiiGames(gcWiiGamesPath) {
+  const fs = require('fs')
+  const path = require('path')
+  const games = []
+
+  if (!fs.existsSync(gcWiiGamesPath)) {
+    return { games, count: 0, path: gcWiiGamesPath, error: 'Folder not found' }
+  }
+
+  const EXTS = ['.iso', '.gcm', '.rvz', '.wbfs', '.wad', '.gcz']
+  let entries
+  try { entries = fs.readdirSync(gcWiiGamesPath, { withFileTypes: true }) }
+  catch (e) { return { games, count: 0, error: e.message } }
+
+  for (const entry of entries) {
+    if (!entry.isFile()) continue
+    const ext = path.extname(entry.name).toLowerCase()
+    if (!EXTS.includes(ext)) continue
+    const title = entry.name.replace(/\.[^.]+$/, '').replace(/_/g, ' ')
+    const isWii = ['.wbfs', '.wad'].includes(ext)
+    games.push({
+      id: 'gcwii_' + title.replace(/\s+/g, '_'),
+      title,
+      path: path.join(gcWiiGamesPath, entry.name),
+      emulator: 'dolphin',
+      genre: 'GCWii',
+      system: isWii ? 'Nintendo Wii' : 'GameCube',
+      status: 'Playable',
+      icon: isWii ? '🎮' : '🟣',
+      artwork: null,
+    })
+  }
+  return { games, count: games.length, path: gcWiiGamesPath }
+}
+
+// ── PCSX2 / PS2 Scanner ─────────────────────────────────────────────────────
+async function scanPs2Games(ps2GamesPath) {
+  const fs = require('fs')
+  const path = require('path')
+  const games = []
+
+  if (!fs.existsSync(ps2GamesPath)) {
+    return { games, count: 0, path: ps2GamesPath, error: 'Folder not found' }
+  }
+
+  const EXTS = ['.iso', '.bin', '.img', '.mdf', '.chd']
+  let entries
+  try { entries = fs.readdirSync(ps2GamesPath, { withFileTypes: true }) }
+  catch (e) { return { games, count: 0, error: e.message } }
+
+  for (const entry of entries) {
+    if (!entry.isFile()) continue
+    const ext = path.extname(entry.name).toLowerCase()
+    if (!EXTS.includes(ext)) continue
+    const title = entry.name.replace(/\.[^.]+$/, '').replace(/_/g, ' ')
+    games.push({
+      id: 'ps2_' + title.replace(/\s+/g, '_'),
+      title,
+      path: path.join(ps2GamesPath, entry.name),
+      emulator: 'pcsx2',
+      genre: 'PS2',
+      system: 'PlayStation 2',
+      status: 'Playable',
+      icon: '💿',
+      artwork: null,
+    })
+  }
+  return { games, count: games.length, path: ps2GamesPath }
+}
+
+module.exports = { ...module.exports, scanXbox360Games, scanGCWiiGames, scanPs2Games }

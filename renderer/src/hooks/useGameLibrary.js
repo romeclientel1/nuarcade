@@ -21,6 +21,18 @@ const SAMPLE_GAMES = [
   { id: 'ps3_tekken6',          title: 'Tekken 6',                    genre: 'PS3',      system: 'RPCS3',          status: 'Perfect', profile: 'BLES00494',                              icon: '🥊',  emulator: 'rpcs3' },
   { id: 'ps3_blazblue',         title: 'BlazBlue Calamity Trigger',   genre: 'PS3',      system: 'RPCS3',          status: 'Perfect', profile: 'BLES00535',                              icon: '🌀',  emulator: 'rpcs3' },
   { id: 'ps3_sf4',              title: 'Street Fighter IV',           genre: 'PS3',      system: 'RPCS3',          status: 'Great',   profile: 'BLES00374',                              icon: '👊',  emulator: 'rpcs3' },
+  // Xbox 360 (Xenia)
+  { id: 'xbox360_Halo3',        title: 'Halo 3',                      genre: 'Xbox360',  system: 'Xbox 360',        status:'Perfect', profile: 'Halo3.iso',                              icon: '🎮',  emulator: 'xenia' },
+  { id: 'xbox360_Gears',        title: 'Gears of War',                genre: 'Xbox360',  system: 'Xbox 360',        status:'Great',   profile: 'GearsOfWar.iso',                         icon: '⚙️',  emulator: 'xenia' },
+  { id: 'xbox360_Forza3',       title: 'Forza Motorsport 3',          genre: 'Racing',   system: 'Xbox 360',        status:'Playable',profile: 'ForzaMotorsport3.iso',                   icon: '🏎️',  emulator: 'xenia' },
+  // GameCube / Wii (Dolphin)
+  { id: 'gcwii_MarioKartWii',   title: 'Mario Kart Wii',              genre: 'GCWii',    system: 'Nintendo Wii',    status:'Perfect', profile: 'MarioKartWii.wbfs',                      icon: '🏁',  emulator: 'dolphin' },
+  { id: 'gcwii_SSBM',           title: 'Super Smash Bros. Melee',     genre: 'Fighting', system: 'GameCube',        status:'Perfect', profile: 'SSBM.iso',                               icon: '💥',  emulator: 'dolphin' },
+  { id: 'gcwii_FZeroGX',        title: 'F-Zero GX',                   genre: 'Racing',   system: 'GameCube',        status:'Perfect', profile: 'FZeroGX.iso',                            icon: '🚀',  emulator: 'dolphin' },
+  // PS2 (PCSX2)
+  { id: 'ps2_GodOfWarII',       title: 'God of War II',               genre: 'PS2',      system: 'PlayStation 2',   status:'Perfect', profile: 'GodOfWarII.iso',                         icon: '⚔️',  emulator: 'pcsx2' },
+  { id: 'ps2_GT4',              title: 'Gran Turismo 4',              genre: 'Racing',   system: 'PlayStation 2',   status:'Perfect', profile: 'GranTurismo4.iso',                       icon: '🏎️',  emulator: 'pcsx2' },
+  { id: 'ps2_SoulCalibur3',     title: 'SoulCalibur III',             genre: 'Fighting', system: 'PlayStation 2',   status:'Great',   profile: 'SoulCaliburIII.iso',                     icon: '🗡️',  emulator: 'pcsx2' },
   // Pinball
   { id: 'Medieval_Madness',     title: 'Medieval Madness',            genre: 'Pinball',  system: 'Visual Pinball X',status:'Perfect', profile: 'Medieval_Madness.vpx',                   icon: '🏰',  emulator: 'vpx', isPinball: true },
   { id: 'Attack_From_Mars',     title: 'Attack From Mars',            genre: 'Pinball',  system: 'Visual Pinball X',status:'Perfect', profile: 'Attack_From_Mars.vpx',                   icon: '🛸',  emulator: 'vpx', isPinball: true },
@@ -72,6 +84,30 @@ export function useGameLibrary() {
               const ps3Result = await window.nuarcade.scanPs3Games(cfg.ps3GamesPath)
               if (ps3Result.games?.length) allGames = [...allGames, ...ps3Result.games]
             } catch (e) { console.warn('RPCS3 scan error:', e) }
+          }
+
+          // ── Xenia / Xbox 360 ─────────────────────────────────
+          if (cfg.mode !== 'pinball' && cfg.xbox360GamesPath) {
+            try {
+              const x360Result = await window.nuarcade.scanXbox360Games(cfg.xbox360GamesPath)
+              if (x360Result.games?.length) allGames = [...allGames, ...x360Result.games]
+            } catch (e) { console.warn('Xenia scan error:', e) }
+          }
+
+          // ── Dolphin / GameCube + Wii ──────────────────────────
+          if (cfg.mode !== 'pinball' && cfg.gcWiiGamesPath) {
+            try {
+              const gcWiiResult = await window.nuarcade.scanGCWiiGames(cfg.gcWiiGamesPath)
+              if (gcWiiResult.games?.length) allGames = [...allGames, ...gcWiiResult.games]
+            } catch (e) { console.warn('Dolphin scan error:', e) }
+          }
+
+          // ── PCSX2 / PS2 ──────────────────────────────────────
+          if (cfg.mode !== 'pinball' && cfg.ps2GamesPath) {
+            try {
+              const ps2Result = await window.nuarcade.scanPs2Games(cfg.ps2GamesPath)
+              if (ps2Result.games?.length) allGames = [...allGames, ...ps2Result.games]
+            } catch (e) { console.warn('PCSX2 scan error:', e) }
           }
 
           // ── Visual Pinball X ─────────────────────────────────
