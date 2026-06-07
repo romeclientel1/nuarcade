@@ -289,6 +289,42 @@ ipcMain.handle('create-folder-structure', async () => {
   return { success: true, results }
 })
 
+
+// ── Backup config to file ────────────────────────────────────────────────────
+ipcMain.handle('backup-config', async () => {
+  const cfg = config.load()
+  const result = await dialog.showSaveDialog({
+    title: 'Save NuArcade Backup',
+    defaultPath: 'nuarcade-backup-' + new Date().toISOString().slice(0,10) + '.json',
+    filters: [{ name: 'JSON', extensions: ['json'] }]
+  })
+  if (result.canceled || !result.filePath) return { success: false }
+  const fs = require('fs')
+  fs.writeFileSync(result.filePath, JSON.stringify({ config: cfg, version: '1.3.0', date: new Date().toISOString() }, null, 2))
+  return { success: true, path: result.filePath }
+})
+
+// ── Restore config from file ─────────────────────────────────────────────────
+ipcMain.handle('restore-config', async () => {
+  const result = await dialog.showOpenDialog({
+    title: 'Restore NuArcade Backup',
+    filters: [{ name: 'JSON', extensions: ['json'] }],
+    properties: ['openFile']
+  })
+  if (result.canceled || !result.filePaths.length) return { success: false }
+  const fs = require('fs')
+  try {
+    const data = JSON.parse(fs.readFileSync(result.filePaths[0], 'utf8'))
+    if (data.config) {
+      config.save(data.config)
+      return { success: true, date: data.date }
+    }
+    return { success: false, error: 'Invalid backup file' }
+  } catch (e) {
+    return { success: false, error: e.message }
+  }
+})
+
 // ── Config & misc ───────────────────────────────────────────────────────────
 ipcMain.handle('add-exclusions', async (event, paths) => {
   return new Promise((resolve) => {

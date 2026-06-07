@@ -40,6 +40,10 @@ contextBridge.exposeInMainWorld('nuarcade', {
   // Folder structure
   createFolderStructure: () => ipcRenderer.invoke('create-folder-structure'),
 
+  // Backup / restore
+  backupConfig: () => ipcRenderer.invoke('backup-config'),
+  restoreConfig: () => ipcRenderer.invoke('restore-config'),
+
   // Controller overrides
   getControllerOverride: (gameId)             => ipcRenderer.invoke('get-controller-override', gameId),
   setControllerOverride: (gameId, controller) => ipcRenderer.invoke('set-controller-override', gameId, controller),

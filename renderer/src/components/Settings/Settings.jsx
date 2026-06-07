@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react"
+import ControllerTest from "../ControllerTest/ControllerTest"
+import { usePlaytime } from "../../hooks/usePlaytime"
 import styles from "./Settings.module.css"
 import { useVersionCheck } from "../../hooks/useVersionCheck"
 import { THEMES } from "../../hooks/useTheme"
@@ -8,6 +10,12 @@ export default function Settings({ onClose, onCRTChange, crtEnabled, themeId, on
   const [saved, setSaved] = useState(false)
   const [exporting, setExporting] = useState(false)
   const { newVersion, releaseUrl } = useVersionCheck()
+const { getAllPlaytime, formatTime } = usePlaytime()
+const [showControllerTest, setShowControllerTest] = useState(false)
+const [rescanning, setRescanning] = useState(false)
+const [backingUp, setBackingUp] = useState(false)
+const [restoring, setRestoring] = useState(false)
+const [rescanResult, setRescanResult] = useState(null)
 
   useEffect(() => { loadConfig() }, [])
 
@@ -31,7 +39,44 @@ export default function Settings({ onClose, onCRTChange, crtEnabled, themeId, on
     }
   }
 
-  const handleSave = async () => {
+  const handleRescan = async () => {
+  if (!window.nuarcade) return
+  setRescanning(true)
+  setRescanResult(null)
+  try {
+    const cfg = config
+    let total = 0
+    const tp = await window.nuarcade.scanGames(cfg.teknoParrotPath, cfg.gamesFolderPath)
+    total += tp.games?.length || 0
+    if (cfg.ps3GamesPath) { const r = await window.nuarcade.scanPs3Games(cfg.ps3GamesPath); total += r.games?.length || 0 }
+    if (cfg.xbox360GamesPath) { const r = await window.nuarcade.scanXbox360Games(cfg.xbox360GamesPath); total += r.games?.length || 0 }
+    if (cfg.gcWiiGamesPath) { const r = await window.nuarcade.scanGCWiiGames(cfg.gcWiiGamesPath); total += r.games?.length || 0 }
+    if (cfg.ps2GamesPath) { const r = await window.nuarcade.scanPs2Games(cfg.ps2GamesPath); total += r.games?.length || 0 }
+    if (cfg.switchGamesPath) { const r = await window.nuarcade.scanSwitchGames(cfg.switchGamesPath); total += r.games?.length || 0 }
+    if (cfg.tablesPath) { const r = await window.nuarcade.scanPinball(cfg.tablesPath); total += r.games?.length || 0 }
+    setRescanResult(total + " games found")
+  } catch (e) { setRescanResult("Scan error: " + e.message) }
+  setRescanning(false)
+}
+
+const handleBackup = async () => {
+  setBackingUp(true)
+  const result = await window.nuarcade?.backupConfig()
+  setBackingUp(false)
+  if (result?.success) alert("Backup saved to " + result.path)
+}
+
+const handleRestore = async () => {
+  setRestoring(true)
+  const result = await window.nuarcade?.restoreConfig()
+  setRestoring(false)
+  if (result?.success) {
+    alert("Config restored from backup dated " + new Date(result.date).toLocaleDateString())
+    loadConfig()
+  }
+}
+
+const handleSave = async () => {
     if (window.nuarcade) await window.nuarcade.setConfig(config)
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)

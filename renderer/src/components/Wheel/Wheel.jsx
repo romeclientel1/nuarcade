@@ -9,6 +9,7 @@ import Help from "../Help/Help"
 import SortMenu from "./SortMenu"
 import { useGamepad } from "./useGamepad"
 import { useArcadeSounds } from "../../hooks/useArcadeSounds"
+import { usePlaytime } from "../../hooks/usePlaytime"
 
 
 import styles from "./Wheel.module.css"
@@ -51,6 +52,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
   const [showSearch, setShowSearch] = useState(false)
   const searchRef = useRef(null)
   const sounds = useArcadeSounds()
+  const { startSession, endSession, getPlaytime, formatTime } = usePlaytime()
   
   const [cabinetMode, setCabinetMode] = useState(false)
   const [screenshotMode, setScreenshotMode] = useState(false)
@@ -146,6 +148,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
     if (launching || !current) return
     sounds.launch()
     setLaunching(true)
+    const sessionStart = startSession(current.id || current.profile)
     addRecentlyPlayed(current)
     // recordPlay(current)
     // Gamepad rumble on launch

@@ -1,0 +1,25 @@
+
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 9000; backdrop-filter: blur(8px); }
+.panel { background: #0a0a0a; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; width: 560px; max-height: 80vh; display: flex; flex-direction: column; overflow: hidden; }
+.header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px 16px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.title { font-size: 1.1rem; font-weight: 700; color: #fff; }
+.closeBtn { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: rgba(255,255,255,0.5); font-size: 0.75rem; padding: 4px 10px; cursor: pointer; }
+.body { padding: 20px 24px; overflow-y: auto; }
+.padSection { margin-bottom: 24px; }
+.padName { font-size: 0.72rem; color: rgba(255,255,255,0.4); margin-bottom: 12px; font-family: monospace; }
+.btnGrid { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.btn { width: 44px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); font-size: 0.7rem; color: rgba(255,255,255,0.4); transition: all 0.08s; font-weight: 600; }
+.btnActive { background: rgba(0,255,136,0.2); border-color: #00ff88; color: #00ff88; box-shadow: 0 0 12px rgba(0,255,136,0.3); }
+.axesGrid { display: flex; flex-direction: column; gap: 8px; }
+.axisRow { display: flex; align-items: center; gap: 10px; }
+.axisLabel { font-size: 0.7rem; color: rgba(255,255,255,0.3); min-width: 44px; }
+.axisTrack { flex: 1; height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; position: relative; }
+.axisThumb { position: absolute; top: -4px; width: 12px; height: 12px; border-radius: 50%; background: #00ff88; transform: translateX(-50%); transition: left 0.05s; }
+.axisVal { font-size: 0.68rem; color: rgba(255,255,255,0.3); min-width: 36px; text-align: right; font-family: monospace; }
+.empty { display: flex; flex-direction: column; align-items: center; padding: 48px 24px; gap: 12px; }
+.emptyIcon { font-size: 3rem; opacity: 0.2; }
+.emptyText { font-size: 1rem; color: rgba(255,255,255,0.5); font-weight: 600; }
+.emptySub { font-size: 0.78rem; color: rgba(255,255,255,0.25); }
+.footer { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-top: 1px solid rgba(255,255,255,0.06); }
+.hint { font-size: 0.72rem; color: rgba(255,255,255,0.25); }
+.doneBtn { background: rgba(0,255,136,0.15); border: 1px solid rgba(0,255,136,0.3); border-radius: 8px; color: #00ff88; font-size: 0.82rem; font-weight: 600; padding: 8px 20px; cursor: pointer; }
