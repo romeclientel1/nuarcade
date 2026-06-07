@@ -142,7 +142,7 @@ async function ensureYtDlp() {
 
 ipcMain.handle('search-video', async (event, gameTitle) => {
   try {
-    const query = encodeURIComponent(gameTitle + ' arcade gameplay TeknoParrot')
+    const query = encodeURIComponent(gameTitle + ' gameplay')
     const res = await fetch('https://www.youtube.com/results?search_query=' + query)
     const html = await res.text()
     const match = html.match(/"videoId":"([^"]+)".*?"title":{"runs":\[{"text":"([^"]+)"/)
