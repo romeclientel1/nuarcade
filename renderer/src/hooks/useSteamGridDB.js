@@ -1,13 +1,15 @@
 import { useCallback } from "react"
 
 const SGDB_BASE = "https://www.steamgriddb.com/api/v2"
+const DEFAULT_KEY = "8e15be83af3c9840a1a26987bdf6fd13"
 
 export function useSteamGridDB(apiKey) {
+  const key = apiKey || DEFAULT_KEY
   const searchGame = useCallback(async (title) => {
     if (!apiKey) return null
     try {
       const res = await fetch(SGDB_BASE + "/search/autocomplete/" + encodeURIComponent(title), {
-        headers: { Authorization: "Bearer " + apiKey }
+        headers: { Authorization: "Bearer " + key }
       })
       const data = await res.json()
       return data.data?.[0] || null
@@ -18,7 +20,7 @@ export function useSteamGridDB(apiKey) {
     if (!apiKey || !gameId) return null
     try {
       const res = await fetch(SGDB_BASE + "/heroes/game/" + gameId + "?limit=1", {
-        headers: { Authorization: "Bearer " + apiKey }
+        headers: { Authorization: "Bearer " + key }
       })
       const data = await res.json()
       return data.data?.[0]?.url || null
@@ -29,7 +31,7 @@ export function useSteamGridDB(apiKey) {
     if (!apiKey || !gameId) return null
     try {
       const res = await fetch(SGDB_BASE + "/grids/game/" + gameId + "?limit=1&dimensions=600x900", {
-        headers: { Authorization: "Bearer " + apiKey }
+        headers: { Authorization: "Bearer " + key }
       })
       const data = await res.json()
       return data.data?.[0]?.url || null
@@ -40,7 +42,7 @@ export function useSteamGridDB(apiKey) {
     if (!apiKey || !gameId) return null
     try {
       const res = await fetch(SGDB_BASE + "/logos/game/" + gameId + "?limit=1", {
-        headers: { Authorization: "Bearer " + apiKey }
+        headers: { Authorization: "Bearer " + key }
       })
       const data = await res.json()
       return data.data?.[0]?.url || null

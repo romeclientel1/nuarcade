@@ -86,8 +86,7 @@ export default function ArtworkManager({ games, onClose, apiKey, onArtworkUpdate
             <button
               className={styles.startBtn}
               onClick={runDownload}
-              disabled={!apiKey}
-              style={{ opacity: apiKey ? 1 : 0.4 }}
+              
             >
               Start artwork download
             </button>

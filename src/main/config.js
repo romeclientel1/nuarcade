@@ -10,6 +10,7 @@ const DEFAULTS = {
   pinballPath:      'F:\\vPinball\\',
   tablesPath:       'F:\\PinballTables\\',
   mediaPath:        'F:\\Media\\',
+  sgdbApiKey:       '8e15be83af3c9840a1a26987bdf6fd13',
   setupComplete:    false,
   displayMode:      'fullscreen',
   controllers: {
