@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { fetchScreenScraperArtwork } from './useScreenScraper'
 
 const SAMPLE_GAMES = [
   // TeknoParrot
@@ -255,6 +256,37 @@ export function useGameLibrary() {
           })
           if (seenUpdated) {
             try { localStorage.setItem(seenKey, JSON.stringify(firstSeen)) } catch {}
+
+            // Auto-fetch artwork for newly discovered games in the background
+            const newGameIds = new Set(
+              allGames
+                .filter(g => firstSeen[g.id || g.profile] === now)
+                .map(g => g.id || g.profile)
+            )
+            if (newGameIds.size > 0 && cfg.screenscraper?.user && cfg.screenscraper?.pass) {
+              const newGames = allGames.filter(g => newGameIds.has(g.id || g.profile))
+              // Run in background -- don't await, don't block UI
+              setTimeout(async () => {
+                try {
+                  let artwork = {}
+                  try { artwork = JSON.parse(localStorage.getItem('nuarcade_artwork') || '{}') } catch {}
+                  for (const game of newGames.slice(0, 50)) { // limit to 50 per scan
+                    const id = game.id || game.profile
+                    if (artwork[id]) continue // skip if already have art
+                    const result = await fetchScreenScraperArtwork(
+                      game,
+                      cfg.screenscraper.user,
+                      cfg.screenscraper.pass
+                    )
+                    if (result?.capsule || result?.hero) {
+                      artwork[id] = result
+                    }
+                    await new Promise(r => setTimeout(r, 350)) // rate limit
+                  }
+                  localStorage.setItem('nuarcade_artwork', JSON.stringify(artwork))
+                } catch (e) { /* silent fail */ }
+              }, 2000) // delay 2s to let UI settle first
+            }
           }
 
           // Filter by enabled emulators

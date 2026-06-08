@@ -8,6 +8,7 @@ import GameDetail from "../GameDetail/GameDetail"
 import Help from "../Help/Help"
 import Collections, { useCollections } from "../Collections/Collections"
 import Stats from "../Stats/Stats"
+import VirtualKeyboard from "../VirtualKeyboard/VirtualKeyboard"
 import SortMenu from "./SortMenu"
 import { useGamepad } from "./useGamepad"
 import { useArcadeSounds } from "../../hooks/useArcadeSounds"
@@ -100,6 +101,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
   const [showSort, setShowSort] = useState(false)
   const [showCollections, setShowCollections] = useState(false)
   const [showStats, setShowStats] = useState(false)
+  const [showVirtualKeyboard, setShowVirtualKeyboard] = useState(false)
   const [sortBy, setSortBy] = useState("default")
   const [search,        setSearch       ] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
@@ -248,7 +250,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
   }, [showSearch])
 
   useGamepad({
-    enabled: !showDetail && !showMediaManager && !showSettings && !showSearch && !showHelp,
+    enabled: !showDetail && !showMediaManager && !showSettings && !showSearch && !showHelp && !showVirtualKeyboard,
     onLeft:          () => setSelectedIndex(i => (i - 1 + filteredGames.length) % filteredGames.length),
     onRight:         () => setSelectedIndex(i => (i + 1) % filteredGames.length),
     onConfirm:       () => setShowDetail(true),
@@ -402,25 +404,39 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
                 onChange={e => handleSearchChange(e.target.value)}
                 placeholder="Search games, systems, ROM names..."
                 onKeyDown={e => {
-                  if (e.key === "Escape") { setShowSearch(false); setSearch(""); setDebouncedSearch("") }
+                  if (e.key === "Escape") { setShowSearch(false); setSearch(""); setDebouncedSearch(""); setShowVirtualKeyboard(false) }
                 }}
+                onFocus={() => setShowVirtualKeyboard(false)}
               />
               {debouncedSearch && (
                 <span className={styles.searchCount}>
                   {filteredGames.length} result{filteredGames.length !== 1 ? "s" : ""}
                 </span>
               )}
-              <button className={styles.searchClose} onClick={() => { setShowSearch(false); setSearch(""); setDebouncedSearch("") }}>x</button>
+              <button className={styles.searchClose} onClick={() => {
+                setShowSearch(false); setSearch(""); setDebouncedSearch(""); setShowVirtualKeyboard(false)
+              }}>x</button>
             </div>
           ) : (
             <div className={styles.statsRow}>
               {stats?.devMode && <span className={styles.devBadge}>DEV MODE</span>}
               {attractMode && <span className={styles.attractBadge}>ATTRACT</span>}
-              <span className={styles.gameCount}>{filteredGames.length} games</span>
+              {activeCategory.startsWith("col_") && collections[activeCategory] && (
+                <span className={styles.collectionBadge}>
+                  [] {collections[activeCategory].name}
+                </span>
+              )}
+              {!activeCategory.startsWith("col_") && activeCategory !== "All" && activeCategory !== "Recent" && activeCategory !== "Favorites" && (
+                <span className={styles.filterBadge}>{activeCategory}</span>
+              )}
+              <span className={styles.gameCount}>{filteredGames.length} game{filteredGames.length !== 1 ? "s" : ""}</span>
               {newGameCount > 0 && (
                 <span className={styles.newBadge}>+{newGameCount} new</span>
               )}
-              <button className={styles.searchBtn} onClick={() => setShowSearch(true)}>Search</button>
+              <button className={styles.searchBtn} onClick={() => {
+                setShowSearch(true)
+                setShowVirtualKeyboard(true)
+              }}>Search</button>
               <button className={sortBy !== "default" ? styles.sortActive : styles.sortBtn} onClick={() => setShowSort(s => !s)}>Sort</button>
               <button className={styles.randBtn} onClick={() => {
                 if (filteredGames.length > 0) {
@@ -606,6 +622,15 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
           onClose={() => setShowStats(false)}
         />
       )}
+      {showVirtualKeyboard && showSearch && (
+        <VirtualKeyboard
+          value={search}
+          onChange={val => handleSearchChange(val)}
+          onDone={() => setShowVirtualKeyboard(false)}
+          onClose={() => { setShowSearch(false); setSearch(""); setDebouncedSearch(""); setShowVirtualKeyboard(false) }}
+          resultCount={filteredGames.length}
+        />
+      )}
       {showMediaManager && <MediaManager onClose={() => setShowMediaManager(false)} />}
       {showSettings && <Settings games={games} onClose={() => setShowSettings(false)} onCRTChange={onCRTChange} crtEnabled={crtEnabled} themeId={themeId} onThemeChange={onThemeChange} />}
       {showDetail && current && (
@@ -627,6 +652,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
           <span className={styles.hint}><kbd>R</kbd> Random</span>
           <span className={styles.hint}><kbd>N</kbd> Collections</span>
           <span className={styles.hint}><kbd>T</kbd> Stats</span>
+          <span className={styles.hint}><kbd>Search</kbd> Keyboard</span>
           <span className={styles.hint}><kbd>?</kbd> Help</span>
         </div>
       )}
