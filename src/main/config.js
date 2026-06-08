@@ -35,6 +35,8 @@ const DEFAULTS = {
   pspGamesPath:       'F:\\PSPGames\\',
   cemuPath:           'F:\\Cemu\\',
   wiiUGamesPath:      'F:\\WiiUGames\\',
+  steamPath:          'C:\\Program Files (x86)\\Steam\\steamapps',
+  pcGamesPath:        'F:\\PCGames\\',
   pinballPath:        'F:\\vPinball\\',
   tablesPath:         'F:\\PinballTables\\',
   mediaPath:          'F:\\Media\\',
@@ -55,6 +57,8 @@ const DEFAULTS = {
     ppsspp:      true,
     cemu:        true,
     vpx:         true,
+    steam:       true,
+    pc:          true,
   },
   screenscraper: {
     user: '',

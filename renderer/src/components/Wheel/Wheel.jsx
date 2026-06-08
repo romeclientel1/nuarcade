@@ -22,7 +22,7 @@ import { useSteamGridDB } from "../../hooks/useSteamGridDB"
 
 import styles from "./Wheel.module.css"
 
-const CATEGORIES = ["All", "Favorites", "Recent", "Arcade", "Retro", "Racing", "Fighting", "Shooter", "Rhythm", "Flying", "Sports", "N64", "PS1", "PSP", "Dreamcast", "Model2", "Model3", "PS3", "Xbox360", "GCWii", "WiiU", "PS2", "Switch", "Pinball"]
+const CATEGORIES = ["All", "Favorites", "Recent", "Arcade", "Retro", "Racing", "Fighting", "Shooter", "Rhythm", "Flying", "Sports", "N64", "PS1", "PSP", "Dreamcast", "Model2", "Model3", "PS3", "Xbox360", "GCWii", "WiiU", "PS2", "Switch", "Pinball", "PC"]
 const ATTRACT_TIMEOUT = 120000
 
 function sortGames(games, sortBy) {

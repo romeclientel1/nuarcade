@@ -873,6 +873,32 @@ ipcMain.handle('pixelcade-push', async (event, gameData) => {
 })
 
 
+// -- Steam games -------------------------------------------------------------
+ipcMain.handle('scan-steam-games', async (event, steamPath) => {
+  const { scanSteamGames } = require('./scanner')
+  return scanSteamGames(steamPath)
+})
+ipcMain.handle('launch-steam-game', async (event, appId) => {
+  const { exec } = require('child_process')
+  exec('start steam://rungameid/' + appId)
+  return { ok: true }
+})
+
+// -- PC / Non-Steam games ----------------------------------------------------
+ipcMain.handle('scan-pc-games', async (event, pcGamesPath) => {
+  const { scanPcGames } = require('./scanner')
+  return scanPcGames(pcGamesPath)
+})
+ipcMain.handle('launch-pc-game', async (event, exePath) => {
+  const path = require('path')
+  const { spawn } = require('child_process')
+  try {
+    spawn(exePath, [], { detached: true, stdio: 'ignore', cwd: path.dirname(exePath) }).unref()
+    return { ok: true }
+  } catch (e) { return { ok: false, error: e.message } }
+})
+
+
 // -- LED / External Event Hooks -----------------------------------------------
 // These IPC handlers fire when games are selected or launched.
 // External scripts (Pixelcade, LedBlinky, stream overlays) can subscribe

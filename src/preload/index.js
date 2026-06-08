@@ -93,6 +93,15 @@ contextBridge.exposeInMainWorld('nuarcade', {
   getEventLogPath: ()         => ipcRenderer.invoke('get-event-log-path'),
   pixelcadePush:   (gameData) => ipcRenderer.invoke('pixelcade-push',  gameData),
 
+  // Path verification
+  checkPath: (p) => ipcRenderer.invoke('check-path', p),
+
+  // Steam + PC games
+  scanSteamGames:  (p) => ipcRenderer.invoke('scan-steam-games', p),
+  launchSteamGame: (id) => ipcRenderer.invoke('launch-steam-game', id),
+  scanPcGames:  (p) => ipcRenderer.invoke('scan-pc-games', p),
+  launchPcGame: (p) => ipcRenderer.invoke('launch-pc-game', p),
+
   // BIOS checker
   checkBios: () => ipcRenderer.invoke('check-bios'),
 })

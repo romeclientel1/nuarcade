@@ -1,15 +1,5 @@
-; NuArcade Cabinet Folder Setup
-; Runs silently during installation -- creates all required F: drive folders
-; User never sees this, it just works.
-
 !macro customInstall
-  ; Only create folders if F: drive exists
-  IfFileExists "F:\" 0 +2
-    Goto CreateFolders
-  Goto Done
-
-  CreateFolders:
-    ; Emulator folders
+  IfFileExists "F:\" 0 Done
     CreateDirectory "F:\TeknoParrot"
     CreateDirectory "F:\MAME"
     CreateDirectory "F:\MAME\roms"
@@ -28,8 +18,6 @@
     CreateDirectory "F:\Cemu"
     CreateDirectory "F:\Ryujinx"
     CreateDirectory "F:\vPinball"
-
-    ; Games folders
     CreateDirectory "F:\ArcadeGames"
     CreateDirectory "F:\RetroArchGames"
     CreateDirectory "F:\N64Games"
@@ -45,11 +33,9 @@
     CreateDirectory "F:\Model2Games"
     CreateDirectory "F:\Model3Games"
     CreateDirectory "F:\PinballTables"
-
-    ; Media
+    CreateDirectory "F:\PCGames"
     CreateDirectory "F:\Media"
     CreateDirectory "F:\Media\Videos"
     CreateDirectory "F:\Media\Artwork"
-
   Done:
 !macroend

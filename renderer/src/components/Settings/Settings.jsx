@@ -32,6 +32,8 @@ const [marqueeOpen, setMarqueeOpen] = useState(false)
       setConfig({
         teknoParrotPath: "F:/TeknoParrot/",
         gamesFolderPath: "F:/ArcadeGames/",
+        steamPath:       "C:/Program Files (x86)/Steam/steamapps",
+        pcGamesPath:     "F:/PCGames/",
         pinballPath:     "F:/vPinball/",
         tablesPath:      "F:/PinballTables/",
         mediaPath:       "F:/Media/",
@@ -88,6 +90,8 @@ const handleRescan = async () => {
     await scan("Cemu",        () => window.nuarcade.scanWiiUGames(cfg.wiiUGamesPath))
     await scan("Ryujinx",     () => window.nuarcade.scanSwitchGames(cfg.switchGamesPath))
     await scan("Pinball",     () => window.nuarcade.scanPinball(cfg.tablesPath))
+    await scan("Steam",       () => window.nuarcade.scanSteamGames(cfg.steamPath))
+    await scan("PC Games",    () => window.nuarcade.scanPcGames(cfg.pcGamesPath))
     const total = results.reduce((s, r) => s + r.count, 0)
     setRescanResult({ total, results })
   } catch (e) { setRescanResult({ total: 0, results: [], error: e.message }) }
@@ -257,6 +261,8 @@ const handleSave = async () => {
               { key: "ryujinxPath",        label: "Ryujinx" },
               { key: "switchGamesPath",    label: "Switch Games" },
               { key: "pinballPath",        label: "VPX Engine" },
+              { key: "steamPath",           label: "Steam (steamapps)" },
+              { key: "pcGamesPath",         label: "PC Games" },
               { key: "tablesPath",         label: "Pinball Tables" },
               { key: "mediaPath",          label: "Media folder" },
             ].map(p => (
@@ -478,6 +484,8 @@ const handleSave = async () => {
                 { id: 'cemu',        label: 'Cemu (Wii U)' },
                 { id: 'ryujinx',     label: 'Ryujinx (Switch)' },
                 { id: 'vpx',         label: 'Visual Pinball X' },
+                { id: 'steam',       label: 'Steam' },
+                { id: 'pc',          label: 'PC Games' },
               ].map(emu => {
                 const enabled = config.enabledEmulators?.[emu.id] !== false
                 return (

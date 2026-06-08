@@ -1224,3 +1224,105 @@ async function scanModel3Games(model3GamesPath) {
 }
 
 module.exports = { ...module.exports, scanModel3Games }
+
+
+// -- Steam Game Scanner ------------------------------------------------------
+function scanSteamGames(steamPath) {
+  const fs   = require('fs')
+  const path = require('path')
+  const games = []
+  const libraryPaths = [steamPath]
+
+  const vdfPath = path.join(steamPath, 'libraryfolders.vdf')
+  if (fs.existsSync(vdfPath)) {
+    try {
+      const vdf = fs.readFileSync(vdfPath, 'utf8')
+      const matches = vdf.matchAll(/"path"\s+"([^"]+)"/gi)
+      for (const m of matches) {
+        const p = path.join(m[1], 'steamapps')
+        if (fs.existsSync(p) && !libraryPaths.includes(p)) libraryPaths.push(p)
+      }
+    } catch (e) {}
+  }
+
+  for (const libPath of libraryPaths) {
+    if (!fs.existsSync(libPath)) continue
+    let entries
+    try { entries = fs.readdirSync(libPath) } catch (e) { continue }
+    for (const file of entries) {
+      if (!file.startsWith('appmanifest_') || !file.endsWith('.acf')) continue
+      try {
+        const acf = fs.readFileSync(path.join(libPath, file), 'utf8')
+        const appid      = (acf.match(/"appid"\s+"(\d+)"/)        || [])[1]
+        const name       = (acf.match(/"name"\s+"([^"]+)"/)        || [])[1]
+        const installdir = (acf.match(/"installdir"\s+"([^"]+)"/)  || [])[1]
+        if (!appid || !name || !installdir) continue
+        if (name.match(/Proton|Redistributable|DirectX|Runtime|SDK|Tool/i)) continue
+        games.push({
+          id: 'steam_' + appid, title: name,
+          path: appid, steamAppId: appid,
+          emulator: 'steam', genre: 'PC', system: 'PC (Steam)', status: 'Perfect', icon: '?',
+        })
+      } catch (e) {}
+    }
+  }
+
+  games.sort((a, b) => a.title.localeCompare(b.title))
+  return { games, count: games.length, path: steamPath }
+}
+
+// -- PC / Non-Steam Game Scanner ---------------------------------------------
+function scanPcGames(pcGamesPath) {
+  const fs   = require('fs')
+  const path = require('path')
+  const games = []
+
+  if (!fs.existsSync(pcGamesPath)) {
+    return { games, count: 0, path: pcGamesPath, error: 'Folder not found' }
+  }
+
+  let entries
+  try { entries = fs.readdirSync(pcGamesPath, { withFileTypes: true }) }
+  catch (e) { return { games, count: 0, error: e.message } }
+
+  for (const entry of entries) {
+    const entryPath = path.join(pcGamesPath, entry.name)
+
+    // JSON descriptor: { title, exe, genre }
+    if (entry.isFile() && entry.name.endsWith('.json')) {
+      try {
+        const meta = JSON.parse(fs.readFileSync(entryPath, 'utf8'))
+        if (!meta.exe) continue
+        const exePath = path.isAbsolute(meta.exe) ? meta.exe : path.join(pcGamesPath, meta.exe)
+        games.push({
+          id: 'pc_' + entry.name.replace('.json', ''),
+          title: meta.title || path.basename(meta.exe, '.exe'),
+          path: exePath, emulator: 'pc',
+          genre: meta.genre || 'PC', system: 'PC', status: 'Perfect', icon: '?',
+        })
+      } catch (e) {}
+      continue
+    }
+
+    // Subfolder with a single .exe
+    if (entry.isDirectory()) {
+      try {
+        const subfiles = fs.readdirSync(entryPath)
+        const exes = subfiles.filter(f => f.endsWith('.exe') && !f.match(/uninstall|setup|crash|redist|vc_|dx|oalinst/i))
+        if (exes.length === 1) {
+          const title = entry.name.replace(/[_-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()).trim()
+          games.push({
+            id: 'pc_' + entry.name.replace(/\W/g, '_'), title,
+            path: path.join(entryPath, exes[0]),
+            emulator: 'pc', genre: 'PC', system: 'PC', status: 'Unverified', icon: '?',
+          })
+        }
+      } catch (e) {}
+    }
+  }
+
+  games.sort((a, b) => a.title.localeCompare(b.title))
+  return { games, count: games.length, path: pcGamesPath }
+}
+
+module.exports = { ...module.exports, scanSteamGames, scanPcGames }

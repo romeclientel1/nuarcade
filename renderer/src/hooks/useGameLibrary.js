@@ -212,6 +212,22 @@ export function useGameLibrary() {
             } catch (e) { console.warn('Pinball scan error:', e) }
           }
 
+          // Steam games
+          if (cfg.enabledEmulators?.steam !== false && cfg.steamPath) {
+            try {
+              const steamResult = await window.nuarcade.scanSteamGames(cfg.steamPath)
+              if (steamResult.games?.length) allGames = [...allGames, ...steamResult.games]
+            } catch (e) { console.warn('Steam scan error:', e) }
+          }
+
+          // PC / Non-Steam games
+          if (cfg.enabledEmulators?.pc !== false && cfg.pcGamesPath) {
+            try {
+              const pcResult = await window.nuarcade.scanPcGames(cfg.pcGamesPath)
+              if (pcResult.games?.length) allGames = [...allGames, ...pcResult.games]
+            } catch (e) { console.warn('PC scan error:', e) }
+          }
+
           // Model 2
           if (cfg.mode !== 'pinball' && cfg.model2GamesPath) {
             try {
