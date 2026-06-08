@@ -18,6 +18,8 @@ const [backingUp, setBackingUp] = useState(false)
 const [restoring, setRestoring] = useState(false)
 const [rescanResult, setRescanResult] = useState(null)
 const [showArtworkMgr, setShowArtworkMgr] = useState(false)
+const [biosResult, setBiosResult] = useState(null)
+const [checkingBios, setCheckingBios] = useState(false)
 const [marqueeOpen, setMarqueeOpen] = useState(false)
 
   useEffect(() => { loadConfig() }, [])
@@ -58,31 +60,37 @@ const handleRescan = async () => {
   setRescanResult(null)
   try {
     const cfg = config
-    const counts = []
+    const results = []
     const scan = async (label, fn) => {
-      try { const r = await fn(); const n = r.games?.length || 0; if (n > 0) counts.push(label + ": " + n); return n }
-      catch { return 0 }
+      try {
+        const r = await fn()
+        const n = r.games?.length || 0
+        results.push({ label, count: n, error: null })
+        return n
+      } catch (e) {
+        results.push({ label, count: 0, error: e.message })
+        return 0
+      }
     }
-    let total = 0
-    total += await scan("TeknoParrot", () => window.nuarcade.scanGames(cfg.teknoParrotPath, cfg.gamesFolderPath))
-    total += await scan("MAME",        () => window.nuarcade.scanMameGames(cfg.mameGamesPath))
-    total += await scan("Model 2",     () => window.nuarcade.scanModel2Games(cfg.model2GamesPath))
-    total += await scan("Model 3",     () => window.nuarcade.scanModel3Games(cfg.model3GamesPath))
-    total += await scan("RetroArch",   () => window.nuarcade.scanRetroArchGames(cfg.retroarchGamesPath))
-    total += await scan("Project64",   () => window.nuarcade.scanN64Games(cfg.n64GamesPath))
-    total += await scan("DuckStation", () => window.nuarcade.scanPs1Games(cfg.ps1GamesPath))
-    total += await scan("Flycast",     () => window.nuarcade.scanDreamcastGames(cfg.dreamcastGamesPath))
-    total += await scan("PPSSPP",      () => window.nuarcade.scanPspGames(cfg.pspGamesPath))
-    total += await scan("PCSX2",       () => window.nuarcade.scanPs2Games(cfg.ps2GamesPath))
-    total += await scan("RPCS3",       () => window.nuarcade.scanPs3Games(cfg.ps3GamesPath))
-    total += await scan("Xenia",       () => window.nuarcade.scanXbox360Games(cfg.xbox360GamesPath))
-    total += await scan("Dolphin",     () => window.nuarcade.scanGCWiiGames(cfg.gcWiiGamesPath))
-    total += await scan("Cemu",        () => window.nuarcade.scanWiiUGames(cfg.wiiUGamesPath))
-    total += await scan("Ryujinx",     () => window.nuarcade.scanSwitchGames(cfg.switchGamesPath))
-    total += await scan("Pinball",     () => window.nuarcade.scanPinball(cfg.tablesPath))
-    const breakdown = counts.length ? "\n" + counts.join(" | ") : ""
-    setRescanResult(total + " games found" + breakdown)
-  } catch (e) { setRescanResult("Scan error: " + e.message) }
+    await scan("TeknoParrot", () => window.nuarcade.scanGames(cfg.teknoParrotPath, cfg.gamesFolderPath))
+    await scan("MAME",        () => window.nuarcade.scanMameGames(cfg.mameGamesPath))
+    await scan("Model 2",     () => window.nuarcade.scanModel2Games(cfg.model2GamesPath))
+    await scan("Model 3",     () => window.nuarcade.scanModel3Games(cfg.model3GamesPath))
+    await scan("RetroArch",   () => window.nuarcade.scanRetroArchGames(cfg.retroarchGamesPath))
+    await scan("Project64",   () => window.nuarcade.scanN64Games(cfg.n64GamesPath))
+    await scan("DuckStation", () => window.nuarcade.scanPs1Games(cfg.ps1GamesPath))
+    await scan("Flycast",     () => window.nuarcade.scanDreamcastGames(cfg.dreamcastGamesPath))
+    await scan("PPSSPP",      () => window.nuarcade.scanPspGames(cfg.pspGamesPath))
+    await scan("PCSX2",       () => window.nuarcade.scanPs2Games(cfg.ps2GamesPath))
+    await scan("RPCS3",       () => window.nuarcade.scanPs3Games(cfg.ps3GamesPath))
+    await scan("Xenia",       () => window.nuarcade.scanXbox360Games(cfg.xbox360GamesPath))
+    await scan("Dolphin",     () => window.nuarcade.scanGCWiiGames(cfg.gcWiiGamesPath))
+    await scan("Cemu",        () => window.nuarcade.scanWiiUGames(cfg.wiiUGamesPath))
+    await scan("Ryujinx",     () => window.nuarcade.scanSwitchGames(cfg.switchGamesPath))
+    await scan("Pinball",     () => window.nuarcade.scanPinball(cfg.tablesPath))
+    const total = results.reduce((s, r) => s + r.count, 0)
+    setRescanResult({ total, results })
+  } catch (e) { setRescanResult({ total: 0, results: [], error: e.message }) }
   setRescanning(false)
 }
 
@@ -546,9 +554,23 @@ const handleSave = async () => {
             </div>
             {rescanResult && (
               <div className={styles.rescanResult}>
-                {rescanResult.split("\n").map((line, i) => (
-                  <div key={i} style={{ fontSize: i === 0 ? "12px" : "10px", color: i === 0 ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.25)" }}>{line}</div>
-                ))}
+                {rescanResult.error ? (
+                  <div style={{ color: "#ef4444", fontSize: 11 }}>Scan error: {rescanResult.error}</div>
+                ) : (
+                  <>
+                    <div className={styles.rescanTotal}>{rescanResult.total} games found</div>
+                    <div className={styles.rescanGrid}>
+                      {rescanResult.results?.map(r => (
+                        <div key={r.label} className={styles.rescanRow}>
+                          <span className={styles.rescanLabel}>{r.label}</span>
+                          <span className={styles.rescanCount + (r.count > 0 ? " " + styles.rescanCountHit : "")}>
+                            {r.error ? "ERR" : r.count}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
             )}
             <div className={styles.inputRow}>
@@ -572,11 +594,59 @@ const handleSave = async () => {
           </div>
 
           <div className={styles.section}>
+            <div className={styles.sectionTitle}>BIOS Status</div>
+            <div className={styles.inputRow}>
+              <label className={styles.inputLabel}>Check BIOS files</label>
+              <button className={styles.exportBtn} onClick={async () => {
+                setCheckingBios(true)
+                setBiosResult(null)
+                try { setBiosResult(await window.nuarcade.checkBios()) }
+                catch (e) { setBiosResult({ error: e.message }) }
+                setCheckingBios(false)
+              }} disabled={checkingBios}>
+                {checkingBios ? "Checking..." : "Check BIOS"}
+              </button>
+            </div>
+            {biosResult && !biosResult.error && (
+              <div className={styles.biosGrid}>
+                {[
+                  { key: "pcsx2",      label: "PCSX2 (PS2)",      note: ".bin files in bios/" },
+                  { key: "duckstation",label: "DuckStation (PS1)", note: "scph*.bin in bios/" },
+                  { key: "flycast",    label: "Flycast (DC)",      note: "dc_boot.bin in data/" },
+                  { key: "ryujinx",   label: "Ryujinx (Switch)",  note: "prod.keys in system/" },
+                ].map(({ key, label, note }) => {
+                  const b = biosResult[key]
+                  if (!b) return null
+                  return (
+                    <div key={key} className={styles.biosRow}>
+                      <div className={styles.biosLeft}>
+                        <span className={b.found ? styles.biosOk : styles.biosMissing}>
+                          {b.found ? "OK" : "MISSING"}
+                        </span>
+                        <span className={styles.biosLabel}>{label}</span>
+                      </div>
+                      <div className={styles.biosRight}>
+                        {b.found
+                          ? <span className={styles.biosFiles}>{b.files.join(", ")}</span>
+                          : <span className={styles.biosNote}>{note}</span>
+                        }
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+            {biosResult?.error && (
+              <div style={{ fontSize: 10, color: "#ef4444", marginTop: 6 }}>Error: {biosResult.error}</div>
+            )}
+          </div>
+
+          <div className={styles.section}>
             <div className={styles.sectionTitle}>About</div>
             <div className={styles.aboutGrid}>
               <div className={styles.aboutRow}>
                 <span className={styles.aboutLabel}>Version</span>
-                <span className={styles.aboutVal}>v2.0.0 {newVersion ? "(v" + newVersion + " available)" : "(latest)"}</span>
+                <span className={styles.aboutVal}>v2.9.0 {newVersion ? "(v" + newVersion + " available)" : "(latest)"}</span>
               </div>
               <div className={styles.aboutRow}>
                 <span className={styles.aboutLabel}>Platform</span>

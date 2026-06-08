@@ -84,6 +84,9 @@ contextBridge.exposeInMainWorld('nuarcade', {
   // VPX pinball launch
   launchVpxTable: (tablePath) => ipcRenderer.invoke('launch-vpx-table', tablePath),
 
+  // Path verification
+  checkPath: (folderPath) => ipcRenderer.invoke('check-path', folderPath),
+
   // LED / external event hooks
   gameSelected:    (gameData) => ipcRenderer.invoke('game-selected',    gameData),
   gameLaunched:    (gameData) => ipcRenderer.invoke('game-launched',    gameData),

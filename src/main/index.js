@@ -804,7 +804,14 @@ ipcMain.handle('scan-wiiu-games', async (event, wiiUGamesPath) => {
 })
 
 
-// -- First launch folder setup -----------------------------------------------
+// -- Path verification -------------------------------------------------------
+ipcMain.handle('check-path', async (event, folderPath) => {
+  try {
+    return { exists: fs.existsSync(folderPath) }
+  } catch (e) {
+    return { exists: false }
+  }
+})
 // Creates all required F: drive folders on first launch if they don't exist.
 // Mirrors the NSIS installer script as a belt-and-suspenders fallback.
 function ensureCabinetFolders() {

@@ -398,3 +398,57 @@
   border-color: rgba(0,200,255,0.3);
   color: #00c8ff;
 }
+.rescanTotal {
+  font-size: 13px;
+  color: rgba(255,255,255,0.7);
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+.rescanGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px 8px;
+}
+.rescanRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 3px 6px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.03);
+}
+.rescanLabel {
+  font-size: 10px;
+  color: rgba(255,255,255,0.35);
+}
+.rescanCount {
+  font-size: 10px;
+  color: rgba(255,255,255,0.2);
+  font-family: monospace;
+}
+.rescanCountHit {
+  color: #00ff88;
+  font-weight: 700;
+}
+.biosGrid { display: flex; flex-direction: column; gap: 5px; margin-top: 8px; }
+.biosRow {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 8px; border-radius: 4px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.biosLeft { display: flex; align-items: center; gap: 8px; }
+.biosRight { max-width: 55%; }
+.biosOk {
+  font-size: 9px; font-weight: 700; color: #00ff88;
+  border: 1px solid rgba(0,255,136,0.3); border-radius: 3px;
+  padding: 1px 5px;
+}
+.biosMissing {
+  font-size: 9px; font-weight: 700; color: #ef4444;
+  border: 1px solid rgba(239,68,68,0.3); border-radius: 3px;
+  padding: 1px 5px;
+}
+.biosLabel { font-size: 11px; color: rgba(255,255,255,0.6); }
+.biosFiles { font-size: 9px; color: rgba(255,255,255,0.3); font-family: monospace; }
+.biosNote  { font-size: 9px; color: rgba(255,255,255,0.2); font-style: italic; }

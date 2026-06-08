@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import styles from './Screen.module.css'
 
 const ALL_PATHS = [
@@ -89,6 +89,32 @@ export default function PathsScreen({ config, updateConfig, next, prev }) {
     }
   }
 
+  const [pathStatus, setPathStatus] = useState({})
+
+  const checkPath = useCallback(async (key, val) => {
+    if (!window.nuarcade?.checkPath || !val) return
+    const { exists } = await window.nuarcade.checkPath(val)
+    setPathStatus(s => ({ ...s, [key]: exists }))
+  }, [])
+
+  // Check all visible paths on mount and when values change
+  useEffect(() => {
+    visiblePaths.forEach(p => checkPath(p.key, values[p.key]))
+  }, [])
+
+  const handleChangeWithCheck = (key, val) => {
+    handleChange(key, val)
+    clearTimeout(window._pathCheckTimer)
+    window._pathCheckTimer = setTimeout(() => checkPath(key, val), 600)
+  }
+
+  const handleBrowseWithCheck = async (key) => {
+    if (window.nuarcade?.browseFolder) {
+      const result = await window.nuarcade.browseFolder()
+      if (result) { handleChange(key, result); checkPath(key, result) }
+    }
+  }
+
   const visiblePaths = ALL_PATHS.filter(p => p.emulators.includes(mode))
 
   const handleContinue = () => {
@@ -112,13 +138,15 @@ export default function PathsScreen({ config, updateConfig, next, prev }) {
             <input
               className={styles.pathInput}
               value={values[p.key] || ''}
-              onChange={e => handleChange(p.key, e.target.value)}
+              onChange={e => handleChangeWithCheck(p.key, e.target.value)}
               placeholder={p.placeholder}
               spellCheck={false}
             />
-            <button className={styles.pathBtn} onClick={() => handleBrowse(p.key)}>
-              ? Browse
+            <button className={styles.pathBtn} onClick={() => handleBrowseWithCheck(p.key)}>
+              Browse
             </button>
+            {pathStatus[p.key] === true  && <span className={styles.pathOk}>OK</span>}
+            {pathStatus[p.key] === false && <span className={styles.pathBad}>!</span>}
           </div>
         ))}
       </div>
