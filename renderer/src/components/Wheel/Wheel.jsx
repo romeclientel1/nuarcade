@@ -397,6 +397,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
         else if (emu === 'ppsspp')      await window.nuarcade.launchPspGame(gamePath)
         else if (emu === 'cemu')        await window.nuarcade.launchWiiUGame(gamePath)
         else if (emu === 'vpx' || current.isPinball) await window.nuarcade.launchVpxTable(gamePath)
+        else if (emu === 'steam')  await window.nuarcade.launchSteamGame(current.steamAppId || gamePath)
+        else if (emu === 'pc')     await window.nuarcade.launchPcGame(gamePath)
         else await window.nuarcade.launchGame(current.profilePath || current.profile)
       } catch (e) {
         showError("Failed to launch " + current.title + ": " + (e.message || "unknown error"))

@@ -18,7 +18,7 @@ export default function App() {
   const [splashDone, setSplashDone] = useState(false)
   const [lastLaunch, setLastLaunch] = useState(null)
   const { themeId, setTheme } = useTheme()
-  const VERSION = "2.9.0"
+  const VERSION = "3.2.0"
   const { hasUpdate, newVersion, releaseUrl, releaseNotes, dismiss } = useAutoUpdate(VERSION)
 
   const [crtEnabled, setCrtEnabled] = useState(() => {
