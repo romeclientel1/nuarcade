@@ -24,7 +24,7 @@ function shuffle(arr) {
   return a
 }
 
-export default function AttractMode({ games, isActive, onWake, onSelect, artwork }) {
+export default function AttractMode({ games, isActive, onWake, onSelect, artwork, attractConfig = {} }) {
   const [currentIdx,  setCurrentIdx ] = useState(0)
   const [visible,     setVisible    ] = useState(false)
   const [phase,       setPhase      ] = useState("in") // "in" | "out"
@@ -34,14 +34,14 @@ export default function AttractMode({ games, isActive, onWake, onSelect, artwork
   const timerRef  = useRef(null)
   const indexRef  = useRef(0)
 
-  // Build a shuffled list of real games that have artwork or video
+  // Build a shuffled list -- respect attractPreferArt config
   useEffect(() => {
     if (!games.length) return
-    // Prefer games with artwork, but include all if not enough
+    const preferArt = attractConfig.preferArt !== false
     const withArt = games.filter(g => artwork?.[g.id || g.profile]?.hero || artwork?.[g.id || g.profile]?.capsule)
-    const pool = withArt.length >= 8 ? withArt : games
+    const pool = (preferArt && withArt.length >= 6) ? withArt : games
     setShuffled(shuffle(pool))
-  }, [games, artwork])
+  }, [games, artwork, attractConfig.preferArt])
 
   const goToNext = useCallback(() => {
     setPhase("out")
@@ -62,7 +62,8 @@ export default function AttractMode({ games, isActive, onWake, onSelect, artwork
     indexRef.current = 0
     setCurrentIdx(0)
     setPhase("in")
-    timerRef.current = setInterval(goToNext, CYCLE_INTERVAL)
+    const cycleMs = (attractConfig.cycleSpeed || 6) * 1000
+    timerRef.current = setInterval(goToNext, cycleMs)
     return () => clearInterval(timerRef.current)
   }, [isActive, goToNext])
 

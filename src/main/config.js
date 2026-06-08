@@ -60,9 +60,16 @@ const DEFAULTS = {
     user: '',
     pass: '',
   },
+  pixelcade: {
+    enabled: false,
+    ip:      '192.168.1.100',
+    port:    8080,
+  },
   sgdbApiKey:         '8e15be83af3c9840a1a26987bdf6fd13',
   setupComplete:      false,
   displayMode:        'fullscreen',
+  attractCycleSpeed:  6,
+  attractPreferArt:   true,
   controllers: {
     wheel:    null,
     lightgun: null,

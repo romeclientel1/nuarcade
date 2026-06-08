@@ -103,7 +103,7 @@ function getControls(genre) {
   ]
 }
 
-export default function GameDetail({ game, onClose, onLaunch, launching, artwork }) {
+export default function GameDetail({ game, onClose, onLaunch, launching, artwork, games = [], onSelectGame }) {
   const [imgError, setImgError] = useState(false)
   const [controllerOverride, setControllerOverride] = useState("auto")
   const [savingController, setSavingController] = useState(false)
@@ -235,7 +235,12 @@ export default function GameDetail({ game, onClose, onLaunch, launching, artwork
               )}
               {pt.total > 0 && (
                 <span className={styles.statusBadge} style={{ borderColor: "rgba(0,200,255,0.2)", color: "rgba(0,200,255,0.7)", background: "rgba(0,200,255,0.05)" }}>
-                  {formatTime(pt.total)}
+                  {formatTime(pt.total)} total
+                </span>
+              )}
+              {pt.best > 0 && pt.best !== pt.total && (
+                <span className={styles.statusBadge} style={{ borderColor: "rgba(250,204,21,0.2)", color: "rgba(250,204,21,0.7)", background: "rgba(250,204,21,0.05)" }}>
+                  Best: {formatTime(pt.best)}
                 </span>
               )}
               {lastDate && (
@@ -383,6 +388,48 @@ export default function GameDetail({ game, onClose, onLaunch, launching, artwork
                 rows={3}
               />
             </div>
+
+            {/* Similar games */}
+            {(() => {
+              const similar = games
+                .filter(g => {
+                  const id = g.id || g.profile
+                  if (id === gameId) return false
+                  return g.genre === game.genre || g.system === game.system
+                })
+                .sort(() => Math.random() - 0.5)
+                .slice(0, 5)
+              if (similar.length === 0) return null
+              return (
+                <div className={styles.exeSection}>
+                  <div className={styles.exeLabel}>Similar games</div>
+                  <div className={styles.similarList}>
+                    {similar.map(g => {
+                      const gArt = artwork?.[g.id || g.profile] || null
+                      const thumb = gArt?.capsule || gArt?.hero || null
+                      return (
+                        <button
+                          key={g.id || g.profile}
+                          className={styles.similarCard}
+                          onClick={() => onSelectGame?.(g)}
+                          title={g.title}
+                        >
+                          {thumb ? (
+                            <img src={thumb} alt={g.title} className={styles.similarThumb} />
+                          ) : (
+                            <div className={styles.similarFallback} style={{ background: "rgba(255,255,255,0.05)" }}>
+                              <span style={{ fontSize: 18 }}>{g.icon || "?"}</span>
+                            </div>
+                          )}
+                          <div className={styles.similarTitle}>{g.title}</div>
+                          <div className={styles.similarSys}>{g.system}</div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })()}
           </div>
         </div>
       </div>

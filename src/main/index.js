@@ -786,6 +786,40 @@ ipcMain.handle('scan-wiiu-games', async (event, wiiUGamesPath) => {
 })
 
 
+// -- Pixelcade integration ---------------------------------------------------
+// Sends game metadata to a local Pixelcade device via HTTP on game select/launch
+// Pixelcade API: http://<ip>:<port>/api/v1/game (POST)
+ipcMain.handle('pixelcade-push', async (event, gameData) => {
+  const cfg = config.load()
+  if (!cfg.pixelcade?.enabled || !cfg.pixelcade?.ip) return { ok: false, reason: 'disabled' }
+
+  const url = `http://${cfg.pixelcade.ip}:${cfg.pixelcade.port || 8080}/api/v1/game`
+  try {
+    const http = require('http')
+    const body = JSON.stringify({
+      name:       gameData.title    || '',
+      system:     gameData.system   || gameData.genre || '',
+      emulator:   gameData.emulator || '',
+      marqueeUrl: gameData.hero     || gameData.capsule || '',
+    })
+    await new Promise((resolve, reject) => {
+      const req = http.request(url, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) },
+        timeout: 1500,
+      }, (res) => { res.resume(); resolve({ ok: true, status: res.statusCode }) })
+      req.on('error',   reject)
+      req.on('timeout', () => { req.destroy(); reject(new Error('timeout')) })
+      req.write(body)
+      req.end()
+    })
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, reason: e.message }
+  }
+})
+
+
 // -- LED / External Event Hooks -----------------------------------------------
 // These IPC handlers fire when games are selected or launched.
 // External scripts (Pixelcade, LedBlinky, stream overlays) can subscribe

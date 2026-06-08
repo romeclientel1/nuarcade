@@ -356,16 +356,75 @@ const handleSave = async () => {
               <label className={styles.inputLabel}>Idle timeout</label>
               <div className={styles.sliderWrap}>
                 <input
-                  type="range"
-                  min="30"
-                  max="600"
-                  step="30"
+                  type="range" min="30" max="600" step="30"
                   value={config.attractTimeout || 120}
                   onChange={e => update("attractTimeout", parseInt(e.target.value))}
                   className={styles.slider}
                 />
                 <span className={styles.sliderVal}>{config.attractTimeout || 120}s</span>
               </div>
+            </div>
+            <div className={styles.inputRow}>
+              <label className={styles.inputLabel}>Cycle speed</label>
+              <div className={styles.sliderWrap}>
+                <input
+                  type="range" min="2" max="15" step="1"
+                  value={config.attractCycleSpeed || 6}
+                  onChange={e => update("attractCycleSpeed", parseInt(e.target.value))}
+                  className={styles.slider}
+                />
+                <span className={styles.sliderVal}>{config.attractCycleSpeed || 6}s</span>
+              </div>
+            </div>
+            <div className={styles.inputRow}>
+              <label className={styles.inputLabel}>Prefer artwork</label>
+              <div className={styles.toggleGroup}>
+                {["yes", "no"].map(m => (
+                  <button key={m}
+                    className={styles.toggleBtn + ((config.attractPreferArt !== false) === (m === "yes") ? " " + styles.toggleActive : "")}
+                    onClick={() => update("attractPreferArt", m === "yes")}
+                  >{m.toUpperCase()}</button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.section}>
+            <div className={styles.sectionTitle}>Pixelcade</div>
+            <div className={styles.inputRow}>
+              <label className={styles.inputLabel}>Enable</label>
+              <div className={styles.toggleGroup}>
+                {["off", "on"].map(m => (
+                  <button key={m}
+                    className={styles.toggleBtn + (!!config.pixelcade?.enabled === (m === "on") ? " " + styles.toggleActive : "")}
+                    onClick={() => update("pixelcade", { ...config.pixelcade, enabled: m === "on" })}
+                  >{m.toUpperCase()}</button>
+                ))}
+              </div>
+            </div>
+            <div className={styles.inputRow}>
+              <label className={styles.inputLabel}>IP address</label>
+              <input
+                className={styles.input}
+                value={config.pixelcade?.ip || "192.168.1.100"}
+                onChange={e => update("pixelcade", { ...config.pixelcade, ip: e.target.value })}
+                placeholder="192.168.1.100"
+                spellCheck={false}
+              />
+            </div>
+            <div className={styles.inputRow}>
+              <label className={styles.inputLabel}>Port</label>
+              <input
+                className={styles.input}
+                value={config.pixelcade?.port || 8080}
+                onChange={e => update("pixelcade", { ...config.pixelcade, port: parseInt(e.target.value) || 8080 })}
+                placeholder="8080"
+                spellCheck={false}
+              />
+            </div>
+            <div className={styles.emuNote}>
+              Pixelcade receives game art automatically on navigation and launch.
+              Find your device IP in the Pixelcade app settings.
             </div>
           </div>
 

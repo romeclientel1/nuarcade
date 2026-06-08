@@ -75,7 +75,7 @@ function sortGames(games, sortBy) {
 
 export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange }) {
   const {
-    games, stats, loading, libraryEmpty,
+    games, stats, loading, libraryEmpty, config,
     toggleFavorite, isFavorite,
     recentlyPlayed, addRecentlyPlayed,
     newGameCount,
@@ -173,6 +173,12 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
       title: current.title, system: current.system,
       genre: current.genre, emulator: current.emulator,
       id: current.id || current.profile,
+    }).catch?.(() => {})
+    // Pixelcade push on navigation (reuse art already declared above)
+    window.nuarcade?.pixelcadePush?.({
+      title: current.title, system: current.system,
+      genre: current.genre, emulator: current.emulator,
+      hero: art?.hero || null, capsule: art?.capsule || null,
     }).catch?.(() => {})
   }, [current?.id, current?.profile, artwork])
 
@@ -320,6 +326,14 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
       genre: current.genre, emulator: current.emulator,
       id: gameId,
     }).catch?.(() => {})
+    // Pixelcade push on launch (with nowPlaying flag)
+    const launchArt = artwork?.[gameId]
+    window.nuarcade?.pixelcadePush?.({
+      title: current.title, system: current.system,
+      genre: current.genre, emulator: current.emulator,
+      hero: launchArt?.hero || null, capsule: launchArt?.capsule || null,
+      nowPlaying: true,
+    }).catch?.(() => {})
     try {
       const gp = navigator.getGamepads()[0]
       if (gp && gp.vibrationActuator) {
@@ -381,6 +395,10 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
         onSelect={setSelectedIndex}
         onWake={resetIdleTimer}
         artwork={artwork}
+        attractConfig={{
+          cycleSpeed:  config?.attractCycleSpeed || 6,
+          preferArt:   config?.attractPreferArt !== false,
+        }}
       />
 
       {attractMode && (
@@ -483,6 +501,46 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
           </button>
         ))}
       </div>
+
+      {/* Recently played carousel -- shown when library has games and recent list is non-empty */}
+      {!libraryEmpty && recentlyPlayed.length > 0 && activeCategory !== "Recent" && !debouncedSearch && (
+        <div className={styles.recentCarousel}>
+          <div className={styles.recentLabel}>Continue Playing</div>
+          <div className={styles.recentTrack}>
+            {recentlyPlayed.slice(0, 6).map(g => {
+              const gArt = artwork?.[g.id || g.profile]
+              const thumb = gArt?.capsule || gArt?.hero || null
+              const colors = { Racing:"#0066cc",Fighting:"#9900cc",Shooter:"#cc0000",Rhythm:"#6600cc",
+                Arcade:"#ff6600",Retro:"#9933ff",PS1:"#003791",N64:"#e4000f",Dreamcast:"#ff6600",
+                PS3:"#0070d1",Xbox360:"#107c10",GCWii:"#6b21a8",PS2:"#003791",Switch:"#e4000f" }
+              const accent = colors[g.genre] || "#00ff88"
+              return (
+                <button
+                  key={g.id || g.profile}
+                  className={styles.recentCard}
+                  onClick={() => {
+                    const idx = filteredGames.findIndex(fg =>
+                      (fg.id && fg.id === g.id) || (fg.profile && fg.profile === g.profile)
+                    )
+                    if (idx >= 0) { setSelectedIndex(idx); sounds.navigate() }
+                    else { setActiveCategory("All"); setSelectedIndex(0) }
+                  }}
+                  title={g.title}
+                >
+                  {thumb ? (
+                    <img src={thumb} alt={g.title} className={styles.recentThumb} />
+                  ) : (
+                    <div className={styles.recentFallback} style={{ background: accent + "18", borderColor: accent + "33" }}>
+                      <span className={styles.recentIcon}>{g.icon || g.genre?.[0] || "?"}</span>
+                    </div>
+                  )}
+                  <div className={styles.recentTitle}>{g.title}</div>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {libraryEmpty ? (
         <div className={styles.libraryEmpty}>
@@ -636,10 +694,17 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
       {showDetail && current && (
         <GameDetail
           game={current}
-          artwork={artwork?.[current?.id || current?.profile] || null}
+          games={games}
+          artwork={artwork}
           onClose={() => { sounds.back(); setShowDetail(false) }}
           onLaunch={() => { sounds.back(); setShowDetail(false); handleLaunch() }}
           launching={launching}
+          onSelectGame={(g) => {
+            const idx = filteredGames.findIndex(fg => (fg.id && fg.id === g.id) || (fg.profile && fg.profile === g.profile))
+            if (idx >= 0) setSelectedIndex(idx)
+            setShowDetail(false)
+            setTimeout(() => setShowDetail(true), 50)
+          }}
         />
       )}
 

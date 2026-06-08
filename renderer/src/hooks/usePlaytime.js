@@ -29,10 +29,11 @@ export function usePlaytime() {
     const elapsed = Math.floor((Date.now() - startTime) / 1000)
     if (elapsed < 5) return
     const data = load()
-    if (!data[gameId]) data[gameId] = { total: 0, sessions: 0, last: null }
-    data[gameId].total += elapsed
+    if (!data[gameId]) data[gameId] = { total: 0, sessions: 0, last: null, best: 0 }
+    data[gameId].total    += elapsed
     data[gameId].sessions += 1
-    data[gameId].last = new Date().toISOString()
+    data[gameId].last      = new Date().toISOString()
+    data[gameId].best      = Math.max(data[gameId].best || 0, elapsed)
     save(data)
   }, [])
 

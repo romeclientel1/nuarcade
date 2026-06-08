@@ -381,3 +381,60 @@
   background: rgba(0,255,136,0.08) !important;
   color: #00ff88 !important;
 }
+.similarList {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-top: 4px;
+  scrollbar-width: none;
+}
+.similarList::-webkit-scrollbar { display: none; }
+.similarCard {
+  flex-shrink: 0;
+  width: 80px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 6px;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.15s;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.similarCard:hover {
+  border-color: rgba(0,200,255,0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+.similarThumb {
+  width: 100%;
+  height: 60px;
+  object-fit: cover;
+}
+.similarFallback {
+  width: 100%;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.similarTitle {
+  font-size: 9px;
+  color: rgba(255,255,255,0.7);
+  padding: 4px 5px 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+.similarSys {
+  font-size: 8px;
+  color: rgba(255,255,255,0.25);
+  padding: 0 5px 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}

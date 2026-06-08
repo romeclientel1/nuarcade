@@ -85,6 +85,7 @@ contextBridge.exposeInMainWorld('nuarcade', {
   gameSelected:    (gameData) => ipcRenderer.invoke('game-selected',    gameData),
   gameLaunched:    (gameData) => ipcRenderer.invoke('game-launched',    gameData),
   getEventLogPath: ()         => ipcRenderer.invoke('get-event-log-path'),
+  pixelcadePush:   (gameData) => ipcRenderer.invoke('pixelcade-push',  gameData),
 
   // BIOS checker
   checkBios: () => ipcRenderer.invoke('check-bios'),
