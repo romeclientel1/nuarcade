@@ -81,6 +81,9 @@ contextBridge.exposeInMainWorld('nuarcade', {
   // Save text file
   saveTxt: (opts) => ipcRenderer.invoke('save-txt', opts),
 
+  // VPX pinball launch
+  launchVpxTable: (tablePath) => ipcRenderer.invoke('launch-vpx-table', tablePath),
+
   // LED / external event hooks
   gameSelected:    (gameData) => ipcRenderer.invoke('game-selected',    gameData),
   gameLaunched:    (gameData) => ipcRenderer.invoke('game-launched',    gameData),

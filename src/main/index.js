@@ -119,6 +119,23 @@ ipcMain.handle('scan-pinball', async (event, tablesPath) => {
   return scanPinballTables(tablesPath)
 })
 
+// -- VPX launch --------------------------------------------------------------
+ipcMain.handle('launch-vpx-table', async (event, tablePath) => {
+  const cfg = config.load()
+  const vpxDir  = cfg.pinballPath || 'F:\\vPinball\\'
+  const vpxExe  = require('path').join(vpxDir, 'VPinballX64.exe')
+  const { spawn } = require('child_process')
+  try {
+    spawn(vpxExe, ['-play', tablePath], {
+      detached: true, stdio: 'ignore',
+      cwd: vpxDir,
+    }).unref()
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: e.message }
+  }
+})
+
 // -- yt-dlp helpers ----------------------------------------------------------
 async function ensureYtDlp() {
   const { execSync } = require('child_process')

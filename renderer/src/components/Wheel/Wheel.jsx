@@ -393,6 +393,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
       else if (emu === 'model3') await window.nuarcade.launchModel3Game(gamePath)
       else if (emu === 'ppsspp') await window.nuarcade.launchPspGame(gamePath)
       else if (emu === 'cemu')   await window.nuarcade.launchWiiUGame(gamePath)
+      else if (emu === 'vpx' || current.isPinball) await window.nuarcade.launchVpxTable(gamePath)
       else await window.nuarcade.launchGame(current.profilePath || current.profile)
     } else {
       console.log("Dev mode would launch:", current.profile)
