@@ -84,6 +84,8 @@ const EMULATORS = [
     folder: 'F:\\PCSX2\\',
     gamesFolder: 'F:\\PS2Games\\',
     bios: true,
+    biosFolder: 'F:\\PCSX2\\bios\\',
+    biosFiles: ['Any PS2 BIOS .bin file (e.g. SCPH-70012.bin)'],
     steps: [
       'Download PCSX2 from pcsx2.net',
       'Install to F:\\PCSX2\\',
@@ -103,6 +105,8 @@ const EMULATORS = [
     folder: 'F:\\Ryujinx\\',
     gamesFolder: 'F:\\SwitchGames\\',
     bios: true,
+    biosFolder: 'F:\\Ryujinx\\system\\',
+    biosFiles: ['prod.keys', 'title.keys (optional)', 'Firmware via Tools > Install Firmware'],
     steps: [
       'Download Ryujinx from ryujinx.org',
       'Extract to F:\\Ryujinx\\',
@@ -177,6 +181,8 @@ const EMULATORS = [
     folder: 'F:\\DuckStation\\',
     gamesFolder: 'F:\\PS1Games\\',
     bios: true,
+    biosFolder: 'F:\\DuckStation\\bios\\',
+    biosFiles: ['SCPH-1001.bin or any PlayStation BIOS .bin'],
     steps: [
       'Download DuckStation from duckstation.org',
       'Extract to F:\\DuckStation\\',
@@ -196,6 +202,8 @@ const EMULATORS = [
     folder: 'F:\\Flycast\\',
     gamesFolder: 'F:\\DreamcastGames\\',
     bios: true,
+    biosFolder: 'F:\\Flycast\\data\\',
+    biosFiles: ['dc_boot.bin', 'dc_flash.bin (recommended)'],
     steps: [
       'Download Flycast from GitHub releases',
       'Extract to F:\\Flycast\\',
@@ -312,11 +320,29 @@ export default function SetupGuideScreen({ config, next, prev }) {
                     <span className={styles.folderLabel}>Games</span>
                     <code className={styles.folderPath}>{emu.gamesFolder}</code>
                   </div>
+                  {emu.bios && emu.biosFolder && (
+                    <div className={styles.folderRow}>
+                      <span className={styles.folderLabel}>BIOS</span>
+                      <code className={styles.folderPath}>{emu.biosFolder}</code>
+                    </div>
+                  )}
                 </div>
 
-                <a className={styles.guideLink} href={emu.url} target="_blank" rel="noreferrer">
-                  Download {emu.name}
-                </a>
+                {emu.bios && emu.biosFiles && (
+                  <div className={styles.biosDropZone}>
+                    <div className={styles.biosDropTitle}>Drop BIOS files here:</div>
+                    {emu.biosFiles.map((f, i) => (
+                      <div key={i} className={styles.biosFileName}>{f}</div>
+                    ))}
+                  </div>
+                )}
+
+                <button
+                  className={styles.guideLink}
+                  onClick={() => window.open(emu.url, '_blank')}
+                >
+                  Download {emu.name} -- {emu.url.replace('https://', '')}
+                </button>
               </div>
             )}
           </div>
