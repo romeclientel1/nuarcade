@@ -917,7 +917,7 @@ async function scanDreamcastGames(dreamcastGamesPath) {
   if (!fs.existsSync(dreamcastGamesPath)) {
     return { games, count: 0, path: dreamcastGamesPath, error: 'Folder not found' }
   }
-  const EXTS = ['.gdi', '.cdi', '.chd', '.lst', '.m3u']
+  const EXTS = ['.gdi', '.cdi', '.chd', '.lst', '.m3u', '.iso']
   let entries
   try { entries = fs.readdirSync(dreamcastGamesPath, { withFileTypes: true }) }
   catch (e) { return { games, count: 0, error: e.message } }

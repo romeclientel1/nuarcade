@@ -639,6 +639,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
             {activeCategory === "Favorites" ? "Press F on any game to add it" :
              activeCategory === "Recent" ? "Launch a game to see it here" :
              activeCategory === "Pinball" ? "Add .vpx files to F:/PinballTables/" :
+             activeCategory === "PC" ? "Add game folders to F:/PCGames/" :
              "Try selecting a different category"}
           </div>
         </div>

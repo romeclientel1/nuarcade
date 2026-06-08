@@ -34,6 +34,8 @@ const ALL_PATHS = [
   { key: 'wiiUGamesPath',      label: 'Wii U Games',          placeholder: 'F:\\WiiUGames\\',          emulators: ['arcade', 'arcade+pinball'] },
   { key: 'pinballPath',        label: 'VPX Engine',          placeholder: 'F:\\vPinball\\',          emulators: ['pinball', 'arcade+pinball'] },
   { key: 'tablesPath',         label: 'Pinball Tables',      placeholder: 'F:\\PinballTables\\',     emulators: ['pinball', 'arcade+pinball'] },
+  { key: 'steamPath',          label: 'Steam (steamapps)',   placeholder: 'C:\\Program Files (x86)\\Steam\\steamapps', emulators: ['arcade', 'arcade+pinball'] },
+  { key: 'pcGamesPath',        label: 'PC Games',            placeholder: 'F:\\PCGames\\',            emulators: ['arcade', 'arcade+pinball'] },
 ]
 
 export default function PathsScreen({ config, updateConfig, next, prev }) {
@@ -72,6 +74,8 @@ export default function PathsScreen({ config, updateConfig, next, prev }) {
     wiiUGamesPath:     'F:\\WiiUGames\\',
     pinballPath:        'F:\\vPinball\\',
     tablesPath:         'F:\\PinballTables\\',
+    steamPath:          'C:\\Program Files (x86)\\Steam\\steamapps',
+    pcGamesPath:        'F:\\PCGames\\',
   }
 
   const [values, setValues] = useState(() => {

@@ -654,7 +654,7 @@ const handleSave = async () => {
             <div className={styles.aboutGrid}>
               <div className={styles.aboutRow}>
                 <span className={styles.aboutLabel}>Version</span>
-                <span className={styles.aboutVal}>v2.9.0 {newVersion ? "(v" + newVersion + " available)" : "(latest)"}</span>
+                <span className={styles.aboutVal}>v3.2.1 {newVersion ? "(v" + newVersion + " available)" : "(latest)"}</span>
               </div>
               <div className={styles.aboutRow}>
                 <span className={styles.aboutLabel}>Platform</span>
