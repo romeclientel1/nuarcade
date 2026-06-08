@@ -30,7 +30,8 @@
     "files": [
       "src/**/*",
       "renderer/dist/**/*",
-      "assets/**/*"
+      "assets/**/*",
+      "assets/installer/**/*"
     ],
     "win": {
       "target": "nsis",
@@ -42,7 +43,8 @@
       "installerIcon": "assets/icons/icon.ico",
       "installerHeaderIcon": "assets/icons/icon.ico",
       "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
+      "createStartMenuShortcut": true,
+      "include": "assets/installer/folders.nsh"
     }
   },
   "dependencies": {

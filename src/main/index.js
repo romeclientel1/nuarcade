@@ -564,6 +564,7 @@ ipcMain.handle('get-displays', () => {
 })
 
 app.whenReady().then(() => {
+  ensureCabinetFolders()
   if (process.platform === 'darwin') {
     app.dock.setIcon(path.join(__dirname, '../../assets/icons/icon.png'))
   }
@@ -801,6 +802,34 @@ ipcMain.handle('scan-wiiu-games', async (event, wiiUGamesPath) => {
   const { scanWiiUGames } = require('./scanner')
   return scanWiiUGames(wiiUGamesPath)
 })
+
+
+// -- First launch folder setup -----------------------------------------------
+// Creates all required F: drive folders on first launch if they don't exist.
+// Mirrors the NSIS installer script as a belt-and-suspenders fallback.
+function ensureCabinetFolders() {
+  const fs = require('fs')
+  if (!fs.existsSync('F:\\')) return // not a cabinet PC
+  const folders = [
+    'F:\\TeknoParrot', 'F:\\MAME', 'F:\\MAME\\roms',
+    'F:\\Model2', 'F:\\Supermodel',
+    'F:\\RetroArch', 'F:\\RetroArch\\system',
+    'F:\\Project64', 'F:\\DuckStation', 'F:\\Flycast',
+    'F:\\PPSSPP', 'F:\\PCSX2', 'F:\\RPCS3',
+    'F:\\Xenia', 'F:\\Dolphin', 'F:\\Cemu', 'F:\\Ryujinx',
+    'F:\\vPinball',
+    'F:\\ArcadeGames', 'F:\\RetroArchGames',
+    'F:\\N64Games', 'F:\\PS1Games', 'F:\\DreamcastGames',
+    'F:\\PSPGames', 'F:\\PS2Games', 'F:\\PS3Games',
+    'F:\\Xbox360Games', 'F:\\GCWiiGames', 'F:\\WiiUGames',
+    'F:\\SwitchGames', 'F:\\Model2Games', 'F:\\Model3Games',
+    'F:\\PinballTables',
+    'F:\\Media', 'F:\\Media\\Videos', 'F:\\Media\\Artwork',
+  ]
+  folders.forEach(f => {
+    try { fs.mkdirSync(f, { recursive: true }) } catch (e) {}
+  })
+}
 
 
 // -- Pixelcade integration ---------------------------------------------------
