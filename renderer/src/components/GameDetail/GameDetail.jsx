@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useEffect, useRef } from "react"
 import { useGameNotes } from "../../hooks/useGameNotes"
+import { usePlaytime } from "../../hooks/usePlaytime"
 import styles from "./GameDetail.module.css"
 
 const GENRE_COLORS = {
@@ -87,7 +88,7 @@ function getControls(genre) {
   ]
 }
 
-export default function GameDetail({ game, onClose, onLaunch, launching, playCount, lastPlayed, artwork }) {
+export default function GameDetail({ game, onClose, onLaunch, launching, artwork }) {
   const [imgError, setImgError] = useState(false)
   const [controllerOverride, setControllerOverride] = useState("auto")
   const [savingController, setSavingController] = useState(false)
@@ -178,12 +179,12 @@ export default function GameDetail({ game, onClose, onLaunch, launching, playCou
             <div className={styles.statusRow}>
               {playCount !== undefined && playCount > 0 && (
                 <span className={styles.statusBadge} style={{ borderColor: "rgba(0,200,255,0.3)", color: "#00c8ff", background: "rgba(0,200,255,0.08)" }}>
-                  Played {playCount}x
+                  Played {pt.sessions}x
                 </span>
               )}
               {lastPlayed && (
                 <span className={styles.statusBadge} style={{ borderColor: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.4)" }}>
-                  {lastPlayed}
+                  {pt.last ? new Date(pt.last).toLocaleDateString() : "Never"}
                 </span>
               )}
               <span

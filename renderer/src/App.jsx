@@ -5,6 +5,8 @@ import Wheel from "./components/Wheel/Wheel"
 import Updater from "./components/Updater/Updater"
 import CRT from "./components/CRT/CRT"
 import Splash from "./components/Splash/Splash"
+import UpdateBanner from "./components/UpdateBanner/UpdateBanner"
+import { useAutoUpdate } from "./hooks/useAutoUpdate"
 import VolumeOverlay from "./components/VolumeOverlay/VolumeOverlay"
 import CoinCounter from "./components/CoinCounter/CoinCounter"
 import { useTheme } from "./hooks/useTheme"
@@ -16,6 +18,9 @@ export default function App() {
   const [splashDone, setSplashDone] = useState(false)
   const [lastLaunch, setLastLaunch] = useState(null)
   const { themeId, setTheme } = useTheme()
+  const VERSION = "1.5.0"
+  const { hasUpdate, newVersion, releaseUrl, releaseNotes, dismiss } = useAutoUpdate(VERSION)
+
   const [crtEnabled, setCrtEnabled] = useState(() => {
     try { return localStorage.getItem("nuarcade_crt") === "true" } catch { return false }
   })
@@ -52,6 +57,14 @@ export default function App() {
   return (
     <>
       <VolumeOverlay />
+      {hasUpdate && (
+        <UpdateBanner
+          newVersion={newVersion}
+          releaseUrl={releaseUrl}
+          releaseNotes={releaseNotes}
+          onDismiss={dismiss}
+        />
+      )}
       <div style={{ width: "100vw", height: "100vh", background: "#000", overflow: "hidden" }}>
         {phase === "intro" && <Intro onComplete={handleIntroComplete} />}
         {phase === "wizard" && <Wizard onComplete={() => {

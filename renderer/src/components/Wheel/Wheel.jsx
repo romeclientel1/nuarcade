@@ -21,6 +21,16 @@ const ATTRACT_TIMEOUT = 120000
 function sortGames(games, sortBy) {
   const sorted = [...games]
   switch (sortBy) {
+    case "most_played": {
+      try {
+        const pt = JSON.parse(localStorage.getItem("nuarcade_playtime") || "{}")
+        return sorted.sort((a, b) => {
+          const at = pt[a.id || a.profile]?.total || 0
+          const bt = pt[b.id || b.profile]?.total || 0
+          return bt - at
+        })
+      } catch { return sorted }
+    }
     case "name":   return sorted.sort((a, b) => a.title.localeCompare(b.title))
     case "system": return sorted.sort((a, b) => (a.system || "").localeCompare(b.system || ""))
     case "status": {
