@@ -1,11 +1,8 @@
 .overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.85);
-  z-index: 200;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.88);
+  z-index: 200; display: flex;
+  align-items: center; justify-content: center;
   backdrop-filter: blur(4px);
   animation: fadeIn 0.2s ease;
 }
@@ -13,9 +10,12 @@
 .panel {
   background: #050510;
   border: 1px solid rgba(0,200,255,0.2);
-  border-radius: 8px;
-  width: 420px;
+  border-radius: 12px;
+  width: 680px;
+  max-height: 85vh;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
   box-shadow: 0 0 60px rgba(0,200,255,0.1);
   animation: slideUp 0.2s ease;
 }
@@ -24,57 +24,71 @@
   to   { transform: translateY(0); opacity: 1; }
 }
 .header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: flex; align-items: center; justify-content: space-between;
   padding: 20px 24px 16px;
   border-bottom: 1px solid rgba(255,255,255,0.06);
+  flex-shrink: 0;
 }
 .title {
   font-family: Orbitron, sans-serif;
-  font-size: 14px;
-  font-weight: 700;
-  color: #fff;
-  letter-spacing: 0.1em;
+  font-size: 14px; font-weight: 700;
+  color: #fff; letter-spacing: 0.1em;
 }
 .closeBtn {
   background: transparent;
   border: 1px solid rgba(255,255,255,0.15);
   color: rgba(255,255,255,0.4);
-  width: 28px;
-  height: 28px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  transition: all 0.15s;
+  width: 28px; height: 28px;
+  border-radius: 4px; cursor: pointer;
+  font-size: 12px; transition: all 0.15s;
 }
 .closeBtn:hover { color: #fff; border-color: rgba(255,255,255,0.3); }
-.list { padding: 12px 24px; display: flex; flex-direction: column; gap: 4px; }
+.body { overflow-y: auto; flex: 1; padding: 0 24px 16px; }
+.section { margin-top: 20px; }
+.sectionTitle {
+  font-size: 10px; font-weight: 700;
+  color: rgba(0,200,255,0.7);
+  text-transform: uppercase; letter-spacing: 0.12em;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(0,200,255,0.12);
+}
+.list { display: flex; flex-direction: column; gap: 2px; }
 .row {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 8px 0;
-  border-bottom: 1px solid rgba(255,255,255,0.04);
+  display: flex; align-items: center; gap: 16px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
 }
 .row:last-child { border-bottom: none; }
 .key {
-  font-family: Share Tech Mono, monospace;
-  font-size: 11px;
-  color: #00c8ff;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px; color: #00c8ff;
   background: rgba(0,200,255,0.08);
   border: 1px solid rgba(0,200,255,0.2);
-  border-radius: 3px;
-  padding: 3px 8px;
-  min-width: 120px;
-  text-align: center;
-  flex-shrink: 0;
+  border-radius: 3px; padding: 3px 8px;
+  min-width: 160px; text-align: center; flex-shrink: 0;
 }
 .desc { font-size: 12px; color: rgba(255,255,255,0.5); }
+.emuGrid { display: flex; flex-direction: column; gap: 6px; }
+.emuRow {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 6px 8px; border-radius: 6px;
+  background: rgba(255,255,255,0.02);
+}
+.emuIcon {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px; font-weight: 700;
+  color: #00ff88; background: rgba(0,255,136,0.1);
+  border: 1px solid rgba(0,255,136,0.2);
+  border-radius: 3px; padding: 2px 5px;
+  min-width: 32px; text-align: center; flex-shrink: 0;
+}
+.emuName { font-size: 12px; color: rgba(255,255,255,0.8); font-weight: 600; }
+.emuSystems { font-size: 10px; color: rgba(255,255,255,0.3); margin-top: 1px; }
 .footer {
   padding: 12px 24px 16px;
-  font-size: 10px;
-  color: rgba(255,255,255,0.2);
-  text-align: center;
-  letter-spacing: 0.1em;
+  font-size: 10px; color: rgba(255,255,255,0.2);
+  text-align: center; letter-spacing: 0.1em;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  flex-shrink: 0;
 }

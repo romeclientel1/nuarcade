@@ -616,22 +616,31 @@
   letter-spacing: 0.08em;
 }
 .helpBtn {
-  width: 26px;
-  height: 26px;
+  width: 26px; height: 26px;
   border: 1px solid rgba(255,255,255,0.15);
-  background: transparent;
-  color: rgba(255,255,255,0.35);
-  font-size: 13px;
-  cursor: pointer;
-  border-radius: 50%;
-  transition: all 0.15s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: Orbitron, sans-serif;
-  font-weight: 700;
+  background: transparent; color: rgba(255,255,255,0.35);
+  font-size: 13px; cursor: pointer; border-radius: 50%;
+  transition: all 0.15s; display: flex;
+  align-items: center; justify-content: center;
+  font-family: Orbitron, sans-serif; font-weight: 700;
 }
 .helpBtn:hover { border-color: rgba(0,200,255,0.4); color: #00c8ff; }
+.randBtn {
+  padding: 0 8px; height: 26px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: transparent; color: rgba(255,255,255,0.35);
+  font-size: 13px; cursor: pointer; border-radius: 4px;
+  transition: all 0.15s; display: flex; align-items: center;
+}
+.randBtn:hover { border-color: rgba(250,204,21,0.4); color: #facc15; }
+.colBtn {
+  padding: 0 8px; height: 26px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: transparent; color: rgba(255,255,255,0.35);
+  font-size: 11px; cursor: pointer; border-radius: 4px;
+  transition: all 0.15s; font-family: monospace;
+}
+.colBtn:hover { border-color: rgba(0,255,136,0.4); color: #00ff88; }
 
 .newBadge {
   padding: 2px 8px;

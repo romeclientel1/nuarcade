@@ -324,7 +324,35 @@ ipcMain.handle('backup-config', async () => {
   })
   if (result.canceled || !result.filePath) return { success: false }
   const fs = require('fs')
-  fs.writeFileSync(result.filePath, JSON.stringify({ config: cfg, version: '1.3.0', date: new Date().toISOString() }, null, 2))
+  // Config is stored in electron userData -- localStorage keys are sent from renderer
+  const backup = {
+    version: '2.2.0',
+    date: new Date().toISOString(),
+    config: cfg,
+    // localStorage data is passed via a separate IPC call before backup
+    localStorage: {},
+  }
+  fs.writeFileSync(result.filePath, JSON.stringify(backup, null, 2))
+  return { success: true, path: result.filePath }
+})
+
+// Store localStorage snapshot for backup
+ipcMain.handle('backup-localstorage', async (event, data) => {
+  const cfg = config.load()
+  const result = await dialog.showSaveDialog({
+    title: 'Save NuArcade Full Backup',
+    defaultPath: 'nuarcade-backup-' + new Date().toISOString().slice(0,10) + '.json',
+    filters: [{ name: 'JSON', extensions: ['json'] }]
+  })
+  if (result.canceled || !result.filePath) return { success: false }
+  const fs = require('fs')
+  const backup = {
+    version: '2.2.0',
+    date: new Date().toISOString(),
+    config: cfg,
+    localStorage: data || {},
+  }
+  fs.writeFileSync(result.filePath, JSON.stringify(backup, null, 2))
   return { success: true, path: result.filePath }
 })
 
@@ -341,7 +369,12 @@ ipcMain.handle('restore-config', async () => {
     const data = JSON.parse(fs.readFileSync(result.filePaths[0], 'utf8'))
     if (data.config) {
       config.save(data.config)
-      return { success: true, date: data.date }
+      return {
+        success: true,
+        date: data.date,
+        version: data.version,
+        localStorage: data.localStorage || {},
+      }
     }
     return { success: false, error: 'Invalid backup file' }
   } catch (e) {
@@ -384,49 +417,57 @@ ipcMain.handle('open-marquee', async () => {
     <head>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
-      body { background: #000; overflow: hidden; width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; font-family: system-ui, sans-serif; }
-      #marquee { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; }
-      #hero { width: 100%; height: 70%; object-fit: cover; object-position: center; opacity: 0; transition: opacity 0.8s ease; }
+      body { background: #000; overflow: hidden; width: 100vw; height: 100vh; font-family: system-ui, sans-serif; }
+      #marquee { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; position: relative; }
+      #hero { width: 100%; height: 65%; object-fit: cover; object-position: center top; opacity: 0; transition: opacity 0.8s ease; }
       #hero.loaded { opacity: 1; }
-      #title { font-size: 3rem; font-weight: 900; color: #fff; text-align: center; letter-spacing: -0.02em; text-shadow: 0 2px 40px rgba(0,0,0,0.8); padding: 0 40px; }
-      #system { font-size: 1.1rem; color: rgba(255,255,255,0.4); letter-spacing: 0.1em; text-transform: uppercase; }
-      #logo { max-width: 60%; max-height: 30%; object-fit: contain; opacity: 0; transition: opacity 0.8s ease; }
+      #capsule { max-height: 70%; max-width: 55%; object-fit: contain; opacity: 0; transition: opacity 0.8s ease; }
+      #capsule.loaded { opacity: 1; }
+      #textblock { display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 2; }
+      #title { font-size: 2.8rem; font-weight: 900; color: #fff; text-align: center; letter-spacing: -0.02em; text-shadow: 0 2px 40px rgba(0,0,0,0.9); padding: 0 32px; }
+      #system { font-size: 1rem; color: rgba(255,255,255,0.45); letter-spacing: 0.14em; text-transform: uppercase; }
+      #logo { max-width: 55%; max-height: 28%; object-fit: contain; opacity: 0; transition: opacity 0.8s ease; }
       #logo.loaded { opacity: 1; }
-      .nuarcade-brand { position: absolute; bottom: 20px; right: 24px; font-size: 0.75rem; color: rgba(255,255,255,0.15); letter-spacing: 0.1em; }
+      #accent { position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: #00ff88; transition: background 0.6s ease; }
+      .brand { position: absolute; bottom: 18px; right: 20px; font-size: 0.7rem; color: rgba(255,255,255,0.12); letter-spacing: 0.1em; }
     </style>
     </head>
     <body>
     <div id="marquee">
-      <img id="hero" src="" />
-      <div id="title">NuArcade</div>
-      <div id="system">Insert Coin</div>
-      <img id="logo" src="" />
+      <img id="hero" src="" style="display:none" />
+      <img id="capsule" src="" style="display:none" />
+      <div id="textblock">
+        <div id="title">NuArcade</div>
+        <div id="system">Insert Coin</div>
+        <img id="logo" src="" style="display:none" />
+      </div>
+      <div id="accent"></div>
     </div>
-    <div class="nuarcade-brand">NuArcade</div>
+    <div class="brand">NuArcade</div>
     <script>
       const { ipcRenderer } = require("electron")
       ipcRenderer.on("marquee-update", (e, data) => {
-        const title = document.getElementById("title")
-        const system = document.getElementById("system")
-        const hero = document.getElementById("hero")
-        const logo = document.getElementById("logo")
-        title.textContent = data.title || "NuArcade"
+        const title   = document.getElementById("title")
+        const system  = document.getElementById("system")
+        const hero    = document.getElementById("hero")
+        const capsule = document.getElementById("capsule")
+        const logo    = document.getElementById("logo")
+        title.textContent  = data.title  || "NuArcade"
         system.textContent = data.system || ""
+        // Reset all
+        hero.className    = ""; hero.style.display    = "none"
+        capsule.className = ""; capsule.style.display = "none"
+        logo.className    = ""; logo.style.display    = "none"
         if (data.hero) {
-          hero.className = ""
-          hero.src = data.hero
+          hero.src = data.hero; hero.style.display = "block"
           hero.onload = () => hero.classList.add("loaded")
-          hero.style.display = "block"
-          logo.style.display = "none"
-        } else if (data.logo) {
-          logo.className = ""
-          logo.src = data.logo
-          logo.onload = () => logo.classList.add("loaded")
-          logo.style.display = "block"
-          hero.style.display = "none"
-        } else {
-          hero.style.display = "none"
-          logo.style.display = "none"
+          if (data.logo) {
+            logo.src = data.logo; logo.style.display = "block"
+            logo.onload = () => logo.classList.add("loaded")
+          }
+        } else if (data.capsule) {
+          capsule.src = data.capsule; capsule.style.display = "block"
+          capsule.onload = () => capsule.classList.add("loaded")
         }
       })
     </script>

@@ -59,8 +59,9 @@ contextBridge.exposeInMainWorld('nuarcade', {
   createFolderStructure: () => ipcRenderer.invoke('create-folder-structure'),
 
   // Backup / restore
-  backupConfig: () => ipcRenderer.invoke('backup-config'),
-  restoreConfig: () => ipcRenderer.invoke('restore-config'),
+  backupConfig:          () => ipcRenderer.invoke('backup-config'),
+  backupLocalStorage:    (data) => ipcRenderer.invoke('backup-localstorage', data),
+  restoreConfig:         () => ipcRenderer.invoke('restore-config'),
 
   // Marquee display
   openMarquee: () => ipcRenderer.invoke('open-marquee'),

@@ -364,3 +364,14 @@
 }
 
 .communityLink:hover { background: rgba(0,200,255,0.08); }
+.rescanResult {
+  margin: 4px 0 8px;
+  padding: 8px 12px;
+  background: rgba(0,255,136,0.05);
+  border: 1px solid rgba(0,255,136,0.12);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  line-height: 1.5;
+}

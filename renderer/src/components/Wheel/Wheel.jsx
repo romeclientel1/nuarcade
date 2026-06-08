@@ -6,6 +6,7 @@ import MediaManager from "../MediaManager/MediaManager"
 import Settings from "../Settings/Settings"
 import GameDetail from "../GameDetail/GameDetail"
 import Help from "../Help/Help"
+import Collections from "../Collections/Collections"
 import SortMenu from "./SortMenu"
 import { useGamepad } from "./useGamepad"
 import { useArcadeSounds } from "../../hooks/useArcadeSounds"
@@ -77,6 +78,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
   const [showDetail, setShowDetail] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
   const [showSort, setShowSort] = useState(false)
+  const [showCollections, setShowCollections] = useState(false)
   const [sortBy, setSortBy] = useState("default")
   const [search,        setSearch       ] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
@@ -128,6 +130,19 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
   const current = filteredGames[selectedIndex] || filteredGames[0]
 
   useEffect(() => { setSelectedIndex(0) }, [activeCategory, debouncedSearch, sortBy])
+
+  // Update marquee display when selected game changes
+  useEffect(() => {
+    if (!current || !window.nuarcade?.updateMarquee) return
+    const art = artwork?.[current.id || current.profile]
+    window.nuarcade.updateMarquee({
+      title:  current.title,
+      system: current.system,
+      hero:   art?.hero   || null,
+      logo:   art?.logo   || null,
+      capsule: art?.capsule || null,
+    }).catch(() => {})
+  }, [current?.id, current?.profile, artwork])
 
   // Auto-launch last played game if configured
   useEffect(() => {
@@ -184,6 +199,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
         if (current) toggleFavorite(current.id || current.profile)
       }
       if (e.key === "?") setShowHelp(h => !h)
+      if (e.key === "n" || e.key === "N") setShowCollections(c => !c)
       if (e.key === "c" || e.key === "C") setCabinetMode(m => !m)
       if (e.key === "s" || e.key === "S") setScreenshotMode(m => !m)
       if (e.key === "r" || e.key === "R") {
@@ -202,11 +218,26 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
 
   useGamepad({
     enabled: !showDetail && !showMediaManager && !showSettings && !showSearch && !showHelp,
-    onLeft:     () => setSelectedIndex(i => (i - 1 + filteredGames.length) % filteredGames.length),
-    onRight:    () => setSelectedIndex(i => (i + 1) % filteredGames.length),
-    onConfirm:  () => setShowDetail(true),
-    onBack:     () => { sounds.back(); setShowDetail(false); setSearch(""); setDebouncedSearch(""); setShowSearch(false) },
-    onFavorite: () => { if (current) toggleFavorite(current.id || current.profile) },
+    onLeft:          () => setSelectedIndex(i => (i - 1 + filteredGames.length) % filteredGames.length),
+    onRight:         () => setSelectedIndex(i => (i + 1) % filteredGames.length),
+    onConfirm:       () => setShowDetail(true),
+    onBack:          () => { sounds.back(); setShowDetail(false); setSearch(""); setDebouncedSearch(""); setShowSearch(false) },
+    onFavorite:      () => { if (current) toggleFavorite(current.id || current.profile) },
+    onCategoryLeft:  () => {
+      const idx = CATEGORIES.indexOf(activeCategory)
+      setActiveCategory(CATEGORIES[(idx - 1 + CATEGORIES.length) % CATEGORIES.length])
+    },
+    onCategoryRight: () => {
+      const idx = CATEGORIES.indexOf(activeCategory)
+      setActiveCategory(CATEGORIES[(idx + 1) % CATEGORIES.length])
+    },
+    onRandom:        () => {
+      if (filteredGames.length > 0) {
+        setSelectedIndex(Math.floor(Math.random() * filteredGames.length))
+        sounds.navigate()
+      }
+    },
+    onSettings:      () => setShowSettings(true),
   })
 
   const handleLaunch = async () => {
@@ -319,6 +350,13 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
               )}
               <button className={styles.searchBtn} onClick={() => setShowSearch(true)}>Search</button>
               <button className={sortBy !== "default" ? styles.sortActive : styles.sortBtn} onClick={() => setShowSort(s => !s)}>Sort</button>
+              <button className={styles.randBtn} onClick={() => {
+                if (filteredGames.length > 0) {
+                  setSelectedIndex(Math.floor(Math.random() * filteredGames.length))
+                  sounds.navigate()
+                }
+              }} title="Random game (R)">?</button>
+              <button className={styles.colBtn} onClick={() => setShowCollections(true)} title="Collections (N)">[]</button>
               <button className={styles.mediaBtn} onClick={() => setShowMediaManager(true)}>Media</button>
               <button className={styles.settingsBtn} onClick={() => setShowSettings(true)}>Settings</button>
               <button className={styles.helpBtn} onClick={() => setShowHelp(true)}>?</button>
@@ -472,6 +510,13 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
 
       {showSort && <SortMenu current={sortBy} onChange={setSortBy} onClose={() => setShowSort(false)} />}
       {showHelp && <Help onClose={() => setShowHelp(false)} />}
+      {showCollections && (
+        <Collections
+          games={games}
+          currentGame={current}
+          onClose={() => setShowCollections(false)}
+        />
+      )}
       {showMediaManager && <MediaManager onClose={() => setShowMediaManager(false)} />}
       {showSettings && <Settings onClose={() => setShowSettings(false)} onCRTChange={onCRTChange} crtEnabled={crtEnabled} themeId={themeId} onThemeChange={onThemeChange} />}
       {showDetail && current && (

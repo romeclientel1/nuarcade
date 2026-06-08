@@ -1,0 +1,167 @@
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.88);
+  z-index: 200; display: flex;
+  align-items: center; justify-content: center;
+  backdrop-filter: blur(6px);
+  animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.panel {
+  background: #060612;
+  border: 1px solid rgba(0,200,255,0.18);
+  border-radius: 12px;
+  width: 720px; max-height: 82vh;
+  display: flex; flex-direction: column;
+  box-shadow: 0 0 80px rgba(0,200,255,0.08);
+  animation: slideUp 0.2s ease;
+  overflow: hidden;
+}
+@keyframes slideUp {
+  from { transform: translateY(12px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 24px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  flex-shrink: 0;
+}
+.title {
+  font-family: Orbitron, sans-serif;
+  font-size: 13px; font-weight: 700;
+  color: #fff; letter-spacing: 0.12em;
+}
+.closeBtn {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.4);
+  width: 28px; height: 28px;
+  border-radius: 4px; cursor: pointer; font-size: 11px;
+}
+.closeBtn:hover { color: #fff; border-color: rgba(255,255,255,0.3); }
+.body {
+  display: flex; flex: 1; overflow: hidden;
+}
+/* Sidebar */
+.sidebar {
+  width: 220px; flex-shrink: 0;
+  border-right: 1px solid rgba(255,255,255,0.06);
+  display: flex; flex-direction: column; gap: 0;
+  overflow: hidden;
+}
+.newRow {
+  display: flex; gap: 6px;
+  padding: 14px 12px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.newInput {
+  flex: 1; background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 4px; color: #fff;
+  font-size: 11px; padding: 6px 8px;
+  font-family: inherit;
+}
+.newInput::placeholder { color: rgba(255,255,255,0.25); }
+.newInput:focus { outline: none; border-color: rgba(0,200,255,0.4); }
+.createBtn {
+  background: rgba(0,255,136,0.15);
+  border: 1px solid rgba(0,255,136,0.3);
+  color: #00ff88; border-radius: 4px;
+  font-size: 16px; width: 30px; cursor: pointer;
+  transition: all 0.15s;
+}
+.createBtn:hover { background: rgba(0,255,136,0.25); }
+.colList { flex: 1; overflow-y: auto; padding: 6px 0; }
+.emptyHint { font-size: 11px; color: rgba(255,255,255,0.2); padding: 16px 14px; }
+.colItem {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 12px; cursor: pointer;
+  border-left: 2px solid transparent;
+  transition: all 0.12s; gap: 6px;
+}
+.colItem:hover { background: rgba(255,255,255,0.04); }
+.colActive {
+  background: rgba(0,200,255,0.07) !important;
+  border-left-color: #00c8ff;
+}
+.colName { font-size: 12px; color: rgba(255,255,255,0.75); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.colMeta { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.colCount { font-size: 10px; color: rgba(255,255,255,0.25); min-width: 18px; text-align: right; }
+.colAction {
+  background: none; border: none;
+  color: rgba(255,255,255,0.2); font-size: 11px;
+  cursor: pointer; padding: 2px 4px;
+  transition: color 0.12s;
+}
+.colAction:hover { color: rgba(255,255,255,0.6); }
+.renameInput {
+  flex: 1; background: rgba(0,200,255,0.1);
+  border: 1px solid rgba(0,200,255,0.3);
+  border-radius: 3px; color: #fff;
+  font-size: 11px; padding: 3px 6px; font-family: inherit;
+}
+.renameInput:focus { outline: none; }
+/* Main area */
+.main {
+  flex: 1; overflow-y: auto;
+  padding: 16px 20px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.mainEmpty {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 10px; padding: 32px 0;
+}
+.mainEmptyIcon { font-size: 36px; color: rgba(255,255,255,0.1); font-family: monospace; }
+.mainEmptyText { font-size: 12px; color: rgba(255,255,255,0.25); text-align: center; line-height: 1.5; }
+.quickAdd { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; width: 100%; max-width: 280px; }
+.quickAddLabel { font-size: 10px; color: rgba(255,255,255,0.3); text-align: center; }
+.quickBtn {
+  padding: 7px 14px; border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.5); font-size: 11px;
+  cursor: pointer; transition: all 0.15s; text-align: left;
+}
+.quickBtn:hover { border-color: rgba(0,200,255,0.3); color: #fff; }
+.quickBtnOn {
+  border-color: rgba(0,255,136,0.3) !important;
+  background: rgba(0,255,136,0.08) !important;
+  color: #00ff88 !important;
+}
+.mainTitle {
+  font-family: Orbitron, sans-serif;
+  font-size: 14px; font-weight: 700; color: #fff;
+}
+.mainSub { font-size: 11px; color: rgba(255,255,255,0.3); margin-top: -6px; }
+.addCurrentBtn {
+  padding: 9px 16px; border-radius: 6px;
+  border: 1px solid rgba(0,200,255,0.25);
+  background: rgba(0,200,255,0.07);
+  color: #00c8ff; font-size: 11px; cursor: pointer;
+  transition: all 0.15s; text-align: left;
+}
+.addCurrentBtn:hover { background: rgba(0,200,255,0.14); }
+.addCurrentBtnOn {
+  border-color: rgba(239,68,68,0.3) !important;
+  background: rgba(239,68,68,0.07) !important;
+  color: #f87171 !important;
+}
+.gameList { display: flex; flex-direction: column; gap: 4px; }
+.gameRow {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 10px; border-radius: 6px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+.gameInfo { flex: 1; min-width: 0; }
+.gameTitle { font-size: 12px; color: rgba(255,255,255,0.8); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gameSystem { font-size: 10px; color: rgba(255,255,255,0.25); margin-top: 2px; }
+.removeBtn {
+  background: none; border: 1px solid rgba(239,68,68,0.2);
+  color: rgba(239,68,68,0.5); border-radius: 4px;
+  font-size: 10px; padding: 3px 8px; cursor: pointer;
+  transition: all 0.12s; flex-shrink: 0; margin-left: 12px;
+}
+.removeBtn:hover { border-color: rgba(239,68,68,0.5); color: #f87171; }

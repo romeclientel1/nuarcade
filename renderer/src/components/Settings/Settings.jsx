@@ -58,44 +58,76 @@ const handleRescan = async () => {
   setRescanResult(null)
   try {
     const cfg = config
+    const counts = []
+    const scan = async (label, fn) => {
+      try { const r = await fn(); const n = r.games?.length || 0; if (n > 0) counts.push(label + ": " + n); return n }
+      catch { return 0 }
+    }
     let total = 0
-    const tp = await window.nuarcade.scanGames(cfg.teknoParrotPath, cfg.gamesFolderPath)
-    total += tp.games?.length || 0
-    if (cfg.ps3GamesPath)       { const r = await window.nuarcade.scanPs3Games(cfg.ps3GamesPath); total += r.games?.length || 0 }
-    if (cfg.xbox360GamesPath)   { const r = await window.nuarcade.scanXbox360Games(cfg.xbox360GamesPath); total += r.games?.length || 0 }
-    if (cfg.gcWiiGamesPath)     { const r = await window.nuarcade.scanGCWiiGames(cfg.gcWiiGamesPath); total += r.games?.length || 0 }
-    if (cfg.ps2GamesPath)       { const r = await window.nuarcade.scanPs2Games(cfg.ps2GamesPath); total += r.games?.length || 0 }
-    if (cfg.switchGamesPath)    { const r = await window.nuarcade.scanSwitchGames(cfg.switchGamesPath); total += r.games?.length || 0 }
-    if (cfg.mameGamesPath)      { const r = await window.nuarcade.scanMameGames(cfg.mameGamesPath); total += r.games?.length || 0 }
-    if (cfg.retroarchGamesPath) { const r = await window.nuarcade.scanRetroArchGames(cfg.retroarchGamesPath); total += r.games?.length || 0 }
-    if (cfg.n64GamesPath)       { const r = await window.nuarcade.scanN64Games(cfg.n64GamesPath); total += r.games?.length || 0 }
-    if (cfg.ps1GamesPath)       { const r = await window.nuarcade.scanPs1Games(cfg.ps1GamesPath); total += r.games?.length || 0 }
-    if (cfg.dreamcastGamesPath) { const r = await window.nuarcade.scanDreamcastGames(cfg.dreamcastGamesPath); total += r.games?.length || 0 }
-    if (cfg.model2GamesPath)    { const r = await window.nuarcade.scanModel2Games(cfg.model2GamesPath); total += r.games?.length || 0 }
-    if (cfg.model3GamesPath)    { const r = await window.nuarcade.scanModel3Games(cfg.model3GamesPath); total += r.games?.length || 0 }
-    if (cfg.pspGamesPath)       { const r = await window.nuarcade.scanPspGames(cfg.pspGamesPath); total += r.games?.length || 0 }
-    if (cfg.wiiUGamesPath)      { const r = await window.nuarcade.scanWiiUGames(cfg.wiiUGamesPath); total += r.games?.length || 0 }
-    if (cfg.tablesPath)         { const r = await window.nuarcade.scanPinball(cfg.tablesPath); total += r.games?.length || 0 }
-    setRescanResult(total + " games found")
+    total += await scan("TeknoParrot", () => window.nuarcade.scanGames(cfg.teknoParrotPath, cfg.gamesFolderPath))
+    total += await scan("MAME",        () => window.nuarcade.scanMameGames(cfg.mameGamesPath))
+    total += await scan("Model 2",     () => window.nuarcade.scanModel2Games(cfg.model2GamesPath))
+    total += await scan("Model 3",     () => window.nuarcade.scanModel3Games(cfg.model3GamesPath))
+    total += await scan("RetroArch",   () => window.nuarcade.scanRetroArchGames(cfg.retroarchGamesPath))
+    total += await scan("Project64",   () => window.nuarcade.scanN64Games(cfg.n64GamesPath))
+    total += await scan("DuckStation", () => window.nuarcade.scanPs1Games(cfg.ps1GamesPath))
+    total += await scan("Flycast",     () => window.nuarcade.scanDreamcastGames(cfg.dreamcastGamesPath))
+    total += await scan("PPSSPP",      () => window.nuarcade.scanPspGames(cfg.pspGamesPath))
+    total += await scan("PCSX2",       () => window.nuarcade.scanPs2Games(cfg.ps2GamesPath))
+    total += await scan("RPCS3",       () => window.nuarcade.scanPs3Games(cfg.ps3GamesPath))
+    total += await scan("Xenia",       () => window.nuarcade.scanXbox360Games(cfg.xbox360GamesPath))
+    total += await scan("Dolphin",     () => window.nuarcade.scanGCWiiGames(cfg.gcWiiGamesPath))
+    total += await scan("Cemu",        () => window.nuarcade.scanWiiUGames(cfg.wiiUGamesPath))
+    total += await scan("Ryujinx",     () => window.nuarcade.scanSwitchGames(cfg.switchGamesPath))
+    total += await scan("Pinball",     () => window.nuarcade.scanPinball(cfg.tablesPath))
+    const breakdown = counts.length ? "\n" + counts.join(" | ") : ""
+    setRescanResult(total + " games found" + breakdown)
   } catch (e) { setRescanResult("Scan error: " + e.message) }
   setRescanning(false)
 }
 
+const LS_BACKUP_KEYS = [
+  "nuarcade_favorites", "nuarcade_recent", "nuarcade_artwork",
+  "nuarcade_ratings", "nuarcade_notes", "nuarcade_first_seen",
+  "nuarcade_playtime", "nuarcade_last_game_count", "nuarcade_collections",
+]
+
 const handleBackup = async () => {
   setBackingUp(true)
-  const result = await window.nuarcade?.backupConfig()
+  try {
+    const lsData = {}
+    LS_BACKUP_KEYS.forEach(key => {
+      const val = localStorage.getItem(key)
+      if (val) lsData[key] = val
+    })
+    const result = await window.nuarcade?.backupLocalStorage(lsData)
+    if (result?.success) alert("Full backup saved to " + result.path + "\n\nIncludes: config, favorites, ratings, notes, playtime, artwork, collections.")
+  } catch (e) { alert("Backup failed: " + e.message) }
   setBackingUp(false)
-  if (result?.success) alert("Backup saved to " + result.path)
 }
 
 const handleRestore = async () => {
   setRestoring(true)
-  const result = await window.nuarcade?.restoreConfig()
+  try {
+    const result = await window.nuarcade?.restoreConfig()
+    if (result?.success) {
+      // Restore localStorage keys if present in backup
+      if (result.localStorage) {
+        Object.entries(result.localStorage).forEach(([key, val]) => {
+          if (LS_BACKUP_KEYS.includes(key)) localStorage.setItem(key, val)
+        })
+      }
+      const keys = Object.keys(result.localStorage || {})
+      alert(
+        "Restored from backup dated " + new Date(result.date).toLocaleDateString() +
+        (keys.length ? "\n\nAlso restored: " + keys.map(k => k.replace("nuarcade_","")).join(", ") : "")
+      )
+      loadConfig()
+    } else if (result?.error) {
+      alert("Restore failed: " + result.error)
+    }
+  } catch (e) { alert("Restore failed: " + e.message) }
   setRestoring(false)
-  if (result?.success) {
-    alert("Config restored from backup dated " + new Date(result.date).toLocaleDateString())
-    loadConfig()
-  }
 }
 
 const handleSave = async () => {
@@ -375,6 +407,31 @@ const handleSave = async () => {
 
           <div className={styles.section}>
             <div className={styles.sectionTitle}>Library</div>
+            <div className={styles.inputRow}>
+              <label className={styles.inputLabel}>Rescan games</label>
+              <button className={styles.exportBtn} onClick={handleRescan} disabled={rescanning}>
+                {rescanning ? "Scanning..." : "Rescan all emulators"}
+              </button>
+            </div>
+            {rescanResult && (
+              <div className={styles.rescanResult}>
+                {rescanResult.split("\n").map((line, i) => (
+                  <div key={i} style={{ fontSize: i === 0 ? "12px" : "10px", color: i === 0 ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.25)" }}>{line}</div>
+                ))}
+              </div>
+            )}
+            <div className={styles.inputRow}>
+              <label className={styles.inputLabel}>Backup</label>
+              <button className={styles.exportBtn} onClick={handleBackup} disabled={backingUp}>
+                {backingUp ? "Saving..." : "Save full backup"}
+              </button>
+            </div>
+            <div className={styles.inputRow}>
+              <label className={styles.inputLabel}>Restore</label>
+              <button className={styles.exportBtn} onClick={handleRestore} disabled={restoring}>
+                {restoring ? "Restoring..." : "Restore from backup"}
+              </button>
+            </div>
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>Export game list</label>
               <button className={styles.exportBtn} onClick={handleExport} disabled={exporting}>
