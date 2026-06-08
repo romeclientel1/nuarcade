@@ -227,7 +227,20 @@ const EMULATORS = [
 
 export default function SetupGuideScreen({ config, next, prev }) {
   const [expanded, setExpanded] = useState(null)
+  const [biosStatus, setBiosStatus] = useState({})
   const toggle = (id) => setExpanded(e => e === id ? null : id)
+
+  // Run BIOS check on mount (Windows only)
+  useState(() => {
+    if (window.nuarcade?.checkBios) {
+      window.nuarcade.checkBios().then(r => setBiosStatus(r || {})).catch(() => {})
+    }
+  })
+
+  const getBiosStatus = (emuId) => {
+    if (!biosStatus[emuId]) return null
+    return biosStatus[emuId].found ? 'ok' : 'missing'
+  }
 
   return (
     <div className={styles.screen}>
@@ -254,12 +267,29 @@ export default function SetupGuideScreen({ config, next, prev }) {
               </div>
               <div className={styles.guideRight}>
                 {emu.bios && <span className={styles.biosTag}>BIOS req.</span>}
+                {emu.bios && getBiosStatus(emu.id) === 'ok' && (
+                  <span className={styles.biosOk}>BIOS OK</span>
+                )}
+                {emu.bios && getBiosStatus(emu.id) === 'missing' && (
+                  <span className={styles.biosMissing}>BIOS missing</span>
+                )}
                 <span className={styles.guideChevron}>{expanded === emu.id ? 'v' : '>'}</span>
               </div>
             </div>
 
             {expanded === emu.id && (
               <div className={styles.guideBody}>
+                {emu.bios && getBiosStatus(emu.id) === 'missing' && (
+                  <div className={styles.biosWarning}>
+                    BIOS files not detected. This emulator will not launch games without them.
+                    See step {emu.steps.findIndex(s => s.toLowerCase().includes('bios')) + 1} below.
+                  </div>
+                )}
+                {emu.bios && getBiosStatus(emu.id) === 'ok' && (
+                  <div className={styles.biosFound}>
+                    BIOS files detected -- you are good to go!
+                  </div>
+                )}
                 <div className={styles.guideSteps}>
                   {emu.steps.map((step, i) => (
                     <div key={i} className={styles.guideStep}>

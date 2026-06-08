@@ -511,11 +511,54 @@ ipcMain.handle('scan-mame-games', async (event, mameGamesPath) => {
 // -- RetroArch ---------------------------------------------------------------
 ipcMain.handle('launch-retroarch-game', async (event, gamePath) => {
   const cfg = config.load()
-  const retroExe = path.join(cfg.retroarchPath || 'F:\\RetroArch\\', 'retroarch.exe')
+  const retroDir = cfg.retroarchPath || 'F:\\RetroArch\\'
+  const retroExe = path.join(retroDir, 'retroarch.exe')
   const { spawn } = require('child_process')
-  // Launch with auto-core detection (-L flag omitted so RetroArch picks core from extension)
-  spawn(retroExe, ['-f', gamePath], { detached: true, stdio: 'ignore' }).unref()
-  return { launched: true }
+  const ext = path.extname(gamePath).toLowerCase()
+
+  // Extension -> core dll mapping (most common cores)
+  const CORE_MAP = {
+    '.nes':  'nestopia_libretro.dll',
+    '.fds':  'nestopia_libretro.dll',
+    '.sfc':  'snes9x_libretro.dll',
+    '.smc':  'snes9x_libretro.dll',
+    '.md':   'genesis_plus_gx_libretro.dll',
+    '.gen':  'genesis_plus_gx_libretro.dll',
+    '.smd':  'genesis_plus_gx_libretro.dll',
+    '.32x':  'picodrive_libretro.dll',
+    '.gg':   'genesis_plus_gx_libretro.dll',
+    '.sms':  'genesis_plus_gx_libretro.dll',
+    '.gba':  'mgba_libretro.dll',
+    '.gbc':  'gambatte_libretro.dll',
+    '.gb':   'gambatte_libretro.dll',
+    '.n64':  'mupen64plus_next_libretro.dll',
+    '.z64':  'mupen64plus_next_libretro.dll',
+    '.v64':  'mupen64plus_next_libretro.dll',
+    '.bin':  'pcsx_rearmed_libretro.dll',
+    '.cue':  'pcsx_rearmed_libretro.dll',
+    '.iso':  'pcsx_rearmed_libretro.dll',
+    '.chd':  'pcsx_rearmed_libretro.dll',
+    '.pce':  'mednafen_pce_libretro.dll',
+    '.ngp':  'mednafen_ngp_libretro.dll',
+    '.ngc':  'mednafen_ngp_libretro.dll',
+    '.ws':   'mednafen_wswan_libretro.dll',
+    '.wsc':  'mednafen_wswan_libretro.dll',
+    '.a26':  'stella_libretro.dll',
+    '.a78':  'prosystem_libretro.dll',
+    '.lnx':  'handy_libretro.dll',
+    '.col':  'bluemsx_libretro.dll',
+    '.vec':  'vecx_libretro.dll',
+  }
+
+  const coreName = CORE_MAP[ext]
+  const corePath = coreName ? path.join(retroDir, 'cores', coreName) : null
+
+  const args = corePath && fs.existsSync(corePath)
+    ? ['-f', '-L', corePath, gamePath]
+    : ['-f', gamePath]
+
+  spawn(retroExe, args, { detached: true, stdio: 'ignore' }).unref()
+  return { launched: true, core: coreName || 'auto' }
 })
 
 ipcMain.handle('scan-retroarch-games', async (event, retroarchGamesPath) => {
@@ -563,6 +606,47 @@ ipcMain.handle('launch-flycast-game', async (event, gamePath) => {
 ipcMain.handle('scan-dreamcast-games', async (event, dreamcastGamesPath) => {
   const { scanDreamcastGames } = require('./scanner')
   return scanDreamcastGames(dreamcastGamesPath)
+})
+
+
+// -- BIOS file checker -------------------------------------------------------
+// Returns which BIOS files are present/missing for each emulator that needs them
+ipcMain.handle('check-bios', async () => {
+  const cfg = config.load()
+  const results = {}
+
+  // PCSX2 - needs any file in bios folder
+  const pcsx2Bios = path.join(cfg.pcsx2Path || 'F:\\PCSX2\\', 'bios')
+  try {
+    const files = fs.readdirSync(pcsx2Bios).filter(f => f.toLowerCase().endsWith('.bin'))
+    results.pcsx2 = { found: files.length > 0, files, folder: pcsx2Bios }
+  } catch (e) { results.pcsx2 = { found: false, files: [], folder: pcsx2Bios } }
+
+  // Ryujinx - needs prod.keys in system folder
+  const ryujinxSystem = path.join(cfg.ryujinxPath || 'F:\\Ryujinx\\', 'system')
+  const prodKeys = path.join(ryujinxSystem, 'prod.keys')
+  results.ryujinx = { found: fs.existsSync(prodKeys), files: fs.existsSync(prodKeys) ? ['prod.keys'] : [], folder: ryujinxSystem }
+
+  // DuckStation - needs any .bin in a bios subfolder or scph*.bin anywhere under duckstation path
+  const dsPath = cfg.duckstationPath || 'F:\\DuckStation\\'
+  const dsBios = path.join(dsPath, 'bios')
+  try {
+    const files = fs.readdirSync(dsBios).filter(f => f.toLowerCase().endsWith('.bin'))
+    results.duckstation = { found: files.length > 0, files, folder: dsBios }
+  } catch (e) {
+    // Try root of DuckStation folder
+    try {
+      const files = fs.readdirSync(dsPath).filter(f => f.toLowerCase().match(/scph.*\.bin/))
+      results.duckstation = { found: files.length > 0, files, folder: dsPath }
+    } catch (e2) { results.duckstation = { found: false, files: [], folder: dsBios } }
+  }
+
+  // Flycast - needs dc_boot.bin in data folder
+  const flycastData = path.join(cfg.flycastPath || 'F:\\Flycast\\', 'data')
+  const dcBoot = path.join(flycastData, 'dc_boot.bin')
+  results.flycast = { found: fs.existsSync(dcBoot), files: fs.existsSync(dcBoot) ? ['dc_boot.bin'] : [], folder: flycastData }
+
+  return results
 })
 
 
