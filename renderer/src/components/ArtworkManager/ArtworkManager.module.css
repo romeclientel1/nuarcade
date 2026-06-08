@@ -1,0 +1,16 @@
+
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 9000; backdrop-filter: blur(8px); }
+.panel { background: #0a0a0a; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; width: 560px; max-height: 80vh; display: flex; flex-direction: column; overflow: hidden; }
+.header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px 16px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.title { font-size: 1.1rem; font-weight: 700; color: #fff; }
+.closeBtn { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: rgba(255,255,255,0.5); font-size: 0.75rem; padding: 4px 10px; cursor: pointer; }
+.body { padding: 20px 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; flex: 1; }
+.info { font-size: 0.82rem; color: rgba(255,255,255,0.5); line-height: 1.5; }
+.noKey { font-size: 0.78rem; color: #f59e0b; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 8px; padding: 12px; line-height: 1.5; }
+.progressBar { height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
+.progressFill { height: 100%; background: #00ff88; border-radius: 2px; transition: width 0.3s ease; }
+.stats { font-size: 0.78rem; color: rgba(255,255,255,0.4); }
+.logBox { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 12px; max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+.logLine { font-size: 0.68rem; color: rgba(255,255,255,0.3); font-family: monospace; }
+.footer { padding: 16px 24px; border-top: 1px solid rgba(255,255,255,0.06); }
+.startBtn { width: 100%; padding: 12px; background: rgba(0,255,136,0.15); border: 1px solid rgba(0,255,136,0.3); border-radius: 8px; color: #00ff88; font-size: 0.85rem; font-weight: 600; cursor: pointer; }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import ControllerTest from "../ControllerTest/ControllerTest"
 import { usePlaytime } from "../../hooks/usePlaytime"
+import ArtworkManager from "../ArtworkManager/ArtworkManager"
 import styles from "./Settings.module.css"
 import { useVersionCheck } from "../../hooks/useVersionCheck"
 import { THEMES } from "../../hooks/useTheme"
@@ -16,6 +17,8 @@ const [rescanning, setRescanning] = useState(false)
 const [backingUp, setBackingUp] = useState(false)
 const [restoring, setRestoring] = useState(false)
 const [rescanResult, setRescanResult] = useState(null)
+const [showArtworkMgr, setShowArtworkMgr] = useState(false)
+const [marqueeOpen, setMarqueeOpen] = useState(false)
 
   useEffect(() => { loadConfig() }, [])
 
@@ -39,7 +42,17 @@ const [rescanResult, setRescanResult] = useState(null)
     }
   }
 
-  const handleRescan = async () => {
+  const handleMarquee = async () => {
+  if (marqueeOpen) {
+    await window.nuarcade?.closeMarquee()
+    setMarqueeOpen(false)
+  } else {
+    await window.nuarcade?.openMarquee()
+    setMarqueeOpen(true)
+  }
+}
+
+const handleRescan = async () => {
   if (!window.nuarcade) return
   setRescanning(true)
   setRescanResult(null)

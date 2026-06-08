@@ -10,6 +10,7 @@ import SortMenu from "./SortMenu"
 import { useGamepad } from "./useGamepad"
 import { useArcadeSounds } from "../../hooks/useArcadeSounds"
 import { usePlaytime } from "../../hooks/usePlaytime"
+import { useSteamGridDB } from "../../hooks/useSteamGridDB"
 
 
 import styles from "./Wheel.module.css"
@@ -53,6 +54,11 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
   const searchRef = useRef(null)
   const sounds = useArcadeSounds()
   const { startSession, endSession, getPlaytime, formatTime } = usePlaytime()
+  const [artwork, setArtwork] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("nuarcade_artwork") || "{}") } catch { return {} }
+  })
+  const sgdbKey = config?.sgdbApiKey || null
+  const { fetchArtworkForGame } = useSteamGridDB(sgdbKey)
   
   const [cabinetMode, setCabinetMode] = useState(false)
   const [screenshotMode, setScreenshotMode] = useState(false)

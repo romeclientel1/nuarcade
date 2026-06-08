@@ -44,6 +44,11 @@ contextBridge.exposeInMainWorld('nuarcade', {
   backupConfig: () => ipcRenderer.invoke('backup-config'),
   restoreConfig: () => ipcRenderer.invoke('restore-config'),
 
+  // Marquee display
+  openMarquee: () => ipcRenderer.invoke('open-marquee'),
+  closeMarquee: () => ipcRenderer.invoke('close-marquee'),
+  updateMarquee: (data) => ipcRenderer.invoke('update-marquee', data),
+
   // Controller overrides
   getControllerOverride: (gameId)             => ipcRenderer.invoke('get-controller-override', gameId),
   setControllerOverride: (gameId, controller) => ipcRenderer.invoke('set-controller-override', gameId, controller),

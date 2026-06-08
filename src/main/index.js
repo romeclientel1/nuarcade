@@ -325,6 +325,107 @@ ipcMain.handle('restore-config', async () => {
   }
 })
 
+
+// ── Marquee display (second monitor) ────────────────────────────────────────
+let marqueeWin = null
+
+ipcMain.handle('open-marquee', async () => {
+  const displays = screen.getAllDisplays()
+  const secondary = displays.find(d => d.id !== screen.getPrimaryDisplay().id)
+  const display = secondary || screen.getPrimaryDisplay()
+
+  if (marqueeWin && !marqueeWin.isDestroyed()) {
+    marqueeWin.focus()
+    return { success: true }
+  }
+
+  marqueeWin = new BrowserWindow({
+    x: display.bounds.x,
+    y: display.bounds.y,
+    width: display.bounds.width,
+    height: display.bounds.height,
+    fullscreen: true,
+    frame: false,
+    backgroundColor: "#000000",
+    alwaysOnTop: true,
+    webPreferences: {
+      contextIsolation: false,
+      nodeIntegration: true,
+    }
+  })
+
+  marqueeWin.loadURL("data:text/html," + encodeURIComponent(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { background: #000; overflow: hidden; width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; font-family: system-ui, sans-serif; }
+      #marquee { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; }
+      #hero { width: 100%; height: 70%; object-fit: cover; object-position: center; opacity: 0; transition: opacity 0.8s ease; }
+      #hero.loaded { opacity: 1; }
+      #title { font-size: 3rem; font-weight: 900; color: #fff; text-align: center; letter-spacing: -0.02em; text-shadow: 0 2px 40px rgba(0,0,0,0.8); padding: 0 40px; }
+      #system { font-size: 1.1rem; color: rgba(255,255,255,0.4); letter-spacing: 0.1em; text-transform: uppercase; }
+      #logo { max-width: 60%; max-height: 30%; object-fit: contain; opacity: 0; transition: opacity 0.8s ease; }
+      #logo.loaded { opacity: 1; }
+      .nuarcade-brand { position: absolute; bottom: 20px; right: 24px; font-size: 0.75rem; color: rgba(255,255,255,0.15); letter-spacing: 0.1em; }
+    </style>
+    </head>
+    <body>
+    <div id="marquee">
+      <img id="hero" src="" />
+      <div id="title">NuArcade</div>
+      <div id="system">Insert Coin</div>
+      <img id="logo" src="" />
+    </div>
+    <div class="nuarcade-brand">NuArcade</div>
+    <script>
+      const { ipcRenderer } = require("electron")
+      ipcRenderer.on("marquee-update", (e, data) => {
+        const title = document.getElementById("title")
+        const system = document.getElementById("system")
+        const hero = document.getElementById("hero")
+        const logo = document.getElementById("logo")
+        title.textContent = data.title || "NuArcade"
+        system.textContent = data.system || ""
+        if (data.hero) {
+          hero.className = ""
+          hero.src = data.hero
+          hero.onload = () => hero.classList.add("loaded")
+          hero.style.display = "block"
+          logo.style.display = "none"
+        } else if (data.logo) {
+          logo.className = ""
+          logo.src = data.logo
+          logo.onload = () => logo.classList.add("loaded")
+          logo.style.display = "block"
+          hero.style.display = "none"
+        } else {
+          hero.style.display = "none"
+          logo.style.display = "none"
+        }
+      })
+    </script>
+    </body>
+    </html>
+  `))
+
+  marqueeWin.on("closed", () => { marqueeWin = null })
+  return { success: true }
+})
+
+ipcMain.handle('close-marquee', () => {
+  if (marqueeWin && !marqueeWin.isDestroyed()) marqueeWin.close()
+  return { success: true }
+})
+
+ipcMain.handle('update-marquee', (event, data) => {
+  if (marqueeWin && !marqueeWin.isDestroyed()) {
+    marqueeWin.webContents.send("marquee-update", data)
+  }
+  return { success: true }
+})
+
 // ── Config & misc ───────────────────────────────────────────────────────────
 ipcMain.handle('add-exclusions', async (event, paths) => {
   return new Promise((resolve) => {
