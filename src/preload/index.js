@@ -78,6 +78,9 @@ contextBridge.exposeInMainWorld('nuarcade', {
   // Signal wizard complete (enables cursor hide)
   setupComplete: () => ipcRenderer.send('setup-complete'),
 
+  // Save text file
+  saveTxt: (opts) => ipcRenderer.invoke('save-txt', opts),
+
   // BIOS checker
   checkBios: () => ipcRenderer.invoke('check-bios'),
 })

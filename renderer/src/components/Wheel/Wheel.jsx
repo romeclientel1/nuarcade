@@ -6,7 +6,7 @@ import MediaManager from "../MediaManager/MediaManager"
 import Settings from "../Settings/Settings"
 import GameDetail from "../GameDetail/GameDetail"
 import Help from "../Help/Help"
-import Collections from "../Collections/Collections"
+import Collections, { useCollections } from "../Collections/Collections"
 import SortMenu from "./SortMenu"
 import { useGamepad } from "./useGamepad"
 import { useArcadeSounds } from "../../hooks/useArcadeSounds"
@@ -69,6 +69,15 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
     newGameCount,
   } = useGameLibrary()
 
+  const { getCollections } = useCollections()
+  const [collections, setCollections] = useState(() => getCollections())
+
+  // Refresh collections when panel closes
+  const handleCollectionsClose = () => {
+    setShowCollections(false)
+    setCollections(getCollections())
+  }
+
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [activeCategory, setActiveCategory] = useState("All")
   const [launching, setLaunching] = useState(false)
@@ -109,6 +118,9 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
       list = games.filter(g => isFavorite(g.id || g.profile))
     } else if (activeCategory === "Recent") {
       list = recentlyPlayed
+    } else if (activeCategory.startsWith("col_")) {
+      const col = collections[activeCategory]
+      list = col ? games.filter(g => col.games.includes(g.id || g.profile)) : []
     } else if (activeCategory !== "All") {
       list = games.filter(g => g.genre === activeCategory)
     }
@@ -224,12 +236,14 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
     onBack:          () => { sounds.back(); setShowDetail(false); setSearch(""); setDebouncedSearch(""); setShowSearch(false) },
     onFavorite:      () => { if (current) toggleFavorite(current.id || current.profile) },
     onCategoryLeft:  () => {
-      const idx = CATEGORIES.indexOf(activeCategory)
-      setActiveCategory(CATEGORIES[(idx - 1 + CATEGORIES.length) % CATEGORIES.length])
+      const allCats = [...CATEGORIES, ...Object.keys(collections)]
+      const idx = allCats.indexOf(activeCategory)
+      setActiveCategory(allCats[(idx - 1 + allCats.length) % allCats.length])
     },
     onCategoryRight: () => {
-      const idx = CATEGORIES.indexOf(activeCategory)
-      setActiveCategory(CATEGORIES[(idx + 1) % CATEGORIES.length])
+      const allCats = [...CATEGORIES, ...Object.keys(collections)]
+      const idx = allCats.indexOf(activeCategory)
+      setActiveCategory(allCats[(idx + 1) % allCats.length])
     },
     onRandom:        () => {
       if (filteredGames.length > 0) {
@@ -383,6 +397,16 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
             )}
           </button>
         ))}
+        {Object.values(collections).map(col => (
+          <button
+            key={col.id}
+            className={styles.catPill + " " + styles.catCollection + (activeCategory === col.id ? " " + styles.catActive : "")}
+            onClick={() => setActiveCategory(col.id)}
+          >
+            {col.name}
+            <span className={styles.catCount}>{col.games.length}</span>
+          </button>
+        ))}
       </div>
 
       {libraryEmpty ? (
@@ -514,7 +538,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
         <Collections
           games={games}
           currentGame={current}
-          onClose={() => setShowCollections(false)}
+          onClose={handleCollectionsClose}
         />
       )}
       {showMediaManager && <MediaManager onClose={() => setShowMediaManager(false)} />}

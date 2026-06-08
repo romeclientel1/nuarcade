@@ -728,6 +728,20 @@ ipcMain.handle('scan-model3-games', async (event, model3GamesPath) => {
   return scanModel3Games(model3GamesPath)
 })
 
+// -- Save text file (used by Export game list) --------------------------------
+ipcMain.handle('save-txt', async (event, { content, defaultName }) => {
+  const result = await dialog.showSaveDialog({
+    title: 'Export Game List',
+    defaultPath: defaultName || 'nuarcade-games.txt',
+    filters: [{ name: 'Text File', extensions: ['txt'] }]
+  })
+  if (result.canceled || !result.filePath) return { success: false }
+  const fs = require('fs')
+  fs.writeFileSync(result.filePath, content, 'utf8')
+  return { success: true, path: result.filePath }
+})
+
+
 // -- PPSSPP / PSP ------------------------------------------------------------
 ipcMain.handle('launch-psp-game', async (event, gamePath) => {
   const cfg = config.load()

@@ -139,21 +139,29 @@ const handleSave = async () => {
   const handleExport = async () => {
     setExporting(true)
     try {
-      const recent = JSON.parse(localStorage.getItem("nuarcade_recent") || "[]")
-      const counts = JSON.parse(localStorage.getItem("nuarcade_play_counts") || "{}")
+      const recent   = JSON.parse(localStorage.getItem("nuarcade_recent")   || "[]")
+      const playtime = JSON.parse(localStorage.getItem("nuarcade_playtime") || "{}")
+      const ratings  = JSON.parse(localStorage.getItem("nuarcade_ratings")  || "{}")
+      const notes    = JSON.parse(localStorage.getItem("nuarcade_notes")    || "{}")
       const lines = [
         "NuArcade Game List",
-        "Generated: " + new Date().toLocaleDateString(),
-        "=".repeat(50),
+        "Generated: " + new Date().toLocaleString(),
+        "=".repeat(60),
         "",
-        ...recent.map((g, i) => (i+1) + ". " + g.title + " (" + (g.system||"") + ") - played " + (counts[g.id||g.profile]||0) + "x")
+        ...recent.map((g, i) => {
+          const id    = g.id || g.profile
+          const mins  = Math.round((playtime[id]?.total || 0) / 60000)
+          const stars = "*".repeat(ratings[id] || 0) || "-"
+          const note  = notes[id] ? " | Note: " + notes[id].slice(0, 60) : ""
+          return (i+1) + ". " + g.title + " (" + (g.system||"") + ") | " + mins + " min | " + stars + note
+        })
       ]
-      const blob = new Blob([lines.join("\n")], { type: "text/plain" })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement("a")
-      a.href = url
-      a.download = "nuarcade-games.txt"
-      a.click()
+      const text = lines.join("\n")
+      if (window.nuarcade?.saveTxt) {
+        await window.nuarcade.saveTxt({ content: text, defaultName: "nuarcade-games.txt" })
+      } else {
+        console.log(text)
+      }
     } catch (e) { console.error(e) }
     setTimeout(() => setExporting(false), 1000)
   }
@@ -187,12 +195,43 @@ const handleSave = async () => {
 
           <div className={styles.section}>
             <div className={styles.sectionTitle}>Paths</div>
+            <div className={styles.pathsNote}>
+              All paths default to F: drive. Browse or type to update, then Save Settings.
+            </div>
             {[
-              { key: "teknoParrotPath", label: "TeknoParrot" },
-              { key: "gamesFolderPath", label: "Games folder" },
-              { key: "pinballPath",     label: "VPX engine" },
-              { key: "tablesPath",      label: "Pinball tables" },
-              { key: "mediaPath",       label: "Media folder" },
+              { key: "teknoParrotPath",    label: "TeknoParrot" },
+              { key: "gamesFolderPath",    label: "Arcade Games" },
+              { key: "mamePath",           label: "MAME" },
+              { key: "mameGamesPath",      label: "MAME ROMs" },
+              { key: "model2Path",         label: "Model 2" },
+              { key: "model2GamesPath",    label: "Model 2 Games" },
+              { key: "model3Path",         label: "Supermodel (M3)" },
+              { key: "model3GamesPath",    label: "Model 3 Games" },
+              { key: "retroarchPath",      label: "RetroArch" },
+              { key: "retroarchGamesPath", label: "RetroArch Games" },
+              { key: "project64Path",      label: "Project64" },
+              { key: "n64GamesPath",       label: "N64 Games" },
+              { key: "duckstationPath",    label: "DuckStation" },
+              { key: "ps1GamesPath",       label: "PS1 Games" },
+              { key: "flycastPath",        label: "Flycast" },
+              { key: "dreamcastGamesPath", label: "Dreamcast Games" },
+              { key: "ppssppPath",         label: "PPSSPP" },
+              { key: "pspGamesPath",       label: "PSP Games" },
+              { key: "pcsx2Path",          label: "PCSX2" },
+              { key: "ps2GamesPath",       label: "PS2 Games" },
+              { key: "rpcs3Path",          label: "RPCS3" },
+              { key: "ps3GamesPath",       label: "PS3 Games" },
+              { key: "xeniaPath",          label: "Xenia" },
+              { key: "xbox360GamesPath",   label: "Xbox 360 Games" },
+              { key: "dolphinPath",        label: "Dolphin" },
+              { key: "gcWiiGamesPath",     label: "GC/Wii Games" },
+              { key: "cemuPath",           label: "Cemu" },
+              { key: "wiiUGamesPath",      label: "Wii U Games" },
+              { key: "ryujinxPath",        label: "Ryujinx" },
+              { key: "switchGamesPath",    label: "Switch Games" },
+              { key: "pinballPath",        label: "VPX Engine" },
+              { key: "tablesPath",         label: "Pinball Tables" },
+              { key: "mediaPath",          label: "Media folder" },
             ].map(p => (
               <div key={p.key} className={styles.inputRow}>
                 <label className={styles.inputLabel}>{p.label}</label>
@@ -202,6 +241,10 @@ const handleSave = async () => {
                   onChange={e => update(p.key, e.target.value)}
                   spellCheck={false}
                 />
+                <button className={styles.browseBtn} onClick={async () => {
+                  const result = await window.nuarcade?.browseFolder()
+                  if (result) update(p.key, result)
+                }}>Browse</button>
               </div>
             ))}
           </div>
@@ -308,14 +351,24 @@ const handleSave = async () => {
           </div>
 
           <div className={styles.section}>
-            <div className={styles.sectionTitle}>Community</div>
-            <div className={styles.inputRow}>
-              <label className={styles.inputLabel}>Discord</label>
-              <button className={styles.communityLink} onClick={() => window.open('https://discord.gg/nuarcade', '_blank')}>Join NuArcade Discord</button>
-            </div>
+            <div className={styles.sectionTitle}>Links</div>
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>GitHub</label>
-              <button className={styles.communityLink} onClick={() => window.open('https://github.com/romeclientel1/nuarcade', '_blank')}>Star on GitHub</button>
+              <button className={styles.communityLink} onClick={() => window.open('https://github.com/romeclientel1/nuarcade', '_blank')}>
+                romeclientel1/nuarcade
+              </button>
+            </div>
+            <div className={styles.inputRow}>
+              <label className={styles.inputLabel}>Website</label>
+              <button className={styles.communityLink} onClick={() => window.open('https://romeclientel1.github.io/nuarcade/', '_blank')}>
+                romeclientel1.github.io/nuarcade
+              </button>
+            </div>
+            <div className={styles.inputRow}>
+              <label className={styles.inputLabel}>Report a bug</label>
+              <button className={styles.communityLink} onClick={() => window.open('https://github.com/romeclientel1/nuarcade/issues', '_blank')}>
+                GitHub Issues
+              </button>
             </div>
           </div>
 
