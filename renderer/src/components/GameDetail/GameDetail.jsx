@@ -87,7 +87,7 @@ function getControls(genre) {
   ]
 }
 
-export default function GameDetail({ game, onClose, onLaunch, launching, playCount, lastPlayed }) {
+export default function GameDetail({ game, onClose, onLaunch, launching, playCount, lastPlayed, artwork }) {
   const [imgError, setImgError] = useState(false)
   const [controllerOverride, setControllerOverride] = useState("auto")
   const [savingController, setSavingController] = useState(false)
