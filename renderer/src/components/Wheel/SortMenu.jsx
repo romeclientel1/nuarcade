@@ -3,6 +3,7 @@ import styles from "./SortMenu.module.css"
 const SORT_OPTIONS = [
   { id: "default",        label: "Default",         icon: "D" },
   { id: "most_played",    label: "Most Played",      icon: "P" },
+  { id: "most_launched",  label: "Most Launched",    icon: "L" },
   { id: "top_rated",      label: "Top Rated",        icon: "*" },
   { id: "recently_added", label: "Recently Added",   icon: "N" },
   { id: "name",           label: "Name A-Z",         icon: "A" },

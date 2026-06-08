@@ -89,7 +89,7 @@ const handleRescan = async () => {
 const LS_BACKUP_KEYS = [
   "nuarcade_favorites", "nuarcade_recent", "nuarcade_artwork",
   "nuarcade_ratings", "nuarcade_notes", "nuarcade_first_seen",
-  "nuarcade_playtime", "nuarcade_last_game_count", "nuarcade_collections",
+  "nuarcade_playtime", "nuarcade_launches", "nuarcade_last_game_count", "nuarcade_collections",
 ]
 
 const handleBackup = async () => {

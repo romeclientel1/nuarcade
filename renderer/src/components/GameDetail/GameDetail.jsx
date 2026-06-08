@@ -107,6 +107,7 @@ export default function GameDetail({ game, onClose, onLaunch, launching, artwork
   const [savingController, setSavingController] = useState(false)
 
   const { getNote, saveNote, getRating, saveRating } = useGameNotes()
+  const { getPlaytime, getLaunches, formatTime, formatLastPlayed } = usePlaytime()
   const [note, setNote] = useState("")
   const [rating, setRating] = useState(0)
   const [hoverRating, setHoverRating] = useState(0)
@@ -115,6 +116,11 @@ export default function GameDetail({ game, onClose, onLaunch, launching, artwork
   const statusColor = STATUS_COLORS[game.status] || "#888888"
   const imgUrl = game.id && !game.isPinball ? THUMBNAIL_BASE + game.id + ".png" : null
   const fallbackIcon = game.icon || GENRE_ICONS[game.genre] || "?"
+
+  const gameId  = game.id || game.profile
+  const pt      = getPlaytime(gameId)
+  const lc      = getLaunches(gameId)
+  const lastDate = lc.last || pt.last || null
 
   useEffect(() => {
     loadControllerOverride()
@@ -199,14 +205,19 @@ export default function GameDetail({ game, onClose, onLaunch, launching, artwork
             <div className={styles.title}>{game.title}</div>
 
             <div className={styles.statusRow}>
-              {playCount !== undefined && playCount > 0 && (
+              {lc.count > 0 && (
                 <span className={styles.statusBadge} style={{ borderColor: "rgba(0,200,255,0.3)", color: "#00c8ff", background: "rgba(0,200,255,0.08)" }}>
-                  Played {pt.sessions}x
+                  Launched {lc.count}x
                 </span>
               )}
-              {lastPlayed && (
+              {pt.total > 0 && (
+                <span className={styles.statusBadge} style={{ borderColor: "rgba(0,200,255,0.2)", color: "rgba(0,200,255,0.7)", background: "rgba(0,200,255,0.05)" }}>
+                  {formatTime(pt.total)}
+                </span>
+              )}
+              {lastDate && (
                 <span className={styles.statusBadge} style={{ borderColor: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.4)" }}>
-                  {pt.last ? new Date(pt.last).toLocaleDateString() : "Never"}
+                  {formatLastPlayed(lastDate)}
                 </span>
               )}
               <span

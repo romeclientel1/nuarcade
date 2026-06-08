@@ -1,6 +1,7 @@
 import { useCallback } from "react"
 
-const KEY = "nuarcade_playtime"
+const KEY         = "nuarcade_playtime"
+const LAUNCHES_KEY = "nuarcade_launches"
 
 function load() {
   try { return JSON.parse(localStorage.getItem(KEY) || "{}") } catch { return {} }
@@ -8,6 +9,14 @@ function load() {
 
 function save(data) {
   try { localStorage.setItem(KEY, JSON.stringify(data)) } catch {}
+}
+
+function loadLaunches() {
+  try { return JSON.parse(localStorage.getItem(LAUNCHES_KEY) || "{}") } catch { return {} }
+}
+
+function saveLaunches(data) {
+  try { localStorage.setItem(LAUNCHES_KEY, JSON.stringify(data)) } catch {}
 }
 
 export function usePlaytime() {
@@ -27,6 +36,22 @@ export function usePlaytime() {
     save(data)
   }, [])
 
+  const recordLaunch = useCallback((gameId) => {
+    if (!gameId) return
+    const data = loadLaunches()
+    if (!data[gameId]) data[gameId] = { count: 0, last: null }
+    data[gameId].count += 1
+    data[gameId].last = new Date().toISOString()
+    saveLaunches(data)
+  }, [])
+
+  const getLaunches = useCallback((gameId) => {
+    const data = loadLaunches()
+    return data[gameId] || { count: 0, last: null }
+  }, [])
+
+  const getAllLaunches = useCallback(() => loadLaunches(), [])
+
   const getPlaytime = useCallback((gameId) => {
     const data = load()
     return data[gameId] || { total: 0, sessions: 0, last: null }
@@ -42,6 +67,17 @@ export function usePlaytime() {
     return m + "m"
   }, [])
 
+  const formatLastPlayed = useCallback((isoDate) => {
+    if (!isoDate) return null
+    const diff = Math.floor((Date.now() - new Date(isoDate).getTime()) / 1000)
+    if (diff < 60)      return "Just now"
+    if (diff < 3600)    return Math.floor(diff / 60) + "m ago"
+    if (diff < 86400)   return Math.floor(diff / 3600) + "h ago"
+    if (diff < 604800)  return Math.floor(diff / 86400) + "d ago"
+    if (diff < 2592000) return Math.floor(diff / 604800) + "w ago"
+    return new Date(isoDate).toLocaleDateString()
+  }, [])
+
   const getTopGames = useCallback((games, limit = 5) => {
     const data = load()
     return games
@@ -55,5 +91,11 @@ export function usePlaytime() {
       .map(g => ({ ...g, playtime: data[g.id || g.profile] }))
   }, [])
 
-  return { startSession, endSession, getPlaytime, getAllPlaytime, formatTime, getTopGames }
+  return {
+    startSession, endSession,
+    recordLaunch, getLaunches, getAllLaunches,
+    getPlaytime, getAllPlaytime,
+    formatTime, formatLastPlayed,
+    getTopGames,
+  }
 }

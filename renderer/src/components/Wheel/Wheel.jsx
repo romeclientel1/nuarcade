@@ -32,6 +32,16 @@ function sortGames(games, sortBy) {
         })
       } catch { return sorted }
     }
+    case "most_launched": {
+      try {
+        const lc = JSON.parse(localStorage.getItem("nuarcade_launches") || "{}")
+        return sorted.sort((a, b) => {
+          const al = lc[a.id || a.profile]?.count || 0
+          const bl = lc[b.id || b.profile]?.count || 0
+          return bl - al
+        })
+      } catch { return sorted }
+    }
     case "recently_added": {
       try {
         const seen = JSON.parse(localStorage.getItem("nuarcade_first_seen") || "{}")
@@ -101,7 +111,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
     searchDebounce.current = setTimeout(() => setDebouncedSearch(val), 120)
   }
   const sounds = useArcadeSounds()
-  const { startSession, endSession, getPlaytime, formatTime } = usePlaytime()
+  const { startSession, endSession, getPlaytime, formatTime, recordLaunch } = usePlaytime()
   const [artwork, setArtwork] = useState(() => {
     try { return JSON.parse(localStorage.getItem("nuarcade_artwork") || "{}") } catch { return {} }
   })
@@ -259,6 +269,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
     sounds.launch()
     setLaunching(true)
     const sessionStart = startSession(current.id || current.profile)
+    recordLaunch(current.id || current.profile)
     addRecentlyPlayed(current)
     // Gamepad rumble on launch
     try {

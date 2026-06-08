@@ -1,37 +1,57 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import styles from "./AttractMode.module.css"
 
-const CYCLE_INTERVAL = 5000
-const FADE_DURATION  = 800
+const CYCLE_INTERVAL = 6000
+const FADE_DURATION  = 600
+
+const GENRE_COLORS = {
+  Racing:    "#0066cc", Fighting: "#9900cc", Shooter:   "#cc0000",
+  Rhythm:    "#6600cc", Flying:   "#0099cc", Sports:    "#009900",
+  Pinball:   "#ff6600", Arcade:   "#ff6600", Retro:     "#9933ff",
+  N64:       "#e4000f", PS1:      "#003791", PSP:       "#0057a8",
+  Dreamcast: "#ff6600", WiiU:     "#009ac7", Model2:    "#0055aa",
+  Model3:    "#0088aa", PS3:      "#0070d1", Xbox360:   "#107c10",
+  GCWii:     "#6b21a8", PS2:      "#003791", Switch:    "#e4000f",
+  Other:     "#00ff88",
+}
+
+function shuffle(arr) {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
 
 export default function AttractMode({ games, isActive, onWake, artwork }) {
   const [currentIdx,  setCurrentIdx ] = useState(0)
   const [visible,     setVisible    ] = useState(false)
-  const [fadeClass,   setFadeClass  ] = useState(styles.fadeIn)
+  const [phase,       setPhase      ] = useState("in") // "in" | "out"
   const [videoError,  setVideoError ] = useState({})
+  const [shuffled,    setShuffled   ] = useState([])
   const videoRef  = useRef(null)
   const timerRef  = useRef(null)
   const indexRef  = useRef(0)
 
-  // Filter to games that have video or hero art
-  const attractGames = games.filter(g => {
-    const id = g.id || g.profile?.replace(".xml","").replace(".vpx","")
-    const hasVideo = window.nuarcade?.platform === "win32"
-    const hasHero  = artwork?.[g.id || g.profile]?.hero
-    return hasVideo || hasHero || true // show all games, fall back to genre colors
-  })
+  // Build a shuffled list of real games that have artwork or video
+  useEffect(() => {
+    if (!games.length) return
+    // Prefer games with artwork, but include all if not enough
+    const withArt = games.filter(g => artwork?.[g.id || g.profile]?.hero || artwork?.[g.id || g.profile]?.capsule)
+    const pool = withArt.length >= 8 ? withArt : games
+    setShuffled(shuffle(pool))
+  }, [games, artwork])
 
   const goToNext = useCallback(() => {
-    setFadeClass(styles.fadeOut)
+    setPhase("out")
     setTimeout(() => {
-      indexRef.current = (indexRef.current + 1) % (attractGames.length || 1)
+      indexRef.current = (indexRef.current + 1) % (shuffled.length || 1)
       setCurrentIdx(indexRef.current)
-      setVideoError(e => ({ ...e, [indexRef.current]: false }))
-      setFadeClass(styles.fadeIn)
+      setPhase("in")
     }, FADE_DURATION)
-  }, [attractGames.length])
+  }, [shuffled.length])
 
-  // Start/stop cycling
   useEffect(() => {
     if (!isActive) {
       clearInterval(timerRef.current)
@@ -39,23 +59,23 @@ export default function AttractMode({ games, isActive, onWake, artwork }) {
       return
     }
     setVisible(true)
-    setCurrentIdx(0)
     indexRef.current = 0
+    setCurrentIdx(0)
+    setPhase("in")
     timerRef.current = setInterval(goToNext, CYCLE_INTERVAL)
     return () => clearInterval(timerRef.current)
   }, [isActive, goToNext])
 
-  // Play video when slide changes
   useEffect(() => {
     if (!videoRef.current || !isActive) return
     videoRef.current.currentTime = 0
     videoRef.current.play().catch(() => {})
   }, [currentIdx, isActive])
 
-  // Wake on any input
   useEffect(() => {
     const wake = (e) => {
       if (!isActive) return
+      // Arrow keys navigate while attract mode is active -- don't wake on those
       if (e.type === "keydown" && ["ArrowLeft","ArrowRight","Enter"," "].includes(e.key)) return
       onWake()
     }
@@ -67,9 +87,9 @@ export default function AttractMode({ games, isActive, onWake, artwork }) {
     }
   }, [isActive, onWake])
 
-  if (!isActive || !visible || attractGames.length === 0) return null
+  if (!isActive || !visible || shuffled.length === 0) return null
 
-  const game   = attractGames[currentIdx] || attractGames[0]
+  const game   = shuffled[currentIdx] || shuffled[0]
   const gameId = game.id || game.profile?.replace(".xml","").replace(".vpx","")
   const art    = artwork?.[game.id || game.profile] || {}
 
@@ -77,84 +97,95 @@ export default function AttractMode({ games, isActive, onWake, artwork }) {
     ? "file:///F:/Media/Videos/" + gameId + ".mp4"
     : null
 
-  const hasVideo = videoUrl && !videoError[currentIdx]
-  const heroUrl  = art.hero || null
-  const logoUrl  = art.logo || null
+  const hasVideo   = videoUrl && !videoError[currentIdx]
+  const heroUrl    = art.hero    || null
+  const capsuleUrl = art.capsule || null
+  const logoUrl    = art.logo    || null
+  const accent     = GENRE_COLORS[game.genre] || "#00ff88"
+  const fadeStyle  = { opacity: phase === "in" ? 1 : 0, transition: `opacity ${FADE_DURATION}ms ease` }
 
-  const GENRE_COLORS = {
-    Racing:  "#0066cc", Fighting: "#9900cc", Shooter: "#cc0000",
-    Rhythm:  "#6600cc", Flying:   "#0099cc", Sports:  "#009900",
-    Pinball: "#ff6600", PS3:      "#0070d1", Xbox360: "#107c10",
-    GCWii:   "#6b21a8", PS2:      "#003791", Switch:  "#e4000f",
-  }
-  const accentColor = GENRE_COLORS[game.genre] || "#00ff88"
+  // Progress dots -- show max 16, use proportional active indicator
+  const totalDots = Math.min(shuffled.length, 16)
+  const activeDot = Math.floor((currentIdx / shuffled.length) * totalDots)
 
   return (
     <div className={styles.overlay} onClick={onWake}>
-      {/* Background layer */}
-      <div className={`${styles.bgLayer} ${fadeClass}`}>
+
+      {/* Background */}
+      <div className={styles.bg} style={fadeStyle}>
         {hasVideo && (
           <video
             ref={videoRef}
             className={styles.bgVideo}
             src={videoUrl}
-            muted
-            loop
-            playsInline
-            autoPlay
+            muted loop playsInline autoPlay
             onError={() => setVideoError(e => ({ ...e, [currentIdx]: true }))}
           />
         )}
         {!hasVideo && heroUrl && (
           <img src={heroUrl} alt="" className={styles.bgHero} />
         )}
-        {!hasVideo && !heroUrl && (
-          <div
-            className={styles.bgColor}
-            style={{ background: "radial-gradient(ellipse at center, " + accentColor + "22 0%, #000 70%)" }}
+        {!hasVideo && !heroUrl && capsuleUrl && (
+          <img src={capsuleUrl} alt="" className={styles.bgCapsule} />
+        )}
+        {!hasVideo && !heroUrl && !capsuleUrl && (
+          <div className={styles.bgColor}
+            style={{ background: "radial-gradient(ellipse at 40% 40%, " + accent + "30 0%, #000 65%)" }}
           />
         )}
         <div className={styles.bgOverlay} />
+        <div className={styles.bgVignette} />
       </div>
 
       {/* Scanlines */}
       <div className={styles.scanlines} />
 
+      {/* Capsule art overlay (when hero is available) */}
+      {!hasVideo && heroUrl && capsuleUrl && (
+        <div className={styles.capsuleWrap} style={fadeStyle}>
+          <img src={capsuleUrl} alt="" className={styles.capsuleFloat} />
+        </div>
+      )}
+
       {/* Game info */}
-      <div className={`${styles.gameInfo} ${fadeClass}`}>
+      <div className={styles.gameInfo} style={fadeStyle}>
+        <div className={styles.systemTag} style={{ background: accent + "22", borderColor: accent + "44", color: accent }}>
+          {game.system || game.genre}
+        </div>
         {logoUrl ? (
           <img src={logoUrl} alt={game.title} className={styles.gameLogo} />
         ) : (
-          <div className={styles.gameTitle} style={{ color: accentColor }}>
+          <div className={styles.gameTitle} style={{ color: "#fff", textShadow: "0 0 40px " + accent + "88" }}>
             {game.title}
           </div>
         )}
-        <div className={styles.gameSystem}>{game.system || game.genre}</div>
-        <div className={styles.gameGenre} style={{ background: accentColor + "22", borderColor: accentColor + "44", color: accentColor }}>
-          {game.genre}
-        </div>
+        {game.genre && !logoUrl && (
+          <div className={styles.gameGenre} style={{ color: accent + "aa" }}>{game.genre}</div>
+        )}
       </div>
 
       {/* Bottom bar */}
       <div className={styles.bottomBar}>
         <div className={styles.nuarcadeBrand}>NuArcade</div>
-        <div className={styles.insertCoin}>INSERT COIN</div>
-        <div className={styles.gameCount}>{attractGames.length} games</div>
+        <div className={styles.insertCoin}>
+          <span className={styles.coinBlink}>INSERT COIN</span>
+        </div>
+        <div className={styles.gameCount}>{games.length} games</div>
       </div>
 
       {/* Progress dots */}
       <div className={styles.dots}>
-        {attractGames.slice(0, Math.min(attractGames.length, 12)).map((_, i) => (
+        {Array.from({ length: totalDots }).map((_, i) => (
           <div
             key={i}
-            className={styles.dot + (i === currentIdx ? " " + styles.dotActive : "")}
-            style={i === currentIdx ? { background: accentColor } : {}}
+            className={styles.dot + (i === activeDot ? " " + styles.dotActive : "")}
+            style={i === activeDot ? { background: accent } : {}}
           />
         ))}
       </div>
 
-      {/* Corner watermark */}
-      <div className={styles.version}>v1.6.0</div>
+      {/* Version */}
+      <div className={styles.version}>v2.3.1</div>
     </div>
   )
 }
