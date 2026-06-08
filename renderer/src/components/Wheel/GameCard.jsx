@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react"
 import styles from "./GameCard.module.css"
 import { generatePlaceholderSvg } from "../../hooks/generatePlaceholder"
+import { useGameNotes } from "../../hooks/useGameNotes"
 
 const THUMBNAIL_BASE = "https://raw.githubusercontent.com/teknogods/TeknoParrotUIThumbnails/master/Icons/"
 
@@ -44,6 +45,9 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork 
   const [videoReady,  setVideoReady ] = useState(false)
   const [videoError,  setVideoError ] = useState(false)
   const videoRef = useRef(null)
+  const { getRating, getNote } = useGameNotes()
+  const rating = getRating(game)
+  const note   = getNote(game)
 
   const colors      = GENRE_COLORS[game.genre] || GENRE_COLORS.Other
   const statusColor = STATUS_COLORS[game.status] || "#888888"
@@ -159,6 +163,16 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork 
       <div className={styles.statusDot} style={{ background: statusColor }} title={game.status} />
 
       {isFavorite && <div className={styles.favIndicator}>*</div>}
+
+      {rating > 0 && (
+        <div className={styles.ratingIndicator}>
+          {"*".repeat(rating)}
+        </div>
+      )}
+
+      {note && isCenter && (
+        <div className={styles.notePreview}>{note.slice(0, 60)}{note.length > 60 ? "..." : ""}</div>
+      )}
 
       {!game.isPinball && (
         <div className={styles.info}>

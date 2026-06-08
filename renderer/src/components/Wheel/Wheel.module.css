@@ -669,3 +669,10 @@
   animation: marquee 8s linear infinite;
 }
 .marqueeInner.short { animation: none; }
+.searchCount {
+  font-size: 10px;
+  color: rgba(255,255,255,0.3);
+  white-space: nowrap;
+  padding: 0 8px;
+  font-family: 'Share Tech Mono', monospace;
+}

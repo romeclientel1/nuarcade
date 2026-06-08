@@ -37,6 +37,13 @@ export default function App() {
         setPhase("wizard")
         return
       }
+      // Store autoLaunchLast flag for Wheel to pick up
+      if (config.autoLaunchLast) {
+        try {
+          const recent = JSON.parse(localStorage.getItem("nuarcade_recent") || "[]")
+          if (recent[0]) localStorage.setItem("nuarcade_auto_launch", JSON.stringify(recent[0]))
+        } catch {}
+      }
     }
     setPhase("wheel")
     setShowUpdater(true)

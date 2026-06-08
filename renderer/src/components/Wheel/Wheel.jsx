@@ -31,7 +31,16 @@ function sortGames(games, sortBy) {
         })
       } catch { return sorted }
     }
-    case "top_rated": {
+    case "recently_added": {
+      try {
+        const seen = JSON.parse(localStorage.getItem("nuarcade_first_seen") || "{}")
+        return sorted.sort((a, b) => {
+          const at = seen[a.id || a.profile] || 0
+          const bt = seen[b.id || b.profile] || 0
+          return bt - at
+        })
+      } catch { return sorted }
+    }
       try {
         const ratings = JSON.parse(localStorage.getItem("nuarcade_ratings") || "{}")
         return sorted.sort((a, b) => {
@@ -68,9 +77,17 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
   const [showHelp, setShowHelp] = useState(false)
   const [showSort, setShowSort] = useState(false)
   const [sortBy, setSortBy] = useState("default")
-  const [search, setSearch] = useState("")
-  const [showSearch, setShowSearch] = useState(false)
+  const [search,        setSearch       ] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
+  const [showSearch,    setShowSearch   ] = useState(false)
   const searchRef = useRef(null)
+  const searchDebounce = useRef(null)
+
+  const handleSearchChange = (val) => {
+    setSearch(val)
+    clearTimeout(searchDebounce.current)
+    searchDebounce.current = setTimeout(() => setDebouncedSearch(val), 120)
+  }
   const sounds = useArcadeSounds()
   const { startSession, endSession, getPlaytime, formatTime } = usePlaytime()
   const [artwork, setArtwork] = useState(() => {
@@ -92,13 +109,16 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
     } else if (activeCategory !== "All") {
       list = games.filter(g => g.genre === activeCategory)
     }
-    if (search.trim()) {
-      const q = search.toLowerCase()
-      list = list.filter(g =>
-        g.title?.toLowerCase().includes(q) ||
-        g.system?.toLowerCase().includes(q) ||
-        g.genre?.toLowerCase().includes(q)
-      )
+    if (debouncedSearch.trim()) {
+      const q = debouncedSearch.toLowerCase().trim()
+      const terms = q.split(/\s+/)
+      list = list.filter(g => {
+        const haystack = [
+          g.title, g.system, g.genre, g.romName, g.serial
+        ].filter(Boolean).join(" ").toLowerCase()
+        // All terms must appear somewhere in the haystack (AND logic)
+        return terms.every(term => haystack.includes(term))
+      })
     }
     return sortGames(list, sortBy)
   }
@@ -106,7 +126,25 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
   const filteredGames = getFilteredGames()
   const current = filteredGames[selectedIndex] || filteredGames[0]
 
-  useEffect(() => { setSelectedIndex(0) }, [activeCategory, search, sortBy])
+  useEffect(() => { setSelectedIndex(0) }, [activeCategory, debouncedSearch, sortBy])
+
+  // Auto-launch last played game if configured
+  useEffect(() => {
+    if (!games.length) return
+    try {
+      const raw = localStorage.getItem("nuarcade_auto_launch")
+      if (!raw) return
+      localStorage.removeItem("nuarcade_auto_launch")
+      const lastGame = JSON.parse(raw)
+      const idx = games.findIndex(g =>
+        (g.id && g.id === lastGame.id) || (g.profile && g.profile === lastGame.profile)
+      )
+      if (idx >= 0) {
+        setSelectedIndex(idx)
+        setTimeout(() => handleLaunch(), 1200)
+      }
+    } catch {}
+  }, [games])
 
   const resetIdleTimer = useCallback(() => {
     setAttractMode(false)
@@ -137,6 +175,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
         sounds.back(); setShowDetail(false)
         setShowSearch(false)
         setSearch("")
+        setDebouncedSearch("")
         setShowHelp(false)
         setShowSort(false)
       }
@@ -165,7 +204,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
     onLeft:     () => setSelectedIndex(i => (i - 1 + filteredGames.length) % filteredGames.length),
     onRight:    () => setSelectedIndex(i => (i + 1) % filteredGames.length),
     onConfirm:  () => setShowDetail(true),
-    onBack:     () => { sounds.back(); setShowDetail(false); setSearch(""); setShowSearch(false) },
+    onBack:     () => { sounds.back(); setShowDetail(false); setSearch(""); setDebouncedSearch(""); setShowSearch(false) },
     onFavorite: () => { if (current) toggleFavorite(current.id || current.profile) },
   })
 
@@ -256,13 +295,18 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
                 ref={searchRef}
                 className={styles.searchInput}
                 value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Search games..."
+                onChange={e => handleSearchChange(e.target.value)}
+                placeholder="Search games, systems, ROM names..."
                 onKeyDown={e => {
-                  if (e.key === "Escape") { setShowSearch(false); setSearch("") }
+                  if (e.key === "Escape") { setShowSearch(false); setSearch(""); setDebouncedSearch("") }
                 }}
               />
-              <button className={styles.searchClose} onClick={() => { setShowSearch(false); setSearch("") }}>x</button>
+              {debouncedSearch && (
+                <span className={styles.searchCount}>
+                  {filteredGames.length} result{filteredGames.length !== 1 ? "s" : ""}
+                </span>
+              )}
+              <button className={styles.searchClose} onClick={() => { setShowSearch(false); setSearch(""); setDebouncedSearch("") }}>x</button>
             </div>
           ) : (
             <div className={styles.statsRow}>

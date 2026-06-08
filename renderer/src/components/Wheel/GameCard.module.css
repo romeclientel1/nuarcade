@@ -239,7 +239,29 @@
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.2); }
 }
-/* ── SteamGridDB hero image (center card full bleed bg) ─── */
+.ratingIndicator {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 9px;
+  color: #facc15;
+  z-index: 5;
+  letter-spacing: 1px;
+  text-shadow: 0 0 6px rgba(250,204,21,0.6);
+}
+.notePreview {
+  position: absolute;
+  bottom: 54px;
+  left: 8px;
+  right: 8px;
+  font-size: 9px;
+  color: rgba(255,255,255,0.35);
+  font-style: italic;
+  z-index: 5;
+  line-height: 1.4;
+  overflow: hidden;
+}
+/* -- SteamGridDB hero image (center card full bleed bg) --- */
 .heroImg {
   position: absolute;
   inset: 0;
@@ -254,7 +276,7 @@
 }
 .heroLoaded { opacity: 1; }
 
-/* ── Logo overlay on center card ───────────────────────── */
+/* -- Logo overlay on center card ------------------------- */
 .logoOverlay {
   position: absolute;
   bottom: 80px;

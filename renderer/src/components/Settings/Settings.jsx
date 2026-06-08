@@ -149,7 +149,7 @@ const handleSave = async () => {
           {newVersion && (
             <div className={styles.updateBanner}>
               <span>NuArcade {newVersion} is available!</span>
-              <a href={releaseUrl} target="_blank" rel="noreferrer" className={styles.updateLink}>Download</a>
+              <button className={styles.updateLink} onClick={() => window.open(releaseUrl, '_blank')}>Download</button>
             </div>
           )}
 
@@ -279,15 +279,11 @@ const handleSave = async () => {
             <div className={styles.sectionTitle}>Community</div>
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>Discord</label>
-              <a href="https://discord.gg/nuarcade" target="_blank" rel="noreferrer" className={styles.communityLink}>
-                Join NuArcade Discord
-              </a>
+              <button className={styles.communityLink} onClick={() => window.open('https://discord.gg/nuarcade', '_blank')}>Join NuArcade Discord</button>
             </div>
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>GitHub</label>
-              <a href="https://github.com/romeclientel1/nuarcade" target="_blank" rel="noreferrer" className={styles.communityLink}>
-                Star on GitHub
-              </a>
+              <button className={styles.communityLink} onClick={() => window.open('https://github.com/romeclientel1/nuarcade', '_blank')}>Star on GitHub</button>
             </div>
           </div>
 

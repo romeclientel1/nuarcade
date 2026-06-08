@@ -3,14 +3,28 @@ import { usePlaytime } from "../../hooks/usePlaytime"
 import styles from "./GameDetail.module.css"
 
 const GENRE_COLORS = {
-  Racing:   { bg: "#001a33", accent: "#0066cc" },
-  Fighting: { bg: "#1a001a", accent: "#9900cc" },
-  Shooter:  { bg: "#1a0000", accent: "#cc0000" },
-  Rhythm:   { bg: "#0a001a", accent: "#6600cc" },
-  Flying:   { bg: "#000d1a", accent: "#0099cc" },
-  Sports:   { bg: "#001a00", accent: "#009900" },
-  Pinball:  { bg: "#1a0a00", accent: "#ff6600" },
-  Other:    { bg: "#0a0a0a", accent: "#444444" },
+  Racing:    { bg: "#001a33", accent: "#0066cc" },
+  Fighting:  { bg: "#1a001a", accent: "#9900cc" },
+  Shooter:   { bg: "#1a0000", accent: "#cc0000" },
+  Rhythm:    { bg: "#0a001a", accent: "#6600cc" },
+  Flying:    { bg: "#000d1a", accent: "#0099cc" },
+  Sports:    { bg: "#001a00", accent: "#009900" },
+  Pinball:   { bg: "#1a0a00", accent: "#ff6600" },
+  Arcade:    { bg: "#0d0600", accent: "#ff6600" },
+  Retro:     { bg: "#06000d", accent: "#9933ff" },
+  N64:       { bg: "#0a0010", accent: "#e4000f" },
+  PS1:       { bg: "#000510", accent: "#003791" },
+  PSP:       { bg: "#000a15", accent: "#0057a8" },
+  Dreamcast: { bg: "#0d0600", accent: "#ff6600" },
+  WiiU:      { bg: "#000510", accent: "#009ac7" },
+  Model2:    { bg: "#00060d", accent: "#0055aa" },
+  Model3:    { bg: "#000d06", accent: "#0088aa" },
+  PS3:       { bg: "#000d1a", accent: "#0070d1" },
+  Xbox360:   { bg: "#001a00", accent: "#107c10" },
+  GCWii:     { bg: "#0d001a", accent: "#6b21a8" },
+  PS2:       { bg: "#00001a", accent: "#003791" },
+  Switch:    { bg: "#1a0000", accent: "#e4000f" },
+  Other:     { bg: "#0a0a0a", accent: "#444444" },
 }
 
 const STATUS_COLORS = {

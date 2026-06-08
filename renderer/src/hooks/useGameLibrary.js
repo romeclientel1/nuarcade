@@ -251,6 +251,20 @@ export function useGameLibrary() {
             } catch (e) { console.warn('Cemu scan error:', e) }
           }
 
+          // Stamp first-seen timestamp for each game (for Recently Added sort)
+          const seenKey = "nuarcade_first_seen"
+          let firstSeen = {}
+          try { firstSeen = JSON.parse(localStorage.getItem(seenKey) || "{}") } catch {}
+          const now = Date.now()
+          let seenUpdated = false
+          allGames.forEach(g => {
+            const id = g.id || g.profile
+            if (!firstSeen[id]) { firstSeen[id] = now; seenUpdated = true }
+          })
+          if (seenUpdated) {
+            try { localStorage.setItem(seenKey, JSON.stringify(firstSeen)) } catch {}
+          }
+
           // Filter by enabled emulators
           const enabled = cfg.enabledEmulators || {}
           const hasToggles = Object.keys(enabled).length > 0
