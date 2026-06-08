@@ -24,6 +24,10 @@ const ALL_PATHS = [
   { key: 'ps1GamesPath',       label: 'PS1 Games',           placeholder: 'F:\\PS1Games\\',          emulators: ['arcade', 'arcade+pinball'] },
   { key: 'flycastPath',        label: 'Flycast (Dreamcast)', placeholder: 'F:\\Flycast\\',           emulators: ['arcade', 'arcade+pinball'] },
   { key: 'dreamcastGamesPath', label: 'Dreamcast Games',     placeholder: 'F:\\DreamcastGames\\',    emulators: ['arcade', 'arcade+pinball'] },
+  { key: 'ppssppPath',         label: 'PPSSPP (PSP)',         placeholder: 'F:\\PPSSPP\\',             emulators: ['arcade', 'arcade+pinball'] },
+  { key: 'pspGamesPath',       label: 'PSP Games',            placeholder: 'F:\\PSPGames\\',           emulators: ['arcade', 'arcade+pinball'] },
+  { key: 'cemuPath',           label: 'Cemu (Wii U)',         placeholder: 'F:\\Cemu\\',               emulators: ['arcade', 'arcade+pinball'] },
+  { key: 'wiiUGamesPath',      label: 'Wii U Games',          placeholder: 'F:\\WiiUGames\\',          emulators: ['arcade', 'arcade+pinball'] },
   { key: 'pinballPath',        label: 'VPX Engine',          placeholder: 'F:\\vPinball\\',          emulators: ['pinball', 'arcade+pinball'] },
   { key: 'tablesPath',         label: 'Pinball Tables',      placeholder: 'F:\\PinballTables\\',     emulators: ['pinball', 'arcade+pinball'] },
 ]
@@ -54,6 +58,10 @@ export default function PathsScreen({ config, updateConfig, next, prev }) {
     ps1GamesPath:       'F:\\PS1Games\\',
     flycastPath:        'F:\\Flycast\\',
     dreamcastGamesPath: 'F:\\DreamcastGames\\',
+    ppssppPath:        'F:\\PPSSPP\\',
+    pspGamesPath:      'F:\\PSPGames\\',
+    cemuPath:          'F:\\Cemu\\',
+    wiiUGamesPath:     'F:\\WiiUGames\\',
     pinballPath:        'F:\\vPinball\\',
     tablesPath:         'F:\\PinballTables\\',
   }

@@ -286,6 +286,10 @@ ipcMain.handle('create-folder-structure', async () => {
     'F:\\PS1Games',
     'F:\\Flycast',
     'F:\\DreamcastGames',
+    'F:\\PPSSPP',
+    'F:\\PSPGames',
+    'F:\\Cemu',
+    'F:\\WiiUGames',
     'F:\\vPinball',
     'F:\\PinballTables',
     'F:\\NuArcade',
@@ -647,6 +651,35 @@ ipcMain.handle('check-bios', async () => {
   results.flycast = { found: fs.existsSync(dcBoot), files: fs.existsSync(dcBoot) ? ['dc_boot.bin'] : [], folder: flycastData }
 
   return results
+})
+
+
+// -- PPSSPP / PSP ------------------------------------------------------------
+ipcMain.handle('launch-psp-game', async (event, gamePath) => {
+  const cfg = config.load()
+  const ppssppExe = path.join(cfg.ppssppPath || 'F:\\PPSSPP\\', 'PPSSPPWindows64.exe')
+  const { spawn } = require('child_process')
+  spawn(ppssppExe, [gamePath], { detached: true, stdio: 'ignore' }).unref()
+  return { launched: true }
+})
+
+ipcMain.handle('scan-psp-games', async (event, pspGamesPath) => {
+  const { scanPspGames } = require('./scanner')
+  return scanPspGames(pspGamesPath)
+})
+
+// -- Cemu / Wii U ------------------------------------------------------------
+ipcMain.handle('launch-wiiu-game', async (event, gamePath) => {
+  const cfg = config.load()
+  const cemuExe = path.join(cfg.cemuPath || 'F:\\Cemu\\', 'Cemu.exe')
+  const { spawn } = require('child_process')
+  spawn(cemuExe, ['-f', '-g', gamePath], { detached: true, stdio: 'ignore' }).unref()
+  return { launched: true }
+})
+
+ipcMain.handle('scan-wiiu-games', async (event, wiiUGamesPath) => {
+  const { scanWiiUGames } = require('./scanner')
+  return scanWiiUGames(wiiUGamesPath)
 })
 
 

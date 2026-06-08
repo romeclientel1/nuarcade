@@ -966,3 +966,105 @@ async function scanDreamcastGames(dreamcastGamesPath) {
 }
 
 module.exports = { ...module.exports, scanDreamcastGames }
+
+
+// -- PPSSPP / PSP Scanner ----------------------------------------------------
+async function scanPspGames(pspGamesPath) {
+  const games = []
+  if (!fs.existsSync(pspGamesPath)) {
+    return { games, count: 0, path: pspGamesPath, error: 'Folder not found' }
+  }
+  const EXTS = ['.iso', '.cso', '.pbp', '.chd']
+  let entries
+  try { entries = fs.readdirSync(pspGamesPath, { withFileTypes: true }) }
+  catch (e) { return { games, count: 0, error: e.message } }
+
+  for (const entry of entries) {
+    if (!entry.isFile()) continue
+    const ext = path.extname(entry.name).toLowerCase()
+    if (!EXTS.includes(ext)) continue
+    const title = entry.name.replace(/\.[^.]+$/, '').replace(/_/g, ' ').trim()
+    games.push({
+      id: 'psp_' + title.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, ''),
+      title,
+      path: path.join(pspGamesPath, entry.name),
+      emulator: 'ppsspp',
+      genre: 'PSP',
+      system: 'PlayStation Portable',
+      status: 'Playable',
+      icon: 'PSP',
+      artwork: null,
+    })
+  }
+  games.sort((a, b) => a.title.localeCompare(b.title))
+  return { games, count: games.length, path: pspGamesPath }
+}
+
+module.exports = { ...module.exports, scanPspGames }
+
+
+// -- Cemu / Wii U Scanner ----------------------------------------------------
+async function scanWiiUGames(wiiUGamesPath) {
+  const games = []
+  if (!fs.existsSync(wiiUGamesPath)) {
+    return { games, count: 0, path: wiiUGamesPath, error: 'Folder not found' }
+  }
+
+  let entries
+  try { entries = fs.readdirSync(wiiUGamesPath, { withFileTypes: true }) }
+  catch (e) { return { games, count: 0, error: e.message } }
+
+  for (const entry of entries) {
+    // Cemu games are usually in folders containing a .rpx file
+    if (entry.isDirectory()) {
+      const gameDir = path.join(wiiUGamesPath, entry.name)
+      // Look for code/*.rpx
+      const codeDir = path.join(gameDir, 'code')
+      let rpx = null
+      if (fs.existsSync(codeDir)) {
+        const codeFiles = fs.readdirSync(codeDir).filter(f => f.toLowerCase().endsWith('.rpx'))
+        if (codeFiles.length) rpx = path.join(codeDir, codeFiles[0])
+      }
+      if (!rpx) {
+        // Try root of game folder
+        const rootFiles = fs.readdirSync(gameDir).filter(f => f.toLowerCase().endsWith('.rpx'))
+        if (rootFiles.length) rpx = path.join(gameDir, rootFiles[0])
+      }
+      if (rpx) {
+        games.push({
+          id: 'wiiu_' + entry.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, ''),
+          title: entry.name.replace(/_/g, ' ').trim(),
+          path: rpx,
+          emulator: 'cemu',
+          genre: 'WiiU',
+          system: 'Wii U',
+          status: 'Playable',
+          icon: 'WU',
+          artwork: null,
+        })
+      }
+      continue
+    }
+    // Also handle .wud / .wux disc images
+    if (entry.isFile()) {
+      const ext = path.extname(entry.name).toLowerCase()
+      if (!['.wud', '.wux', '.iso'].includes(ext)) continue
+      const title = entry.name.replace(/\.[^.]+$/, '').replace(/_/g, ' ').trim()
+      games.push({
+        id: 'wiiu_' + title.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, ''),
+        title,
+        path: path.join(wiiUGamesPath, entry.name),
+        emulator: 'cemu',
+        genre: 'WiiU',
+        system: 'Wii U',
+        status: 'Playable',
+        icon: 'WU',
+        artwork: null,
+      })
+    }
+  }
+  games.sort((a, b) => a.title.localeCompare(b.title))
+  return { games, count: games.length, path: wiiUGamesPath }
+}
+
+module.exports = { ...module.exports, scanWiiUGames }

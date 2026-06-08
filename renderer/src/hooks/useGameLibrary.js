@@ -61,6 +61,14 @@ const SAMPLE_GAMES = [
   { id: 'dc_SonicAdventure',    title: 'Sonic Adventure',            genre: 'Dreamcast', system: 'Dreamcast',      status: 'Perfect', profile: 'SonicAdventure.gdi',      icon: 'DC', emulator: 'flycast'    },
   { id: 'dc_MarvelVsCapcom2',   title: 'Marvel vs. Capcom 2',        genre: 'Fighting',  system: 'Dreamcast',      status: 'Perfect', profile: 'MarvelVsCapcom2.gdi',     icon: 'DC', emulator: 'flycast'    },
   { id: 'dc_CrazyTaxi',         title: 'Crazy Taxi',                 genre: 'Racing',    system: 'Dreamcast',      status: 'Perfect', profile: 'CrazyTaxi.gdi',           icon: 'DC', emulator: 'flycast'    },
+  // PPSSPP / PSP
+  { id: 'psp_GodOfWarChainsOfOlympus', title: 'God of War: Chains of Olympus', genre: 'PSP', system: 'PlayStation Portable', status: 'Perfect', profile: 'GodOfWarChainsOfOlympus.iso', icon: 'PSP', emulator: 'ppsspp' },
+  { id: 'psp_MonsterHunterFreedom',    title: 'Monster Hunter Freedom Unite',   genre: 'PSP', system: 'PlayStation Portable', status: 'Perfect', profile: 'MonsterHunterFreedomUnite.iso', icon: 'PSP', emulator: 'ppsspp' },
+  { id: 'psp_GrandTheftAutoSA',        title: 'Grand Theft Auto: San Andreas',  genre: 'PSP', system: 'PlayStation Portable', status: 'Perfect', profile: 'GTASanAndreas.iso', icon: 'PSP', emulator: 'ppsspp' },
+  // Cemu / Wii U
+  { id: 'wiiu_MarioKart8',   title: 'Mario Kart 8',                    genre: 'WiiU', system: 'Wii U', status: 'Perfect', profile: 'MarioKart8', icon: 'WU', emulator: 'cemu' },
+  { id: 'wiiu_ZeldaBOTW',    title: 'Zelda: Breath of the Wild',       genre: 'WiiU', system: 'Wii U', status: 'Perfect', profile: 'ZeldaBOTW',  icon: 'WU', emulator: 'cemu' },
+  { id: 'wiiu_Splatoon',     title: 'Splatoon',                        genre: 'WiiU', system: 'Wii U', status: 'Perfect', profile: 'Splatoon',   icon: 'WU', emulator: 'cemu' },
   // Pinball
   { id: 'Medieval_Madness',     title: 'Medieval Madness',            genre: 'Pinball',  system: 'Visual Pinball X',status:'Perfect', profile: 'Medieval_Madness.vpx',                   icon: '?',  emulator: 'vpx', isPinball: true },
   { id: 'Attack_From_Mars',     title: 'Attack From Mars',            genre: 'Pinball',  system: 'Visual Pinball X',status:'Perfect', profile: 'Attack_From_Mars.vpx',                   icon: '?',  emulator: 'vpx', isPinball: true },
@@ -76,6 +84,7 @@ export function useGameLibrary() {
   const [loading,        setLoading       ] = useState(true)
   const [error,          setError         ] = useState(null)
   const [config,         setConfig        ] = useState(null)
+  const [libraryEmpty,   setLibraryEmpty  ] = useState(false)
   const [favorites,      setFavorites     ] = useState(() => {
     try { return JSON.parse(localStorage.getItem(FAVORITES_KEY) || '[]') } catch { return [] }
   })
@@ -194,13 +203,42 @@ export function useGameLibrary() {
             } catch (e) { console.warn('Pinball scan error:', e) }
           }
 
+          // PPSSPP / PSP
+          if (cfg.mode !== 'pinball' && cfg.pspGamesPath) {
+            try {
+              const pspResult = await window.nuarcade.scanPspGames(cfg.pspGamesPath)
+              if (pspResult.games?.length) allGames = [...allGames, ...pspResult.games]
+            } catch (e) { console.warn('PPSSPP scan error:', e) }
+          }
+
+          // Cemu / Wii U
+          if (cfg.mode !== 'pinball' && cfg.wiiUGamesPath) {
+            try {
+              const wiiUResult = await window.nuarcade.scanWiiUGames(cfg.wiiUGamesPath)
+              if (wiiUResult.games?.length) allGames = [...allGames, ...wiiUResult.games]
+            } catch (e) { console.warn('Cemu scan error:', e) }
+          }
+
+          // Filter by enabled emulators
+          const enabled = cfg.enabledEmulators || {}
+          const hasToggles = Object.keys(enabled).length > 0
+          if (hasToggles) {
+            allGames = allGames.filter(g => {
+              const emu = g.emulator || 'teknoparrot'
+              return enabled[emu] !== false
+            })
+          }
+
           // Fall back to samples if nothing found
           const prevCount = parseInt(localStorage.getItem('nuarcade_last_game_count') || '0')
-          const markedGames = (allGames.length > 0 ? allGames : SAMPLE_GAMES).map((g, i) => ({
+          const libraryEmpty = allGames.length === 0
+          const markedGames = (!libraryEmpty ? allGames : SAMPLE_GAMES).map((g, i) => ({
             ...g,
-            isNew: allGames.length > 0 && prevCount > 0 && i >= prevCount
+            isNew: !libraryEmpty && prevCount > 0 && i >= prevCount,
+            isSample: libraryEmpty,
           }))
           localStorage.setItem('nuarcade_last_game_count', markedGames.length)
+          setLibraryEmpty(libraryEmpty)
           setGames(markedGames)
         } else {
           // Setup not complete ? show samples
@@ -249,7 +287,7 @@ export function useGameLibrary() {
   }
 
   return {
-    games, stats, loading, error, config,
+    games, stats, loading, error, config, libraryEmpty,
     refreshLibrary: loadLibrary,
     favorites, toggleFavorite, isFavorite: (id) => favorites.includes(id),
     recentlyPlayed, addRecentlyPlayed,

@@ -61,12 +61,19 @@ const handleRescan = async () => {
     let total = 0
     const tp = await window.nuarcade.scanGames(cfg.teknoParrotPath, cfg.gamesFolderPath)
     total += tp.games?.length || 0
-    if (cfg.ps3GamesPath) { const r = await window.nuarcade.scanPs3Games(cfg.ps3GamesPath); total += r.games?.length || 0 }
-    if (cfg.xbox360GamesPath) { const r = await window.nuarcade.scanXbox360Games(cfg.xbox360GamesPath); total += r.games?.length || 0 }
-    if (cfg.gcWiiGamesPath) { const r = await window.nuarcade.scanGCWiiGames(cfg.gcWiiGamesPath); total += r.games?.length || 0 }
-    if (cfg.ps2GamesPath) { const r = await window.nuarcade.scanPs2Games(cfg.ps2GamesPath); total += r.games?.length || 0 }
-    if (cfg.switchGamesPath) { const r = await window.nuarcade.scanSwitchGames(cfg.switchGamesPath); total += r.games?.length || 0 }
-    if (cfg.tablesPath) { const r = await window.nuarcade.scanPinball(cfg.tablesPath); total += r.games?.length || 0 }
+    if (cfg.ps3GamesPath)       { const r = await window.nuarcade.scanPs3Games(cfg.ps3GamesPath); total += r.games?.length || 0 }
+    if (cfg.xbox360GamesPath)   { const r = await window.nuarcade.scanXbox360Games(cfg.xbox360GamesPath); total += r.games?.length || 0 }
+    if (cfg.gcWiiGamesPath)     { const r = await window.nuarcade.scanGCWiiGames(cfg.gcWiiGamesPath); total += r.games?.length || 0 }
+    if (cfg.ps2GamesPath)       { const r = await window.nuarcade.scanPs2Games(cfg.ps2GamesPath); total += r.games?.length || 0 }
+    if (cfg.switchGamesPath)    { const r = await window.nuarcade.scanSwitchGames(cfg.switchGamesPath); total += r.games?.length || 0 }
+    if (cfg.mameGamesPath)      { const r = await window.nuarcade.scanMameGames(cfg.mameGamesPath); total += r.games?.length || 0 }
+    if (cfg.retroarchGamesPath) { const r = await window.nuarcade.scanRetroArchGames(cfg.retroarchGamesPath); total += r.games?.length || 0 }
+    if (cfg.n64GamesPath)       { const r = await window.nuarcade.scanN64Games(cfg.n64GamesPath); total += r.games?.length || 0 }
+    if (cfg.ps1GamesPath)       { const r = await window.nuarcade.scanPs1Games(cfg.ps1GamesPath); total += r.games?.length || 0 }
+    if (cfg.dreamcastGamesPath) { const r = await window.nuarcade.scanDreamcastGames(cfg.dreamcastGamesPath); total += r.games?.length || 0 }
+    if (cfg.pspGamesPath)       { const r = await window.nuarcade.scanPspGames(cfg.pspGamesPath); total += r.games?.length || 0 }
+    if (cfg.wiiUGamesPath)      { const r = await window.nuarcade.scanWiiUGames(cfg.wiiUGamesPath); total += r.games?.length || 0 }
+    if (cfg.tablesPath)         { const r = await window.nuarcade.scanPinball(cfg.tablesPath); total += r.games?.length || 0 }
     setRescanResult(total + " games found")
   } catch (e) { setRescanResult("Scan error: " + e.message) }
   setRescanning(false)
@@ -279,6 +286,73 @@ const handleSave = async () => {
               <a href="https://github.com/romeclientel1/nuarcade" target="_blank" rel="noreferrer" className={styles.communityLink}>
                 Star on GitHub
               </a>
+            </div>
+          </div>
+
+          <div className={styles.section}>
+            <div className={styles.sectionTitle}>Emulators</div>
+            <div className={styles.emuToggles}>
+              {[
+                { id: 'teknoparrot', label: 'TeknoParrot' },
+                { id: 'mame',        label: 'MAME' },
+                { id: 'retroarch',   label: 'RetroArch' },
+                { id: 'project64',   label: 'Project64 (N64)' },
+                { id: 'duckstation', label: 'DuckStation (PS1)' },
+                { id: 'flycast',     label: 'Flycast (DC)' },
+                { id: 'ppsspp',      label: 'PPSSPP (PSP)' },
+                { id: 'pcsx2',       label: 'PCSX2 (PS2)' },
+                { id: 'rpcs3',       label: 'RPCS3 (PS3)' },
+                { id: 'xenia',       label: 'Xenia (Xbox 360)' },
+                { id: 'dolphin',     label: 'Dolphin (GC/Wii)' },
+                { id: 'cemu',        label: 'Cemu (Wii U)' },
+                { id: 'ryujinx',     label: 'Ryujinx (Switch)' },
+                { id: 'vpx',         label: 'Visual Pinball X' },
+              ].map(emu => {
+                const enabled = config.enabledEmulators?.[emu.id] !== false
+                return (
+                  <button
+                    key={emu.id}
+                    className={styles.emuToggle + (enabled ? " " + styles.emuToggleOn : "")}
+                    onClick={() => {
+                      const cur = config.enabledEmulators || {}
+                      update("enabledEmulators", { ...cur, [emu.id]: !enabled })
+                    }}
+                  >
+                    <span className={styles.emuDot} style={{ background: enabled ? "var(--accent, #00ff88)" : "rgba(255,255,255,0.15)" }} />
+                    {emu.label}
+                  </button>
+                )
+              })}
+            </div>
+            <div className={styles.emuNote}>
+              Disabled emulators are hidden from the wheel. Re-enable anytime.
+            </div>
+          </div>
+
+          <div className={styles.section}>
+            <div className={styles.sectionTitle}>Artwork</div>
+            <div className={styles.inputRow}>
+              <label className={styles.inputLabel}>ScreenScraper user</label>
+              <input
+                className={styles.input}
+                value={config.screenscraper?.user || ""}
+                onChange={e => update("screenscraper", { ...config.screenscraper, user: e.target.value })}
+                placeholder="your screenscraper.fr username"
+                spellCheck={false}
+              />
+            </div>
+            <div className={styles.inputRow}>
+              <label className={styles.inputLabel}>ScreenScraper pass</label>
+              <input
+                className={styles.input}
+                type="password"
+                value={config.screenscraper?.pass || ""}
+                onChange={e => update("screenscraper", { ...config.screenscraper, pass: e.target.value })}
+                placeholder="your screenscraper.fr password"
+              />
+            </div>
+            <div className={styles.emuNote}>
+              Free account at screenscraper.fr -- covers MAME, retro, and all classic systems.
             </div>
           </div>
 

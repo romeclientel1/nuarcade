@@ -281,6 +281,46 @@
 .exportBtn:hover:not(:disabled) { background: rgba(0,200,255,0.1); }
 .exportBtn:disabled { opacity: 0.4; cursor: not-allowed; }
 
+.emuToggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.emuToggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.35);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: Share Tech Mono, monospace;
+}
+.emuToggleOn {
+  border-color: rgba(0,255,136,0.25);
+  background: rgba(0,255,136,0.06);
+  color: rgba(255,255,255,0.8);
+}
+.emuToggle:hover { border-color: rgba(255,255,255,0.2); }
+.emuDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.emuNote {
+  font-size: 10px;
+  color: rgba(255,255,255,0.2);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
 .themeGrid {
   display: flex;
   gap: 8px;

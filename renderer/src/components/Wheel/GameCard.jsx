@@ -1,22 +1,30 @@
 import { useState, useRef, useEffect } from "react"
 import styles from "./GameCard.module.css"
+import { generatePlaceholderSvg } from "../../hooks/generatePlaceholder"
 
 const THUMBNAIL_BASE = "https://raw.githubusercontent.com/teknogods/TeknoParrotUIThumbnails/master/Icons/"
 
 const GENRE_COLORS = {
-  Racing:  { bg: "#001a33", accent: "#0066cc" },
-  Fighting:{ bg: "#1a001a", accent: "#9900cc" },
-  Shooter: { bg: "#1a0000", accent: "#cc0000" },
-  Rhythm:  { bg: "#0a001a", accent: "#6600cc" },
-  Flying:  { bg: "#000d1a", accent: "#0099cc" },
-  Sports:  { bg: "#001a00", accent: "#009900" },
-  Pinball: { bg: "#1a0a00", accent: "#ff6600" },
-  PS3:     { bg: "#000d1a", accent: "#0070d1" },
-  Xbox360: { bg: "#001a00", accent: "#107c10" },
-  GCWii:   { bg: "#0d001a", accent: "#6b21a8" },
-  PS2:     { bg: "#00001a", accent: "#003791" },
-  Switch:  { bg: "#1a0000", accent: "#e4000f" },
-  Other:   { bg: "#0a0a0a", accent: "#444444" },
+  Racing:    { bg: "#001a33", accent: "#0066cc" },
+  Fighting:  { bg: "#1a001a", accent: "#9900cc" },
+  Shooter:   { bg: "#1a0000", accent: "#cc0000" },
+  Rhythm:    { bg: "#0a001a", accent: "#6600cc" },
+  Flying:    { bg: "#000d1a", accent: "#0099cc" },
+  Sports:    { bg: "#001a00", accent: "#009900" },
+  Pinball:   { bg: "#1a0a00", accent: "#ff6600" },
+  Arcade:    { bg: "#0d0600", accent: "#ff6600" },
+  Retro:     { bg: "#06000d", accent: "#9933ff" },
+  N64:       { bg: "#0a0010", accent: "#e4000f" },
+  PS1:       { bg: "#000510", accent: "#003791" },
+  PSP:       { bg: "#000a15", accent: "#0057a8" },
+  Dreamcast: { bg: "#0d0600", accent: "#ff6600" },
+  WiiU:      { bg: "#000510", accent: "#009ac7" },
+  PS3:       { bg: "#000d1a", accent: "#0070d1" },
+  Xbox360:   { bg: "#001a00", accent: "#107c10" },
+  GCWii:     { bg: "#0d001a", accent: "#6b21a8" },
+  PS2:       { bg: "#00001a", accent: "#003791" },
+  Switch:    { bg: "#1a0000", accent: "#e4000f" },
+  Other:     { bg: "#0a0a0a", accent: "#444444" },
 }
 
 const STATUS_COLORS = {
@@ -76,7 +84,7 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork 
       style={{ background: colors.bg }}
       onClick={onClick}
     >
-      {/* Hero image — full bleed background on center card */}
+      {/* Hero image -- full bleed background on center card */}
       {showHero && (
         <img
           src={heroUrl}
@@ -133,15 +141,8 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork 
           </div>
         )}
 
-        {/* Genre fallback */}
-        {!game.isPinball && !showThumb && !showCapsule && !showVideo && (
-          <div className={styles.artFallback} style={{ background: colors.bg }}>
-            <div className={styles.fallbackIcon}>{game.icon || "?"}</div>
-            <div className={styles.fallbackGlow}
-              style={{ background: `radial-gradient(ellipse at center, ${colors.accent}22 0%, transparent 70%)` }}
-            />
-          </div>
-        )}
+        {/* Generated placeholder -- always shows something */}
+        {!game.isPinball && !showThumb && !showCapsule && !showVideo && (\n          <img\n            src={generatePlaceholderSvg(game)}\n            alt={game.title}\n            className={styles.artImg}\n            style={{ opacity: 0.85 }}\n          />\n        )}
 
         {showVideo && <div className={styles.videoBadge}>LIVE</div>}
 

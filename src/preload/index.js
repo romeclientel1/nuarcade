@@ -22,6 +22,8 @@ contextBridge.exposeInMainWorld('nuarcade', {
   launchN64Game:       (gamePath)     => ipcRenderer.invoke('launch-n64-game', gamePath),
   launchPs1Game:       (gamePath)     => ipcRenderer.invoke('launch-ps1-game', gamePath),
   launchFlycastGame:   (gamePath)     => ipcRenderer.invoke('launch-flycast-game', gamePath),
+  launchPspGame:       (gamePath)     => ipcRenderer.invoke('launch-psp-game', gamePath),
+  launchWiiUGame:      (gamePath)     => ipcRenderer.invoke('launch-wiiu-game', gamePath),
 
   // Scanning
   scanGames:            (opts)                => ipcRenderer.invoke('scan-games', opts),
@@ -36,6 +38,8 @@ contextBridge.exposeInMainWorld('nuarcade', {
   scanN64Games:         (n64GamesPath)        => ipcRenderer.invoke('scan-n64-games', n64GamesPath),
   scanPs1Games:         (ps1GamesPath)        => ipcRenderer.invoke('scan-ps1-games', ps1GamesPath),
   scanDreamcastGames:   (dreamcastGamesPath)  => ipcRenderer.invoke('scan-dreamcast-games', dreamcastGamesPath),
+  scanPspGames:         (pspGamesPath)         => ipcRenderer.invoke('scan-psp-games', pspGamesPath),
+  scanWiiUGames:        (wiiUGamesPath)        => ipcRenderer.invoke('scan-wiiu-games', wiiUGamesPath),
 
   // TeknoParrot updater
   runUpdater: () => ipcRenderer.invoke('run-updater'),

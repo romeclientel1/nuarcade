@@ -259,6 +259,86 @@
 
 .emptySub { font-size: 12px; color: rgba(255,255,255,0.2); }
 
+/* Library empty first-run screen */
+.libraryEmpty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 32px 24px;
+  overflow-y: auto;
+  z-index: 5;
+  gap: 0;
+}
+.emptyBigIcon { font-size: 52px; opacity: 0.25; margin-bottom: 12px; }
+.emptyBigTitle {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.7);
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+.emptyBigSub {
+  font-size: 13px;
+  color: rgba(255,255,255,0.35);
+  margin-bottom: 24px;
+  text-align: center;
+}
+.emptySteps {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 480px;
+  margin-bottom: 24px;
+}
+.emptyStep {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.6);
+}
+.emptyStepNum {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--accent, #00ff88);
+  color: #000;
+  font-weight: 900;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.emptyFolders {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  max-width: 480px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+.emptyFolderRow {
+  font-size: 11px;
+  color: rgba(255,255,255,0.35);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.emptyFolderRow code {
+  font-family: 'Courier New', monospace;
+  color: var(--accent, #00ff88);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
 .infoPanel {
   position: relative;
   z-index: 10;

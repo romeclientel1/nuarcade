@@ -15,7 +15,7 @@ import { useSteamGridDB } from "../../hooks/useSteamGridDB"
 
 import styles from "./Wheel.module.css"
 
-const CATEGORIES = ["All", "Favorites", "Recent", "Arcade", "Retro", "Racing", "Fighting", "Shooter", "Rhythm", "Flying", "Sports", "N64", "PS1", "Dreamcast", "PS3", "Xbox360", "GCWii", "PS2", "Switch", "Pinball"]
+const CATEGORIES = ["All", "Favorites", "Recent", "Arcade", "Retro", "Racing", "Fighting", "Shooter", "Rhythm", "Flying", "Sports", "N64", "PS1", "PSP", "Dreamcast", "PS3", "Xbox360", "GCWii", "WiiU", "PS2", "Switch", "Pinball"]
 const ATTRACT_TIMEOUT = 120000
 
 function sortGames(games, sortBy) {
@@ -43,7 +43,7 @@ function sortGames(games, sortBy) {
 
 export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange }) {
   const {
-    games, stats, loading,
+    games, stats, loading, libraryEmpty,
     toggleFavorite, isFavorite,
     recentlyPlayed, addRecentlyPlayed,
     newGameCount,
@@ -189,6 +189,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
       else if (emu === 'project64') await window.nuarcade.launchN64Game(gamePath)
       else if (emu === 'duckstation') await window.nuarcade.launchPs1Game(gamePath)
       else if (emu === 'flycast') await window.nuarcade.launchFlycastGame(gamePath)
+      else if (emu === 'ppsspp') await window.nuarcade.launchPspGame(gamePath)
+      else if (emu === 'cemu')   await window.nuarcade.launchWiiUGame(gamePath)
       else await window.nuarcade.launchGame(current.profilePath || current.profile)
     } else {
       console.log("Dev mode would launch:", current.profile)
@@ -289,7 +291,45 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
         ))}
       </div>
 
-      {filteredGames.length === 0 ? (
+      {libraryEmpty ? (
+        <div className={styles.libraryEmpty}>
+          <div className={styles.emptyBigIcon}>?</div>
+          <div className={styles.emptyBigTitle}>Your library is empty</div>
+          <div className={styles.emptyBigSub}>
+            NuArcade is ready -- you just need to add games.
+          </div>
+          <div className={styles.emptySteps}>
+            <div className={styles.emptyStep}>
+              <span className={styles.emptyStepNum}>1</span>
+              <span>Install emulators via <strong>Setup Guide</strong> in the wizard</span>
+            </div>
+            <div className={styles.emptyStep}>
+              <span className={styles.emptyStepNum}>2</span>
+              <span>Copy game files to your F: drive folders</span>
+            </div>
+            <div className={styles.emptyStep}>
+              <span className={styles.emptyStepNum}>3</span>
+              <span>Hit <strong>Rescan</strong> in Settings to detect your games</span>
+            </div>
+          </div>
+          <div className={styles.emptyFolders}>
+            <div className={styles.emptyFolderRow}><code>F:\ArcadeGames\</code> -- TeknoParrot arcade</div>
+            <div className={styles.emptyFolderRow}><code>F:\MAME\roms\</code> -- MAME classics</div>
+            <div className={styles.emptyFolderRow}><code>F:\RetroArchGames\</code> -- NES, SNES, Genesis...</div>
+            <div className={styles.emptyFolderRow}><code>F:\N64Games\</code> -- Nintendo 64</div>
+            <div className={styles.emptyFolderRow}><code>F:\PS1Games\</code> -- PlayStation</div>
+            <div className={styles.emptyFolderRow}><code>F:\DreamcastGames\</code> -- Dreamcast</div>
+            <div className={styles.emptyFolderRow}><code>F:\PS2Games\</code> -- PlayStation 2</div>
+            <div className={styles.emptyFolderRow}><code>F:\PS3Games\</code> -- PlayStation 3</div>
+            <div className={styles.emptyFolderRow}><code>F:\Xbox360Games\</code> -- Xbox 360</div>
+            <div className={styles.emptyFolderRow}><code>F:\GCWiiGames\</code> -- GameCube / Wii</div>
+            <div className={styles.emptyFolderRow}><code>F:\SwitchGames\</code> -- Nintendo Switch</div>
+            <div className={styles.emptyFolderRow}><code>F:\PSPGames\</code> -- PSP</div>
+            <div className={styles.emptyFolderRow}><code>F:\WiiUGames\</code> -- Wii U</div>
+            <div className={styles.emptyFolderRow}><code>F:\PinballTables\</code> -- Visual Pinball X</div>
+          </div>
+        </div>
+      ) : filteredGames.length === 0 ? (
         <div className={styles.emptyState}>
           <div className={styles.emptyIcon}>
             {activeCategory === "Favorites" ? "?" : activeCategory === "Recent" ? "?" : activeCategory === "Pinball" ? "?" : activeCategory === "PS3" ? "?" : activeCategory === "Xbox360" ? "?" : activeCategory === "GCWii" ? "?" : activeCategory === "PS2" ? "?" : "??"}
