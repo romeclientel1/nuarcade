@@ -41,6 +41,7 @@ function sortGames(games, sortBy) {
         })
       } catch { return sorted }
     }
+    case "top_rated": {
       try {
         const ratings = JSON.parse(localStorage.getItem("nuarcade_ratings") || "{}")
         return sorted.sort((a, b) => {

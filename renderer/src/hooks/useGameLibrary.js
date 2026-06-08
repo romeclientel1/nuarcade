@@ -227,15 +227,7 @@ export function useGameLibrary() {
             } catch (e) { console.warn('Model3 scan error:', e) }
           }
 
-          // Sega Model 2
-  { id: 'model2_daytona',  title: 'Daytona USA',           genre: 'Model2',  system: 'Sega Model 2', status: 'Perfect', profile: 'daytona.zip',  icon: 'M2', emulator: 'model2' },
-  { id: 'model2_vf2',      title: 'Virtua Fighter 2',      genre: 'Fighting',system: 'Sega Model 2', status: 'Perfect', profile: 'vf2.zip',      icon: 'M2', emulator: 'model2' },
-  { id: 'model2_srallyc',  title: 'Sega Rally Championship',genre: 'Racing', system: 'Sega Model 2', status: 'Perfect', profile: 'srallyc.zip',  icon: 'M2', emulator: 'model2' },
-  // Sega Model 3
-  { id: 'model3_scud',     title: 'Scud Race / Super GT',  genre: 'Model3',  system: 'Sega Model 3', status: 'Perfect', profile: 'scud.zip',     icon: 'M3', emulator: 'model3' },
-  { id: 'model3_vf3',      title: 'Virtua Fighter 3',      genre: 'Fighting',system: 'Sega Model 3', status: 'Perfect', profile: 'vf3.zip',      icon: 'M3', emulator: 'model3' },
-  { id: 'model3_starwars', title: 'Star Wars Trilogy Arcade',genre: 'Shooter',system: 'Sega Model 3', status: 'Perfect', profile: 'starwars.zip', icon: 'M3', emulator: 'model3' },
-  // PPSSPP / PSP
+          // PPSSPP / PSP
           if (cfg.mode !== 'pinball' && cfg.pspGamesPath) {
             try {
               const pspResult = await window.nuarcade.scanPspGames(cfg.pspGamesPath)

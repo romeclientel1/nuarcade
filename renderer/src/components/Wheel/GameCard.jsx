@@ -148,7 +148,14 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork 
         )}
 
         {/* Generated placeholder -- always shows something */}
-        {!game.isPinball && !showThumb && !showCapsule && !showVideo && (\n          <img\n            src={generatePlaceholderSvg(game)}\n            alt={game.title}\n            className={styles.artImg}\n            style={{ opacity: 0.85 }}\n          />\n        )}
+        {!game.isPinball && !showThumb && !showCapsule && !showVideo && (
+          <img
+            src={generatePlaceholderSvg(game)}
+            alt={game.title}
+            className={styles.artImg}
+            style={{ opacity: 0.85 }}
+          />
+        )}
 
         {showVideo && <div className={styles.videoBadge}>LIVE</div>}
 
