@@ -1,5 +1,4 @@
-import { useState, useEffect, useEffect, useRef } from "react"
-import { useGameNotes } from "../../hooks/useGameNotes"
+import { useState, useEffect, useRef } from "react"
 import { usePlaytime } from "../../hooks/usePlaytime"
 import styles from "./GameDetail.module.css"
 
