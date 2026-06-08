@@ -8,8 +8,10 @@ import GameDetail from "../GameDetail/GameDetail"
 import Help from "../Help/Help"
 import Collections, { useCollections } from "../Collections/Collections"
 import Stats from "../Stats/Stats"
-import Achievements from "../Achievements/Achievements"
+import Achievements, { computeStats } from "../Achievements/Achievements"
+import { AchievementToastContainer, useAchievementToasts } from "../Achievements/AchievementToast"
 import VirtualKeyboard from "../VirtualKeyboard/VirtualKeyboard"
+import BootScreen from "./BootScreen"
 import SortMenu from "./SortMenu"
 import { useGamepad } from "./useGamepad"
 import { useArcadeSounds } from "../../hooks/useArcadeSounds"
@@ -103,6 +105,17 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
   const [showCollections, setShowCollections] = useState(false)
   const [showStats, setShowStats] = useState(false)
   const [showAchievements, setShowAchievements] = useState(false)
+  const [showBoot, setShowBoot] = useState(false)
+
+  // Show boot screen once after library loads (only on cabinet, only if games exist)
+  const bootShown = useRef(false)
+  useEffect(() => {
+    if (bootShown.current || loading || !games.length) return
+    bootShown.current = true
+    if (window.nuarcade?.platform === "win32") {
+      setShowBoot(true)
+    }
+  }, [games.length, loading])
   const [showVirtualKeyboard, setShowVirtualKeyboard] = useState(false)
   const [sortBy, setSortBy] = useState("default")
   const [search,        setSearch       ] = useState("")
@@ -123,6 +136,16 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
   })
   const sgdbKey = config?.sgdbApiKey || null
   const { fetchArtworkForGame } = useSteamGridDB(sgdbKey)
+
+  // Achievement stats -- recomputed every 15s and whenever games change
+  const [achievementStats, setAchievementStats] = useState(() => computeStats(games))
+  useEffect(() => {
+    if (!games.length) return
+    setAchievementStats(computeStats(games))
+    const interval = setInterval(() => setAchievementStats(computeStats(games)), 15000)
+    return () => clearInterval(interval)
+  }, [games])
+  const { toasts: achieveToasts, dismiss: dismissToast } = useAchievementToasts(achievementStats)
   
   const [cabinetMode, setCabinetMode] = useState(false)
   const [screenshotMode, setScreenshotMode] = useState(false)
@@ -224,21 +247,26 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
 
   useEffect(() => {
     const handler = (e) => {
-      if (showSearch) return
+      // Never intercept when any text input or overlay is active
+      if (showSearch || showVirtualKeyboard) return
+      if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return
+
       if (e.key === "ArrowLeft")  { sounds.navigate(); setSelectedIndex(i => (i - 1 + filteredGames.length) % filteredGames.length) }
       if (e.key === "ArrowRight") { sounds.navigate(); setSelectedIndex(i => (i + 1) % filteredGames.length) }
-      if (e.key === "Enter")      { sounds.select(); setShowDetail(true) }
+      if (e.key === "Enter")      { if (!showDetail && !showHelp && !showStats && !showAchievements && !showCollections && !showSettings && !showMediaManager) { sounds.select(); setShowDetail(true) } }
       if (e.key === "Escape") {
-        sounds.back(); setShowDetail(false)
-        setShowSearch(false)
-        setSearch("")
-        setDebouncedSearch("")
-        setShowHelp(false)
-        setShowSort(false)
+        sounds.back()
+        setShowDetail(false); setShowSearch(false); setSearch(""); setDebouncedSearch("")
+        setShowHelp(false); setShowSort(false); setShowStats(false)
+        setShowAchievements(false); setShowCollections(false)
+        setShowVirtualKeyboard(false)
       }
-      if (e.key === "f" || e.key === "F") {
-        if (current) toggleFavorite(current.id || current.profile)
-      }
+
+      // Single-key shortcuts only fire when no overlay is open
+      const anyOverlay = showDetail || showHelp || showStats || showAchievements || showCollections || showSettings || showMediaManager
+      if (anyOverlay) return
+
+      if (e.key === "f" || e.key === "F") { if (current) toggleFavorite(current.id || current.profile) }
       if (e.key === "?") setShowHelp(h => !h)
       if (e.key === "n" || e.key === "N") setShowCollections(c => !c)
       if (e.key === "t" || e.key === "T") setShowStats(s => !s)
@@ -253,7 +281,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
     }
     window.addEventListener("keydown", handler)
     return () => window.removeEventListener("keydown", handler)
-  }, [filteredGames, selectedIndex, showSearch, current])
+  }, [filteredGames, selectedIndex, showSearch, showVirtualKeyboard, showDetail, showHelp, showStats, showAchievements, showCollections, showSettings, showMediaManager, current, handleLaunch])
 
   useEffect(() => {
     if (showSearch && searchRef.current) searchRef.current.focus()
@@ -297,6 +325,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
     // When window regains focus, the user returned from the emulator -- save session
     const handleFocusReturn = () => {
       endSession(gameId, sessionStart)
+      setAchievementStats(computeStats(games))
       window.removeEventListener("focus", handleFocusReturn)
     }
     window.addEventListener("focus", handleFocusReturn)
@@ -726,6 +755,17 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
           <span className={styles.hint}><kbd>Search</kbd> Keyboard</span>
           <span className={styles.hint}><kbd>?</kbd> Help</span>
         </div>
+      )}
+      {/* Achievement toasts */}
+      <AchievementToastContainer toasts={achieveToasts} onDismiss={dismissToast} />
+
+      {/* Boot screen -- shown once on first library load */}
+      {showBoot && (
+        <BootScreen
+          games={games}
+          artwork={artwork}
+          onComplete={() => setShowBoot(false)}
+        />
       )}
     </div>
   )

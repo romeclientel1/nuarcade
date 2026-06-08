@@ -218,6 +218,16 @@ export default function GameDetail({ game, onClose, onLaunch, launching, artwork
             >
               {launching ? "Launching..." : game.isPinball ? "Launch Table" : "Launch Game"}
             </button>
+            {lc.count > 0 && (
+              <button
+                className={styles.playAgainBtn}
+                style={{ borderColor: colors.accent + "44", color: colors.accent + "99" }}
+                onClick={onLaunch}
+                disabled={launching}
+              >
+                Play Again
+              </button>
+            )}
           </div>
 
           <div className={styles.infoSide}>

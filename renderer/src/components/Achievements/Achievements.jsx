@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import { useOverlayGamepad } from "../../hooks/useOverlayGamepad"
 import styles from "./Achievements.module.css"
 
-const ACHIEVEMENTS = [
+export const ACHIEVEMENTS = [
   // Playtime
   { id: "first_launch",   icon: "?",  title: "First Launch",      desc: "Launch your first game",               check: (s) => s.totalLaunches >= 1 },
   { id: "hour_1",         icon: "?",  title: "First Hour",        desc: "Play for 1 total hour",                check: (s) => s.totalTimeSec >= 3600 },
@@ -38,7 +38,7 @@ const ACHIEVEMENTS = [
   { id: "5_systems",      icon: "?",  title: "Multi-System",      desc: "Play games on 5 different systems",    check: (s) => s.distinctSystems >= 5 },
 ]
 
-function computeStats(games) {
+export function computeStats(games) {
   const pt       = (() => { try { return JSON.parse(localStorage.getItem("nuarcade_playtime") || "{}") } catch { return {} } })()
   const lc       = (() => { try { return JSON.parse(localStorage.getItem("nuarcade_launches")  || "{}") } catch { return {} } })()
   const ratings  = (() => { try { return JSON.parse(localStorage.getItem("nuarcade_ratings")   || "{}") } catch { return {} } })()
