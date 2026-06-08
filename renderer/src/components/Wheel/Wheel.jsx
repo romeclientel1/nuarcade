@@ -166,7 +166,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
     setLaunching(true)
     const sessionStart = startSession(current.id || current.profile)
     addRecentlyPlayed(current)
-    // recordPlay(current)
     // Gamepad rumble on launch
     try {
       const gp = navigator.getGamepads()[0]
@@ -178,7 +177,19 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
       }
     } catch (e) {}
     if (window.nuarcade) {
-      await window.nuarcade.launchGame(current.profilePath || current.profile)
+      const emu = current.emulator || 'teknoparrot'
+      const gamePath = current.path || current.profilePath || current.profile
+      if (emu === 'rpcs3')       await window.nuarcade.launchPs3Game(gamePath)
+      else if (emu === 'xenia')  await window.nuarcade.launchXbox360Game(gamePath)
+      else if (emu === 'dolphin') await window.nuarcade.launchGCWiiGame(gamePath)
+      else if (emu === 'pcsx2')  await window.nuarcade.launchPs2Game(gamePath)
+      else if (emu === 'ryujinx') await window.nuarcade.launchSwitchGame(gamePath)
+      else if (emu === 'mame')   await window.nuarcade.launchMameGame(gamePath)
+      else if (emu === 'retroarch') await window.nuarcade.launchRetroArchGame(gamePath)
+      else if (emu === 'project64') await window.nuarcade.launchN64Game(gamePath)
+      else if (emu === 'duckstation') await window.nuarcade.launchPs1Game(gamePath)
+      else if (emu === 'flycast') await window.nuarcade.launchFlycastGame(gamePath)
+      else await window.nuarcade.launchGame(current.profilePath || current.profile)
     } else {
       console.log("Dev mode would launch:", current.profile)
     }

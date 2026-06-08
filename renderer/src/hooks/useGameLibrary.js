@@ -37,6 +37,30 @@ const SAMPLE_GAMES = [
   { id: 'ps2_GodOfWarII',       title: 'God of War II',               genre: 'PS2',      system: 'PlayStation 2',   status:'Perfect', profile: 'GodOfWarII.iso',                         icon: '??',  emulator: 'pcsx2' },
   { id: 'ps2_GT4',              title: 'Gran Turismo 4',              genre: 'Racing',   system: 'PlayStation 2',   status:'Perfect', profile: 'GranTurismo4.iso',                       icon: '??',  emulator: 'pcsx2' },
   { id: 'ps2_SoulCalibur3',     title: 'SoulCalibur III',             genre: 'Fighting', system: 'PlayStation 2',   status:'Great',   profile: 'SoulCaliburIII.iso',                     icon: '??',  emulator: 'pcsx2' },
+  // MAME Arcade Classics
+  { id: 'mame_pacman',          title: 'Pac-Man',                    genre: 'Arcade',    system: 'MAME',           status: 'Perfect', profile: 'pacman.zip',              icon: 'M',  emulator: 'mame'       },
+  { id: 'mame_galaga',          title: 'Galaga',                     genre: 'Arcade',    system: 'MAME',           status: 'Perfect', profile: 'galaga.zip',              icon: 'M',  emulator: 'mame'       },
+  { id: 'mame_sf2',             title: 'Street Fighter II',          genre: 'Fighting',  system: 'MAME',           status: 'Perfect', profile: 'sf2.zip',                 icon: 'M',  emulator: 'mame'       },
+  { id: 'mame_mk',              title: 'Mortal Kombat',              genre: 'Fighting',  system: 'MAME',           status: 'Perfect', profile: 'mk.zip',                  icon: 'M',  emulator: 'mame'       },
+  { id: 'mame_dkong',           title: 'Donkey Kong',                genre: 'Arcade',    system: 'MAME',           status: 'Perfect', profile: 'dkong.zip',               icon: 'M',  emulator: 'mame'       },
+  // RetroArch / Classic Consoles
+  { id: 'ra_SuperMarioBros',    title: 'Super Mario Bros.',          genre: 'Retro',     system: 'NES',            status: 'Perfect', profile: 'SuperMarioBros.nes',      icon: 'R',  emulator: 'retroarch'  },
+  { id: 'ra_SuperMarioWorld',   title: 'Super Mario World',          genre: 'Retro',     system: 'SNES',           status: 'Perfect', profile: 'SuperMarioWorld.sfc',     icon: 'R',  emulator: 'retroarch'  },
+  { id: 'ra_SonicTheHedgehog',  title: 'Sonic the Hedgehog',         genre: 'Retro',     system: 'Genesis',        status: 'Perfect', profile: 'SonicTheHedgehog.md',     icon: 'R',  emulator: 'retroarch'  },
+  { id: 'ra_PokemonRed',        title: 'Pokemon Red',                genre: 'Retro',     system: 'Game Boy',       status: 'Perfect', profile: 'PokemonRed.gb',           icon: 'R',  emulator: 'retroarch'  },
+  { id: 'ra_MarioKart64',       title: 'Mario Kart 64',              genre: 'Racing',    system: 'N64',            status: 'Perfect', profile: 'MarioKart64.n64',         icon: 'R',  emulator: 'retroarch'  },
+  // Project64 / N64
+  { id: 'n64_Goldeneye007',     title: 'GoldenEye 007',              genre: 'N64',       system: 'Nintendo 64',    status: 'Perfect', profile: 'Goldeneye007.z64',        icon: '64', emulator: 'project64'  },
+  { id: 'n64_Zelda_OOT',        title: 'Zelda: Ocarina of Time',     genre: 'N64',       system: 'Nintendo 64',    status: 'Perfect', profile: 'ZeldaOcarinaOfTime.z64',  icon: '64', emulator: 'project64'  },
+  { id: 'n64_SuperSmashBros',   title: 'Super Smash Bros.',          genre: 'Fighting',  system: 'Nintendo 64',    status: 'Perfect', profile: 'SuperSmashBros.n64',      icon: '64', emulator: 'project64'  },
+  // DuckStation / PS1
+  { id: 'ps1_CrashBandicoot',   title: 'Crash Bandicoot',            genre: 'PS1',       system: 'PlayStation',    status: 'Perfect', profile: 'CrashBandicoot.bin',      icon: 'DS', emulator: 'duckstation' },
+  { id: 'ps1_FinalFantasyVII',  title: 'Final Fantasy VII',          genre: 'PS1',       system: 'PlayStation',    status: 'Perfect', profile: 'FinalFantasyVII.bin',     icon: 'DS', emulator: 'duckstation' },
+  { id: 'ps1_MetalGearSolid',   title: 'Metal Gear Solid',           genre: 'PS1',       system: 'PlayStation',    status: 'Perfect', profile: 'MetalGearSolid.bin',      icon: 'DS', emulator: 'duckstation' },
+  // Flycast / Dreamcast
+  { id: 'dc_SonicAdventure',    title: 'Sonic Adventure',            genre: 'Dreamcast', system: 'Dreamcast',      status: 'Perfect', profile: 'SonicAdventure.gdi',      icon: 'DC', emulator: 'flycast'    },
+  { id: 'dc_MarvelVsCapcom2',   title: 'Marvel vs. Capcom 2',        genre: 'Fighting',  system: 'Dreamcast',      status: 'Perfect', profile: 'MarvelVsCapcom2.gdi',     icon: 'DC', emulator: 'flycast'    },
+  { id: 'dc_CrazyTaxi',         title: 'Crazy Taxi',                 genre: 'Racing',    system: 'Dreamcast',      status: 'Perfect', profile: 'CrazyTaxi.gdi',           icon: 'DC', emulator: 'flycast'    },
   // Pinball
   { id: 'Medieval_Madness',     title: 'Medieval Madness',            genre: 'Pinball',  system: 'Visual Pinball X',status:'Perfect', profile: 'Medieval_Madness.vpx',                   icon: '?',  emulator: 'vpx', isPinball: true },
   { id: 'Attack_From_Mars',     title: 'Attack From Mars',            genre: 'Pinball',  system: 'Visual Pinball X',status:'Perfect', profile: 'Attack_From_Mars.vpx',                   icon: '?',  emulator: 'vpx', isPinball: true },
@@ -122,7 +146,47 @@ export function useGameLibrary() {
             } catch (e) { console.warn('PCSX2 scan error:', e) }
           }
 
-          // ?? Visual Pinball X ?????????????????????????????????
+          // MAME / Arcade Classics
+          if (cfg.mode !== 'pinball' && cfg.mameGamesPath) {
+            try {
+              const mameResult = await window.nuarcade.scanMameGames(cfg.mameGamesPath)
+              if (mameResult.games?.length) allGames = [...allGames, ...mameResult.games]
+            } catch (e) { console.warn('MAME scan error:', e) }
+          }
+
+          // RetroArch / Classic Consoles
+          if (cfg.mode !== 'pinball' && cfg.retroarchGamesPath) {
+            try {
+              const raResult = await window.nuarcade.scanRetroArchGames(cfg.retroarchGamesPath)
+              if (raResult.games?.length) allGames = [...allGames, ...raResult.games]
+            } catch (e) { console.warn('RetroArch scan error:', e) }
+          }
+
+          // Project64 / N64
+          if (cfg.mode !== 'pinball' && cfg.n64GamesPath) {
+            try {
+              const n64Result = await window.nuarcade.scanN64Games(cfg.n64GamesPath)
+              if (n64Result.games?.length) allGames = [...allGames, ...n64Result.games]
+            } catch (e) { console.warn('Project64 scan error:', e) }
+          }
+
+          // DuckStation / PS1
+          if (cfg.mode !== 'pinball' && cfg.ps1GamesPath) {
+            try {
+              const ps1Result = await window.nuarcade.scanPs1Games(cfg.ps1GamesPath)
+              if (ps1Result.games?.length) allGames = [...allGames, ...ps1Result.games]
+            } catch (e) { console.warn('DuckStation scan error:', e) }
+          }
+
+          // Flycast / Dreamcast
+          if (cfg.mode !== 'pinball' && cfg.dreamcastGamesPath) {
+            try {
+              const dcResult = await window.nuarcade.scanDreamcastGames(cfg.dreamcastGamesPath)
+              if (dcResult.games?.length) allGames = [...allGames, ...dcResult.games]
+            } catch (e) { console.warn('Flycast scan error:', e) }
+          }
+
+          // Visual Pinball X
           if (cfg.mode !== 'arcade' && cfg.tablesPath) {
             try {
               const pbResult = await window.nuarcade.scanPinball(cfg.tablesPath)

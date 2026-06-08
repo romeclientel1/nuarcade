@@ -57,7 +57,7 @@ function createWindow() {
   return win
 }
 
-// ── Browse folder dialog ────────────────────────────────────────────────────
+// -- Browse folder dialog ----------------------------------------------------
 ipcMain.handle('browse-folder', async () => {
   const result = await dialog.showOpenDialog({
     properties: ['openDirectory'],
@@ -67,7 +67,7 @@ ipcMain.handle('browse-folder', async () => {
   return result.filePaths[0]
 })
 
-// ── Launch TeknoParrot game ─────────────────────────────────────────────────
+// -- Launch TeknoParrot game -------------------------------------------------
 ipcMain.handle('launch-game', async (event, profilePath) => {
   return new Promise((resolve) => {
     const cfg = config.load()
@@ -79,7 +79,7 @@ ipcMain.handle('launch-game', async (event, profilePath) => {
   })
 })
 
-// ── Launch RPCS3 game ───────────────────────────────────────────────────────
+// -- Launch RPCS3 game -------------------------------------------------------
 ipcMain.handle('launch-ps3-game', async (event, gamePath) => {
   return new Promise((resolve) => {
     const cfg = config.load()
@@ -90,7 +90,7 @@ ipcMain.handle('launch-ps3-game', async (event, gamePath) => {
   })
 })
 
-// ── Run TeknoParrot updater ─────────────────────────────────────────────────
+// -- Run TeknoParrot updater -------------------------------------------------
 ipcMain.handle('run-updater', async () => {
   return new Promise((resolve) => {
     const cfg = config.load()
@@ -101,25 +101,25 @@ ipcMain.handle('run-updater', async () => {
   })
 })
 
-// ── Scan TeknoParrot games ──────────────────────────────────────────────────
+// -- Scan TeknoParrot games --------------------------------------------------
 ipcMain.handle('scan-games', async (event, { teknoParrotPath, gamesFolderPath }) => {
   const { scanGames } = require('./scanner')
   return scanGames(teknoParrotPath, gamesFolderPath)
 })
 
-// ── Scan RPCS3 games ────────────────────────────────────────────────────────
+// -- Scan RPCS3 games --------------------------------------------------------
 ipcMain.handle('scan-ps3-games', async (event, ps3GamesPath) => {
   const { scanPs3Games } = require('./scanner')
   return scanPs3Games(ps3GamesPath)
 })
 
-// ── Scan pinball tables ─────────────────────────────────────────────────────
+// -- Scan pinball tables -----------------------------------------------------
 ipcMain.handle('scan-pinball', async (event, tablesPath) => {
   const { scanPinballTables } = require('./scanner')
   return scanPinballTables(tablesPath)
 })
 
-// ── yt-dlp helpers ──────────────────────────────────────────────────────────
+// -- yt-dlp helpers ----------------------------------------------------------
 async function ensureYtDlp() {
   const { execSync } = require('child_process')
   try {
@@ -182,7 +182,7 @@ ipcMain.handle('download-video', async (event, { videoUrl, outputPath, gameId })
 })
 
 
-// ── Launch Xenia / Xbox 360 ─────────────────────────────────────────────────
+// -- Launch Xenia / Xbox 360 -------------------------------------------------
 ipcMain.handle('launch-xbox360-game', async (event, gamePath) => {
   return new Promise((resolve) => {
     const cfg = config.load()
@@ -193,7 +193,7 @@ ipcMain.handle('launch-xbox360-game', async (event, gamePath) => {
   })
 })
 
-// ── Launch Dolphin / GC+Wii ─────────────────────────────────────────────────
+// -- Launch Dolphin / GC+Wii -------------------------------------------------
 ipcMain.handle('launch-gcwii-game', async (event, gamePath) => {
   return new Promise((resolve) => {
     const cfg = config.load()
@@ -204,7 +204,7 @@ ipcMain.handle('launch-gcwii-game', async (event, gamePath) => {
   })
 })
 
-// ── Launch PCSX2 / PS2 ──────────────────────────────────────────────────────
+// -- Launch PCSX2 / PS2 ------------------------------------------------------
 ipcMain.handle('launch-ps2-game', async (event, gamePath) => {
   return new Promise((resolve) => {
     const cfg = config.load()
@@ -215,26 +215,26 @@ ipcMain.handle('launch-ps2-game', async (event, gamePath) => {
   })
 })
 
-// ── Scan Xbox 360 games ─────────────────────────────────────────────────────
+// -- Scan Xbox 360 games -----------------------------------------------------
 ipcMain.handle('scan-xbox360-games', async (event, xbox360GamesPath) => {
   const { scanXbox360Games } = require('./scanner')
   return scanXbox360Games(xbox360GamesPath)
 })
 
-// ── Scan GameCube/Wii games ─────────────────────────────────────────────────
+// -- Scan GameCube/Wii games -------------------------------------------------
 ipcMain.handle('scan-gcwii-games', async (event, gcWiiGamesPath) => {
   const { scanGCWiiGames } = require('./scanner')
   return scanGCWiiGames(gcWiiGamesPath)
 })
 
-// ── Scan PS2 games ──────────────────────────────────────────────────────────
+// -- Scan PS2 games ----------------------------------------------------------
 ipcMain.handle('scan-ps2-games', async (event, ps2GamesPath) => {
   const { scanPs2Games } = require('./scanner')
   return scanPs2Games(ps2GamesPath)
 })
 
 
-// ── Launch Ryujinx / Switch ──────────────────────────────────────────────────
+// -- Launch Ryujinx / Switch --------------------------------------------------
 ipcMain.handle('launch-switch-game', async (event, gamePath) => {
   return new Promise((resolve) => {
     const cfg = config.load()
@@ -245,14 +245,14 @@ ipcMain.handle('launch-switch-game', async (event, gamePath) => {
   })
 })
 
-// ── Scan Switch games ────────────────────────────────────────────────────────
+// -- Scan Switch games --------------------------------------------------------
 ipcMain.handle('scan-switch-games', async (event, switchGamesPath) => {
   const { scanSwitchGames } = require('./scanner')
   return scanSwitchGames(switchGamesPath)
 })
 
 
-// ── Create F: drive folder structure ────────────────────────────────────────
+// -- Create F: drive folder structure ----------------------------------------
 ipcMain.handle('create-folder-structure', async () => {
   const fs = require('fs')
   const folders = [
@@ -270,6 +270,22 @@ ipcMain.handle('create-folder-structure', async () => {
     'F:\\Ryujinx',
     'F:\\Ryujinx\\system',
     'F:\\SwitchGames',
+    'F:\\MAME',
+    'F:\\MAME\\roms',
+    'F:\\RetroArch',
+    'F:\\RetroArchGames',
+    'F:\\RetroArchGames\\NES',
+    'F:\\RetroArchGames\\SNES',
+    'F:\\RetroArchGames\\Genesis',
+    'F:\\RetroArchGames\\GBA',
+    'F:\\RetroArchGames\\N64',
+    'F:\\RetroArchGames\\PS1',
+    'F:\\Project64',
+    'F:\\N64Games',
+    'F:\\DuckStation',
+    'F:\\PS1Games',
+    'F:\\Flycast',
+    'F:\\DreamcastGames',
     'F:\\vPinball',
     'F:\\PinballTables',
     'F:\\NuArcade',
@@ -290,7 +306,7 @@ ipcMain.handle('create-folder-structure', async () => {
 })
 
 
-// ── Backup config to file ────────────────────────────────────────────────────
+// -- Backup config to file ----------------------------------------------------
 ipcMain.handle('backup-config', async () => {
   const cfg = config.load()
   const result = await dialog.showSaveDialog({
@@ -304,7 +320,7 @@ ipcMain.handle('backup-config', async () => {
   return { success: true, path: result.filePath }
 })
 
-// ── Restore config from file ─────────────────────────────────────────────────
+// -- Restore config from file -------------------------------------------------
 ipcMain.handle('restore-config', async () => {
   const result = await dialog.showOpenDialog({
     title: 'Restore NuArcade Backup',
@@ -326,7 +342,7 @@ ipcMain.handle('restore-config', async () => {
 })
 
 
-// ── Marquee display (second monitor) ────────────────────────────────────────
+// -- Marquee display (second monitor) ----------------------------------------
 let marqueeWin = null
 
 ipcMain.handle('open-marquee', async () => {
@@ -426,7 +442,7 @@ ipcMain.handle('update-marquee', (event, data) => {
   return { success: true }
 })
 
-// ── Config & misc ───────────────────────────────────────────────────────────
+// -- Config & misc -----------------------------------------------------------
 ipcMain.handle('add-exclusions', async (event, paths) => {
   return new Promise((resolve) => {
     const ps = paths.map(p => `Add-MpPreference -ExclusionPath "${p}"`).join('; ')
@@ -475,6 +491,80 @@ app.whenReady().then(() => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
 })
+
+// -- MAME --------------------------------------------------------------------
+ipcMain.handle('launch-mame-game', async (event, gamePath) => {
+  const cfg = config.load()
+  const mameExe = path.join(cfg.mamePath || 'F:\\MAME\\', 'mame.exe')
+  const { spawn } = require('child_process')
+  const romFile = path.basename(gamePath, path.extname(gamePath))
+  const romsDir = path.dirname(gamePath)
+  spawn(mameExe, [romFile, '-rompath', romsDir], { detached: true, stdio: 'ignore' }).unref()
+  return { launched: true }
+})
+
+ipcMain.handle('scan-mame-games', async (event, mameGamesPath) => {
+  const { scanMameGames } = require('./scanner')
+  return scanMameGames(mameGamesPath)
+})
+
+// -- RetroArch ---------------------------------------------------------------
+ipcMain.handle('launch-retroarch-game', async (event, gamePath) => {
+  const cfg = config.load()
+  const retroExe = path.join(cfg.retroarchPath || 'F:\\RetroArch\\', 'retroarch.exe')
+  const { spawn } = require('child_process')
+  // Launch with auto-core detection (-L flag omitted so RetroArch picks core from extension)
+  spawn(retroExe, ['-f', gamePath], { detached: true, stdio: 'ignore' }).unref()
+  return { launched: true }
+})
+
+ipcMain.handle('scan-retroarch-games', async (event, retroarchGamesPath) => {
+  const { scanRetroArchGames } = require('./scanner')
+  return scanRetroArchGames(retroarchGamesPath)
+})
+
+// -- Project64 / N64 ---------------------------------------------------------
+ipcMain.handle('launch-n64-game', async (event, gamePath) => {
+  const cfg = config.load()
+  const p64Exe = path.join(cfg.project64Path || 'F:\\Project64\\', 'Project64.exe')
+  const { spawn } = require('child_process')
+  spawn(p64Exe, [gamePath], { detached: true, stdio: 'ignore' }).unref()
+  return { launched: true }
+})
+
+ipcMain.handle('scan-n64-games', async (event, n64GamesPath) => {
+  const { scanN64Games } = require('./scanner')
+  return scanN64Games(n64GamesPath)
+})
+
+// -- DuckStation / PS1 -------------------------------------------------------
+ipcMain.handle('launch-ps1-game', async (event, gamePath) => {
+  const cfg = config.load()
+  const dsExe = path.join(cfg.duckstationPath || 'F:\\DuckStation\\', 'duckstation-qt-x64-ReleaseLTCG.exe')
+  const { spawn } = require('child_process')
+  spawn(dsExe, [gamePath], { detached: true, stdio: 'ignore' }).unref()
+  return { launched: true }
+})
+
+ipcMain.handle('scan-ps1-games', async (event, ps1GamesPath) => {
+  const { scanPs1Games } = require('./scanner')
+  return scanPs1Games(ps1GamesPath)
+})
+
+// -- Flycast / Dreamcast -----------------------------------------------------
+ipcMain.handle('launch-flycast-game', async (event, gamePath) => {
+  const cfg = config.load()
+  const flyExe = path.join(cfg.flycastPath || 'F:\\Flycast\\', 'flycast.exe')
+  const { spawn } = require('child_process')
+  spawn(flyExe, [gamePath], { detached: true, stdio: 'ignore' }).unref()
+  return { launched: true }
+})
+
+ipcMain.handle('scan-dreamcast-games', async (event, dreamcastGamesPath) => {
+  const { scanDreamcastGames } = require('./scanner')
+  return scanDreamcastGames(dreamcastGamesPath)
+})
+
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()

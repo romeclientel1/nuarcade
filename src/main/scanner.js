@@ -214,7 +214,7 @@ function scanPinballTables(tablesPath) {
       status: 'Perfect',
       isSubscription: false,
       visible: true,
-      icon: '🎱',
+      icon: 'VPX',
       isPinball: true,
     }
   })
@@ -229,7 +229,7 @@ function scanPinballTables(tablesPath) {
 
 module.exports = { scanGames, parseProfile, scanPinballTables }
 
-// ── RPCS3 Game Scanner ──────────────────────────────────────────────────────
+// -- RPCS3 Game Scanner ------------------------------------------------------
 // RPCS3 stores games in folders named by their serial (e.g. BLES01807)
 // Each folder contains a PS3_GAME subfolder with PARAM.SFO holding the title
 async function scanPs3Games(ps3GamesPath) {
@@ -255,13 +255,13 @@ async function scanPs3Games(ps3GamesPath) {
     const paramSfo = path.join(gameDir, 'PS3_GAME', 'PARAM.SFO')
     const paramSfoAlt = path.join(gameDir, 'PARAM.SFO')
 
-    // Try to read game title from PARAM.SFO (binary format — extract ASCII title)
+    // Try to read game title from PARAM.SFO (binary format - extract ASCII title)
     let title = entry.name
     const sfoPath = fs.existsSync(paramSfo) ? paramSfo : fs.existsSync(paramSfoAlt) ? paramSfoAlt : null
     if (sfoPath) {
       try {
         const buf = fs.readFileSync(sfoPath)
-        // PARAM.SFO: find TITLE key — it's a UTF-8 string after the data table
+        // PARAM.SFO: find TITLE key - it's a UTF-8 string after the data table
         const titleMatch = buf.toString('latin1').match(/TITLE\x00[\s\S]{4,20}([A-Za-z0-9][\x20-\x7E]{2,80})/)
         if (titleMatch) title = titleMatch[1].replace(/\x00.*/, '').trim()
       } catch (e) {}
@@ -284,7 +284,7 @@ async function scanPs3Games(ps3GamesPath) {
 module.exports = { ...module.exports, scanPs3Games }
 
 
-// ── Xenia / Xbox 360 Scanner ────────────────────────────────────────────────
+// -- Xenia / Xbox 360 Scanner ------------------------------------------------
 async function scanXbox360Games(xbox360GamesPath) {
   const fs = require('fs')
   const path = require('path')
@@ -301,7 +301,7 @@ async function scanXbox360Games(xbox360GamesPath) {
 
   for (const entry of entries) {
     if (entry.isDirectory()) {
-      // Folder-based game — look for default.xex inside
+      // Folder-based game - look for default.xex inside
       const xex = path.join(xbox360GamesPath, entry.name, 'default.xex')
       if (fs.existsSync(xex)) {
         games.push({
@@ -312,7 +312,7 @@ async function scanXbox360Games(xbox360GamesPath) {
           genre: 'Xbox360',
           system: 'Xbox 360',
           status: 'Playable',
-          icon: '🎮',
+          icon: 'GP',
           artwork: null,
         })
       }
@@ -326,7 +326,7 @@ async function scanXbox360Games(xbox360GamesPath) {
         genre: 'Xbox360',
         system: 'Xbox 360',
         status: 'Playable',
-        icon: '🎮',
+        icon: 'GP',
         artwork: null,
       })
     }
@@ -334,7 +334,7 @@ async function scanXbox360Games(xbox360GamesPath) {
   return { games, count: games.length, path: xbox360GamesPath }
 }
 
-// ── Dolphin / GameCube + Wii Scanner ────────────────────────────────────────
+// -- Dolphin / GameCube + Wii Scanner ----------------------------------------
 async function scanGCWiiGames(gcWiiGamesPath) {
   const fs = require('fs')
   const path = require('path')
@@ -363,14 +363,14 @@ async function scanGCWiiGames(gcWiiGamesPath) {
       genre: 'GCWii',
       system: isWii ? 'Nintendo Wii' : 'GameCube',
       status: 'Playable',
-      icon: isWii ? '🎮' : '🟣',
+      icon: isWii ? 'gamepad' : 'switch',
       artwork: null,
     })
   }
   return { games, count: games.length, path: gcWiiGamesPath }
 }
 
-// ── PCSX2 / PS2 Scanner ─────────────────────────────────────────────────────
+// -- PCSX2 / PS2 Scanner -----------------------------------------------------
 async function scanPs2Games(ps2GamesPath) {
   const fs = require('fs')
   const path = require('path')
@@ -398,7 +398,7 @@ async function scanPs2Games(ps2GamesPath) {
       genre: 'PS2',
       system: 'PlayStation 2',
       status: 'Playable',
-      icon: '💿',
+      icon: 'PS2',
       artwork: null,
     })
   }
@@ -408,7 +408,7 @@ async function scanPs2Games(ps2GamesPath) {
 module.exports = { ...module.exports, scanXbox360Games, scanGCWiiGames, scanPs2Games }
 
 
-// ── Ryujinx / Nintendo Switch Scanner ───────────────────────────────────────
+// -- Ryujinx / Nintendo Switch Scanner ---------------------------------------
 async function scanSwitchGames(switchGamesPath) {
   const fs = require('fs')
   const path = require('path')
@@ -436,7 +436,7 @@ async function scanSwitchGames(switchGamesPath) {
       genre: 'Switch',
       system: 'Nintendo Switch',
       status: 'Playable',
-      icon: '🔴',
+      icon: 'NSW',
       artwork: null,
     })
   }
@@ -444,3 +444,281 @@ async function scanSwitchGames(switchGamesPath) {
 }
 
 module.exports = { ...module.exports, scanSwitchGames }
+
+
+// -- MAME Scanner ------------------------------------------------------------
+// Scans a folder for .zip and .chd ROM files
+async function scanMameGames(mameGamesPath) {
+  const games = []
+  if (!fs.existsSync(mameGamesPath)) {
+    return { games, count: 0, path: mameGamesPath, error: 'Folder not found' }
+  }
+  const EXTS = ['.zip', '.chd']
+  let entries
+  try { entries = fs.readdirSync(mameGamesPath, { withFileTypes: true }) }
+  catch (e) { return { games, count: 0, error: e.message } }
+
+  for (const entry of entries) {
+    if (!entry.isFile()) continue
+    const ext = path.extname(entry.name).toLowerCase()
+    if (!EXTS.includes(ext)) continue
+    const romName = entry.name.replace(/\.[^.]+$/, '')
+    // Friendly title: uppercase first letter, keep romset name as-is
+    const title = romName.charAt(0).toUpperCase() + romName.slice(1)
+    games.push({
+      id: 'mame_' + romName,
+      title,
+      romName,
+      path: path.join(mameGamesPath, entry.name),
+      emulator: 'mame',
+      genre: 'Arcade',
+      system: 'MAME',
+      status: 'Playable',
+      icon: 'M',
+      artwork: null,
+    })
+  }
+  games.sort((a, b) => a.title.localeCompare(b.title))
+  return { games, count: games.length, path: mameGamesPath }
+}
+
+module.exports = { ...module.exports, scanMameGames }
+
+
+// -- RetroArch Scanner -------------------------------------------------------
+// Scans a games folder for common ROM extensions across all classic systems
+async function scanRetroArchGames(retroarchGamesPath) {
+  const games = []
+  if (!fs.existsSync(retroarchGamesPath)) {
+    return { games, count: 0, path: retroarchGamesPath, error: 'Folder not found' }
+  }
+
+  // Extension -> system display name
+  const EXT_MAP = {
+    '.nes':  'NES',
+    '.fds':  'NES',
+    '.sfc':  'SNES',
+    '.smc':  'SNES',
+    '.md':   'Genesis',
+    '.gen':  'Genesis',
+    '.smd':  'Genesis',
+    '.gba':  'GBA',
+    '.gbc':  'GBC',
+    '.gb':   'Game Boy',
+    '.n64':  'N64',
+    '.z64':  'N64',
+    '.v64':  'N64',
+    '.ndd':  'N64',
+    '.bin':  'PS1',
+    '.cue':  'PS1',
+    '.iso':  'PS1',
+    '.chd':  'Multi',
+    '.zip':  'Multi',
+    '.pce':  'PC Engine',
+    '.ngp':  'Neo Geo Pocket',
+    '.ngc':  'Neo Geo Pocket',
+    '.ws':   'WonderSwan',
+    '.wsc':  'WonderSwan',
+    '.a26':  'Atari 2600',
+    '.a78':  'Atari 7800',
+    '.lnx':  'Atari Lynx',
+    '.32x':  '32X',
+    '.gg':   'Game Gear',
+    '.sms':  'Master System',
+    '.col':  'ColecoVision',
+    '.vec':  'Vectrex',
+  }
+
+  let entries
+  try { entries = fs.readdirSync(retroarchGamesPath, { withFileTypes: true }) }
+  catch (e) { return { games, count: 0, error: e.message } }
+
+  const seen = new Set()
+  for (const entry of entries) {
+    // Recurse one level into system subfolders
+    if (entry.isDirectory()) {
+      const subPath = path.join(retroarchGamesPath, entry.name)
+      let subEntries
+      try { subEntries = fs.readdirSync(subPath, { withFileTypes: true }) }
+      catch (e) { continue }
+      for (const sub of subEntries) {
+        if (!sub.isFile()) continue
+        const ext = path.extname(sub.name).toLowerCase()
+        if (!EXT_MAP[ext]) continue
+        const fullPath = path.join(subPath, sub.name)
+        if (seen.has(fullPath)) continue
+        seen.add(fullPath)
+        const title = sub.name.replace(/\.[^.]+$/, '').replace(/_/g, ' ').trim()
+        games.push({
+          id: 'ra_' + title.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '') + '_' + games.length,
+          title,
+          path: fullPath,
+          emulator: 'retroarch',
+          genre: 'Retro',
+          system: EXT_MAP[ext] || 'RetroArch',
+          status: 'Playable',
+          icon: 'R',
+          artwork: null,
+        })
+      }
+    } else if (entry.isFile()) {
+      const ext = path.extname(entry.name).toLowerCase()
+      if (!EXT_MAP[ext]) continue
+      const fullPath = path.join(retroarchGamesPath, entry.name)
+      if (seen.has(fullPath)) continue
+      seen.add(fullPath)
+      const title = entry.name.replace(/\.[^.]+$/, '').replace(/_/g, ' ').trim()
+      games.push({
+        id: 'ra_' + title.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '') + '_' + games.length,
+        title,
+        path: fullPath,
+        emulator: 'retroarch',
+        genre: 'Retro',
+        system: EXT_MAP[ext] || 'RetroArch',
+        status: 'Playable',
+        icon: 'R',
+        artwork: null,
+      })
+    }
+  }
+  games.sort((a, b) => a.title.localeCompare(b.title))
+  return { games, count: games.length, path: retroarchGamesPath }
+}
+
+module.exports = { ...module.exports, scanRetroArchGames }
+
+
+// -- Project64 / N64 Scanner ------------------------------------------------
+async function scanN64Games(n64GamesPath) {
+  const games = []
+  if (!fs.existsSync(n64GamesPath)) {
+    return { games, count: 0, path: n64GamesPath, error: 'Folder not found' }
+  }
+  const EXTS = ['.n64', '.z64', '.v64', '.ndd']
+  let entries
+  try { entries = fs.readdirSync(n64GamesPath, { withFileTypes: true }) }
+  catch (e) { return { games, count: 0, error: e.message } }
+
+  for (const entry of entries) {
+    if (!entry.isFile()) continue
+    const ext = path.extname(entry.name).toLowerCase()
+    if (!EXTS.includes(ext)) continue
+    const title = entry.name.replace(/\.[^.]+$/, '').replace(/_/g, ' ').trim()
+    games.push({
+      id: 'n64_' + title.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, ''),
+      title,
+      path: path.join(n64GamesPath, entry.name),
+      emulator: 'project64',
+      genre: 'N64',
+      system: 'Nintendo 64',
+      status: 'Playable',
+      icon: '64',
+      artwork: null,
+    })
+  }
+  games.sort((a, b) => a.title.localeCompare(b.title))
+  return { games, count: games.length, path: n64GamesPath }
+}
+
+module.exports = { ...module.exports, scanN64Games }
+
+
+// -- DuckStation / PS1 Scanner -----------------------------------------------
+async function scanPs1Games(ps1GamesPath) {
+  const games = []
+  if (!fs.existsSync(ps1GamesPath)) {
+    return { games, count: 0, path: ps1GamesPath, error: 'Folder not found' }
+  }
+  const EXTS = ['.bin', '.iso', '.chd', '.cue', '.img', '.pbp', '.ecm', '.mdf']
+  let entries
+  try { entries = fs.readdirSync(ps1GamesPath, { withFileTypes: true }) }
+  catch (e) { return { games, count: 0, error: e.message } }
+
+  const seen = new Set()
+  for (const entry of entries) {
+    if (!entry.isFile()) continue
+    const ext = path.extname(entry.name).toLowerCase()
+    if (!EXTS.includes(ext)) continue
+    // Skip .bin files that have a matching .cue (avoid duplicates)
+    if (ext === '.bin') {
+      const cue = path.join(ps1GamesPath, entry.name.replace(/\.bin$/i, '.cue'))
+      if (fs.existsSync(cue)) continue
+    }
+    const baseName = entry.name.replace(/\.[^.]+$/, '')
+    if (seen.has(baseName)) continue
+    seen.add(baseName)
+    const title = baseName.replace(/_/g, ' ').trim()
+    games.push({
+      id: 'ps1_' + baseName.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, ''),
+      title,
+      path: path.join(ps1GamesPath, entry.name),
+      emulator: 'duckstation',
+      genre: 'PS1',
+      system: 'PlayStation',
+      status: 'Playable',
+      icon: 'DS',
+      artwork: null,
+    })
+  }
+  games.sort((a, b) => a.title.localeCompare(b.title))
+  return { games, count: games.length, path: ps1GamesPath }
+}
+
+module.exports = { ...module.exports, scanPs1Games }
+
+
+// -- Flycast / Dreamcast Scanner ---------------------------------------------
+async function scanDreamcastGames(dreamcastGamesPath) {
+  const games = []
+  if (!fs.existsSync(dreamcastGamesPath)) {
+    return { games, count: 0, path: dreamcastGamesPath, error: 'Folder not found' }
+  }
+  const EXTS = ['.gdi', '.cdi', '.chd', '.lst', '.m3u']
+  let entries
+  try { entries = fs.readdirSync(dreamcastGamesPath, { withFileTypes: true }) }
+  catch (e) { return { games, count: 0, error: e.message } }
+
+  for (const entry of entries) {
+    // GDI games often live in their own subfolder
+    if (entry.isDirectory()) {
+      const subPath = path.join(dreamcastGamesPath, entry.name)
+      let subEntries
+      try { subEntries = fs.readdirSync(subPath, { withFileTypes: true }) }
+      catch (e) { continue }
+      const gdi = subEntries.find(f => f.isFile() && path.extname(f.name).toLowerCase() === '.gdi')
+      if (gdi) {
+        games.push({
+          id: 'dc_' + entry.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, ''),
+          title: entry.name.replace(/_/g, ' ').trim(),
+          path: path.join(subPath, gdi.name),
+          emulator: 'flycast',
+          genre: 'Dreamcast',
+          system: 'Dreamcast',
+          status: 'Playable',
+          icon: 'DC',
+          artwork: null,
+        })
+      }
+      continue
+    }
+    if (!entry.isFile()) continue
+    const ext = path.extname(entry.name).toLowerCase()
+    if (!EXTS.includes(ext)) continue
+    const title = entry.name.replace(/\.[^.]+$/, '').replace(/_/g, ' ').trim()
+    games.push({
+      id: 'dc_' + title.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, ''),
+      title,
+      path: path.join(dreamcastGamesPath, entry.name),
+      emulator: 'flycast',
+      genre: 'Dreamcast',
+      system: 'Dreamcast',
+      status: 'Playable',
+      icon: 'DC',
+      artwork: null,
+    })
+  }
+  games.sort((a, b) => a.title.localeCompare(b.title))
+  return { games, count: games.length, path: dreamcastGamesPath }
+}
+
+module.exports = { ...module.exports, scanDreamcastGames }
