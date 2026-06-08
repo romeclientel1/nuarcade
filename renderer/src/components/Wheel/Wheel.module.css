@@ -808,3 +808,11 @@
   text-align: left;
   width: 70px;
 }
+.achieveBtn {
+  padding: 0 8px; height: 26px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: transparent; color: rgba(255,255,255,0.35);
+  font-size: 14px; cursor: pointer; border-radius: 4px;
+  transition: all 0.15s;
+}
+.achieveBtn:hover { border-color: rgba(250,204,21,0.4); color: #facc15; }

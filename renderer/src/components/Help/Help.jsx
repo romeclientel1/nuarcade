@@ -11,6 +11,7 @@ const SHORTCUTS = [
   { key: 'R', desc: 'Pick a random game' },
   { key: 'N', desc: 'Open collections manager' },
   { key: 'T', desc: 'Open stats dashboard' },
+  { key: 'A', desc: 'Open achievements' },
   { key: 'C', desc: 'Cabinet mode (hide UI chrome)' },
   { key: 'S', desc: 'Screenshot mode (hide all UI)' },
   { key: '?', desc: 'Show this help screen' },

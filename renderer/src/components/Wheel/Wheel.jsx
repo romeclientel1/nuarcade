@@ -8,6 +8,7 @@ import GameDetail from "../GameDetail/GameDetail"
 import Help from "../Help/Help"
 import Collections, { useCollections } from "../Collections/Collections"
 import Stats from "../Stats/Stats"
+import Achievements from "../Achievements/Achievements"
 import VirtualKeyboard from "../VirtualKeyboard/VirtualKeyboard"
 import SortMenu from "./SortMenu"
 import { useGamepad } from "./useGamepad"
@@ -101,6 +102,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
   const [showSort, setShowSort] = useState(false)
   const [showCollections, setShowCollections] = useState(false)
   const [showStats, setShowStats] = useState(false)
+  const [showAchievements, setShowAchievements] = useState(false)
   const [showVirtualKeyboard, setShowVirtualKeyboard] = useState(false)
   const [sortBy, setSortBy] = useState("default")
   const [search,        setSearch       ] = useState("")
@@ -203,8 +205,9 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
   const resetIdleTimer = useCallback(() => {
     setAttractMode(false)
     clearTimeout(idleTimer.current)
-    idleTimer.current = setTimeout(() => setAttractMode(true), ATTRACT_TIMEOUT)
-  }, [])
+    const timeoutMs = ((config?.attractTimeout || 120)) * 1000
+    idleTimer.current = setTimeout(() => setAttractMode(true), timeoutMs)
+  }, [config?.attractTimeout])
 
   useEffect(() => {
     resetIdleTimer()
@@ -239,6 +242,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
       if (e.key === "?") setShowHelp(h => !h)
       if (e.key === "n" || e.key === "N") setShowCollections(c => !c)
       if (e.key === "t" || e.key === "T") setShowStats(s => !s)
+      if (e.key === "a" || e.key === "A") setShowAchievements(s => !s)
       if (e.key === "c" || e.key === "C") setCabinetMode(m => !m)
       if (e.key === "s" || e.key === "S") setScreenshotMode(m => !m)
       if (e.key === "r" || e.key === "R") {
@@ -464,6 +468,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
               }} title="Random game (R)">?</button>
               <button className={styles.colBtn} onClick={() => setShowCollections(true)} title="Collections (N)">[]</button>
               <button className={styles.statsBtn} onClick={() => setShowStats(true)} title="My Stats (T)">#</button>
+              <button className={styles.achieveBtn} onClick={() => setShowAchievements(true)} title="Achievements (A)">*</button>
               <button className={styles.mediaBtn} onClick={() => setShowMediaManager(true)}>Media</button>
               <button className={styles.settingsBtn} onClick={() => setShowSettings(true)}>Settings</button>
               <button className={styles.helpBtn} onClick={() => setShowHelp(true)}>?</button>
@@ -503,7 +508,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
       </div>
 
       {/* Recently played carousel -- shown when library has games and recent list is non-empty */}
-      {!libraryEmpty && recentlyPlayed.length > 0 && activeCategory !== "Recent" && !debouncedSearch && (
+      {!libraryEmpty && !cabinetMode && !screenshotMode && recentlyPlayed.length > 0 && activeCategory !== "Recent" && !debouncedSearch && (
         <div className={styles.recentCarousel}>
           <div className={styles.recentLabel}>Continue Playing</div>
           <div className={styles.recentTrack}>
@@ -675,10 +680,10 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
         />
       )}
       {showStats && (
-        <Stats
-          games={games}
-          onClose={() => setShowStats(false)}
-        />
+        <Stats games={games} onClose={() => setShowStats(false)} />
+      )}
+      {showAchievements && (
+        <Achievements games={games} onClose={() => setShowAchievements(false)} />
       )}
       {showVirtualKeyboard && showSearch && (
         <VirtualKeyboard
@@ -717,6 +722,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
           <span className={styles.hint}><kbd>R</kbd> Random</span>
           <span className={styles.hint}><kbd>N</kbd> Collections</span>
           <span className={styles.hint}><kbd>T</kbd> Stats</span>
+          <span className={styles.hint}><kbd>A</kbd> Achievements</span>
           <span className={styles.hint}><kbd>Search</kbd> Keyboard</span>
           <span className={styles.hint}><kbd>?</kbd> Help</span>
         </div>

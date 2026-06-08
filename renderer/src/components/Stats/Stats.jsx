@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react"
+import { useMemo, useRef, useState, useEffect } from "react"
 import { useOverlayGamepad } from "../../hooks/useOverlayGamepad"
 import { usePlaytime } from "../../hooks/usePlaytime"
 import styles from "./Stats.module.css"
@@ -17,6 +17,14 @@ const SYSTEM_COLORS = {
 export default function Stats({ games, onClose }) {
   const { getAllPlaytime, getAllLaunches, formatTime } = usePlaytime()
   const bodyRef = useRef(null)
+  const [tick, setTick] = useState(0)
+
+  // Refresh stats every 5s in case playtime updates while panel is open
+  useEffect(() => {
+    const interval = setInterval(() => setTick(t => t + 1), 5000)
+    return () => clearInterval(interval)
+  }, [])
+
   useOverlayGamepad({
     onClose,
     onUp:   () => bodyRef.current?.scrollBy({ top: -80, behavior: 'smooth' }),
@@ -62,7 +70,7 @@ export default function Stats({ games, onClose }) {
     const totalLaunches = enriched.reduce((s, g) => s + g.lcCount, 0)
 
     return { playtime: pt, launches: lc, systemStats, topPlayed, topLaunched, topRated, totalTime, totalLaunches }
-  }, [games])
+  }, [games, tick])
 
   const totalGames   = games.length
   const playedGames  = games.filter(g => (getAllPlaytime()[g.id||g.profile]?.total || 0) > 0).length

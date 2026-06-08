@@ -1,0 +1,93 @@
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.9);
+  z-index: 200; display: flex;
+  align-items: center; justify-content: center;
+  backdrop-filter: blur(6px);
+  animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.panel {
+  background: #060612;
+  border: 1px solid rgba(250,204,21,0.2);
+  border-radius: 12px;
+  width: 760px; max-height: 85vh;
+  display: flex; flex-direction: column;
+  box-shadow: 0 0 60px rgba(250,204,21,0.05);
+  animation: slideUp 0.2s ease; overflow: hidden;
+}
+@keyframes slideUp {
+  from { transform: translateY(12px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+.header {
+  display: flex; align-items: center; gap: 16px;
+  padding: 18px 24px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  flex-shrink: 0;
+}
+.title {
+  font-family: Orbitron, sans-serif;
+  font-size: 14px; font-weight: 700;
+  color: #facc15; letter-spacing: 0.12em;
+  flex-shrink: 0;
+}
+.progress { flex: 1; display: flex; align-items: center; gap: 10px; }
+.progressBar {
+  flex: 1; height: 4px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 2px; overflow: hidden;
+}
+.progressFill {
+  height: 100%; background: #facc15;
+  border-radius: 2px; transition: width 0.5s ease;
+}
+.progressLabel {
+  font-size: 11px; color: rgba(255,255,255,0.3);
+  white-space: nowrap; font-family: monospace;
+}
+.closeBtn {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.4);
+  width: 28px; height: 28px;
+  border-radius: 4px; cursor: pointer; font-size: 11px;
+}
+.closeBtn:hover { color: #fff; border-color: rgba(255,255,255,0.3); }
+.body { overflow-y: auto; flex: 1; padding: 16px 24px 20px; display: flex; flex-direction: column; gap: 20px; }
+.section { display: flex; flex-direction: column; gap: 10px; }
+.sectionTitle {
+  font-size: 10px; font-weight: 700;
+  color: rgba(250,204,21,0.5);
+  text-transform: uppercase; letter-spacing: 0.12em;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(250,204,21,0.1);
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px;
+}
+.card {
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.cardUnlocked {
+  background: rgba(250,204,21,0.06);
+  border-color: rgba(250,204,21,0.25);
+}
+.cardLocked {
+  background: rgba(255,255,255,0.02);
+  border-color: rgba(255,255,255,0.06);
+}
+.cardIcon { font-size: 20px; line-height: 1; }
+.cardTitle {
+  font-size: 11px; font-weight: 700;
+  color: rgba(255,255,255,0.85);
+  line-height: 1.2;
+}
+.cardDesc { font-size: 9px; color: rgba(255,255,255,0.3); line-height: 1.4; }
+.cardUnlocked .cardTitle { color: #facc15; }
+.empty { text-align: center; color: rgba(255,255,255,0.2); font-size: 13px; padding: 40px 0; }
