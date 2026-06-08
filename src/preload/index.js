@@ -22,6 +22,8 @@ contextBridge.exposeInMainWorld('nuarcade', {
   launchN64Game:       (gamePath)     => ipcRenderer.invoke('launch-n64-game', gamePath),
   launchPs1Game:       (gamePath)     => ipcRenderer.invoke('launch-ps1-game', gamePath),
   launchFlycastGame:   (gamePath)     => ipcRenderer.invoke('launch-flycast-game', gamePath),
+  launchModel2Game:    (gamePath)     => ipcRenderer.invoke('launch-model2-game', gamePath),
+  launchModel3Game:    (gamePath)     => ipcRenderer.invoke('launch-model3-game', gamePath),
   launchPspGame:       (gamePath)     => ipcRenderer.invoke('launch-psp-game', gamePath),
   launchWiiUGame:      (gamePath)     => ipcRenderer.invoke('launch-wiiu-game', gamePath),
 
@@ -38,6 +40,8 @@ contextBridge.exposeInMainWorld('nuarcade', {
   scanN64Games:         (n64GamesPath)        => ipcRenderer.invoke('scan-n64-games', n64GamesPath),
   scanPs1Games:         (ps1GamesPath)        => ipcRenderer.invoke('scan-ps1-games', ps1GamesPath),
   scanDreamcastGames:   (dreamcastGamesPath)  => ipcRenderer.invoke('scan-dreamcast-games', dreamcastGamesPath),
+  scanModel2Games:      (model2GamesPath)  => ipcRenderer.invoke('scan-model2-games', model2GamesPath),
+  scanModel3Games:      (model3GamesPath)  => ipcRenderer.invoke('scan-model3-games', model3GamesPath),
   scanPspGames:         (pspGamesPath)         => ipcRenderer.invoke('scan-psp-games', pspGamesPath),
   scanWiiUGames:        (wiiUGamesPath)        => ipcRenderer.invoke('scan-wiiu-games', wiiUGamesPath),
 

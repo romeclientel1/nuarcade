@@ -61,6 +61,14 @@ const SAMPLE_GAMES = [
   { id: 'dc_SonicAdventure',    title: 'Sonic Adventure',            genre: 'Dreamcast', system: 'Dreamcast',      status: 'Perfect', profile: 'SonicAdventure.gdi',      icon: 'DC', emulator: 'flycast'    },
   { id: 'dc_MarvelVsCapcom2',   title: 'Marvel vs. Capcom 2',        genre: 'Fighting',  system: 'Dreamcast',      status: 'Perfect', profile: 'MarvelVsCapcom2.gdi',     icon: 'DC', emulator: 'flycast'    },
   { id: 'dc_CrazyTaxi',         title: 'Crazy Taxi',                 genre: 'Racing',    system: 'Dreamcast',      status: 'Perfect', profile: 'CrazyTaxi.gdi',           icon: 'DC', emulator: 'flycast'    },
+  // Sega Model 2
+  { id: 'model2_daytona',  title: 'Daytona USA',           genre: 'Model2',  system: 'Sega Model 2', status: 'Perfect', profile: 'daytona.zip',  icon: 'M2', emulator: 'model2' },
+  { id: 'model2_vf2',      title: 'Virtua Fighter 2',      genre: 'Fighting',system: 'Sega Model 2', status: 'Perfect', profile: 'vf2.zip',      icon: 'M2', emulator: 'model2' },
+  { id: 'model2_srallyc',  title: 'Sega Rally Championship',genre: 'Racing', system: 'Sega Model 2', status: 'Perfect', profile: 'srallyc.zip',  icon: 'M2', emulator: 'model2' },
+  // Sega Model 3
+  { id: 'model3_scud',     title: 'Scud Race / Super GT',  genre: 'Model3',  system: 'Sega Model 3', status: 'Perfect', profile: 'scud.zip',     icon: 'M3', emulator: 'model3' },
+  { id: 'model3_vf3',      title: 'Virtua Fighter 3',      genre: 'Fighting',system: 'Sega Model 3', status: 'Perfect', profile: 'vf3.zip',      icon: 'M3', emulator: 'model3' },
+  { id: 'model3_starwars', title: 'Star Wars Trilogy Arcade',genre: 'Shooter',system: 'Sega Model 3', status: 'Perfect', profile: 'starwars.zip', icon: 'M3', emulator: 'model3' },
   // PPSSPP / PSP
   { id: 'psp_GodOfWarChainsOfOlympus', title: 'God of War: Chains of Olympus', genre: 'PSP', system: 'PlayStation Portable', status: 'Perfect', profile: 'GodOfWarChainsOfOlympus.iso', icon: 'PSP', emulator: 'ppsspp' },
   { id: 'psp_MonsterHunterFreedom',    title: 'Monster Hunter Freedom Unite',   genre: 'PSP', system: 'PlayStation Portable', status: 'Perfect', profile: 'MonsterHunterFreedomUnite.iso', icon: 'PSP', emulator: 'ppsspp' },
@@ -203,7 +211,31 @@ export function useGameLibrary() {
             } catch (e) { console.warn('Pinball scan error:', e) }
           }
 
-          // PPSSPP / PSP
+          // Model 2
+          if (cfg.mode !== 'pinball' && cfg.model2GamesPath) {
+            try {
+              const m2Result = await window.nuarcade.scanModel2Games(cfg.model2GamesPath)
+              if (m2Result.games?.length) allGames = [...allGames, ...m2Result.games]
+            } catch (e) { console.warn('Model2 scan error:', e) }
+          }
+
+          // Model 3 / Supermodel
+          if (cfg.mode !== 'pinball' && cfg.model3GamesPath) {
+            try {
+              const m3Result = await window.nuarcade.scanModel3Games(cfg.model3GamesPath)
+              if (m3Result.games?.length) allGames = [...allGames, ...m3Result.games]
+            } catch (e) { console.warn('Model3 scan error:', e) }
+          }
+
+          // Sega Model 2
+  { id: 'model2_daytona',  title: 'Daytona USA',           genre: 'Model2',  system: 'Sega Model 2', status: 'Perfect', profile: 'daytona.zip',  icon: 'M2', emulator: 'model2' },
+  { id: 'model2_vf2',      title: 'Virtua Fighter 2',      genre: 'Fighting',system: 'Sega Model 2', status: 'Perfect', profile: 'vf2.zip',      icon: 'M2', emulator: 'model2' },
+  { id: 'model2_srallyc',  title: 'Sega Rally Championship',genre: 'Racing', system: 'Sega Model 2', status: 'Perfect', profile: 'srallyc.zip',  icon: 'M2', emulator: 'model2' },
+  // Sega Model 3
+  { id: 'model3_scud',     title: 'Scud Race / Super GT',  genre: 'Model3',  system: 'Sega Model 3', status: 'Perfect', profile: 'scud.zip',     icon: 'M3', emulator: 'model3' },
+  { id: 'model3_vf3',      title: 'Virtua Fighter 3',      genre: 'Fighting',system: 'Sega Model 3', status: 'Perfect', profile: 'vf3.zip',      icon: 'M3', emulator: 'model3' },
+  { id: 'model3_starwars', title: 'Star Wars Trilogy Arcade',genre: 'Shooter',system: 'Sega Model 3', status: 'Perfect', profile: 'starwars.zip', icon: 'M3', emulator: 'model3' },
+  // PPSSPP / PSP
           if (cfg.mode !== 'pinball' && cfg.pspGamesPath) {
             try {
               const pspResult = await window.nuarcade.scanPspGames(cfg.pspGamesPath)

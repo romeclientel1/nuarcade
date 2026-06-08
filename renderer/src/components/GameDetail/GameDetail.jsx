@@ -92,8 +92,10 @@ export default function GameDetail({ game, onClose, onLaunch, launching, artwork
   const [controllerOverride, setControllerOverride] = useState("auto")
   const [savingController, setSavingController] = useState(false)
 
-  const { getNote, saveNote } = useGameNotes()
+  const { getNote, saveNote, getRating, saveRating } = useGameNotes()
   const [note, setNote] = useState("")
+  const [rating, setRating] = useState(0)
+  const [hoverRating, setHoverRating] = useState(0)
   const noteTimer = useRef(null)
   const colors = GENRE_COLORS[game.genre] || GENRE_COLORS.Other
   const statusColor = STATUS_COLORS[game.status] || "#888888"
@@ -103,7 +105,14 @@ export default function GameDetail({ game, onClose, onLaunch, launching, artwork
   useEffect(() => {
     loadControllerOverride()
     setNote(getNote(game))
+    setRating(getRating(game))
   }, [game.id])
+
+  const handleRating = (stars) => {
+    const newRating = stars === rating ? 0 : stars // tap same star to clear
+    setRating(newRating)
+    saveRating(game, newRating)
+  }
 
   const loadControllerOverride = async () => {
     if (window.nuarcade && game.id) {
@@ -269,6 +278,26 @@ export default function GameDetail({ game, onClose, onLaunch, launching, artwork
                     <span className={styles.controlLabel}>{c.label}</span>
                   </div>
                 ))}
+              </div>
+            </div>
+            <div className={styles.exeSection}>
+              <div className={styles.exeLabel}>Your rating</div>
+              <div className={styles.starRow}>
+                {[1, 2, 3, 4, 5].map(star => (
+                  <button
+                    key={star}
+                    className={styles.starBtn}
+                    onClick={() => handleRating(star)}
+                    onMouseEnter={() => setHoverRating(star)}
+                    onMouseLeave={() => setHoverRating(0)}
+                    style={{ color: star <= (hoverRating || rating) ? "#facc15" : "rgba(255,255,255,0.15)" }}
+                  >
+                    *
+                  </button>
+                ))}
+                {rating > 0 && (
+                  <span className={styles.ratingLabel}>{["", "Poor", "Fair", "Good", "Great", "Perfect"][rating]}</span>
+                )}
               </div>
             </div>
             <div className={styles.exeSection}>

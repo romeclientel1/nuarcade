@@ -19,6 +19,8 @@ const GENRE_COLORS = {
   PSP:       { bg: "#000a15", accent: "#0057a8" },
   Dreamcast: { bg: "#0d0600", accent: "#ff6600" },
   WiiU:      { bg: "#000510", accent: "#009ac7" },
+  Model2:    { bg: "#00060d", accent: "#0055aa" },
+  Model3:    { bg: "#000d06", accent: "#0088aa" },
   PS3:       { bg: "#000d1a", accent: "#0070d1" },
   Xbox360:   { bg: "#001a00", accent: "#107c10" },
   GCWii:     { bg: "#0d001a", accent: "#6b21a8" },

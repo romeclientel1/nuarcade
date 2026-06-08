@@ -71,6 +71,8 @@ const handleRescan = async () => {
     if (cfg.n64GamesPath)       { const r = await window.nuarcade.scanN64Games(cfg.n64GamesPath); total += r.games?.length || 0 }
     if (cfg.ps1GamesPath)       { const r = await window.nuarcade.scanPs1Games(cfg.ps1GamesPath); total += r.games?.length || 0 }
     if (cfg.dreamcastGamesPath) { const r = await window.nuarcade.scanDreamcastGames(cfg.dreamcastGamesPath); total += r.games?.length || 0 }
+    if (cfg.model2GamesPath)    { const r = await window.nuarcade.scanModel2Games(cfg.model2GamesPath); total += r.games?.length || 0 }
+    if (cfg.model3GamesPath)    { const r = await window.nuarcade.scanModel3Games(cfg.model3GamesPath); total += r.games?.length || 0 }
     if (cfg.pspGamesPath)       { const r = await window.nuarcade.scanPspGames(cfg.pspGamesPath); total += r.games?.length || 0 }
     if (cfg.wiiUGamesPath)      { const r = await window.nuarcade.scanWiiUGames(cfg.wiiUGamesPath); total += r.games?.length || 0 }
     if (cfg.tablesPath)         { const r = await window.nuarcade.scanPinball(cfg.tablesPath); total += r.games?.length || 0 }
@@ -299,6 +301,8 @@ const handleSave = async () => {
                 { id: 'project64',   label: 'Project64 (N64)' },
                 { id: 'duckstation', label: 'DuckStation (PS1)' },
                 { id: 'flycast',     label: 'Flycast (DC)' },
+                { id: 'model2',      label: 'Model 2 (Sega)' },
+                { id: 'model3',      label: 'Model 3 (Supermodel)' },
                 { id: 'ppsspp',      label: 'PPSSPP (PSP)' },
                 { id: 'pcsx2',       label: 'PCSX2 (PS2)' },
                 { id: 'rpcs3',       label: 'RPCS3 (PS3)' },
@@ -354,7 +358,24 @@ const handleSave = async () => {
             <div className={styles.emuNote}>
               Free account at screenscraper.fr -- covers MAME, retro, and all classic systems.
             </div>
+            <div className={styles.inputRow}>
+              <label className={styles.inputLabel}>Bulk fetch</label>
+              <button className={styles.exportBtn} onClick={() => setShowArtworkMgr(true)}>
+                Open Artwork Manager
+              </button>
+            </div>
           </div>
+
+          {showArtworkMgr && (
+            <ArtworkManager
+              games={[]}
+              apiKey={config?.sgdbApiKey}
+              ssUser={config?.screenscraper?.user}
+              ssPass={config?.screenscraper?.pass}
+              onClose={() => setShowArtworkMgr(false)}
+              onArtworkUpdate={() => {}}
+            />
+          )}
 
           <div className={styles.section}>
             <div className={styles.sectionTitle}>Library</div>
@@ -371,7 +392,7 @@ const handleSave = async () => {
             <div className={styles.aboutGrid}>
               <div className={styles.aboutRow}>
                 <span className={styles.aboutLabel}>Version</span>
-                <span className={styles.aboutVal}>1.0.0 {newVersion ? "(update available)" : "(latest)"}</span>
+                <span className={styles.aboutVal}>v2.0.0 {newVersion ? "(v" + newVersion + " available)" : "(latest)"}</span>
               </div>
               <div className={styles.aboutRow}>
                 <span className={styles.aboutLabel}>Platform</span>

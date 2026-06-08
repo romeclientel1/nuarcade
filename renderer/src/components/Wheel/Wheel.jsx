@@ -15,7 +15,7 @@ import { useSteamGridDB } from "../../hooks/useSteamGridDB"
 
 import styles from "./Wheel.module.css"
 
-const CATEGORIES = ["All", "Favorites", "Recent", "Arcade", "Retro", "Racing", "Fighting", "Shooter", "Rhythm", "Flying", "Sports", "N64", "PS1", "PSP", "Dreamcast", "PS3", "Xbox360", "GCWii", "WiiU", "PS2", "Switch", "Pinball"]
+const CATEGORIES = ["All", "Favorites", "Recent", "Arcade", "Retro", "Racing", "Fighting", "Shooter", "Rhythm", "Flying", "Sports", "N64", "PS1", "PSP", "Dreamcast", "Model2", "Model3", "PS3", "Xbox360", "GCWii", "WiiU", "PS2", "Switch", "Pinball"]
 const ATTRACT_TIMEOUT = 120000
 
 function sortGames(games, sortBy) {
@@ -31,7 +31,16 @@ function sortGames(games, sortBy) {
         })
       } catch { return sorted }
     }
-    case "name":   return sorted.sort((a, b) => a.title.localeCompare(b.title))
+    case "top_rated": {
+      try {
+        const ratings = JSON.parse(localStorage.getItem("nuarcade_ratings") || "{}")
+        return sorted.sort((a, b) => {
+          const ar = ratings[a.id || a.profile] || 0
+          const br = ratings[b.id || b.profile] || 0
+          return br - ar
+        })
+      } catch { return sorted }
+    }
     case "system": return sorted.sort((a, b) => (a.system || "").localeCompare(b.system || ""))
     case "status": {
       const order = { Perfect: 0, Great: 1, Playable: 2, Unverified: 3 }
@@ -189,6 +198,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
       else if (emu === 'project64') await window.nuarcade.launchN64Game(gamePath)
       else if (emu === 'duckstation') await window.nuarcade.launchPs1Game(gamePath)
       else if (emu === 'flycast') await window.nuarcade.launchFlycastGame(gamePath)
+      else if (emu === 'model2') await window.nuarcade.launchModel2Game(gamePath)
+      else if (emu === 'model3') await window.nuarcade.launchModel3Game(gamePath)
       else if (emu === 'ppsspp') await window.nuarcade.launchPspGame(gamePath)
       else if (emu === 'cemu')   await window.nuarcade.launchWiiUGame(gamePath)
       else await window.nuarcade.launchGame(current.profilePath || current.profile)

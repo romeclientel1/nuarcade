@@ -286,6 +286,10 @@ ipcMain.handle('create-folder-structure', async () => {
     'F:\\PS1Games',
     'F:\\Flycast',
     'F:\\DreamcastGames',
+    'F:\\Model2',
+    'F:\\Model2Games',
+    'F:\\Supermodel',
+    'F:\\Model3Games',
     'F:\\PPSSPP',
     'F:\\PSPGames',
     'F:\\Cemu',
@@ -653,6 +657,35 @@ ipcMain.handle('check-bios', async () => {
   return results
 })
 
+
+// -- Model 2 Emulator --------------------------------------------------------
+ipcMain.handle('launch-model2-game', async (event, gamePath) => {
+  const cfg = config.load()
+  const m2Exe = path.join(cfg.model2Path || 'F:\\Model2\\', 'emulator_multicpu.exe')
+  const romName = path.basename(gamePath, path.extname(gamePath))
+  const { spawn } = require('child_process')
+  spawn(m2Exe, [romName], { cwd: path.dirname(m2Exe), detached: true, stdio: 'ignore' }).unref()
+  return { launched: true }
+})
+
+ipcMain.handle('scan-model2-games', async (event, model2GamesPath) => {
+  const { scanModel2Games } = require('./scanner')
+  return scanModel2Games(model2GamesPath)
+})
+
+// -- Model 3 / Supermodel ----------------------------------------------------
+ipcMain.handle('launch-model3-game', async (event, gamePath) => {
+  const cfg = config.load()
+  const m3Exe = path.join(cfg.model3Path || 'F:\\Supermodel\\', 'Supermodel.exe')
+  const { spawn } = require('child_process')
+  spawn(m3Exe, [gamePath, '-fullscreen'], { detached: true, stdio: 'ignore' }).unref()
+  return { launched: true }
+})
+
+ipcMain.handle('scan-model3-games', async (event, model3GamesPath) => {
+  const { scanModel3Games } = require('./scanner')
+  return scanModel3Games(model3GamesPath)
+})
 
 // -- PPSSPP / PSP ------------------------------------------------------------
 ipcMain.handle('launch-psp-game', async (event, gamePath) => {

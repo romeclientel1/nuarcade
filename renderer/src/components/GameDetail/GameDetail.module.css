@@ -290,7 +290,7 @@
 .noteArea:focus { border-color: rgba(0,200,255,0.4); }
 .noteArea::placeholder { color: rgba(255,255,255,0.2); }
 
-/* ── Hero banner ────────────────────────────────────────── */
+/* -- Hero banner ------------------------------------------ */
 .heroBanner {
   position: relative;
   width: 100%;
@@ -322,3 +322,7 @@
   object-fit: contain;
   filter: drop-shadow(0 2px 8px rgba(0,0,0,0.9));
 }
+.starRow { display: flex; align-items: center; gap: 4px; }
+.starBtn { background: none; border: none; font-size: 22px; cursor: pointer; padding: 2px; transition: color 0.1s, transform 0.1s; line-height: 1; }
+.starBtn:hover { transform: scale(1.2); }
+.ratingLabel { font-size: 10px; color: rgba(255,255,255,0.35); margin-left: 6px; letter-spacing: 0.05em; text-transform: uppercase; }

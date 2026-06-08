@@ -1,50 +1,105 @@
 import { useState, useCallback } from "react"
 import { useSteamGridDB } from "../../hooks/useSteamGridDB"
+import { fetchScreenScraperArtwork } from "../../hooks/useScreenScraper"
 import styles from "./ArtworkManager.module.css"
 
-export default function ArtworkManager({ games, onClose, apiKey, onArtworkUpdate }) {
-  const [status, setStatus] = useState("idle")
+export default function ArtworkManager({ games, onClose, apiKey, ssUser, ssPass, onArtworkUpdate }) {
+  const [status,   setStatus  ] = useState("idle")
   const [progress, setProgress] = useState(0)
-  const [log, setLog] = useState([])
-  const [found, setFound] = useState(0)
+  const [log,      setLog     ] = useState([])
+  const [found,    setFound   ] = useState(0)
+  const [skipped,  setSkipped ] = useState(0)
+  const [source,   setSource  ] = useState({ sgdb: 0, ss: 0 })
   const { fetchArtworkForGame } = useSteamGridDB(apiKey)
 
-  const addLog = (msg) => setLog(l => [...l.slice(-40), msg])
+  const addLog = (msg, type = "info") => setLog(l => [...l.slice(-60), { msg, type }])
 
   const runDownload = useCallback(async () => {
     setStatus("running")
     setProgress(0)
     setLog([])
     setFound(0)
+    setSkipped(0)
+    setSource({ sgdb: 0, ss: 0 })
 
-    const artwork = {}
+    // Load existing artwork so we don't re-fetch what we already have
+    let artwork = {}
+    try { artwork = JSON.parse(localStorage.getItem("nuarcade_artwork") || "{}") } catch {}
+
+    let foundCount = 0
+    let skippedCount = 0
+    let sgdbCount = 0
+    let ssCount = 0
+
     for (let i = 0; i < games.length; i++) {
       const game = games[i]
+      const key = game.id || game.profile
       setProgress(Math.round((i / games.length) * 100))
-      addLog("Searching: " + game.title)
-      try {
-        const result = await fetchArtworkForGame(game.title)
-        if (result && (result.hero || result.capsule || result.logo)) {
-          artwork[game.id || game.profile] = result
-          setFound(f => f + 1)
-          addLog("Found art: " + game.title)
-        } else {
-          addLog("No art: " + game.title)
-        }
-      } catch (e) {
-        addLog("Error: " + game.title)
+
+      // Skip if we already have capsule art for this game
+      if (artwork[key]?.capsule) {
+        skippedCount++
+        setSkipped(skippedCount)
+        continue
       }
-      await new Promise(r => setTimeout(r, 300))
+
+      addLog("Searching: " + game.title)
+
+      let result = null
+
+      // Try SteamGridDB first (best for modern games)
+      if (apiKey) {
+        try {
+          result = await fetchArtworkForGame(game.title)
+          if (result?.capsule || result?.hero) {
+            result.source = "sgdb"
+            sgdbCount++
+            setSource({ sgdb: sgdbCount, ss: ssCount })
+          } else {
+            result = null
+          }
+        } catch (e) { result = null }
+        await new Promise(r => setTimeout(r, 200))
+      }
+
+      // Fall back to ScreenScraper (best for retro/MAME)
+      if (!result && ssUser && ssPass) {
+        try {
+          result = await fetchScreenScraperArtwork(game, ssUser, ssPass)
+          if (result?.capsule || result?.hero) {
+            result.source = "screenscraper"
+            ssCount++
+            setSource({ sgdb: sgdbCount, ss: ssCount })
+          } else {
+            result = null
+          }
+        } catch (e) { result = null }
+        await new Promise(r => setTimeout(r, 400))
+      }
+
+      if (result) {
+        artwork[key] = result
+        foundCount++
+        setFound(foundCount)
+        addLog("Found (" + (result.source === "sgdb" ? "SGDB" : "ScreenScraper") + "): " + game.title, "ok")
+      } else {
+        addLog("No art found: " + game.title, "miss")
+      }
+
+      // Save incrementally every 10 games
+      if (i % 10 === 0) {
+        try { localStorage.setItem("nuarcade_artwork", JSON.stringify(artwork)) } catch {}
+      }
     }
 
-    try {
-      localStorage.setItem("nuarcade_artwork", JSON.stringify(artwork))
-    } catch (e) {}
-
+    try { localStorage.setItem("nuarcade_artwork", JSON.stringify(artwork)) } catch {}
     onArtworkUpdate?.(artwork)
     setProgress(100)
     setStatus("done")
-  }, [games, fetchArtworkForGame, onArtworkUpdate])
+    addLog("Complete! " + foundCount + " found, " + skippedCount + " already had art.", "ok")
+  }, [games, fetchArtworkForGame, apiKey, ssUser, ssPass, onArtworkUpdate])
+
+  const canRun = apiKey || (ssUser && ssPass)
 
   return (
     <div className={styles.overlay}>
@@ -56,15 +111,25 @@ export default function ArtworkManager({ games, onClose, apiKey, onArtworkUpdate
 
         <div className={styles.body}>
           <div className={styles.info}>
-            Downloads box art, hero images, and logos from SteamGridDB for all {games.length} games in your library.
+            Fetches box art, hero images, and logos for all {games.length} games.
+            Uses SteamGridDB for modern titles and ScreenScraper for retro/arcade.
+            Already-fetched games are skipped automatically.
           </div>
 
-          {!apiKey && (
+          {!canRun && (
             <div className={styles.noKey}>
-              No SteamGridDB API key set. Add your key in Settings to enable artwork download.
-              Get a free key at steamgriddb.com/profile/preferences
+              Add a SteamGridDB API key or ScreenScraper credentials in Settings to enable artwork download.
             </div>
           )}
+
+          <div className={styles.sourceRow}>
+            <div className={styles.sourceChip} style={{ opacity: apiKey ? 1 : 0.3 }}>
+              SteamGridDB {apiKey ? "ready" : "no key"}
+            </div>
+            <div className={styles.sourceChip} style={{ opacity: ssUser ? 1 : 0.3 }}>
+              ScreenScraper {ssUser ? "ready" : "no credentials"}
+            </div>
+          </div>
 
           {status !== "idle" && (
             <>
@@ -72,10 +137,21 @@ export default function ArtworkManager({ games, onClose, apiKey, onArtworkUpdate
                 <div className={styles.progressFill} style={{ width: progress + "%" }} />
               </div>
               <div className={styles.stats}>
-                {status === "done" ? "Done! Found artwork for " + found + " games." : "Scanning " + progress + "% - found " + found + " so far..."}
+                {status === "done"
+                  ? "Done! " + found + " games got new artwork."
+                  : progress + "% -- " + found + " found, " + skipped + " skipped"}
               </div>
+              {status === "done" && (
+                <div className={styles.sourceStats}>
+                  SteamGridDB: {source.sgdb} | ScreenScraper: {source.ss}
+                </div>
+              )}
               <div className={styles.logBox}>
-                {log.map((l, i) => <div key={i} className={styles.logLine}>{l}</div>)}
+                {log.map((l, i) => (
+                  <div key={i} className={styles.logLine + " " + (l.type === "ok" ? styles.logOk : l.type === "miss" ? styles.logMiss : "")}>
+                    {l.msg}
+                  </div>
+                ))}
               </div>
             </>
           )}
@@ -83,17 +159,13 @@ export default function ArtworkManager({ games, onClose, apiKey, onArtworkUpdate
 
         <div className={styles.footer}>
           {status === "idle" && (
-            <button
-              className={styles.startBtn}
-              onClick={runDownload}
-              
-            >
-              Start artwork download
+            <button className={styles.startBtn} onClick={runDownload} disabled={!canRun} style={{ opacity: canRun ? 1 : 0.4 }}>
+              Fetch artwork for all {games.length} games
             </button>
           )}
           {status === "running" && (
             <button className={styles.startBtn} disabled style={{ opacity: 0.5 }}>
-              Downloading...
+              Downloading... {progress}%
             </button>
           )}
           {status === "done" && (

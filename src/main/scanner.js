@@ -1068,3 +1068,159 @@ async function scanWiiUGames(wiiUGamesPath) {
 }
 
 module.exports = { ...module.exports, scanWiiUGames }
+
+
+// -- Model 2 Emulator Scanner ------------------------------------------------
+// Model 2 games are typically .zip files in the roms folder
+async function scanModel2Games(model2GamesPath) {
+  const games = []
+  if (!fs.existsSync(model2GamesPath)) {
+    return { games, count: 0, path: model2GamesPath, error: 'Folder not found' }
+  }
+
+  // Known Model 2 ROM names -> friendly titles
+  const MODEL2_TITLES = {
+    'daytona':    'Daytona USA',
+    'daytonam':   'Daytona USA (Japan)',
+    'daytonagtx': 'Daytona USA GTX',
+    'desert':     'Desert Tank',
+    'dynamcop':   'Dynamite Deka / Die Hard Arcade',
+    'dynaphaol':  'Dynamite Deka (ALT)',
+    'fvipers':    'Fighting Vipers',
+    'fvipersa':   'Fighting Vipers (ALT)',
+    'gunblade':   'Gunblade NY',
+    'gunblad2':   'LA Machineguns',
+    'indy500':    'Indianapolis 500',
+    'lastbrnx':   'Last Bronx',
+    'manxtt':     'Manx TT Superbike',
+    'motoraid':   'Motor Raid',
+    'overrev':    'Over Rev',
+    'pltkids':    'Pilot Kids',
+    'rchase2':    'Rail Chase 2',
+    'segawski':   'Sega Water Ski',
+    'skisuprg':   'Sega Ski Super G',
+    'skytargt':   'Sky Target',
+    'sonicar':    'Sonic the Fighters / Sonic Championship',
+    'srallyc':    'Sega Rally Championship',
+    'srallycb':   'Sega Rally Championship (bootleg)',
+    'stcc':       'Sega Touring Car Championship',
+    'topskatr':   'Top Skater',
+    'vcop':       'Virtua Cop',
+    'vcop2':      'Virtua Cop 2',
+    'vf2':        'Virtua Fighter 2',
+    'vf2a':       'Virtua Fighter 2 (ver 2.1)',
+    'vf2b':       'Virtua Fighter 2 (ver 2.0)',
+    'von':        'Virtual On: Cybertroopers',
+    'vonj':       'Virtual On (Japan)',
+    'vstriker':   'Virtua Striker',
+    'zerogun':    'Zero Gunner',
+    'zeroguna':   'Zero Gunner (ALT)',
+  }
+
+  const EXTS = ['.zip']
+  let entries
+  try { entries = fs.readdirSync(model2GamesPath, { withFileTypes: true }) }
+  catch (e) { return { games, count: 0, error: e.message } }
+
+  for (const entry of entries) {
+    if (!entry.isFile()) continue
+    const ext = path.extname(entry.name).toLowerCase()
+    if (!EXTS.includes(ext)) continue
+    const romName = entry.name.replace(/\.[^.]+$/, '').toLowerCase()
+    const title = MODEL2_TITLES[romName] || (romName.charAt(0).toUpperCase() + romName.slice(1))
+    games.push({
+      id: 'model2_' + romName,
+      title,
+      romName,
+      path: path.join(model2GamesPath, entry.name),
+      emulator: 'model2',
+      genre: 'Arcade',
+      system: 'Sega Model 2',
+      status: 'Playable',
+      icon: 'M2',
+      artwork: null,
+    })
+  }
+  games.sort((a, b) => a.title.localeCompare(b.title))
+  return { games, count: games.length, path: model2GamesPath }
+}
+
+module.exports = { ...module.exports, scanModel2Games }
+
+
+// -- Model 3 / Supermodel Scanner --------------------------------------------
+// Model 3 games are .zip files referencing Supermodel emulator
+async function scanModel3Games(model3GamesPath) {
+  const games = []
+  if (!fs.existsSync(model3GamesPath)) {
+    return { games, count: 0, path: model3GamesPath, error: 'Folder not found' }
+  }
+
+  const MODEL3_TITLES = {
+    'bass':       'Sega Bass Fishing',
+    'bassdx':     'Sega Bass Fishing Deluxe',
+    'daytona2':   'Daytona USA 2: Battle on the Edge',
+    'dayto2pe':   'Daytona USA 2 Power Edition',
+    'dirtd2dx':   'Dirt Devils 2 Deluxe',
+    'dirtdevil':  'Dirt Devils',
+    'ecw':        'ECW Hardcore Revolution',
+    'fvipers2':   'Fighting Vipers 2',
+    'getbass':    'Get Bass / Sega Bass Fishing',
+    'harley':     'Harley Davidson & L.A. Riders',
+    'lamachin':   'L.A. Machineguns',
+    'lemans24':   'Le Mans 24',
+    'lostwrld':   'The Lost World: Jurassic Park',
+    'lostwrldj':  'The Lost World (Japan)',
+    'magicride':  'Magic Ride',
+    'magtruck':   'Magic Truck Adventure',
+    'manxttdx':   'Manx TT Super Bike DX',
+    'oceanhun':   'Ocean Hunter',
+    'orca':       'Virtua Striker 2 (Step 2.0)',
+    'scud':       'Scud Race / Super GT',
+    'scuda':      'Scud Race (ALT)',
+    'scudp':      'Scud Race Plus',
+    'spikeout':   'Spikeout',
+    'spikeofe':   'Spikeout: Final Edition',
+    'srally2':    'Sega Rally 2',
+    'srally2dx':  'Sega Rally 2 DX',
+    'starwars':   'Star Wars Trilogy Arcade',
+    'von2':       'Virtual On: Oratorio Tangram',
+    'von254g':    'Virtual On OT (ver 5.4g)',
+    'vf3':        'Virtua Fighter 3',
+    'vf3a':       'Virtua Fighter 3 (ALT)',
+    'vf3b':       'Virtua Fighter 3 Team Battle',
+    'vs298':      'Virtua Striker 2 (ver 98)',
+    'vs2v991':    'Virtua Striker 2 (ver 99.1)',
+    'vsn':        'Virtua Striker 2 (Network)',
+    'wwfwrstlg':  'WWF Wrestling',
+  }
+
+  const EXTS = ['.zip']
+  let entries
+  try { entries = fs.readdirSync(model3GamesPath, { withFileTypes: true }) }
+  catch (e) { return { games, count: 0, error: e.message } }
+
+  for (const entry of entries) {
+    if (!entry.isFile()) continue
+    const ext = path.extname(entry.name).toLowerCase()
+    if (!EXTS.includes(ext)) continue
+    const romName = entry.name.replace(/\.[^.]+$/, '').toLowerCase()
+    const title = MODEL3_TITLES[romName] || (romName.charAt(0).toUpperCase() + romName.slice(1))
+    games.push({
+      id: 'model3_' + romName,
+      title,
+      romName,
+      path: path.join(model3GamesPath, entry.name),
+      emulator: 'model3',
+      genre: 'Arcade',
+      system: 'Sega Model 3',
+      status: 'Playable',
+      icon: 'M3',
+      artwork: null,
+    })
+  }
+  games.sort((a, b) => a.title.localeCompare(b.title))
+  return { games, count: games.length, path: model3GamesPath }
+}
+
+module.exports = { ...module.exports, scanModel3Games }
