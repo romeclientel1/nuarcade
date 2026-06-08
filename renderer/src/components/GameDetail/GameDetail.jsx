@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react"
 import { usePlaytime } from "../../hooks/usePlaytime"
+import { useGameNotes } from "../../hooks/useGameNotes"
+import { useCollections } from "../Collections/Collections"
 import styles from "./GameDetail.module.css"
 
 const GENRE_COLORS = {
@@ -108,9 +110,11 @@ export default function GameDetail({ game, onClose, onLaunch, launching, artwork
 
   const { getNote, saveNote, getRating, saveRating } = useGameNotes()
   const { getPlaytime, getLaunches, formatTime, formatLastPlayed } = usePlaytime()
+  const { getCollections, addToCollection, removeFromCollection } = useCollections()
   const [note, setNote] = useState("")
   const [rating, setRating] = useState(0)
   const [hoverRating, setHoverRating] = useState(0)
+  const [collections, setCollections] = useState(() => getCollections())
   const noteTimer = useRef(null)
   const colors = GENRE_COLORS[game.genre] || GENRE_COLORS.Other
   const statusColor = STATUS_COLORS[game.status] || "#888888"
@@ -121,6 +125,12 @@ export default function GameDetail({ game, onClose, onLaunch, launching, artwork
   const pt      = getPlaytime(gameId)
   const lc      = getLaunches(gameId)
   const lastDate = lc.last || pt.last || null
+
+  // Artwork from cache (SteamGridDB / ScreenScraper)
+  const gameArt   = artwork?.[gameId] || null
+  const heroUrl   = gameArt?.hero    || null
+  const capsuleUrl= gameArt?.capsule || null
+  const logoUrl   = gameArt?.logo    || null
 
   useEffect(() => {
     loadControllerOverride()
@@ -172,8 +182,18 @@ export default function GameDetail({ game, onClose, onLaunch, launching, artwork
 
         <div className={styles.content}>
           <div className={styles.artSide}>
+            {heroUrl && (
+              <div className={styles.heroBackground} style={{ backgroundImage: "url(" + heroUrl + ")" }} />
+            )}
             <div className={styles.artWrap} style={{ borderColor: colors.accent + "44", boxShadow: "0 0 40px " + colors.accent + "22" }}>
-              {imgUrl && !imgError ? (
+              {capsuleUrl ? (
+                <img
+                  src={capsuleUrl}
+                  alt={game.title}
+                  className={styles.artImg}
+                  onError={() => {}}
+                />
+              ) : imgUrl && !imgError ? (
                 <img
                   src={imgUrl}
                   alt={game.title}
@@ -184,6 +204,9 @@ export default function GameDetail({ game, onClose, onLaunch, launching, artwork
                 <div className={styles.artFallback}>
                   <div className={styles.fallbackIcon}>{fallbackIcon}</div>
                 </div>
+              )}
+              {logoUrl && (
+                <img src={logoUrl} alt="" className={styles.logoOverlay} />
               )}
             </div>
 
@@ -324,6 +347,31 @@ export default function GameDetail({ game, onClose, onLaunch, launching, artwork
                   <span className={styles.ratingLabel}>{["", "Poor", "Fair", "Good", "Great", "Perfect"][rating]}</span>
                 )}
               </div>
+            </div>
+            <div className={styles.exeSection}>
+              <div className={styles.exeLabel}>Collections</div>
+              {Object.values(collections).length === 0 ? (
+                <div className={styles.collectionsEmpty}>No collections yet -- create one in the Collections panel (N)</div>
+              ) : (
+                <div className={styles.collectionChips}>
+                  {Object.values(collections).map(col => {
+                    const inCol = col.games.includes(gameId)
+                    return (
+                      <button
+                        key={col.id}
+                        className={styles.collectionChip + (inCol ? " " + styles.collectionChipOn : "")}
+                        onClick={() => {
+                          if (inCol) removeFromCollection(col.id, gameId)
+                          else addToCollection(col.id, game)
+                          setCollections(getCollections())
+                        }}
+                      >
+                        {inCol ? "- " : "+ "}{col.name}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
             </div>
             <div className={styles.exeSection}>
               <div className={styles.exeLabel}>Personal notes <span style={{color:"rgba(255,255,255,0.2)",fontSize:9}}>(auto-saved)</span></div>

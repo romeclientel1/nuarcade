@@ -7,6 +7,7 @@ import Settings from "../Settings/Settings"
 import GameDetail from "../GameDetail/GameDetail"
 import Help from "../Help/Help"
 import Collections, { useCollections } from "../Collections/Collections"
+import Stats from "../Stats/Stats"
 import SortMenu from "./SortMenu"
 import { useGamepad } from "./useGamepad"
 import { useArcadeSounds } from "../../hooks/useArcadeSounds"
@@ -98,6 +99,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
   const [showHelp, setShowHelp] = useState(false)
   const [showSort, setShowSort] = useState(false)
   const [showCollections, setShowCollections] = useState(false)
+  const [showStats, setShowStats] = useState(false)
   const [sortBy, setSortBy] = useState("default")
   const [search,        setSearch       ] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
@@ -222,6 +224,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
       }
       if (e.key === "?") setShowHelp(h => !h)
       if (e.key === "n" || e.key === "N") setShowCollections(c => !c)
+      if (e.key === "t" || e.key === "T") setShowStats(s => !s)
       if (e.key === "c" || e.key === "C") setCabinetMode(m => !m)
       if (e.key === "s" || e.key === "S") setScreenshotMode(m => !m)
       if (e.key === "r" || e.key === "R") {
@@ -268,9 +271,26 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
     if (launching || !current) return
     sounds.launch()
     setLaunching(true)
-    const sessionStart = startSession(current.id || current.profile)
-    recordLaunch(current.id || current.profile)
+    const gameId = current.id || current.profile
+    const sessionStart = startSession(gameId)
+    recordLaunch(gameId)
     addRecentlyPlayed(current)
+
+    // When window regains focus, the user returned from the emulator -- save session
+    const handleFocusReturn = () => {
+      endSession(gameId, sessionStart)
+      window.removeEventListener("focus", handleFocusReturn)
+    }
+    window.addEventListener("focus", handleFocusReturn)
+
+    // Also save if NuArcade is closed before focus returns (visibilitychange)
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        endSession(gameId, sessionStart)
+        document.removeEventListener("visibilitychange", handleVisibility)
+      }
+    }
+    document.addEventListener("visibilitychange", handleVisibility)
     // Gamepad rumble on launch
     try {
       const gp = navigator.getGamepads()[0]
@@ -332,6 +352,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
         isActive={attractMode}
         onSelect={setSelectedIndex}
         onWake={resetIdleTimer}
+        artwork={artwork}
       />
 
       {attractMode && (
@@ -382,6 +403,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
                 }
               }} title="Random game (R)">?</button>
               <button className={styles.colBtn} onClick={() => setShowCollections(true)} title="Collections (N)">[]</button>
+              <button className={styles.statsBtn} onClick={() => setShowStats(true)} title="My Stats (T)">#</button>
               <button className={styles.mediaBtn} onClick={() => setShowMediaManager(true)}>Media</button>
               <button className={styles.settingsBtn} onClick={() => setShowSettings(true)}>Settings</button>
               <button className={styles.helpBtn} onClick={() => setShowHelp(true)}>?</button>
@@ -552,6 +574,12 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
           onClose={handleCollectionsClose}
         />
       )}
+      {showStats && (
+        <Stats
+          games={games}
+          onClose={() => setShowStats(false)}
+        />
+      )}
       {showMediaManager && <MediaManager onClose={() => setShowMediaManager(false)} />}
       {showSettings && <Settings onClose={() => setShowSettings(false)} onCRTChange={onCRTChange} crtEnabled={crtEnabled} themeId={themeId} onThemeChange={onThemeChange} />}
       {showDetail && current && (
@@ -561,9 +589,20 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
           onClose={() => { sounds.back(); setShowDetail(false) }}
           onLaunch={() => { sounds.back(); setShowDetail(false); handleLaunch() }}
           launching={launching}
-          playCount={0}
-          lastPlayed={null}
         />
+      )}
+
+      {/* Keyboard hint bar -- hidden in cabinet/screenshot mode */}
+      {!cabinetMode && !screenshotMode && !attractMode && (
+        <div className={styles.hintBar}>
+          <span className={styles.hint}><kbd>Enter</kbd> Detail</span>
+          <span className={styles.hint}><kbd>Space</kbd> Launch</span>
+          <span className={styles.hint}><kbd>F</kbd> Favorite</span>
+          <span className={styles.hint}><kbd>R</kbd> Random</span>
+          <span className={styles.hint}><kbd>N</kbd> Collections</span>
+          <span className={styles.hint}><kbd>T</kbd> Stats</span>
+          <span className={styles.hint}><kbd>?</kbd> Help</span>
+        </div>
       )}
     </div>
   )

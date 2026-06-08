@@ -649,6 +649,14 @@
   transition: all 0.15s; font-family: monospace;
 }
 .colBtn:hover { border-color: rgba(0,255,136,0.4); color: #00ff88; }
+.statsBtn {
+  padding: 0 8px; height: 26px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: transparent; color: rgba(255,255,255,0.35);
+  font-size: 13px; cursor: pointer; border-radius: 4px;
+  transition: all 0.15s; font-family: monospace; font-weight: 700;
+}
+.statsBtn:hover { border-color: rgba(250,204,21,0.4); color: #facc15; }
 
 .newBadge {
   padding: 2px 8px;
@@ -692,4 +700,32 @@
   white-space: nowrap;
   padding: 0 8px;
   font-family: 'Share Tech Mono', monospace;
+}
+.hintBar {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 6px 24px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.7));
+  pointer-events: none;
+}
+.hint {
+  font-size: 10px;
+  color: rgba(255,255,255,0.2);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.hint kbd {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  padding: 1px 5px;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 3px;
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.35);
 }
