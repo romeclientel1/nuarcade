@@ -418,6 +418,7 @@ ipcMain.handle('open-marquee', async () => {
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
       body { background: #000; overflow: hidden; width: 100vw; height: 100vh; font-family: system-ui, sans-serif; }
+      @keyframes pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.4; transform:scale(0.8); } }
       #marquee { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; position: relative; }
       #hero { width: 100%; height: 65%; object-fit: cover; object-position: center top; opacity: 0; transition: opacity 0.8s ease; }
       #hero.loaded { opacity: 1; }
@@ -441,23 +442,37 @@ ipcMain.handle('open-marquee', async () => {
         <div id="system">Insert Coin</div>
         <img id="logo" src="" style="display:none" />
       </div>
+      <div id="now-playing" style="display:none; position:absolute; top:20px; left:24px; align-items:center; gap:8px; background:rgba(0,255,136,0.15); border:1px solid rgba(0,255,136,0.4); border-radius:20px; padding:6px 14px;">
+        <div style="width:8px;height:8px;border-radius:50%;background:#00ff88;animation:pulse 1s ease-in-out infinite;"></div>
+        <span style="font-size:11px;font-weight:700;color:#00ff88;letter-spacing:0.12em;text-transform:uppercase;">Now Playing</span>
+      </div>
       <div id="accent"></div>
     </div>
     <div class="brand">NuArcade</div>
     <script>
       const { ipcRenderer } = require("electron")
       ipcRenderer.on("marquee-update", (e, data) => {
-        const title   = document.getElementById("title")
-        const system  = document.getElementById("system")
-        const hero    = document.getElementById("hero")
-        const capsule = document.getElementById("capsule")
-        const logo    = document.getElementById("logo")
+        const title      = document.getElementById("title")
+        const system     = document.getElementById("system")
+        const hero       = document.getElementById("hero")
+        const capsule    = document.getElementById("capsule")
+        const logo       = document.getElementById("logo")
+        const nowBadge   = document.getElementById("now-playing")
+        const accent     = document.getElementById("accent")
+
         title.textContent  = data.title  || "NuArcade"
         system.textContent = data.system || ""
-        // Reset all
+
+        // Now Playing badge
+        if (nowBadge) {
+          nowBadge.style.display = data.nowPlaying ? "flex" : "none"
+        }
+
+        // Reset media
         hero.className    = ""; hero.style.display    = "none"
         capsule.className = ""; capsule.style.display = "none"
         logo.className    = ""; logo.style.display    = "none"
+
         if (data.hero) {
           hero.src = data.hero; hero.style.display = "block"
           hero.onload = () => hero.classList.add("loaded")
@@ -769,6 +784,49 @@ ipcMain.handle('scan-wiiu-games', async (event, wiiUGamesPath) => {
   const { scanWiiUGames } = require('./scanner')
   return scanWiiUGames(wiiUGamesPath)
 })
+
+
+// -- LED / External Event Hooks -----------------------------------------------
+// These IPC handlers fire when games are selected or launched.
+// External scripts (Pixelcade, LedBlinky, stream overlays) can subscribe
+// by reading the event log file or via a local HTTP webhook if configured.
+
+const EVENT_LOG_PATH = require('path').join(require('electron').app.getPath('userData'), 'nuarcade-events.json')
+
+function writeEvent(type, payload) {
+  try {
+    const fs = require('fs')
+    const event = { type, timestamp: new Date().toISOString(), ...payload }
+    fs.writeFileSync(EVENT_LOG_PATH, JSON.stringify(event, null, 2), 'utf8')
+  } catch (e) {}
+}
+
+// Fired when user navigates to a game on the wheel
+ipcMain.handle('game-selected', async (event, gameData) => {
+  writeEvent('game-selected', {
+    title:    gameData.title,
+    system:   gameData.system,
+    genre:    gameData.genre,
+    emulator: gameData.emulator,
+    id:       gameData.id || gameData.profile,
+  })
+  return { ok: true }
+})
+
+// Fired when a game is launched
+ipcMain.handle('game-launched', async (event, gameData) => {
+  writeEvent('game-launched', {
+    title:    gameData.title,
+    system:   gameData.system,
+    genre:    gameData.genre,
+    emulator: gameData.emulator,
+    id:       gameData.id || gameData.profile,
+  })
+  return { ok: true }
+})
+
+// Returns path to the event log file (for external scripts to watch)
+ipcMain.handle('get-event-log-path', () => EVENT_LOG_PATH)
 
 
 app.on('window-all-closed', () => {

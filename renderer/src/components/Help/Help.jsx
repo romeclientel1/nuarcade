@@ -1,3 +1,5 @@
+import { useRef } from 'react'
+import { useOverlayGamepad } from '../../hooks/useOverlayGamepad'
 import styles from './Help.module.css'
 
 const SHORTCUTS = [
@@ -45,6 +47,12 @@ const EMULATORS = [
 ]
 
 export default function Help({ onClose }) {
+  const bodyRef = useRef(null)
+  useOverlayGamepad({
+    onClose,
+    onUp:   () => bodyRef.current?.scrollBy({ top: -80, behavior: 'smooth' }),
+    onDown: () => bodyRef.current?.scrollBy({ top:  80, behavior: 'smooth' }),
+  })
   return (
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.panel} onClick={e => e.stopPropagation()}>
@@ -53,7 +61,7 @@ export default function Help({ onClose }) {
           <button className={styles.closeBtn} onClick={onClose}>X</button>
         </div>
 
-        <div className={styles.body}>
+        <div className={styles.body} ref={bodyRef}>
           <div className={styles.section}>
             <div className={styles.sectionTitle}>Keyboard Shortcuts</div>
             <div className={styles.list}>

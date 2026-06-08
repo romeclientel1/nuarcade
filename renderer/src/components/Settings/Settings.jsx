@@ -6,7 +6,7 @@ import styles from "./Settings.module.css"
 import { useVersionCheck } from "../../hooks/useVersionCheck"
 import { THEMES } from "../../hooks/useTheme"
 
-export default function Settings({ onClose, onCRTChange, crtEnabled, themeId, onThemeChange }) {
+export default function Settings({ games = [], onClose, onCRTChange, crtEnabled, themeId, onThemeChange }) {
   const [config, setConfig] = useState(null)
   const [saved, setSaved] = useState(false)
   const [exporting, setExporting] = useState(false)
@@ -139,26 +139,45 @@ const handleSave = async () => {
   const handleExport = async () => {
     setExporting(true)
     try {
-      const recent   = JSON.parse(localStorage.getItem("nuarcade_recent")   || "[]")
       const playtime = JSON.parse(localStorage.getItem("nuarcade_playtime") || "{}")
-      const ratings  = JSON.parse(localStorage.getItem("nuarcade_ratings")  || "{}")
-      const notes    = JSON.parse(localStorage.getItem("nuarcade_notes")    || "{}")
+      const launches = JSON.parse(localStorage.getItem("nuarcade_launches")  || "{}")
+      const ratings  = JSON.parse(localStorage.getItem("nuarcade_ratings")   || "{}")
+      const notes    = JSON.parse(localStorage.getItem("nuarcade_notes")     || "{}")
+      const favs     = JSON.parse(localStorage.getItem("nuarcade_favorites") || "[]")
+
+      const sorted = [...games].sort((a, b) => {
+        const at = playtime[a.id||a.profile]?.total || 0
+        const bt = playtime[b.id||b.profile]?.total || 0
+        if (bt !== at) return bt - at
+        return a.title.localeCompare(b.title)
+      })
+
       const lines = [
-        "NuArcade Game List",
+        "NuArcade Game Library",
         "Generated: " + new Date().toLocaleString(),
-        "=".repeat(60),
+        "Total games: " + sorted.length,
+        "=".repeat(70),
         "",
-        ...recent.map((g, i) => {
+        ...sorted.map((g, i) => {
           const id    = g.id || g.profile
-          const mins  = Math.round((playtime[id]?.total || 0) / 60000)
+          const secs  = playtime[id]?.total || 0
+          const mins  = Math.round(secs / 60)
+          const h     = Math.floor(mins / 60)
+          const m     = mins % 60
+          const time  = secs > 0 ? (h > 0 ? h + "h " + m + "m" : m + "m") : "-"
+          const lc    = launches[id]?.count || 0
           const stars = "*".repeat(ratings[id] || 0) || "-"
-          const note  = notes[id] ? " | Note: " + notes[id].slice(0, 60) : ""
-          return (i+1) + ". " + g.title + " (" + (g.system||"") + ") | " + mins + " min | " + stars + note
+          const fav   = favs.includes(id) ? " [FAV]" : ""
+          const note  = notes[id] ? "\n   Note: " + notes[id].slice(0, 100) : ""
+          return (i+1) + ". " + g.title + fav +
+            "\n   System: " + (g.system||g.genre||"-") + " | Emulator: " + (g.emulator||"-") +
+            "\n   Playtime: " + time + " | Launched: " + lc + "x | Rating: " + stars +
+            note
         })
       ]
       const text = lines.join("\n")
       if (window.nuarcade?.saveTxt) {
-        await window.nuarcade.saveTxt({ content: text, defaultName: "nuarcade-games.txt" })
+        await window.nuarcade.saveTxt({ content: text, defaultName: "nuarcade-library.txt" })
       } else {
         console.log(text)
       }
@@ -449,7 +468,7 @@ const handleSave = async () => {
 
           {showArtworkMgr && (
             <ArtworkManager
-              games={[]}
+              games={games}
               apiKey={config?.sgdbApiKey}
               ssUser={config?.screenscraper?.user}
               ssPass={config?.screenscraper?.pass}

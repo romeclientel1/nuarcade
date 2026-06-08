@@ -24,7 +24,7 @@ function shuffle(arr) {
   return a
 }
 
-export default function AttractMode({ games, isActive, onWake, artwork }) {
+export default function AttractMode({ games, isActive, onWake, onSelect, artwork }) {
   const [currentIdx,  setCurrentIdx ] = useState(0)
   const [visible,     setVisible    ] = useState(false)
   const [phase,       setPhase      ] = useState("in") // "in" | "out"
@@ -77,6 +77,16 @@ export default function AttractMode({ games, isActive, onWake, artwork }) {
       if (!isActive) return
       // Arrow keys navigate while attract mode is active -- don't wake on those
       if (e.type === "keydown" && ["ArrowLeft","ArrowRight","Enter"," "].includes(e.key)) return
+      // Snap wheel to the game currently showing in attract mode
+      if (onSelect && shuffled.length > 0) {
+        const showing = shuffled[indexRef.current]
+        if (showing) {
+          const realIdx = games.findIndex(g =>
+            (g.id && g.id === showing.id) || (g.profile && g.profile === showing.profile)
+          )
+          if (realIdx >= 0) onSelect(realIdx)
+        }
+      }
       onWake()
     }
     window.addEventListener("keydown", wake)
@@ -85,7 +95,7 @@ export default function AttractMode({ games, isActive, onWake, artwork }) {
       window.removeEventListener("keydown", wake)
       window.removeEventListener("click",   wake)
     }
-  }, [isActive, onWake])
+  }, [isActive, onWake, onSelect, shuffled, games])
 
   if (!isActive || !visible || shuffled.length === 0) return null
 

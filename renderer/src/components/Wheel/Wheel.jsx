@@ -155,7 +155,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
 
   useEffect(() => { setSelectedIndex(0) }, [activeCategory, debouncedSearch, sortBy])
 
-  // Update marquee display when selected game changes
+  // Update marquee display when selected game changes + fire LED game-selected event
   useEffect(() => {
     if (!current || !window.nuarcade?.updateMarquee) return
     const art = artwork?.[current.id || current.profile]
@@ -166,6 +166,12 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
       logo:   art?.logo   || null,
       capsule: art?.capsule || null,
     }).catch(() => {})
+    // Fire LED/external event
+    window.nuarcade?.gameSelected?.({
+      title: current.title, system: current.system,
+      genre: current.genre, emulator: current.emulator,
+      id: current.id || current.profile,
+    }).catch?.(() => {})
   }, [current?.id, current?.profile, artwork])
 
   // Auto-launch last played game if configured
@@ -291,7 +297,27 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
       }
     }
     document.addEventListener("visibilitychange", handleVisibility)
-    // Gamepad rumble on launch
+
+    // Push "NOW PLAYING" state to marquee with full game info
+    if (window.nuarcade?.updateMarquee) {
+      const art = artwork?.[gameId]
+      window.nuarcade.updateMarquee({
+        title:      current.title,
+        system:     current.system || current.genre,
+        hero:       art?.hero    || null,
+        logo:       art?.logo    || null,
+        capsule:    art?.capsule || null,
+        nowPlaying: true,
+        genre:      current.genre,
+        emulator:   current.emulator,
+      }).catch(() => {})
+    }
+    // Fire LED/external game-launched event
+    window.nuarcade?.gameLaunched?.({
+      title: current.title, system: current.system,
+      genre: current.genre, emulator: current.emulator,
+      id: gameId,
+    }).catch?.(() => {})
     try {
       const gp = navigator.getGamepads()[0]
       if (gp && gp.vibrationActuator) {
@@ -581,7 +607,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
         />
       )}
       {showMediaManager && <MediaManager onClose={() => setShowMediaManager(false)} />}
-      {showSettings && <Settings onClose={() => setShowSettings(false)} onCRTChange={onCRTChange} crtEnabled={crtEnabled} themeId={themeId} onThemeChange={onThemeChange} />}
+      {showSettings && <Settings games={games} onClose={() => setShowSettings(false)} onCRTChange={onCRTChange} crtEnabled={crtEnabled} themeId={themeId} onThemeChange={onThemeChange} />}
       {showDetail && current && (
         <GameDetail
           game={current}

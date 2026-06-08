@@ -1,4 +1,5 @@
-import { useMemo } from "react"
+import { useMemo, useRef } from "react"
+import { useOverlayGamepad } from "../../hooks/useOverlayGamepad"
 import { usePlaytime } from "../../hooks/usePlaytime"
 import styles from "./Stats.module.css"
 
@@ -15,6 +16,12 @@ const SYSTEM_COLORS = {
 
 export default function Stats({ games, onClose }) {
   const { getAllPlaytime, getAllLaunches, formatTime } = usePlaytime()
+  const bodyRef = useRef(null)
+  useOverlayGamepad({
+    onClose,
+    onUp:   () => bodyRef.current?.scrollBy({ top: -80, behavior: 'smooth' }),
+    onDown: () => bodyRef.current?.scrollBy({ top:  80, behavior: 'smooth' }),
+  })
 
   const { playtime, launches, systemStats, topPlayed, topLaunched, topRated, totalTime, totalLaunches } = useMemo(() => {
     const pt  = getAllPlaytime()
@@ -68,7 +75,7 @@ export default function Stats({ games, onClose }) {
           <button className={styles.closeBtn} onClick={onClose}>X</button>
         </div>
 
-        <div className={styles.body}>
+        <div className={styles.body} ref={bodyRef}>
 
           {/* Hero numbers */}
           <div className={styles.heroRow}>

@@ -81,6 +81,11 @@ contextBridge.exposeInMainWorld('nuarcade', {
   // Save text file
   saveTxt: (opts) => ipcRenderer.invoke('save-txt', opts),
 
+  // LED / external event hooks
+  gameSelected:    (gameData) => ipcRenderer.invoke('game-selected',    gameData),
+  gameLaunched:    (gameData) => ipcRenderer.invoke('game-launched',    gameData),
+  getEventLogPath: ()         => ipcRenderer.invoke('get-event-log-path'),
+
   // BIOS checker
   checkBios: () => ipcRenderer.invoke('check-bios'),
 })

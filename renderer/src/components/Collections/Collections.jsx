@@ -1,4 +1,5 @@
-import { useState, useCallback } from "react"
+import { useState, useCallback, useRef } from "react"
+import { useOverlayGamepad } from "../../hooks/useOverlayGamepad"
 import styles from "./Collections.module.css"
 
 const COLLECTIONS_KEY = "nuarcade_collections"
@@ -56,6 +57,15 @@ export function useCollections() {
 
 export default function Collections({ games, currentGame, onClose }) {
   const { getCollections, createCollection, deleteCollection, addToCollection, removeFromCollection, renameCollection } = useCollections()
+  const sideRef = useRef(null)
+  const mainRef = useRef(null)
+  useOverlayGamepad({
+    onClose,
+    onUp:    () => sideRef.current?.scrollBy({ top: -60, behavior: 'smooth' }),
+    onDown:  () => sideRef.current?.scrollBy({ top:  60, behavior: 'smooth' }),
+    onRight: () => mainRef.current?.scrollBy({ top:  60, behavior: 'smooth' }),
+    onLeft:  () => mainRef.current?.scrollBy({ top: -60, behavior: 'smooth' }),
+  })
   const [cols, setCols] = useState(() => getCollections())
   const [newName, setNewName] = useState("")
   const [activeCol, setActiveCol] = useState(null)
@@ -118,7 +128,7 @@ export default function Collections({ games, currentGame, onClose }) {
               />
               <button className={styles.createBtn} onClick={handleCreate}>+</button>
             </div>
-            <div className={styles.colList}>
+            <div className={styles.colList} ref={sideRef}>
               {colList.length === 0 && (
                 <div className={styles.emptyHint}>No collections yet.</div>
               )}
@@ -153,7 +163,7 @@ export default function Collections({ games, currentGame, onClose }) {
             </div>
           </div>
 
-          <div className={styles.main}>
+          <div className={styles.main} ref={mainRef}>
             {!activeCol ? (
               <div className={styles.mainEmpty}>
                 <div className={styles.mainEmptyIcon}>[]</div>
