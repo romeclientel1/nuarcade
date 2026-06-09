@@ -1,155 +1,194 @@
 import { useEffect, useRef, useState } from 'react'
 import styles from './Intro.module.css'
 
-const PHASE_TIMINGS = [800, 200, 600, 1200, 800, 600]
+// Procedural sound engine -- no files needed
+function createAudio() {
+  try { return new (window.AudioContext || window.webkitAudioContext)() } catch { return null }
+}
 
-const PARTICLES = Array.from({ length: 24 }, (_, i) => ({
+function playSound(ctx, type, opts = {}) {
+  if (!ctx) return
+  const { freq = 440, freq2, duration = 0.3, gain = 0.3, delay = 0, shape = 'square', ramp = 'exp' } = opts
+  const osc = ctx.createOscillator()
+  const vol = ctx.createGain()
+  const now = ctx.currentTime + delay
+
+  osc.connect(vol)
+  vol.connect(ctx.destination)
+  osc.type = shape
+  osc.frequency.setValueAtTime(freq, now)
+  if (freq2) osc.frequency.linearRampToValueAtTime(freq2, now + duration)
+  vol.gain.setValueAtTime(gain, now)
+  if (ramp === 'exp') vol.gain.exponentialRampToValueAtTime(0.001, now + duration)
+  else vol.gain.linearRampToValueAtTime(0, now + duration)
+  osc.start(now)
+  osc.stop(now + duration + 0.01)
+}
+
+function playCoin(ctx) {
+  if (!ctx) return
+  // Two-tone coin jingle
+  playSound(ctx, 'coin', { freq: 988,  duration: 0.08, gain: 0.4, shape: 'square' })
+  playSound(ctx, 'coin', { freq: 1319, duration: 0.12, gain: 0.4, shape: 'square', delay: 0.07 })
+}
+
+function playBassHit(ctx) {
+  if (!ctx) return
+  // Deep bass thud
+  playSound(ctx, 'bass', { freq: 80, freq2: 40, duration: 0.5, gain: 0.6, shape: 'sine' })
+  // High crack
+  playSound(ctx, 'crack', { freq: 2200, freq2: 400, duration: 0.15, gain: 0.25, shape: 'sawtooth' })
+}
+
+function playLogoSlam(ctx) {
+  if (!ctx) return
+  // Impact thud
+  playSound(ctx, 'thud', { freq: 60, freq2: 30, duration: 0.4, gain: 0.7, shape: 'sine' })
+  // Metallic shimmer
+  playSound(ctx, 'shimmer', { freq: 3200, freq2: 1600, duration: 0.3, gain: 0.15, shape: 'square', delay: 0.05 })
+  // Rising sweep
+  playSound(ctx, 'sweep', { freq: 200, freq2: 800, duration: 0.25, gain: 0.2, shape: 'sawtooth', delay: 0.05 })
+}
+
+function startAmbient(ctx) {
+  if (!ctx) return null
+  // Low hum like arcade machines idling
+  const osc1 = ctx.createOscillator()
+  const osc2 = ctx.createOscillator()
+  const vol  = ctx.createGain()
+  const now  = ctx.currentTime
+
+  osc1.type = 'sine'; osc1.frequency.value = 60
+  osc2.type = 'sine'; osc2.frequency.value = 63  // slight detune for thickness
+
+  osc1.connect(vol); osc2.connect(vol)
+  vol.connect(ctx.destination)
+
+  vol.gain.setValueAtTime(0, now)
+  vol.gain.linearRampToValueAtTime(0.04, now + 1.5)
+
+  osc1.start(); osc2.start()
+  return { osc1, osc2, vol, stop: () => { try { osc1.stop(); osc2.stop() } catch(e){} } }
+}
+
+const PARTICLES = Array.from({ length: 40 }, (_, i) => ({
   id: i,
-  left: `${Math.random() * 100}%`,
-  duration: `${2 + Math.random() * 4}s`,
-  delay: `${Math.random() * 3}s`,
-  size: `${1 + Math.random() * 3}px`,
-  opacity: 0.3 + Math.random() * 0.7,
+  left: Math.random() * 100,
+  duration: 2.5 + Math.random() * 4,
+  delay: Math.random() * 4,
+  size: 1 + Math.random() * 2.5,
+  opacity: 0.2 + Math.random() * 0.6,
 }))
 
 export default function Intro({ onComplete }) {
-  const [waiting, setWaiting] = useState(true)
-  const [logoVisible, setLogoVisible] = useState(false)
-  const [taglineVisible, setTaglineVisible] = useState(false)
-  const [fadeOut, setFadeOut] = useState(false)
-  const [flicker, setFlicker] = useState(false)
-  const [showParticles, setShowParticles] = useState(false)
-  const coinAudioRef = useRef(null)
-  const ambientAudioRef = useRef(null)
-  const timeoutsRef = useRef([])
-  const startedRef = useRef(false)
+  const [phase, setPhase] = useState('dark')  // dark -> flicker -> logo -> tagline -> fadeout
+  const ctxRef   = useRef(null)
+  const ambRef   = useRef(null)
+  const timersRef = useRef([])
 
-  const addTimeout = (fn, delay) => {
-    const id = setTimeout(fn, delay)
-    timeoutsRef.current.push(id)
-    return id
-  }
-
-  const startIntro = () => {
-    if (startedRef.current) return
-    startedRef.current = true
-    setWaiting(false)
-
-    coinAudioRef.current = new Audio('/sounds/coin.wav')
-    coinAudioRef.current.volume = 0.9
-
-    ambientAudioRef.current = new Audio('/sounds/arcade-ambient.wav')
-    ambientAudioRef.current.volume = 0
-    ambientAudioRef.current.loop = true
-    ambientAudioRef.current.play().catch(() => {})
-
-    addTimeout(() => {
-      setFlicker(true)
-      coinAudioRef.current.play().catch(() => {})
-      fadeAudio(ambientAudioRef.current, 0, 0.35, 3000)
-
-      addTimeout(() => {
-        setFlicker(false)
-        setLogoVisible(true)
-        setShowParticles(true)
-
-        addTimeout(() => {
-          addTimeout(() => {
-            setTaglineVisible(true)
-
-            addTimeout(() => {
-              setFadeOut(true)
-              addTimeout(() => onComplete(), PHASE_TIMINGS[5])
-            }, PHASE_TIMINGS[4])
-          }, PHASE_TIMINGS[3])
-        }, PHASE_TIMINGS[2])
-      }, PHASE_TIMINGS[1])
-    }, PHASE_TIMINGS[0])
+  const at = (fn, ms) => {
+    const id = setTimeout(fn, ms)
+    timersRef.current.push(id)
   }
 
   useEffect(() => {
-    const handle = () => { if (!startedRef.current) startIntro() }
-    window.addEventListener('keydown', handle)
-    window.addEventListener('click', handle)
+    // Start immediately -- no keypress needed
+    ctxRef.current = createAudio()
+    const ctx = ctxRef.current
+    ambRef.current = startAmbient(ctx)
+
+    // Timeline
+    at(() => {
+      // Coin drop
+      playCoin(ctx)
+      setPhase('flicker')
+
+      at(() => {
+        // Screen settles, bass hit, logo slams
+        playLogoSlam(ctx)
+        setPhase('logo')
+
+        at(() => {
+          // Tagline appears
+          playBassHit(ctx)
+          setPhase('tagline')
+
+          at(() => {
+            // Fade to wheel
+            setPhase('fadeout')
+            at(() => onComplete(), 700)
+          }, 2200)
+        }, 1000)
+      }, 350)
+    }, 600)
+
+    // Skip on any input
+    const skip = () => {
+      timersRef.current.forEach(clearTimeout)
+      ambRef.current?.stop()
+      onComplete()
+    }
+    window.addEventListener('keydown', skip)
+    window.addEventListener('click',   skip)
+
     return () => {
-      timeoutsRef.current.forEach(clearTimeout)
-      window.removeEventListener('keydown', handle)
-      window.removeEventListener('click', handle)
+      timersRef.current.forEach(clearTimeout)
+      ambRef.current?.stop()
+      window.removeEventListener('keydown', skip)
+      window.removeEventListener('click',   skip)
     }
   }, [])
 
   return (
-    <div
-      className={`${styles.stage} ${flicker ? styles.flicker : ''} ${fadeOut ? styles.fadeOut : ''}`}
-      onClick={waiting ? startIntro : undefined}
-    >
+    <div className={styles.stage + ' ' + (phase === 'fadeout' ? styles.fadeOut : '') + ' ' + (phase === 'flicker' ? styles.flicker : '')}>
+
+      {/* Grid background */}
       <div className={styles.grid} />
       <div className={styles.vignette} />
+      <div className={styles.scanlines} />
 
-      {showParticles && (
+      {/* Particles */}
+      {(phase === 'logo' || phase === 'tagline' || phase === 'fadeout') && (
         <div className={styles.particles}>
           {PARTICLES.map(p => (
-            <div
-              key={p.id}
-              className={styles.particle}
-              style={{
-                left: p.left,
-                bottom: '-10px',
-                width: p.size,
-                height: p.size,
-                animationDuration: p.duration,
-                animationDelay: p.delay,
-                opacity: p.opacity,
-              }}
-            />
+            <div key={p.id} className={styles.particle} style={{
+              left: p.left + '%',
+              width: p.size + 'px', height: p.size + 'px',
+              animationDuration: p.duration + 's',
+              animationDelay: p.delay + 's',
+              opacity: p.opacity,
+            }} />
           ))}
         </div>
       )}
 
-      {waiting && (
-        <div className={styles.pressStart}>
-          Press any key or click to start
-        </div>
-      )}
-
-      {!waiting && logoVisible && (
-        <div className={`${styles.logoWrap} ${styles.logoIn}`}>
+      {/* Logo */}
+      {(phase === 'logo' || phase === 'tagline' || phase === 'fadeout') && (
+        <div className={styles.logoWrap}>
           <div className={styles.logoGlow} />
           <div className={styles.logoText}>
             <span className={styles.logoNu}>Nu</span>
             <span className={styles.logoArcade}>Arcade</span>
           </div>
+          <div className={styles.logoUnderline} />
           <div className={styles.scanline} />
         </div>
       )}
 
-      {taglineVisible && (
-        <div className={`${styles.tagline} ${styles.taglineIn}`}>
+      {/* Tagline */}
+      {(phase === 'tagline' || phase === 'fadeout') && (
+        <div className={styles.tagline}>
           Modern arcade. One cabinet. Zero compromises.
         </div>
       )}
 
-      {!waiting && (
+      {/* Version */}
+      <div className={styles.version}>v3.2.4</div>
+
+      {/* Skip hint */}
+      {phase !== 'dark' && phase !== 'fadeout' && (
         <div className={styles.skipHint}>Press any key to skip</div>
       )}
     </div>
   )
-}
-
-function fadeAudio(audio, from, to, duration) {
-  const steps = 30
-  const interval = duration / steps
-  const delta = (to - from) / steps
-  let current = from
-  audio.volume = from
-  const timer = setInterval(() => {
-    current += delta
-    if ((delta > 0 && current >= to) || (delta < 0 && current <= to)) {
-      audio.volume = Math.max(0, Math.min(1, to))
-      clearInterval(timer)
-    } else {
-      audio.volume = Math.max(0, Math.min(1, current))
-    }
-  }, interval)
-  return timer
 }

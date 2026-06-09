@@ -1,203 +1,186 @@
 .stage {
-  position: fixed;
-  inset: 0;
+  position: fixed; inset: 0;
   background: #000;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-  transition: opacity 0.6s ease;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 9999;
+  overflow: hidden;
 }
 
+/* Grid background */
 .grid {
-  position: absolute;
-  inset: 0;
+  position: absolute; inset: 0;
   background-image:
-    linear-gradient(rgba(0, 200, 255, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 200, 255, 0.04) 1px, transparent 1px);
+    linear-gradient(rgba(0,200,255,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,200,255,0.04) 1px, transparent 1px);
   background-size: 48px 48px;
-  z-index: 0;
+  animation: gridPulse 8s ease-in-out infinite;
+}
+@keyframes gridPulse {
+  0%,100% { opacity: 0.6; }
+  50%      { opacity: 1; }
 }
 
+/* Vignette */
 .vignette {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse 90% 90% at 50% 50%, transparent 30%, rgba(0,0,0,0.9) 100%);
-  z-index: 1;
-  pointer-events: none;
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.85) 100%);
+}
+
+/* Scanlines overlay */
+.scanlines {
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(
+    0deg, transparent, transparent 2px,
+    rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px
+  );
+  pointer-events: none; z-index: 10;
 }
 
 /* Screen flicker on coin drop */
 .flicker {
-  animation: flicker 0.2s steps(2) forwards;
+  animation: flicker 0.35s steps(1) forwards;
 }
-
 @keyframes flicker {
-  0%   { opacity: 1; background: #000; }
-  25%  { opacity: 0.3; background: #001a2a; }
-  50%  { opacity: 1; background: #000; }
-  75%  { opacity: 0.6; background: #00080f; }
-  100% { opacity: 1; background: #000; }
+  0%   { filter: brightness(0); }
+  20%  { filter: brightness(3) hue-rotate(20deg); }
+  35%  { filter: brightness(0.3); }
+  55%  { filter: brightness(2.5) hue-rotate(-10deg); }
+  70%  { filter: brightness(0.5); }
+  85%  { filter: brightness(1.8); }
+  100% { filter: brightness(1); }
 }
 
+/* Fade out */
 .fadeOut {
-  opacity: 0;
-  transition: opacity 0.6s ease;
+  animation: fadeOut 0.7s ease forwards;
+}
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
 }
 
-/* Logo container */
+/* Particles */
+.particles {
+  position: absolute; inset: 0;
+  pointer-events: none;
+}
+.particle {
+  position: absolute;
+  border-radius: 50%;
+  background: #00c8ff;
+  animation: rise linear infinite;
+  box-shadow: 0 0 4px #00c8ff;
+}
+@keyframes rise {
+  from { transform: translateY(110vh) scale(0); opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 0.8; }
+  to   { transform: translateY(-10vh) scale(1.5); opacity: 0; }
+}
+
+/* Logo */
 .logoWrap {
   position: relative;
-  z-index: 10;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  opacity: 0;
-  transform: scale(0.85);
-  transition: none;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 12px;
+  animation: logoSlam 0.25s cubic-bezier(0.2, 1.8, 0.4, 1) forwards;
 }
-
-.logoIn {
-  animation: logoSlam 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-
 @keyframes logoSlam {
-  0% {
-    opacity: 0;
-    transform: scale(0.7) translateY(20px);
-  }
-  60% {
-    opacity: 1;
-    transform: scale(1.04) translateY(-4px);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
+  from { transform: scale(0.3) translateY(-40px); opacity: 0; filter: blur(20px); }
+  to   { transform: scale(1) translateY(0);       opacity: 1; filter: blur(0); }
 }
 
-/* Bloom glow behind logo */
 .logoGlow {
   position: absolute;
-  width: 600px;
-  height: 200px;
-  background: radial-gradient(ellipse at center, rgba(0, 200, 255, 0.18) 0%, transparent 70%);
-  top: 50%;
-  left: 50%;
+  width: 600px; height: 200px;
+  background: radial-gradient(ellipse at center, rgba(0,200,255,0.15) 0%, transparent 70%);
+  top: 50%; left: 50%;
   transform: translate(-50%, -50%);
-  animation: bloomPulse 2s ease-in-out infinite;
+  animation: glowPulse 2s ease-in-out infinite;
+}
+@keyframes glowPulse {
+  0%,100% { opacity: 0.6; transform: translate(-50%,-50%) scale(1); }
+  50%     { opacity: 1;   transform: translate(-50%,-50%) scale(1.1); }
 }
 
-@keyframes bloomPulse {
-  0%, 100% { opacity: 0.7; }
-  50%       { opacity: 1; }
-}
-
-/* The actual logo text */
 .logoText {
   font-family: 'Orbitron', sans-serif;
-  font-size: clamp(64px, 10vw, 110px);
+  font-size: clamp(4rem, 10vw, 8rem);
   font-weight: 900;
-  letter-spacing: 0.04em;
+  letter-spacing: -0.02em;
   line-height: 1;
-  position: relative;
+  text-shadow:
+    0 0 40px rgba(0,200,255,0.8),
+    0 0 80px rgba(0,200,255,0.4),
+    0 0 120px rgba(0,200,255,0.2);
 }
-
 .logoNu {
   color: #00c8ff;
-  text-shadow:
-    0 0 40px rgba(0, 200, 255, 0.8),
-    0 0 80px rgba(0, 200, 255, 0.4),
-    0 0 120px rgba(0, 200, 255, 0.2);
 }
-
 .logoArcade {
-  color: #ffffff;
-  text-shadow:
-    0 0 20px rgba(255, 255, 255, 0.4),
-    0 0 60px rgba(0, 200, 255, 0.2);
+  color: #fff;
 }
 
-/* Scanline sweep */
+.logoUnderline {
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #00c8ff, transparent);
+  animation: underlineExpand 0.6s ease 0.15s forwards;
+}
+@keyframes underlineExpand {
+  from { width: 0; }
+  to   { width: 100%; }
+}
+
 .scanline {
   position: absolute;
+  width: 100%; height: 2px;
+  background: rgba(0,200,255,0.6);
   top: 0;
-  left: -10%;
-  width: 120%;
-  height: 3px;
-  background: linear-gradient(90deg, transparent, rgba(0, 200, 255, 0.8), transparent);
-  animation: scanSweep 1.2s ease-in-out 0.3s forwards;
-  opacity: 0;
+  animation: scanSweep 0.4s ease 0.1s forwards;
+  box-shadow: 0 0 8px #00c8ff;
 }
-
 @keyframes scanSweep {
-  0%   { top: -10px; opacity: 0; }
-  10%  { opacity: 1; }
-  90%  { opacity: 1; }
-  100% { top: 110%; opacity: 0; }
+  from { top: -10px; opacity: 1; }
+  to   { top: 110%; opacity: 0; }
 }
 
 /* Tagline */
 .tagline {
-  position: relative;
-  z-index: 10;
-  margin-top: 24px;
-  font-family: 'Share Tech Mono', 'Courier New', monospace;
-  font-size: clamp(12px, 1.5vw, 16px);
-  color: rgba(0, 200, 255, 0.6);
-  letter-spacing: 0.2em;
+  font-size: clamp(0.9rem, 2vw, 1.2rem);
+  color: rgba(255,255,255,0.5);
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  opacity: 0;
+  margin-top: 24px;
+  animation: taglineIn 0.5s ease forwards;
+}
+@keyframes taglineIn {
+  from { opacity: 0; transform: translateY(12px); letter-spacing: 0.4em; }
+  to   { opacity: 1; transform: translateY(0);    letter-spacing: 0.18em; }
 }
 
-.taglineIn {
-  animation: taglineFade 0.8s ease forwards;
-}
-
-@keyframes taglineFade {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+/* Version watermark */
+.version {
+  position: absolute;
+  bottom: 20px; right: 24px;
+  font-size: 11px;
+  color: rgba(255,255,255,0.12);
+  letter-spacing: 0.1em;
 }
 
 /* Skip hint */
 .skipHint {
   position: absolute;
-  bottom: 32px;
-  right: 40px;
+  bottom: 20px; left: 50%;
+  transform: translateX(-50%);
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.18);
-  letter-spacing: 0.15em;
+  color: rgba(255,255,255,0.18);
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  z-index: 20;
-  animation: hintFade 1s ease 2s both;
+  animation: blink 2s step-end infinite;
 }
-
-@keyframes hintFade {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-.particles {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-.particle {
-  position: absolute;
-  width: 2px;
-  height: 2px;
-  background: #00c8ff;
-  border-radius: 50%;
-  animation: particleFly linear infinite;
-  opacity: 0;
-}
-
-@keyframes particleFly {
-  0%   { opacity: 0; transform: translateY(0) scale(0); }
-  10%  { opacity: 0.8; }
-  90%  { opacity: 0.4; }
-  100% { opacity: 0; transform: translateY(-600px) scale(1.5); }
+@keyframes blink {
+  0%,100% { opacity: 1; }
+  50%     { opacity: 0.2; }
 }
