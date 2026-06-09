@@ -16,7 +16,7 @@ export default function App() {
   const [showUpdater, setShowUpdater] = useState(false)
   const [lastLaunch, setLastLaunch] = useState(null)
   const { themeId, setTheme } = useTheme()
-  const VERSION = "3.2.7"
+  const VERSION = "3.2.8"
   const { hasUpdate, newVersion, releaseUrl, releaseNotes, dismiss } = useAutoUpdate(VERSION)
 
   const [crtEnabled, setCrtEnabled] = useState(() => {
@@ -29,30 +29,41 @@ export default function App() {
   }
 
   const handleIntroComplete = async () => {
+    let goToWizard = false
     try {
       if (window.nuarcade?.getConfig) {
         const config = await window.nuarcade.getConfig()
         if (!config?.setupComplete) {
-          setPhase("wizard")
-          return
-        }
-        if (config.autoLaunchLast) {
+          goToWizard = true
+        } else if (config.autoLaunchLast) {
           try {
             const recent = JSON.parse(localStorage.getItem("nuarcade_recent") || "[]")
             if (recent[0]) localStorage.setItem("nuarcade_auto_launch", JSON.stringify(recent[0]))
           } catch {}
         }
+      } else {
+        // window.nuarcade not available -- dev mode, go to wheel
+        goToWizard = false
       }
     } catch (e) {
-      console.warn("getConfig failed:", e)
+      console.warn("getConfig failed, defaulting to wizard:", e)
+      goToWizard = true
     }
-    setPhase("wheel")
-    setShowUpdater(true)
+    if (goToWizard) {
+      setPhase("wizard")
+    } else {
+      setPhase("wheel")
+      setShowUpdater(true)
+    }
   }
 
   useEffect(() => {
     const handler = (e) => {
       if (e.key === "Escape" && phase === "intro") setPhase("wheel")
+      // Ctrl+W = re-run setup wizard (emergency reset)
+      if (e.ctrlKey && e.key === "w" && phase === "wheel") {
+        window.nuarcade?.resetSetup?.().then(() => setPhase("wizard"))
+      }
     }
     window.addEventListener("keydown", handler)
     return () => window.removeEventListener("keydown", handler)
@@ -76,7 +87,7 @@ export default function App() {
           setPhase("wheel")
           setShowUpdater(true)
         }} />}
-        {phase === "wheel" && <Wheel onCRTChange={handleCRTChange} crtEnabled={crtEnabled} themeId={themeId} onThemeChange={setTheme} lastLaunch={lastLaunch} setLastLaunch={setLastLaunch} />}
+        {(phase === "wheel" || phase === "fallback") && <Wheel onCRTChange={handleCRTChange} crtEnabled={crtEnabled} themeId={themeId} onThemeChange={setTheme} lastLaunch={lastLaunch} setLastLaunch={setLastLaunch} />}
         {phase === "wheel" && showUpdater && (
           <Updater onDismiss={() => setShowUpdater(false)} />
         )}

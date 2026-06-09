@@ -534,6 +534,10 @@ ipcMain.handle('add-exclusions', async (event, paths) => {
 })
 
 ipcMain.handle('get-config', () => config.load())
+ipcMain.handle('reset-setup', () => {
+  config.update({ setupComplete: false })
+  return { ok: true }
+})
 
 ipcMain.handle('get-controller-override', (event, gameId) => {
   const cfg = config.load()

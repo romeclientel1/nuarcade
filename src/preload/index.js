@@ -4,7 +4,8 @@ contextBridge.exposeInMainWorld('nuarcade', {
   platform: process.platform,
 
   // Config
-  getConfig:  () => ipcRenderer.invoke('get-config'),
+  getConfig:   () => ipcRenderer.invoke('get-config'),
+  resetSetup:  () => ipcRenderer.invoke('reset-setup'),
   setConfig:  (updates) => ipcRenderer.invoke('set-config', updates),
 
   // Browse
