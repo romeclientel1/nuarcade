@@ -52,8 +52,12 @@ export default function Wizard({ onComplete }) {
 
   const finish = async () => {
     const finalConfig = { ...config, setupComplete: true }
-    if (window.nuarcade) {
-      await window.nuarcade.setConfig(finalConfig)
+    try {
+      if (window.nuarcade?.setConfig) {
+        await window.nuarcade.setConfig(finalConfig)
+      }
+    } catch (e) {
+      console.warn('setConfig failed:', e)
     }
     onComplete()
   }

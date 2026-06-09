@@ -2,19 +2,19 @@ import { useState, useEffect } from 'react'
 import styles from './Screen.module.css'
 
 const GENRE_ASSIGNMENTS = [
-  { genre: 'Racing',   icon: '??', ctrl: 'wheel',    label: 'Racing wheel' },
-  { genre: 'Shooter',  icon: '?', ctrl: 'lightgun',  label: 'Light gun' },
-  { genre: 'Fighting', icon: '??', ctrl: 'gamepad',   label: 'Xbox controller' },
-  { genre: 'Rhythm',   icon: '?', ctrl: 'gamepad',   label: 'Xbox controller' },
-  { genre: 'Flying',   icon: '??', ctrl: 'gamepad',   label: 'Xbox controller' },
-  { genre: 'Pinball',  icon: '?', ctrl: 'gamepad',   label: 'Xbox controller' },
+  { genre: 'Racing',   icon: 'WHL', ctrl: 'wheel',    label: 'Racing wheel' },
+  { genre: 'Shooter',  icon: 'GUN', ctrl: 'lightgun',  label: 'Light gun' },
+  { genre: 'Fighting', icon: 'PAD', ctrl: 'gamepad',   label: 'Xbox controller' },
+  { genre: 'Rhythm',   icon: 'BTN', ctrl: 'gamepad',   label: 'Xbox controller' },
+  { genre: 'Flying',   icon: 'STK', ctrl: 'gamepad',   label: 'Xbox controller' },
+  { genre: 'Pinball',  icon: 'FLP', ctrl: 'gamepad',   label: 'Xbox controller' },
 ]
 
 const CONTROLLER_CARDS = [
-  { key: 'wheel',    icon: '??', name: 'Racing wheel',    sub: 'DirectInput ? Force feedback' },
-  { key: 'lightgun', icon: '?', name: 'Light gun',        sub: 'RawInput ? Sinden / GUN4IR' },
-  { key: 'gamepad',  icon: '?', name: 'Xbox controller',  sub: 'XInput ? controller 1' },
-  { key: 'joystick', icon: '??', name: 'Flight stick',     sub: 'Connect to enable flying games' },
+  { key: 'wheel',    icon: 'WHL', name: 'Racing wheel',    sub: 'DirectInput ? Force feedback' },
+  { key: 'lightgun', icon: 'GUN', name: 'Light gun',        sub: 'RawInput ? Sinden / GUN4IR' },
+  { key: 'gamepad',  icon: 'PAD', name: 'Xbox controller',  sub: 'XInput ? controller 1' },
+  { key: 'joystick', icon: 'STK', name: 'Flight stick',     sub: 'Connect to enable flying games' },
 ]
 
 export default function ControllersScreen({ config, updateConfig, next, prev }) {

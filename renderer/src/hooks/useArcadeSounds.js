@@ -1,7 +1,7 @@
 // useArcadeSounds -- procedural arcade sound effects via Web Audio API
 // No audio files needed -- all generated in the browser
 
-import { useRef, useCallback } from 'react'
+import { useRef, useCallback, useEffect } from 'react'
 
 function createCtx() {
   try { return new (window.AudioContext || window.webkitAudioContext)() } catch { return null }
@@ -12,8 +12,29 @@ export function useArcadeSounds() {
 
   const ctx = () => {
     if (!ctxRef.current) ctxRef.current = createCtx()
+    // Resume if suspended (browser requires user gesture)
+    if (ctxRef.current?.state === 'suspended') {
+      ctxRef.current.resume().catch(() => {})
+    }
     return ctxRef.current
   }
+
+  // Unlock AudioContext on first user interaction
+  useEffect(() => {
+    const unlock = () => {
+      if (!ctxRef.current) ctxRef.current = createCtx()
+      if (ctxRef.current?.state === 'suspended') {
+        ctxRef.current.resume().catch(() => {})
+      }
+    }
+    window.addEventListener('click',    unlock, { once: true })
+    window.addEventListener('keydown',  unlock, { once: true })
+    window.addEventListener('gamepadconnected', unlock, { once: true })
+    return () => {
+      window.removeEventListener('click',   unlock)
+      window.removeEventListener('keydown', unlock)
+    }
+  }, [])
 
   const playTone = useCallback((freq, type, duration, gain = 0.15, delay = 0) => {
     const c = ctx()

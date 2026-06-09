@@ -8,7 +8,7 @@ const EMULATORS = [
     name: 'TeknoParrot',
     system: 'Arcade',
     color: '#00ff88',
-    url: 'https://teknoparrot.com',
+    url: 'https://teknoparrot.com/download',
     folder: 'F:\\TeknoParrot\\',
     gamesFolder: 'F:\\ArcadeGames\\',
     bios: false,
@@ -98,10 +98,10 @@ const EMULATORS = [
   {
     id: 'ryujinx',
     icon: '?',
-    name: 'Ryujinx',
+    name: 'Ryubing (Ryujinx fork)',
     system: 'Nintendo Switch',
     color: '#e4000f',
-    url: 'https://ryujinx.org',
+    url: 'https://github.com/GreemDev/Ryubing/releases',
     folder: 'F:\\Ryujinx\\',
     gamesFolder: 'F:\\SwitchGames\\',
     bios: true,
@@ -219,7 +219,7 @@ const EMULATORS = [
     name: 'Model 2 Emulator',
     system: 'Sega Model 2',
     color: '#003366',
-    url: 'https://github.com/magicseb/model2emu',
+    url: 'https://github.com/m2emulator/m2emulator/releases',
     folder: 'F:\\Model2\\',
     gamesFolder: 'F:\\Model2Games\\',
     bios: false,
@@ -237,7 +237,7 @@ const EMULATORS = [
     name: 'Supermodel (Model 3)',
     system: 'Sega Model 3',
     color: '#003366',
-    url: 'https://supermodel3.com',
+    url: 'https://github.com/trzy/Supermodel/releases',
     folder: 'F:\\Supermodel\\',
     gamesFolder: 'F:\\Model3Games\\',
     bios: false,
@@ -307,7 +307,7 @@ const EMULATORS = [
 ]
 
 export default function SetupGuideScreen({ config, next, prev }) {
-  const [expanded, setExpanded] = useState(null)
+  const [expanded, setExpanded] = useState('teknoparrot')
   const [biosStatus, setBiosStatus] = useState({})
   const toggle = (id) => setExpanded(e => e === id ? null : id)
 
