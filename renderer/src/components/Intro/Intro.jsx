@@ -91,32 +91,39 @@ export default function Intro({ onComplete }) {
     timersRef.current.push(id)
   }
 
+  const completedRef = useRef(false)
+  const done = () => {
+    if (completedRef.current) return
+    completedRef.current = true
+    ambRef.current?.stop()
+    onComplete()
+  }
+
   useEffect(() => {
-    // Start immediately -- no keypress needed
     ctxRef.current = createAudio()
     const ctx = ctxRef.current
     ambRef.current = startAmbient(ctx)
 
+    // Guaranteed completion -- if anything hangs, force complete after 6s
+    const safetyTimer = setTimeout(() => done(), 6000)
+    timersRef.current.push(safetyTimer)
+
     // Timeline
     at(() => {
-      // Coin drop
       playCoin(ctx)
       setPhase('flicker')
 
       at(() => {
-        // Screen settles, bass hit, logo slams
         playLogoSlam(ctx)
         setPhase('logo')
 
         at(() => {
-          // Tagline appears
           playBassHit(ctx)
           setPhase('tagline')
 
           at(() => {
-            // Fade to wheel
             setPhase('fadeout')
-            at(() => onComplete(), 700)
+            at(() => done(), 700)
           }, 2200)
         }, 1000)
       }, 350)
@@ -128,8 +135,7 @@ export default function Intro({ onComplete }) {
     const skip = () => {
       if (!skipEnabled) return
       timersRef.current.forEach(clearTimeout)
-      ambRef.current?.stop()
-      onComplete()
+      done()
     }
     window.addEventListener('keydown', skip)
     window.addEventListener('click',   skip)
@@ -187,7 +193,7 @@ export default function Intro({ onComplete }) {
       )}
 
       {/* Version */}
-      <div className={styles.version}>v3.2.6</div>
+      <div className={styles.version}>v3.2.7</div>
 
       {/* Skip hint */}
       {phase !== 'dark' && phase !== 'fadeout' && (
