@@ -338,12 +338,16 @@ export default function SetupGuideScreen({ config, next, prev }) {
           <div key={emu.id} className={styles.guideCard}>
             <div className={styles.guideHeader} onClick={() => toggle(emu.id)}>
               <div className={styles.guideLeft}>
-                <span className={styles.guideIcon}>{emu.icon}</span>
+                <div className={styles.guideIconBox} style={{ borderColor: emu.color + "44", background: emu.color + "11" }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: emu.color, letterSpacing: "0.05em" }}>
+                    {emu.system.slice(0, 3).toUpperCase()}
+                  </span>
+                </div>
                 <div>
                   <div className={styles.guideName} style={{ color: emu.color }}>
                     {emu.name}
                   </div>
-                  <div className={styles.guideSystem}>{emu.system}</div>
+                  <div className={styles.guideSystem}>{emu.system} -- {emu.url.replace('https://', '')}</div>
                 </div>
               </div>
               <div className={styles.guideRight}>
@@ -354,6 +358,12 @@ export default function SetupGuideScreen({ config, next, prev }) {
                 {emu.bios && getBiosStatus(emu.id) === 'missing' && (
                   <span className={styles.biosMissing}>BIOS missing</span>
                 )}
+                <button
+                  className={styles.guideDownloadBtn}
+                  onClick={(e) => { e.stopPropagation(); window.open(emu.url, '_blank') }}
+                >
+                  Download
+                </button>
                 <span className={styles.guideChevron}>{expanded === emu.id ? 'v' : '>'}</span>
               </div>
             </div>

@@ -12,6 +12,7 @@ const SCREENS = [
   'Welcome',
   'Security',
   'Paths',
+  'Emulators',
   'Controllers',
   'Game Scan',
   'Ready',
