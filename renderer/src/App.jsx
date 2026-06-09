@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, Component } from "react"
 import Intro from "./components/Intro/Intro"
 import Wizard from "./components/Wizard/Wizard"
 import Wheel from "./components/Wheel/Wheel"
@@ -11,12 +11,50 @@ import CoinCounter from "./components/CoinCounter/CoinCounter"
 import { useTheme } from "./hooks/useTheme"
 import "./index.css"
 
+// Error boundary catches render crashes and shows diagnostic info
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props)
+    this.state = { error: null }
+  }
+  static getDerivedStateFromError(error) {
+    return { error }
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{
+          position: 'fixed', inset: 0, background: '#000',
+          display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center',
+          color: '#ef4444', fontFamily: 'monospace', padding: 40, gap: 16
+        }}>
+          <div style={{ fontSize: 18, fontWeight: 700 }}>NuArcade render error</div>
+          <div style={{ fontSize: 12, color: '#ff8888', maxWidth: 600, textAlign: 'center' }}>
+            {this.state.error.message}
+          </div>
+          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', maxWidth: 600, textAlign: 'center' }}>
+            {this.state.error.stack?.split('\n').slice(0,5).join(' | ')}
+          </div>
+          <button
+            onClick={() => window.location.reload()}
+            style={{ marginTop: 16, padding: '8px 24px', background: '#ef4444', border: 'none', color: '#fff', cursor: 'pointer', borderRadius: 4 }}
+          >
+            Reload
+          </button>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
+
 export default function App() {
   const [phase, setPhase] = useState("intro")
   const [showUpdater, setShowUpdater] = useState(false)
   const [lastLaunch, setLastLaunch] = useState(null)
   const { themeId, setTheme } = useTheme()
-  const VERSION = "3.2.8"
+  const VERSION = "3.2.9"
   const { hasUpdate, newVersion, releaseUrl, releaseNotes, dismiss } = useAutoUpdate(VERSION)
 
   const [crtEnabled, setCrtEnabled] = useState(() => {
@@ -81,16 +119,18 @@ export default function App() {
         />
       )}
       <div style={{ width: "100vw", height: "100vh", background: "#000", overflow: "hidden" }}>
-        {phase === "intro" && <Intro onComplete={handleIntroComplete} />}
-        {phase === "wizard" && <Wizard onComplete={() => {
-          if (window.nuarcade?.setupComplete) window.nuarcade.setupComplete()
-          setPhase("wheel")
-          setShowUpdater(true)
-        }} />}
-        {(phase === "wheel" || phase === "fallback") && <Wheel onCRTChange={handleCRTChange} crtEnabled={crtEnabled} themeId={themeId} onThemeChange={setTheme} lastLaunch={lastLaunch} setLastLaunch={setLastLaunch} />}
-        {phase === "wheel" && showUpdater && (
-          <Updater onDismiss={() => setShowUpdater(false)} />
-        )}
+        <ErrorBoundary>
+          {phase === "intro" && <Intro onComplete={handleIntroComplete} />}
+          {phase === "wizard" && <Wizard onComplete={() => {
+            if (window.nuarcade?.setupComplete) window.nuarcade.setupComplete()
+            setPhase("wheel")
+            setShowUpdater(true)
+          }} />}
+          {(phase === "wheel" || phase === "fallback") && <Wheel onCRTChange={handleCRTChange} crtEnabled={crtEnabled} themeId={themeId} onThemeChange={setTheme} lastLaunch={lastLaunch} setLastLaunch={setLastLaunch} />}
+          {phase === "wheel" && showUpdater && (
+            <Updater onDismiss={() => setShowUpdater(false)} />
+          )}
+        </ErrorBoundary>
         <CRT enabled={crtEnabled} />
         <CoinCounter lastLaunch={lastLaunch} />
       </div>

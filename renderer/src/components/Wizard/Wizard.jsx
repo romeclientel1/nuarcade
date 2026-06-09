@@ -64,15 +64,18 @@ export default function Wizard({ onComplete }) {
 
   const screenProps = { config, updateConfig, next, prev, finish, step }
 
-  const screens = [
-    <WelcomeScreen {...screenProps} />,
-    <SecurityScreen {...screenProps} />,
-    <PathsScreen {...screenProps} />,
-    <SetupGuideScreen {...screenProps} />,
-<ControllersScreen {...screenProps} />,
-    <ScanScreen {...screenProps} />,
-    <ReadyScreen {...screenProps} />,
-  ]
+  const renderScreen = () => {
+    switch (step) {
+      case 0: return <WelcomeScreen    {...screenProps} />
+      case 1: return <SecurityScreen   {...screenProps} />
+      case 2: return <PathsScreen      {...screenProps} />
+      case 3: return <SetupGuideScreen {...screenProps} />
+      case 4: return <ControllersScreen {...screenProps} />
+      case 5: return <ScanScreen       {...screenProps} />
+      case 6: return <ReadyScreen      {...screenProps} />
+      default: return <WelcomeScreen   {...screenProps} />
+    }
+  }
 
   return (
     <div className={styles.shell}>
@@ -87,7 +90,7 @@ export default function Wizard({ onComplete }) {
           {SCREENS.map((s, i) => (
             <div key={s} className={styles.stepItem}>
               <div className={`${styles.stepDot} ${i < step ? styles.dotDone : i === step ? styles.dotActive : styles.dotWait}`}>
-                {i < step ? '?' : i + 1}
+                {i < step ? 'v' : i + 1}
               </div>
               {i < SCREENS.length - 1 && (
                 <div className={`${styles.stepLine} ${i < step ? styles.lineDone : ''}`} />
@@ -99,7 +102,7 @@ export default function Wizard({ onComplete }) {
       </div>
 
       <div className={styles.body}>
-        {screens[step]}
+        {renderScreen()}
       </div>
     </div>
   )
