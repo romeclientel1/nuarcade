@@ -3,6 +3,9 @@ name: Build NuArcade
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-windows:
     runs-on: windows-latest
@@ -28,9 +31,47 @@ jobs:
       - name: Build Windows installer
         run: npx electron-builder --win --publish never
 
-      - name: Upload installer
+      - name: Get version
+        id: version
+        run: |
+          $version = (Get-Content package.json | ConvertFrom-Json).version
+          echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Upload installer artifact
         uses: actions/upload-artifact@v4
         with:
           name: NuArcade-Windows-Installer
           path: dist/*.exe
-          retention-days: 30
+          retention-days: 90
+
+      - name: Delete existing release if present
+        run: |
+          gh release delete "v${{ steps.version.outputs.VERSION }}" --yes 2>$null || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.VERSION }}
+          name: NuArcade v${{ steps.version.outputs.VERSION }}
+          body: |
+            ## NuArcade v${{ steps.version.outputs.VERSION }}
+
+            ### Installation
+            1. Download `NuArcade-Setup.exe` below
+            2. Run the installer -- it will create all required folders on your F: drive automatically
+            3. Launch NuArcade and follow the Setup Wizard
+
+            ### Requirements
+            - Windows 10/11 64-bit
+            - F: drive for games and emulators (configured automatically)
+            - Individual emulators installed separately (links in the Setup Wizard)
+
+            ### Supported Systems
+            TeknoParrot, MAME, Model 2, Model 3, RetroArch, Project64, DuckStation, Flycast, PPSSPP, PCSX2, RPCS3, Xenia, Dolphin, Cemu, Ryujinx, Visual Pinball X, Steam, PC
+          files: dist/*.exe
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
