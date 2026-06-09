@@ -18,7 +18,7 @@ export default function App() {
   const [splashDone, setSplashDone] = useState(false)
   const [lastLaunch, setLastLaunch] = useState(null)
   const { themeId, setTheme } = useTheme()
-  const VERSION = "3.2.5"
+  const VERSION = "3.2.6"
   const { hasUpdate, newVersion, releaseUrl, releaseNotes, dismiss } = useAutoUpdate(VERSION)
 
   const [crtEnabled, setCrtEnabled] = useState(() => {
@@ -31,19 +31,22 @@ export default function App() {
   }
 
   const handleIntroComplete = async () => {
-    if (window.nuarcade && window.nuarcade.platform === "win32") {
-      const config = await window.nuarcade.getConfig()
-      if (!config.setupComplete) {
-        setPhase("wizard")
-        return
+    try {
+      if (window.nuarcade?.getConfig) {
+        const config = await window.nuarcade.getConfig()
+        if (!config?.setupComplete) {
+          setPhase("wizard")
+          return
+        }
+        if (config.autoLaunchLast) {
+          try {
+            const recent = JSON.parse(localStorage.getItem("nuarcade_recent") || "[]")
+            if (recent[0]) localStorage.setItem("nuarcade_auto_launch", JSON.stringify(recent[0]))
+          } catch {}
+        }
       }
-      // Store autoLaunchLast flag for Wheel to pick up
-      if (config.autoLaunchLast) {
-        try {
-          const recent = JSON.parse(localStorage.getItem("nuarcade_recent") || "[]")
-          if (recent[0]) localStorage.setItem("nuarcade_auto_launch", JSON.stringify(recent[0]))
-        } catch {}
-      }
+    } catch (e) {
+      console.warn("getConfig failed:", e)
     }
     setPhase("wheel")
     setShowUpdater(true)

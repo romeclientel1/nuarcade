@@ -122,8 +122,11 @@ export default function Intro({ onComplete }) {
       }, 350)
     }, 600)
 
-    // Skip on any input
+    // Skip on any input -- brief lockout so early clicks don't fire before IPC is ready
+    let skipEnabled = false
+    const skipLockout = setTimeout(() => { skipEnabled = true }, 800)
     const skip = () => {
+      if (!skipEnabled) return
       timersRef.current.forEach(clearTimeout)
       ambRef.current?.stop()
       onComplete()
@@ -133,6 +136,7 @@ export default function Intro({ onComplete }) {
 
     return () => {
       timersRef.current.forEach(clearTimeout)
+      clearTimeout(skipLockout)
       ambRef.current?.stop()
       window.removeEventListener('keydown', skip)
       window.removeEventListener('click',   skip)
@@ -183,7 +187,7 @@ export default function Intro({ onComplete }) {
       )}
 
       {/* Version */}
-      <div className={styles.version}>v3.2.5</div>
+      <div className={styles.version}>v3.2.6</div>
 
       {/* Skip hint */}
       {phase !== 'dark' && phase !== 'fadeout' && (
