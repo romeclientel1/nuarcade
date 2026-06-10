@@ -1,4 +1,6 @@
-export const ACHIEVEMENTS = [
+// Using var (not const) so Rollup/esbuild never hits a TDZ initialization error
+// regardless of module evaluation order in the bundle.
+var ACHIEVEMENTS = [
   // Playtime
   { id: "first_launch",   icon: "?",  title: "First Launch",      desc: "Launch your first game",               check: (s) => s.totalLaunches >= 1 },
   { id: "hour_1",         icon: "?",  title: "First Hour",        desc: "Play for 1 total hour",                check: (s) => s.totalTimeSec >= 3600 },
@@ -34,40 +36,51 @@ export const ACHIEVEMENTS = [
   { id: "5_systems",      icon: "?",  title: "Multi-System",      desc: "Play games on 5 different systems",    check: (s) => s.distinctSystems >= 5 },
 ]
 
+export { ACHIEVEMENTS }
+
+// Function declaration (not arrow/const) -- hoisted fully, no TDZ risk
 export function computeStats(games) {
-  const pt       = (() => { try { return JSON.parse(localStorage.getItem("nuarcade_playtime") || "{}") } catch { return {} } })()
-  const lc       = (() => { try { return JSON.parse(localStorage.getItem("nuarcade_launches")  || "{}") } catch { return {} } })()
-  const ratings  = (() => { try { return JSON.parse(localStorage.getItem("nuarcade_ratings")   || "{}") } catch { return {} } })()
-  const cols     = (() => { try { return JSON.parse(localStorage.getItem("nuarcade_collections")|| "{}") } catch { return {} } })()
-  const launches = (() => { try { return JSON.parse(localStorage.getItem("nuarcade_launches")   || "{}") } catch { return {} } })()
+  var pt       = (function() { try { return JSON.parse(localStorage.getItem("nuarcade_playtime") || "{}") } catch(e) { return {} } })()
+  var lc       = (function() { try { return JSON.parse(localStorage.getItem("nuarcade_launches")  || "{}") } catch(e) { return {} } })()
+  var ratings  = (function() { try { return JSON.parse(localStorage.getItem("nuarcade_ratings")   || "{}") } catch(e) { return {} } })()
+  var cols     = (function() { try { return JSON.parse(localStorage.getItem("nuarcade_collections")|| "{}") } catch(e) { return {} } })()
+  var launches = (function() { try { return JSON.parse(localStorage.getItem("nuarcade_launches")   || "{}") } catch(e) { return {} } })()
 
-  const totalTimeSec    = Object.values(pt).reduce((s, v) => s + (v.total || 0), 0)
-  const totalLaunches   = Object.values(lc).reduce((s, v) => s + (v.count || 0), 0)
-  const gamesPlayed     = Object.values(pt).filter(v => v.total > 0).length
-  const bestSession     = Math.max(0, ...Object.values(pt).map(v => v.best || 0))
-  const maxGameLaunches = Math.max(0, ...Object.values(lc).map(v => v.count || 0))
-  const gamesRated      = Object.values(ratings).filter(r => r > 0).length
-  const perfectRatings  = Object.values(ratings).filter(r => r === 5).length
-  const collections     = Object.keys(cols).length
-  const collectionGames = Object.values(cols).reduce((s, c) => s + (c.games?.length || 0), 0)
+  var totalTimeSec    = Object.values(pt).reduce(function(s, v) { return s + (v.total || 0) }, 0)
+  var totalLaunches   = Object.values(lc).reduce(function(s, v) { return s + (v.count || 0) }, 0)
+  var gamesPlayed     = Object.values(pt).filter(function(v) { return v.total > 0 }).length
+  var bestSession     = Math.max.apply(null, [0].concat(Object.values(pt).map(function(v) { return v.best || 0 })))
+  var maxGameLaunches = Math.max.apply(null, [0].concat(Object.values(lc).map(function(v) { return v.count || 0 })))
+  var gamesRated      = Object.values(ratings).filter(function(r) { return r > 0 }).length
+  var perfectRatings  = Object.values(ratings).filter(function(r) { return r === 5 }).length
+  var collections     = Object.keys(cols).length
+  var collectionGames = Object.values(cols).reduce(function(s, c) { return s + ((c.games && c.games.length) || 0) }, 0)
 
-  let launchedAfterMidnight = false
-  let launchedBeforeSix = false
-  Object.values(launches).forEach(v => {
+  var launchedAfterMidnight = false
+  var launchedBeforeSix = false
+  Object.values(launches).forEach(function(v) {
     if (!v.last) return
-    const h = new Date(v.last).getHours()
+    var h = new Date(v.last).getHours()
     if (h >= 0 && h < 3)  launchedAfterMidnight = true
     if (h >= 4 && h < 6)  launchedBeforeSix = true
   })
 
-  const emulatorSet = new Set(games.filter(g => pt[g.id || g.profile]?.total > 0).map(g => g.emulator))
-  const systemSet   = new Set(games.filter(g => pt[g.id || g.profile]?.total > 0).map(g => g.system))
+  var emulatorSet = new Set(games.filter(function(g) { return pt[g.id || g.profile] && pt[g.id || g.profile].total > 0 }).map(function(g) { return g.emulator }))
+  var systemSet   = new Set(games.filter(function(g) { return pt[g.id || g.profile] && pt[g.id || g.profile].total > 0 }).map(function(g) { return g.system }))
 
   return {
-    totalTimeSec, totalLaunches, gamesPlayed, bestSession, maxGameLaunches,
-    gamesRated, perfectRatings, collections, collectionGames,
-    launchedAfterMidnight, launchedBeforeSix,
+    totalTimeSec: totalTimeSec,
+    totalLaunches: totalLaunches,
+    gamesPlayed: gamesPlayed,
+    bestSession: bestSession,
+    maxGameLaunches: maxGameLaunches,
+    gamesRated: gamesRated,
+    perfectRatings: perfectRatings,
+    collections: collections,
+    collectionGames: collectionGames,
+    launchedAfterMidnight: launchedAfterMidnight,
+    launchedBeforeSix: launchedBeforeSix,
     distinctEmulators: emulatorSet.size,
-    distinctSystems:   systemSet.size,
+    distinctSystems: systemSet.size,
   }
 }
