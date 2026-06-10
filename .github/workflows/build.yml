@@ -44,35 +44,12 @@ jobs:
           path: dist/*.exe
           retention-days: 90
 
-      - name: Delete existing release if present
+      - name: Publish GitHub Release
         run: |
-          gh release delete "v${{ steps.version.outputs.VERSION }}" --yes 2>$null || true
+          $version = "${{ steps.version.outputs.VERSION }}"
+          $tag = "v$version"
+          $exe = Get-ChildItem dist\*.exe | Select-Object -First 1 -ExpandProperty FullName
+          gh release delete $tag --yes 2>$null
+          gh release create $tag $exe --title "NuArcade v$version" --notes "## NuArcade v$version`n`n### Installation`n1. Download NuArcade-Setup.exe below`n2. Run the installer over the existing install`n3. Launch NuArcade"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ steps.version.outputs.VERSION }}
-          name: NuArcade v${{ steps.version.outputs.VERSION }}
-          body: |
-            ## NuArcade v${{ steps.version.outputs.VERSION }}
-
-            ### Installation
-            1. Download `NuArcade-Setup.exe` below
-            2. Run the installer over the existing install (no uninstall needed)
-            3. Launch NuArcade
-
-            ### Requirements
-            - Windows 10/11 64-bit
-            - F: drive for games and emulators (configured automatically)
-            - Individual emulators installed separately (links in the Setup Wizard)
-
-            ### Supported Systems
-            TeknoParrot, MAME, Model 2, Model 3, RetroArch, Project64, DuckStation, Flycast, PPSSPP, PCSX2, RPCS3, Xenia, Dolphin, Cemu, Ryujinx, Visual Pinball X, Steam, PC
-          files: dist/*.exe
-          draft: false
-          prerelease: false
-          token: ${{ secrets.GITHUB_TOKEN }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
