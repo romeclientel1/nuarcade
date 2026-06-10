@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import styles from "./AchievementToast.module.css"
-import { ACHIEVEMENTS } from "./Achievements"
+import { ACHIEVEMENTS } from "./achievementData"
 
 // Tracks which achievements have been seen so we don't re-toast
 const SEEN_KEY = "nuarcade_achievements_seen"
