@@ -54,7 +54,7 @@ export default function App() {
   const [showUpdater, setShowUpdater] = useState(false)
   const [lastLaunch, setLastLaunch] = useState(null)
   const { themeId, setTheme } = useTheme()
-  const VERSION = "3.4.0"
+  const VERSION = "3.4.1"
   const { hasUpdate, newVersion, releaseUrl, releaseNotes, dismiss } = useAutoUpdate(VERSION)
 
   const [crtEnabled, setCrtEnabled] = useState(() => {
@@ -126,7 +126,7 @@ export default function App() {
             setPhase("wheel")
             setShowUpdater(true)
           }} />}
-          {(phase === "wheel" || phase === "fallback") && <Wheel onCRTChange={handleCRTChange} crtEnabled={crtEnabled} themeId={themeId} onThemeChange={setTheme} lastLaunch={lastLaunch} setLastLaunch={setLastLaunch} />}
+          {(phase === "wheel" || phase === "fallback") && <Wheel onCRTChange={handleCRTChange} crtEnabled={crtEnabled} themeId={themeId} onThemeChange={setTheme} lastLaunch={lastLaunch} setLastLaunch={setLastLaunch} onSetupWizard={() => { window.nuarcade?.resetSetup?.().then(() => setPhase("wizard")) }} />}
           {phase === "wheel" && showUpdater && (
             <Updater onDismiss={() => setShowUpdater(false)} />
           )}

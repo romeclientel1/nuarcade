@@ -1,7 +1,7 @@
 import styles from './Screen.module.css'
 
 export default function ReadyScreen({ config, finish }) {
-  const gameCount = config.scannedGames?.length || 124
+  const gameCount = config.scannedGames?.length || 0
   const ctrlCount = Object.values(config.controllers || {}).filter(Boolean).length || 3
 
   return (
@@ -18,7 +18,7 @@ export default function ReadyScreen({ config, finish }) {
 
       <div className={styles.readyStats}>
         <div className={styles.rsStat}>
-          <div className={styles.rsNum}>{gameCount}</div>
+          <div className={styles.rsNum}>{gameCount || '--'}</div>
           <div className={styles.rsLbl}>Games ready</div>
         </div>
         <div className={styles.rsStat}>

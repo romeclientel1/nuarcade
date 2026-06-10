@@ -78,7 +78,7 @@ function sortGames(games, sortBy) {
   }
 }
 
-export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange }) {
+export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange, onSetupWizard }) {
   const {
     games, stats, loading, libraryEmpty, config,
     toggleFavorite, isFavorite,
@@ -519,7 +519,12 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
       </div>
 
       <div className={styles.categoryStrip}>
-        {CATEGORIES.map(cat => (
+        {CATEGORIES.filter(cat => {
+          if (cat === "All") return true
+          if (cat === "Favorites") return games.some(g => favorites.includes(g.id || g.profile))
+          if (cat === "Recent") return recentlyPlayed.length > 0
+          return games.some(g => g.genre === cat)
+        }).map(cat => (
           <button
             key={cat}
             className={styles.catPill + (activeCategory === cat ? " " + styles.catActive : "")}
@@ -737,7 +742,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
         />
       )}
       {showMediaManager && <MediaManager onClose={() => setShowMediaManager(false)} />}
-      {showSettings && <Settings games={games} onClose={() => setShowSettings(false)} onCRTChange={onCRTChange} crtEnabled={crtEnabled} themeId={themeId} onThemeChange={onThemeChange} />}
+      {showSettings && <Settings games={games} onClose={() => setShowSettings(false)} onCRTChange={onCRTChange} crtEnabled={crtEnabled} themeId={themeId} onThemeChange={onThemeChange} onSetupWizard={onSetupWizard} />}
       {showDetail && current && (
         <GameDetail
           game={current}
