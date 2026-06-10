@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useOverlayGamepad } from "../../hooks/useOverlayGamepad"
 import styles from "./Achievements.module.css"
-import { ACHIEVEMENTS, computeStats } from "./achievementData"
+import { getAchievements, computeStats } from "./achievementData"
 
 export default function Achievements({ games, onClose }) {
   const bodyRef = useRef(null)
@@ -19,9 +19,9 @@ export default function Achievements({ games, onClose }) {
     onDown: () => bodyRef.current?.scrollBy({ top:  80, behavior: "smooth" }),
   })
 
-  const unlocked = ACHIEVEMENTS.filter(a => a.check(stats))
-  const locked   = ACHIEVEMENTS.filter(a => !a.check(stats))
-  const pct      = Math.round((unlocked.length / ACHIEVEMENTS.length) * 100)
+  const unlocked = getAchievements().filter(a => a.check(stats))
+  const locked   = getAchievements().filter(a => !a.check(stats))
+  const pct      = Math.round((unlocked.length / getAchievements().length) * 100)
 
   return (
     <div className={styles.overlay} onClick={onClose}>
@@ -32,7 +32,7 @@ export default function Achievements({ games, onClose }) {
             <div className={styles.progressBar}>
               <div className={styles.progressFill} style={{ width: pct + "%" }} />
             </div>
-            <span className={styles.progressLabel}>{unlocked.length} / {ACHIEVEMENTS.length}</span>
+            <span className={styles.progressLabel}>{unlocked.length} / {getAchievements().length}</span>
           </div>
           <button className={styles.closeBtn} onClick={onClose}>X</button>
         </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import styles from "./AchievementToast.module.css"
-import { ACHIEVEMENTS } from "./achievementData"
+import { getAchievements } from "./achievementData"
 
 // Tracks which achievements have been seen so we don't re-toast
 const SEEN_KEY = "nuarcade_achievements_seen"
@@ -43,7 +43,7 @@ export function useAchievementToasts(stats) {
   const checkForNew = useCallback(() => {
     if (!stats) return
     const seen = getSeenSet()
-    const newlyUnlocked = ACHIEVEMENTS.filter(a => {
+    const newlyUnlocked = getAchievements().filter(a => {
       if (seen.has(a.id)) return false
       return a.check(stats)
     })
