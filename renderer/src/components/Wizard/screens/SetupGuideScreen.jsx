@@ -101,7 +101,7 @@ const EMULATORS = [
     name: 'Ryubing (Ryujinx fork)',
     system: 'Nintendo Switch',
     color: '#e4000f',
-    url: 'https://github.com/GreemDev/Ryubing/releases',
+    url: 'https://github.com/GreemDev/Ryubing/releases/latest',
     folder: 'F:\\Ryujinx\\',
     gamesFolder: 'F:\\SwitchGames\\',
     bios: true,
@@ -219,7 +219,7 @@ const EMULATORS = [
     name: 'Model 2 Emulator',
     system: 'Sega Model 2',
     color: '#003366',
-    url: 'https://github.com/m2emulator/m2emulator/releases',
+    url: 'https://github.com/m2emulator/m2emulator/releases/latest',
     folder: 'F:\\Model2\\',
     gamesFolder: 'F:\\Model2Games\\',
     bios: false,
@@ -307,9 +307,9 @@ const EMULATORS = [
 ]
 
 export default function SetupGuideScreen({ config, next, prev }) {
-  const [expanded, setExpanded] = useState('teknoparrot')
+  const [collapsed, setCollapsed] = useState(new Set())
   const [biosStatus, setBiosStatus] = useState({})
-  const toggle = (id) => setExpanded(e => e === id ? null : id)
+  const toggle = (id) => setCollapsed(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n })
 
   // Run BIOS check on mount (Windows only)
   useState(() => {
@@ -364,11 +364,11 @@ export default function SetupGuideScreen({ config, next, prev }) {
                 >
                   Download
                 </button>
-                <span className={styles.guideChevron}>{expanded === emu.id ? 'v' : '>'}</span>
+                <span className={styles.guideChevron}>{collapsed.has(emu.id) ? '>' : 'v'}</span>
               </div>
             </div>
 
-            {expanded === emu.id && (
+            {!collapsed.has(emu.id) && (
               <div className={styles.guideBody}>
                 {emu.bios && getBiosStatus(emu.id) === 'missing' && (
                   <div className={styles.biosWarning}>
