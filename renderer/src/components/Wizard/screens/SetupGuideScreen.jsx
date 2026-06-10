@@ -4,11 +4,11 @@ import styles from './Screen.module.css'
 const EMULATORS = [
   {
     id: 'teknoparrot',
-    icon: '??',
+    icon: 'ARC',
     name: 'TeknoParrot',
     system: 'Arcade',
     color: '#00ff88',
-    url: 'https://teknoparrot.com/download',
+    url: 'https://teknoparrot.com/',
     folder: 'F:\\TeknoParrot\\',
     gamesFolder: 'F:\\ArcadeGames\\',
     bios: false,
@@ -22,7 +22,7 @@ const EMULATORS = [
   },
   {
     id: 'rpcs3',
-    icon: '?',
+    icon: 'PS3',
     name: 'RPCS3',
     system: 'PlayStation 3',
     color: '#0070d1',
@@ -40,7 +40,7 @@ const EMULATORS = [
   },
   {
     id: 'xenia',
-    icon: '??',
+    icon: 'X360',
     name: 'Xenia',
     system: 'Xbox 360',
     color: '#107c10',
@@ -58,7 +58,7 @@ const EMULATORS = [
   },
   {
     id: 'dolphin',
-    icon: '?',
+    icon: 'GCN',
     name: 'Dolphin',
     system: 'GameCube / Wii',
     color: '#6b21a8',
@@ -76,7 +76,7 @@ const EMULATORS = [
   },
   {
     id: 'pcsx2',
-    icon: '?',
+    icon: 'PS2',
     name: 'PCSX2',
     system: 'PlayStation 2',
     color: '#003791',
@@ -97,7 +97,7 @@ const EMULATORS = [
   },
   {
     id: 'ryujinx',
-    icon: '?',
+    icon: 'NSW',
     name: 'Ryubing (Ryujinx fork)',
     system: 'Nintendo Switch',
     color: '#e4000f',
@@ -288,7 +288,7 @@ const EMULATORS = [
   },
   {
     id: 'vpx',
-    icon: '?',
+    icon: 'PIN',
     name: 'Visual Pinball X',
     system: 'Pinball',
     color: '#cc44ff',

@@ -138,13 +138,13 @@ export default function ScanScreen({ config, updateConfig, next, prev }) {
 
   return (
     <div className={styles.screen}>
-      <div className={styles.eyebrow}>Step 5 ? Game Scan</div>
+      <div className={styles.eyebrow}>Step 5 -- Game Scan</div>
       <div className={styles.title}>
-        {done ? emptyState ? 'Ready ? add games anytime.' : `Found ${totalFound} game${totalFound !== 1 ? 's' : ''}!` : 'Scanning your library...'}
+        {done ? emptyState ? 'Ready -- add games anytime.' : `Found ${totalFound} game${totalFound !== 1 ? 's' : ''}!` : 'Scanning your library...'}
       </div>
       <div className={styles.sub}>
         {emptyState
-          ? "No games found yet ? totally fine. Add games to your F: drive folders and rescan from Settings anytime."
+          ? "No games found yet -- totally fine. Add games to your F: drive folders and rescan from Settings anytime."
           : 'Scanning all emulators and matching game files automatically.'}
       </div>
 
@@ -179,7 +179,7 @@ export default function ScanScreen({ config, updateConfig, next, prev }) {
 
       {emptyState && (
         <div className={styles.emptyHint}>
-          <div className={styles.emptyIcon}>?</div>
+          <div className={styles.emptyIcon}>[ ]</div>
           <div className={styles.emptyText}>Add games to your F: drive folders, then rescan from Settings anytime.</div>
         </div>
       )}
@@ -189,7 +189,7 @@ export default function ScanScreen({ config, updateConfig, next, prev }) {
           const status = getStatus(s.key)
           return (
             <div key={s.key} className={`${styles.statusItem} ${styles[status]}`}>
-              {status === 'done'    && <span className={styles.siDone}>?</span>}
+              {status === 'done'    && <span className={styles.siDone}>OK</span>}
               {status === 'running' && <div className={styles.spinner} />}
               {status === 'wait'    && <div style={{ width:16, height:16, borderRadius:'50%', border:'1px solid rgba(255,255,255,0.15)' }} />}
               <span className={styles.siText}>{s.label}</span>
@@ -200,10 +200,10 @@ export default function ScanScreen({ config, updateConfig, next, prev }) {
       </div>
 
       <div className={styles.footer}>
-        <button className={styles.btnBack} onClick={prev}>? Back</button>
+        <button className={styles.btnBack} onClick={prev}>Back</button>
         <button className={styles.btnNext} onClick={next} disabled={!done}
           style={{ opacity: done ? 1 : 0.4, cursor: done ? 'pointer' : 'not-allowed' }}>
-          {done ? 'Continue ?' : 'Scanning...'}
+          {done ? 'Continue ->' : 'Scanning...'}
         </button>
       </div>
     </div>
