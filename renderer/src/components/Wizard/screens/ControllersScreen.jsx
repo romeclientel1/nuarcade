@@ -11,9 +11,9 @@ const GENRE_ASSIGNMENTS = [
 ]
 
 const CONTROLLER_CARDS = [
-  { key: 'wheel',    icon: 'WHL', name: 'Racing wheel',    sub: 'DirectInput ? Force feedback' },
-  { key: 'lightgun', icon: 'GUN', name: 'Light gun',        sub: 'RawInput ? Sinden / GUN4IR' },
-  { key: 'gamepad',  icon: 'PAD', name: 'Xbox controller',  sub: 'XInput ? controller 1' },
+  { key: 'wheel',    icon: 'WHL', name: 'Racing wheel',    sub: 'DirectInput / Force feedback' },
+  { key: 'lightgun', icon: 'GUN', name: 'Light gun',        sub: 'RawInput / Sinden / GUN4IR' },
+  { key: 'gamepad',  icon: 'PAD', name: 'Xbox controller',  sub: 'XInput / controller 1' },
   { key: 'joystick', icon: 'STK', name: 'Flight stick',     sub: 'Connect to enable flying games' },
 ]
 
@@ -55,7 +55,7 @@ export default function ControllersScreen({ config, updateConfig, next, prev }) 
 
   return (
     <div className={styles.screen}>
-      <div className={styles.eyebrow}>Step 3 ? Controllers</div>
+      <div className={styles.eyebrow}>Step 5 -- Controllers</div>
       <div className={styles.title}>Controllers detected.</div>
       <div className={styles.sub}>
         NuArcade found the following devices. Each genre is automatically
@@ -98,7 +98,7 @@ export default function ControllersScreen({ config, updateConfig, next, prev }) 
 
       <div className={styles.footer}>
         <button className={styles.btnBack} onClick={prev}>Back</button>
-        <button className={styles.btnNext} onClick={next}>Continue ?</button>
+        <button className={styles.btnNext} onClick={next}>Continue -></button>
       </div>
     </div>
   )
