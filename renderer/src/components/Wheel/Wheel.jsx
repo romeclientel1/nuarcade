@@ -427,7 +427,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
     return styles.cardHidden
   }
 
-  if (loading) return <Splash message="Scanning game library..." />
+  if (loading) return <div style={{ width:"100vw", height:"100vh", background:"#000", display:"flex", alignItems:"center", justifyContent:"center", color:"#888", fontFamily:"monospace", fontSize:14 }}>Scanning game library...</div>
 
   return (
     <div className={styles.stage + (cabinetMode ? " " + styles.cabinetMode : "") + (screenshotMode ? " " + styles.screenshotMode : "")}>
