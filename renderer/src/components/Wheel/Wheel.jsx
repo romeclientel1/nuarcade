@@ -211,6 +211,101 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
   }, [current?.id, current?.profile, artwork])
 
   // Auto-launch last played game if configured
+
+  const handleLaunch = async () => {
+    if (launching || !current) return
+    sounds.launch()
+    setLaunching(true)
+    const gameId = current.id || current.profile
+    const sessionStart = startSession(gameId)
+    recordLaunch(gameId)
+    addRecentlyPlayed(current)
+
+    // When window regains focus, the user returned from the emulator -- save session
+    const handleFocusReturn = () => {
+      endSession(gameId, sessionStart)
+      setAchievementStats(computeStats(games))
+      window.removeEventListener("focus", handleFocusReturn)
+    }
+    window.addEventListener("focus", handleFocusReturn)
+
+    // Also save if NuArcade is closed before focus returns (visibilitychange)
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        endSession(gameId, sessionStart)
+        document.removeEventListener("visibilitychange", handleVisibility)
+      }
+    }
+    document.addEventListener("visibilitychange", handleVisibility)
+
+    // Push "NOW PLAYING" state to marquee with full game info
+    if (window.nuarcade?.updateMarquee) {
+      const art = artwork?.[gameId]
+      window.nuarcade.updateMarquee({
+        title:      current.title,
+        system:     current.system || current.genre,
+        hero:       art?.hero    || null,
+        logo:       art?.logo    || null,
+        capsule:    art?.capsule || null,
+        nowPlaying: true,
+        genre:      current.genre,
+        emulator:   current.emulator,
+      }).catch(() => {})
+    }
+    // Fire LED/external game-launched event
+    window.nuarcade?.gameLaunched?.({
+      title: current.title, system: current.system,
+      genre: current.genre, emulator: current.emulator,
+      id: gameId,
+    }).catch?.(() => {})
+    // Pixelcade push on launch (with nowPlaying flag)
+    const launchArt = artwork?.[gameId]
+    window.nuarcade?.pixelcadePush?.({
+      title: current.title, system: current.system,
+      genre: current.genre, emulator: current.emulator,
+      hero: launchArt?.hero || null, capsule: launchArt?.capsule || null,
+      nowPlaying: true,
+    }).catch?.(() => {})
+    try {
+      const gp = navigator.getGamepads()[0]
+      if (gp && gp.vibrationActuator) {
+        gp.vibrationActuator.playEffect("dual-rumble", {
+          startDelay: 0, duration: 300,
+          weakMagnitude: 0.5, strongMagnitude: 1.0
+        })
+      }
+    } catch (e) {}
+    if (window.nuarcade) {
+      const emu = current.emulator || 'teknoparrot'
+      const gamePath = current.path || current.profilePath || current.profile
+      try {
+        if (emu === 'rpcs3')            await window.nuarcade.launchPs3Game(gamePath)
+        else if (emu === 'xenia')       await window.nuarcade.launchXbox360Game(gamePath)
+        else if (emu === 'dolphin')     await window.nuarcade.launchGCWiiGame(gamePath)
+        else if (emu === 'pcsx2')       await window.nuarcade.launchPs2Game(gamePath)
+        else if (emu === 'ryujinx')     await window.nuarcade.launchSwitchGame(gamePath)
+        else if (emu === 'mame')        await window.nuarcade.launchMameGame(gamePath)
+        else if (emu === 'retroarch')   await window.nuarcade.launchRetroArchGame(gamePath)
+        else if (emu === 'project64')   await window.nuarcade.launchN64Game(gamePath)
+        else if (emu === 'duckstation') await window.nuarcade.launchPs1Game(gamePath)
+        else if (emu === 'flycast')     await window.nuarcade.launchFlycastGame(gamePath)
+        else if (emu === 'model2')      await window.nuarcade.launchModel2Game(gamePath)
+        else if (emu === 'model3')      await window.nuarcade.launchModel3Game(gamePath)
+        else if (emu === 'ppsspp')      await window.nuarcade.launchPspGame(gamePath)
+        else if (emu === 'cemu')        await window.nuarcade.launchWiiUGame(gamePath)
+        else if (emu === 'vpx' || current.isPinball) await window.nuarcade.launchVpxTable(gamePath)
+        else if (emu === 'steam')  await window.nuarcade.launchSteamGame(current.steamAppId || gamePath)
+        else if (emu === 'pc')     await window.nuarcade.launchPcGame(gamePath)
+        else await window.nuarcade.launchGame(current.profilePath || current.profile)
+      } catch (e) {
+        showError("Failed to launch " + current.title + ": " + (e.message || "unknown error"))
+      }
+    } else {
+      console.log("Dev mode would launch:", current.profile)
+    }
+    setTimeout(() => setLaunching(false), 3000)
+  }
+
   useEffect(() => {
     if (!games.length) return
     try {
@@ -316,99 +411,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange 
     onSettings:      () => setShowSettings(true),
   })
 
-  const handleLaunch = async () => {
-    if (launching || !current) return
-    sounds.launch()
-    setLaunching(true)
-    const gameId = current.id || current.profile
-    const sessionStart = startSession(gameId)
-    recordLaunch(gameId)
-    addRecentlyPlayed(current)
-
-    // When window regains focus, the user returned from the emulator -- save session
-    const handleFocusReturn = () => {
-      endSession(gameId, sessionStart)
-      setAchievementStats(computeStats(games))
-      window.removeEventListener("focus", handleFocusReturn)
-    }
-    window.addEventListener("focus", handleFocusReturn)
-
-    // Also save if NuArcade is closed before focus returns (visibilitychange)
-    const handleVisibility = () => {
-      if (document.visibilityState === "visible") {
-        endSession(gameId, sessionStart)
-        document.removeEventListener("visibilitychange", handleVisibility)
-      }
-    }
-    document.addEventListener("visibilitychange", handleVisibility)
-
-    // Push "NOW PLAYING" state to marquee with full game info
-    if (window.nuarcade?.updateMarquee) {
-      const art = artwork?.[gameId]
-      window.nuarcade.updateMarquee({
-        title:      current.title,
-        system:     current.system || current.genre,
-        hero:       art?.hero    || null,
-        logo:       art?.logo    || null,
-        capsule:    art?.capsule || null,
-        nowPlaying: true,
-        genre:      current.genre,
-        emulator:   current.emulator,
-      }).catch(() => {})
-    }
-    // Fire LED/external game-launched event
-    window.nuarcade?.gameLaunched?.({
-      title: current.title, system: current.system,
-      genre: current.genre, emulator: current.emulator,
-      id: gameId,
-    }).catch?.(() => {})
-    // Pixelcade push on launch (with nowPlaying flag)
-    const launchArt = artwork?.[gameId]
-    window.nuarcade?.pixelcadePush?.({
-      title: current.title, system: current.system,
-      genre: current.genre, emulator: current.emulator,
-      hero: launchArt?.hero || null, capsule: launchArt?.capsule || null,
-      nowPlaying: true,
-    }).catch?.(() => {})
-    try {
-      const gp = navigator.getGamepads()[0]
-      if (gp && gp.vibrationActuator) {
-        gp.vibrationActuator.playEffect("dual-rumble", {
-          startDelay: 0, duration: 300,
-          weakMagnitude: 0.5, strongMagnitude: 1.0
-        })
-      }
-    } catch (e) {}
-    if (window.nuarcade) {
-      const emu = current.emulator || 'teknoparrot'
-      const gamePath = current.path || current.profilePath || current.profile
-      try {
-        if (emu === 'rpcs3')            await window.nuarcade.launchPs3Game(gamePath)
-        else if (emu === 'xenia')       await window.nuarcade.launchXbox360Game(gamePath)
-        else if (emu === 'dolphin')     await window.nuarcade.launchGCWiiGame(gamePath)
-        else if (emu === 'pcsx2')       await window.nuarcade.launchPs2Game(gamePath)
-        else if (emu === 'ryujinx')     await window.nuarcade.launchSwitchGame(gamePath)
-        else if (emu === 'mame')        await window.nuarcade.launchMameGame(gamePath)
-        else if (emu === 'retroarch')   await window.nuarcade.launchRetroArchGame(gamePath)
-        else if (emu === 'project64')   await window.nuarcade.launchN64Game(gamePath)
-        else if (emu === 'duckstation') await window.nuarcade.launchPs1Game(gamePath)
-        else if (emu === 'flycast')     await window.nuarcade.launchFlycastGame(gamePath)
-        else if (emu === 'model2')      await window.nuarcade.launchModel2Game(gamePath)
-        else if (emu === 'model3')      await window.nuarcade.launchModel3Game(gamePath)
-        else if (emu === 'ppsspp')      await window.nuarcade.launchPspGame(gamePath)
-        else if (emu === 'cemu')        await window.nuarcade.launchWiiUGame(gamePath)
-        else if (emu === 'vpx' || current.isPinball) await window.nuarcade.launchVpxTable(gamePath)
-        else if (emu === 'steam')  await window.nuarcade.launchSteamGame(current.steamAppId || gamePath)
-        else if (emu === 'pc')     await window.nuarcade.launchPcGame(gamePath)
-        else await window.nuarcade.launchGame(current.profilePath || current.profile)
-      } catch (e) {
-        showError("Failed to launch " + current.title + ": " + (e.message || "unknown error"))
-      }
-    } else {
-      console.log("Dev mode would launch:", current.profile)
-    }
-    setTimeout(() => setLaunching(false), 3000)
-  }
 
   const getCardClass = (index) => {
     const diff = index - selectedIndex
