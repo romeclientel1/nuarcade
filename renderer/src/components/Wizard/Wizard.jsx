@@ -6,6 +6,7 @@ import PathsScreen from './screens/PathsScreen'
 import ControllersScreen from './screens/ControllersScreen'
 import SetupGuideScreen from './screens/SetupGuideScreen'
 import ScanScreen from './screens/ScanScreen'
+import MediaScreen from './screens/MediaScreen'
 import ReadyScreen from './screens/ReadyScreen'
 
 const SCREENS = [
@@ -15,6 +16,7 @@ const SCREENS = [
   'Emulators',
   'Controllers',
   'Game Scan',
+  'Media',
   'Ready',
 ]
 
@@ -37,6 +39,9 @@ export default function Wizard({ onComplete }) {
     pinballPath: 'F:\\vPinball\\',
     tablesPath: 'F:\\PinballTables\\',
     controllers: { wheel: null, lightgun: null, gamepad: null },
+    ssUser: '',
+    ssPass: '',
+    sgdbKey: '',
     setupComplete: false,
   })
 
@@ -72,7 +77,8 @@ export default function Wizard({ onComplete }) {
       case 3: return <SetupGuideScreen {...screenProps} />
       case 4: return <ControllersScreen {...screenProps} />
       case 5: return <ScanScreen       {...screenProps} />
-      case 6: return <ReadyScreen      {...screenProps} />
+      case 6: return <MediaScreen      {...screenProps} />
+      case 7: return <ReadyScreen      {...screenProps} />
       default: return <WelcomeScreen   {...screenProps} />
     }
   }
