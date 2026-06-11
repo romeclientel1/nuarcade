@@ -521,7 +521,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       <div className={styles.categoryStrip}>
         {CATEGORIES.filter(cat => {
           if (cat === "All") return true
-          if (cat === "Favorites") return games.some(g => favorites.includes(g.id || g.profile))
+          if (cat === "Favorites") return games.some(g => isFavorite(g.id || g.profile))
           if (cat === "Recent") return recentlyPlayed.length > 0
           return games.some(g => g.genre === cat)
         }).map(cat => (
