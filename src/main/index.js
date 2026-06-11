@@ -72,8 +72,14 @@ ipcMain.handle('launch-game', async (event, profilePath) => {
   return new Promise((resolve) => {
     const cfg = config.load()
     const teknoParrotExe = path.join(cfg.teknoParrotPath, 'TeknoParrotUi.exe')
-    const args = [`--profile=${profilePath}`, '--startMinimized']
-    const child = spawn(teknoParrotExe, args, { detached: true, stdio: 'ignore' })
+    // TeknoParrot expects just the filename, not the full path
+    const profileName = path.basename(profilePath)
+    const args = [`--profile=${profileName}`, '--startGame']
+    const child = spawn(teknoParrotExe, args, {
+      detached: true,
+      stdio: 'ignore',
+      cwd: cfg.teknoParrotPath,  // run from TP directory so it finds its files
+    })
     child.unref()
     resolve({ success: true })
   })

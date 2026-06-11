@@ -6,7 +6,6 @@ const DEFAULT_KEY = "8e15be83af3c9840a1a26987bdf6fd13"
 export function useSteamGridDB(apiKey) {
   const key = apiKey || DEFAULT_KEY
   const searchGame = useCallback(async (title) => {
-    if (!apiKey) return null
     try {
       const res = await fetch(SGDB_BASE + "/search/autocomplete/" + encodeURIComponent(title), {
         headers: { Authorization: "Bearer " + key }
@@ -14,10 +13,10 @@ export function useSteamGridDB(apiKey) {
       const data = await res.json()
       return data.data?.[0] || null
     } catch { return null }
-  }, [apiKey])
+  }, [key])
 
   const getHero = useCallback(async (gameId) => {
-    if (!apiKey || !gameId) return null
+    if (!gameId) return null
     try {
       const res = await fetch(SGDB_BASE + "/heroes/game/" + gameId + "?limit=1", {
         headers: { Authorization: "Bearer " + key }
@@ -25,10 +24,10 @@ export function useSteamGridDB(apiKey) {
       const data = await res.json()
       return data.data?.[0]?.url || null
     } catch { return null }
-  }, [apiKey])
+  }, [key])
 
   const getCapsule = useCallback(async (gameId) => {
-    if (!apiKey || !gameId) return null
+    if (!gameId) return null
     try {
       const res = await fetch(SGDB_BASE + "/grids/game/" + gameId + "?limit=1&dimensions=600x900", {
         headers: { Authorization: "Bearer " + key }
@@ -36,10 +35,10 @@ export function useSteamGridDB(apiKey) {
       const data = await res.json()
       return data.data?.[0]?.url || null
     } catch { return null }
-  }, [apiKey])
+  }, [key])
 
   const getLogo = useCallback(async (gameId) => {
-    if (!apiKey || !gameId) return null
+    if (!gameId) return null
     try {
       const res = await fetch(SGDB_BASE + "/logos/game/" + gameId + "?limit=1", {
         headers: { Authorization: "Bearer " + key }
@@ -47,7 +46,7 @@ export function useSteamGridDB(apiKey) {
       const data = await res.json()
       return data.data?.[0]?.url || null
     } catch { return null }
-  }, [apiKey])
+  }, [key])
 
   const fetchArtworkForGame = useCallback(async (title) => {
     const game = await searchGame(title)
