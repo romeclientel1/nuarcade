@@ -142,65 +142,76 @@ ipcMain.handle('launch-vpx-table', async (event, tablePath) => {
   }
 })
 
-// -- yt-dlp helpers ----------------------------------------------------------
-async function ensureYtDlp() {
-  const { execSync } = require('child_process')
-  try {
-    execSync('yt-dlp --version', { stdio: 'ignore' })
-    return true
-  } catch (e) {
-    try {
-      execSync('pip install yt-dlp --quiet', { stdio: 'ignore' })
-      return true
-    } catch (e2) {
-      try {
-        execSync('winget install yt-dlp --silent', { stdio: 'ignore' })
-        return true
-      } catch (e3) {
-        return false
-      }
-    }
-  }
-}
-
+// -- Video via ScreenScraper --------------------------------------------------
 ipcMain.handle('search-video', async (event, gameTitle) => {
   try {
-    const query = encodeURIComponent(gameTitle + ' gameplay')
-    const res = await fetch('https://www.youtube.com/results?search_query=' + query)
-    const html = await res.text()
-    const match = html.match(/"videoId":"([^"]+)".*?"title":{"runs":\[{"text":"([^"]+)"/)
-    if (match) {
-      return {
-        videoId: match[1],
-        title: match[2],
-        url: 'https://www.youtube.com/watch?v=' + match[1],
-        thumbnail: 'https://img.youtube.com/vi/' + match[1] + '/mqdefault.jpg'
-      }
+    const cfg = config.load()
+    const ssUser = cfg.screenscraper?.user || ''
+    const ssPass = cfg.screenscraper?.pass || ''
+    if (!ssUser || !ssPass) return null
+
+    // Search ScreenScraper for game
+    const searchUrl = `https://www.screenscraper.fr/api2/jeuRecherche.php?devid=nuarcade&devpassword=nuarcade123&softname=nuarcade&output=json&ssid=${encodeURIComponent(ssUser)}&sspassword=${encodeURIComponent(ssPass)}&recherche=${encodeURIComponent(gameTitle)}`
+    const res  = await fetch(searchUrl)
+    const data = await res.json()
+    const jeux = data?.response?.jeux
+    if (!jeux || jeux.length === 0) return null
+
+    const game = jeux[0]
+    const gameId = game.id
+
+    // Get game details with video URL
+    const detailUrl = `https://www.screenscraper.fr/api2/jeuInfos.php?devid=nuarcade&devpassword=nuarcade123&softname=nuarcade&output=json&ssid=${encodeURIComponent(ssUser)}&sspassword=${encodeURIComponent(ssPass)}&gameid=${gameId}`
+    const detailRes  = await fetch(detailUrl)
+    const detailData = await detailRes.json()
+    const medias = detailData?.response?.jeu?.medias || []
+    const videoMedia = medias.find(m => m.type === 'video' || m.type === 'video-normalized')
+    if (!videoMedia) return null
+
+    return {
+      videoId: gameId,
+      title: game.noms?.[0]?.text || gameTitle,
+      url: videoMedia.url,
+      thumbnail: null,
+      source: 'screenscraper',
     }
-    return null
   } catch (e) {
     return null
   }
 })
 
-ipcMain.handle('download-video', async (event, { videoUrl, outputPath, gameId }) => {
+ipcMain.handle('download-video', async (event, { videoUrl, gameId }) => {
   return new Promise(async (resolve) => {
-    const installed = await ensureYtDlp()
-    if (!installed) {
-      resolve({ success: false, error: 'yt-dlp not available' })
-      return
+    try {
+      const cfg = config.load()
+      const videosDir = path.join(cfg.mediaPath || 'F:\\Media\\', 'Videos')
+      if (!fs.existsSync(videosDir)) fs.mkdirSync(videosDir, { recursive: true })
+      const outputFile = path.join(videosDir, gameId + '.mp4')
+
+      // Direct HTTP download -- ScreenScraper serves plain MP4s
+      const ssUser = cfg.screenscraper?.user || ''
+      const ssPass = cfg.screenscraper?.pass || ''
+      const urlWithCreds = videoUrl.includes('screenscraper')
+        ? videoUrl + `&ssid=${encodeURIComponent(ssUser)}&sspassword=${encodeURIComponent(ssPass)}`
+        : videoUrl
+
+      const res = await fetch(urlWithCreds)
+      if (!res.ok) { resolve({ success: false, error: 'Download failed: ' + res.status }); return }
+
+      const buffer = await res.arrayBuffer()
+      fs.writeFileSync(outputFile, Buffer.from(buffer))
+
+      // Store video path in config
+      const videos = JSON.parse(fs.existsSync(path.join(cfg.mediaPath || 'F:\\Media\\', 'videos.json'))
+        ? fs.readFileSync(path.join(cfg.mediaPath || 'F:\\Media\\', 'videos.json'), 'utf8')
+        : '{}')
+      videos[gameId] = outputFile
+      fs.writeFileSync(path.join(cfg.mediaPath || 'F:\\Media\\', 'videos.json'), JSON.stringify(videos))
+
+      resolve({ success: true, outputFile })
+    } catch (e) {
+      resolve({ success: false, error: e.message })
     }
-    const cfg = config.load()
-    const videosDir = (cfg.mediaPath || 'F:\\Media\\') + 'Videos\\'
-    const outputFile = videosDir + gameId + '.mp4'
-    const cmd = 'yt-dlp -f "bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/mp4" --merge-output-format mp4 -o "' + outputFile + '" "' + videoUrl + '"'
-    exec(cmd, (error) => {
-      if (error) {
-        resolve({ success: false, error: error.message })
-      } else {
-        resolve({ success: true, outputFile })
-      }
-    })
   })
 })
 

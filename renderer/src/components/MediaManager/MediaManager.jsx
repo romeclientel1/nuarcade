@@ -20,25 +20,18 @@ export default function MediaManager({ onClose }) {
   const [downloading, setDownloading] = useState({})
   const [previewing, setPreviewing] = useState({})
   const [searchResults, setSearchResults] = useState({})
-  const [ytdlpStatus, setYtdlpStatus] = useState("unknown")
+  const [ssReady, setSsReady] = useState(false)
 
   useEffect(() => {
     scanLibrary()
-    checkYtDlp()
+    checkSsCredentials()
   }, [])
 
-  const checkYtDlp = async () => {
-    if (window.nuarcade && window.nuarcade.platform === "win32") {
-      setYtdlpStatus("checking")
-      try {
-        const result = await window.nuarcade.downloadVideo({ videoUrl: "test", outputPath: "", gameId: "test" })
-        setYtdlpStatus(result.success || result.error !== "yt-dlp not available" ? "ready" : "missing")
-      } catch {
-        setYtdlpStatus("ready")
-      }
-    } else {
-      setYtdlpStatus("dev")
-    }
+  const checkSsCredentials = async () => {
+    try {
+      const cfg = await window.nuarcade?.getConfig()
+      setSsReady(!!(cfg?.screenscraper?.user && cfg?.screenscraper?.pass))
+    } catch {}
   }
 
   const scanLibrary = async () => {
@@ -47,8 +40,36 @@ export default function MediaManager({ onClose }) {
       let gameList = []
       if (window.nuarcade && window.nuarcade.platform === "win32") {
         const config = await window.nuarcade.getConfig()
-        const result = await window.nuarcade.scanGames(config.teknoParrotPath, config.gamesFolderPath)
-        gameList = (result.games || []).map(g => ({ ...g, hasVideo: false }))
+        const scanners = [
+          () => window.nuarcade.scanGames(config.teknoParrotPath, config.gamesFolderPath),
+          () => window.nuarcade.scanMameGames(config.mameGamesPath),
+          () => window.nuarcade.scanPs2Games && window.nuarcade.scanPs2Games(config.ps2GamesPath),
+          () => window.nuarcade.scanPs3Games && window.nuarcade.scanPs3Games(config.ps3GamesPath),
+          () => window.nuarcade.scanXbox360Games && window.nuarcade.scanXbox360Games(config.xbox360GamesPath),
+          () => window.nuarcade.scanGCWiiGames && window.nuarcade.scanGCWiiGames(config.gcWiiGamesPath),
+          () => window.nuarcade.scanSwitchGames && window.nuarcade.scanSwitchGames(config.switchGamesPath),
+          () => window.nuarcade.scanN64Games && window.nuarcade.scanN64Games(config.n64GamesPath),
+          () => window.nuarcade.scanPs1Games && window.nuarcade.scanPs1Games(config.ps1GamesPath),
+          () => window.nuarcade.scanPinball && window.nuarcade.scanPinball(config.tablesPath),
+        ]
+        for (const scanner of scanners) {
+          try {
+            const result = await scanner()
+            if (result && result.games && result.games.length > 0) {
+              gameList = [...gameList, ...result.games.map(g => ({ ...g, hasVideo: false }))]
+            }
+          } catch {}
+        }
+        // Check existing artwork
+        try {
+          const artwork = JSON.parse(localStorage.getItem("nuarcade_artwork") || "{}")
+          const videos  = JSON.parse(localStorage.getItem("nuarcade_videos")  || "{}")
+          gameList = gameList.map(g => ({
+            ...g,
+            hasArtwork: !!(artwork[g.id || g.profile]),
+            hasVideo:   !!(videos[g.id || g.profile]),
+          }))
+        } catch {}
       } else {
         gameList = SAMPLE_GAMES
       }
@@ -150,9 +171,9 @@ export default function MediaManager({ onClose }) {
         {tab === "library" && (
           <div className={styles.body}>
 
-            {ytdlpStatus === "missing" && (
+            {!ssReady && (
               <div className={styles.warningBanner}>
-                yt-dlp is installing automatically in the background. Downloads will be ready in a moment.
+                Add your ScreenScraper credentials in Settings to enable video downloads.
               </div>
             )}
 
@@ -208,7 +229,7 @@ export default function MediaManager({ onClose }) {
                     </div>
                     <div className={styles.gameStatus}>
                       <span className={styles.statusBadge + " " + (game.hasVideo ? styles.badgeGreen : styles.badgeAmber)}>
-                        {game.hasVideo ? "? Video" : "? Video"}
+                        {game.hasVideo ? "OK Video" : "-- Video"}
                       </span>
                     </div>
                     <div className={styles.gameAction}>
@@ -222,7 +243,7 @@ export default function MediaManager({ onClose }) {
                       ) : downloading[game.id] === "done" ? (
                         <span className={styles.readyLabel}>Downloaded!</span>
                       ) : downloading[game.id] === "error" ? (
-                        <span style={{ color: "#ff4444", fontSize: 10 }}>Error ? try again</span>
+                        <span style={{ color: "#ff4444", fontSize: 10 }}>Error -- tap to retry</span>
                       ) : previewing[game.id] === "searching" ? (
                         <div className={styles.dlProgress}>
                           <div className={styles.spinner} />
@@ -254,12 +275,12 @@ export default function MediaManager({ onClose }) {
             <div className={styles.settingsSection}>
               <div className={styles.sectionTitle}>How videos work</div>
               <div className={styles.sectionSub}>
-                NuArcade uses yt-dlp to download gameplay videos from YouTube automatically.
+                NuArcade uses ScreenScraper for video previews and SteamGridDB for artwork.
                 Videos are saved to F:/Media/Videos/ and play on the center card when you select a game.
                 No account needed. No manual setup required.
               </div>
               <div className={styles.sectionSub} style={{ marginTop: 12 }}>
-                yt-dlp installs automatically the first time you download a video.
+                Add your free ScreenScraper account in Settings to enable video previews.
               </div>
             </div>
 
