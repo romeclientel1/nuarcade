@@ -955,3 +955,96 @@ ipcMain.handle('get-event-log-path', () => EVENT_LOG_PATH)
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
 })
+
+// -- Auto-configure TeknoParrot game paths ------------------------------------
+ipcMain.handle('tp-auto-configure', async () => {
+  const cfg = config.load()
+  const tpPath        = cfg.teknoParrotPath || 'F:\\TeknoParrot\\'
+  const gamesFolders  = cfg.arcadeGamesPath || 'F:\\ArcadeGames\\'
+  const profilesDir   = path.join(tpPath, 'GameProfiles')
+  const userProfiles  = path.join(tpPath, 'UserProfiles')
+
+  if (!fs.existsSync(profilesDir)) {
+    return { success: false, error: 'GameProfiles folder not found at: ' + profilesDir }
+  }
+
+  // Helper: recursively find a file by name under a root folder (depth-limited)
+  function findFile(root, name, depth) {
+    if (depth > 5) return null
+    let entries
+    try { entries = fs.readdirSync(root, { withFileTypes: true }) } catch { return null }
+    for (const e of entries) {
+      const full = path.join(root, e.name)
+      if (e.isFile() && e.name.toLowerCase() === name.toLowerCase()) return full
+      if (e.isDirectory()) {
+        const found = findFile(full, name, depth + 1)
+        if (found) return found
+      }
+    }
+    return null
+  }
+
+  const xmlFiles = fs.readdirSync(profilesDir).filter(f => f.toLowerCase().endsWith('.xml'))
+  const { XMLParser } = require('fast-xml-parser')
+  const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_', parseAttributeValue: true })
+
+  const results = []
+  let configured = 0
+  let skipped = 0
+  let notFound = 0
+
+  for (const xmlFile of xmlFiles) {
+    const xmlPath = path.join(profilesDir, xmlFile)
+    let raw, data, profile
+    try {
+      raw = fs.readFileSync(xmlPath, 'utf8')
+      data = parser.parse(raw)
+      profile = data?.GameProfile || data?.UserProfile
+    } catch { skipped++; continue }
+    if (!profile) { skipped++; continue }
+
+    const exeName = profile.ExecutableName || profile.Executable || ''
+    const title   = profile.GameName || profile.Description || xmlFile
+    if (!exeName) { skipped++; continue }
+
+    // Search ArcadeGames folder for this exe
+    const exePath = findFile(gamesFolders, exeName, 0)
+    if (!exePath) { notFound++; results.push({ title, status: 'not_found', exe: exeName }); continue }
+
+    // Write the path into UserProfiles XML (create if missing, update if exists)
+    const userProfilePath = path.join(userProfiles, xmlFile)
+    let userRaw
+    try {
+      userRaw = fs.existsSync(userProfilePath)
+        ? fs.readFileSync(userProfilePath, 'utf8')
+        : raw  // start from GameProfile as template
+    } catch { userRaw = raw }
+
+    // Update or insert GamePath using regex on raw XML string
+    const gameDir = path.dirname(exePath)
+    if (/<GamePath>/i.test(userRaw)) {
+      userRaw = userRaw.replace(/<GamePath>.*?<\/GamePath>/i, `<GamePath>${exePath}<\/GamePath>`)
+    } else if (/<ExecutablePath>/i.test(userRaw)) {
+      userRaw = userRaw.replace(/<ExecutablePath>.*?<\/ExecutablePath>/i, `<ExecutablePath>${exePath}<\/ExecutablePath>`)
+    } else {
+      // Insert before closing tag
+      userRaw = userRaw.replace(/<\/(GameProfile|UserProfile)>/, `  <GamePath>${exePath}<\/GamePath>\n<\/$1>`)
+    }
+
+    // Also update GameLocation if present
+    if (/<GameLocation>/i.test(userRaw)) {
+      userRaw = userRaw.replace(/<GameLocation>.*?<\/GameLocation>/i, `<GameLocation>${gameDir}<\/GameLocation>`)
+    }
+
+    try {
+      if (!fs.existsSync(userProfiles)) fs.mkdirSync(userProfiles, { recursive: true })
+      fs.writeFileSync(userProfilePath, userRaw, 'utf8')
+      configured++
+      results.push({ title, status: 'configured', exe: exeName, path: exePath })
+    } catch (e) {
+      results.push({ title, status: 'error', error: e.message })
+    }
+  }
+
+  return { success: true, configured, notFound, skipped, results }
+})

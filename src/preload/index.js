@@ -105,4 +105,7 @@ contextBridge.exposeInMainWorld('nuarcade', {
 
   // BIOS checker
   checkBios: () => ipcRenderer.invoke('check-bios'),
+
+  // TeknoParrot auto-configure
+  tpAutoConfigure: () => ipcRenderer.invoke('tp-auto-configure'),
 })

@@ -17,6 +17,8 @@ const [rescanning, setRescanning] = useState(false)
 const [backingUp, setBackingUp] = useState(false)
 const [restoring, setRestoring] = useState(false)
 const [rescanResult, setRescanResult] = useState(null)
+const [tpConfiguring, setTpConfiguring] = useState(false)
+const [tpResult, setTpResult] = useState(null)
 const [showArtworkMgr, setShowArtworkMgr] = useState(false)
 const [biosResult, setBiosResult] = useState(null)
 const [checkingBios, setCheckingBios] = useState(false)
@@ -472,6 +474,38 @@ const handleSave = async () => {
                 <button className={styles.exportBtn} onClick={() => { onClose(); onSetupWizard() }}>
                   Open Setup Wizard
                 </button>
+              </div>
+            )}
+            <div className={styles.inputRow}>
+              <label className={styles.inputLabel}>Auto-configure TeknoParrot</label>
+              <button
+                className={styles.exportBtn}
+                disabled={tpConfiguring}
+                onClick={async () => {
+                  setTpConfiguring(true)
+                  setTpResult(null)
+                  try {
+                    const r = await window.nuarcade.tpAutoConfigure()
+                    setTpResult(r)
+                  } catch (e) {
+                    setTpResult({ success: false, error: e.message })
+                  }
+                  setTpConfiguring(false)
+                }}
+              >
+                {tpConfiguring ? 'Scanning...' : 'Find & Wire Games'}
+              </button>
+            </div>
+            {tpResult && (
+              <div className={styles.rescanResult}>
+                {tpResult.error ? (
+                  <div style={{ color: '#ef4444', fontSize: 11 }}>{tpResult.error}</div>
+                ) : (
+                  <div className={styles.rescanTotal}>
+                    {tpResult.configured} game{tpResult.configured !== 1 ? 's' : ''} configured
+                    {tpResult.notFound > 0 ? ` (${tpResult.notFound} not found -- check F:\\ArcadeGames\\)` : ' -- hit Rescan to load them'}
+                  </div>
+                )}
               </div>
             )}
             <div className={styles.emuToggles}>
