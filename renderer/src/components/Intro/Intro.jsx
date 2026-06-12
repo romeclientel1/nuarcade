@@ -193,7 +193,7 @@ export default function Intro({ onComplete }) {
       )}
 
       {/* Version */}
-      <div className={styles.version}>v3.4.9</div>
+      <div className={styles.version}>v3.5.0</div>
 
       {/* Skip hint */}
       {phase !== 'dark' && phase !== 'fadeout' && (

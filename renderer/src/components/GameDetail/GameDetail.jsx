@@ -39,19 +39,19 @@ const STATUS_COLORS = {
 const THUMBNAIL_BASE = "https://raw.githubusercontent.com/teknogods/TeknoParrotUIThumbnails/master/Icons/"
 
 const GENRE_ICONS = {
-  Racing:   "??",
-  Fighting: "??",
-  Shooter:  "?",
-  Rhythm:   "?",
-  Flying:   "??",
-  Sports:   "?",
-  Pinball:  "?",
+  Racing:   "RAC",
+  Fighting: "FGT",
+  Shooter:  "GUN",
+  Rhythm:   "RHY",
+  Flying:   "FLY",
+  Sports:   "SPT",
+  Pinball:  "PIN",
   Other:    "?",
 }
 
 const CONTROLLERS = [
   { id: "auto",     label: "Auto",         icon: "?", desc: "Use genre default" },
-  { id: "wheel",    label: "Racing Wheel",  icon: "??", desc: "DirectInput wheel" },
+  { id: "wheel",    label: "Racing Wheel",  icon: "?", desc: "DirectInput wheel" },
   { id: "lightgun", label: "Light Gun",     icon: "?", desc: "Sinden / GUN4IR" },
   { id: "gamepad",  label: "Xbox Gamepad",  icon: "?", desc: "XInput controller" },
 ]
@@ -59,47 +59,47 @@ const CONTROLLERS = [
 function getControls(genre) {
   const maps = {
     Racing:   [
-      { icon: "??", label: "Steering wheel" },
-      { icon: "?", label: "Gas pedal" },
-      { icon: "?", label: "Brake pedal" },
-      { icon: "??", label: "Shift up" },
-      { icon: "??", label: "Shift down" },
-      { icon: "??", label: "View change" },
+      { icon: "W",   label: "Steering wheel" },
+      { icon: "GAS", label: "Gas pedal" },
+      { icon: "BRK", label: "Brake pedal" },
+      { icon: "S+",  label: "Shift up" },
+      { icon: "S-",  label: "Shift down" },
+      { icon: "CAM", label: "View change" },
     ],
     Shooter:  [
-      { icon: "?", label: "Light gun aim" },
-      { icon: "?", label: "Trigger - fire" },
-      { icon: "??", label: "Reload" },
-      { icon: "??", label: "Start" },
+      { icon: "AIM", label: "Light gun aim" },
+      { icon: "FIRE",label: "Trigger - fire" },
+      { icon: "RLD", label: "Reload" },
+      { icon: "ST",  label: "Start" },
     ],
     Fighting: [
-      { icon: "??", label: "Left stick - move" },
-      { icon: "??", label: "A - punch" },
-      { icon: "??", label: "B - kick" },
-      { icon: "?", label: "X - heavy" },
-      { icon: "?", label: "Y - special" },
+      { icon: "LS",  label: "Left stick - move" },
+      { icon: "A",   label: "A - punch" },
+      { icon: "B",   label: "B - kick" },
+      { icon: "X",   label: "X - heavy" },
+      { icon: "Y",   label: "Y - special" },
     ],
     Rhythm:   [
-      { icon: "?", label: "Face buttons - notes" },
-      { icon: "??", label: "Stick - navigation" },
-      { icon: "??", label: "Start" },
+      { icon: "BTN", label: "Face buttons - notes" },
+      { icon: "NAV", label: "Stick - navigation" },
+      { icon: "ST",  label: "Start" },
     ],
     Flying:   [
-      { icon: "??", label: "Left stick - pitch/roll" },
+      { icon: "?", label: "Left stick - pitch/roll" },
       { icon: "?", label: "RT - fire" },
       { icon: "?", label: "LT - afterburner" },
     ],
     Pinball:  [
-      { icon: "??", label: "LB - left flipper" },
-      { icon: "??", label: "RB - right flipper" },
-      { icon: "??", label: "Up - plunge" },
+      { icon: "?", label: "LB - left flipper" },
+      { icon: "?", label: "RB - right flipper" },
+      { icon: "?", label: "Up - plunge" },
     ],
   }
   return maps[genre] || [
-    { icon: "??", label: "Left stick - move" },
-    { icon: "??", label: "A - confirm" },
-    { icon: "??", label: "B - back" },
-    { icon: "??", label: "Start" },
+    { icon: "LS",  label: "Left stick - move" },
+    { icon: "?", label: "A - confirm" },
+    { icon: "?", label: "B - back" },
+    { icon: "ST",  label: "Start" },
   ]
 }
 

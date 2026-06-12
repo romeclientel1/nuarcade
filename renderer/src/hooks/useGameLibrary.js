@@ -114,12 +114,12 @@ export function useGameLibrary() {
         if (cfg.setupComplete) {
           let allGames = []
 
-          // ?? TeknoParrot ??????????????????????????????????????
+          // TeknoParrot
           try {
-            const tpResult = await window.nuarcade.scanGames(
-              cfg.teknoParrotPath,
-              cfg.gamesFolderPath
-            )
+            const tpResult = await window.nuarcade.scanGames({
+              teknoParrotPath: cfg.teknoParrotPath,
+              gamesFolderPath: cfg.gamesFolderPath,
+            })
             if (tpResult.games?.length) allGames = [...allGames, ...tpResult.games]
             if (tpResult.stats) setStats(tpResult.stats)
           } catch (e) { console.warn('TP scan error:', e) }
