@@ -23,7 +23,7 @@ import { useSteamGridDB } from "../../hooks/useSteamGridDB"
 
 import styles from "./Wheel.module.css"
 
-const CATEGORIES = ["All", "Favorites", "Recent", "Arcade", "Retro", "Racing", "Fighting", "Shooter", "Rhythm", "Flying", "Sports", "N64", "PS1", "PSP", "Dreamcast", "Model2", "Model3", "PS3", "Xbox360", "GCWii", "WiiU", "PS2", "Switch", "Pinball", "PC"]
+const CATEGORIES = ["All", "Favorites", "Recent", "Arcade", "MAME", "Retro", "Racing", "Fighting", "Shooter", "Rhythm", "Flying", "Sports", "N64", "PS1", "PSP", "Dreamcast", "Model2", "Model3", "PS3", "Xbox360", "GCWii", "WiiU", "PS2", "Switch", "Pinball", "PC"]
 const ATTRACT_TIMEOUT = 120000
 
 function sortGames(games, sortBy) {
@@ -164,7 +164,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       const col = collections[activeCategory]
       list = col ? games.filter(g => col.games.includes(g.id || g.profile)) : []
     } else if (activeCategory !== "All") {
-      list = games.filter(g => g.genre === activeCategory)
+      list = games.filter(g => g.genre === activeCategory || g.system === activeCategory || g.emulator === activeCategory.toLowerCase())
     }
     if (debouncedSearch.trim()) {
       const q = debouncedSearch.toLowerCase().trim()
@@ -523,7 +523,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
           if (cat === "All") return true
           if (cat === "Favorites") return games.some(g => isFavorite(g.id || g.profile))
           if (cat === "Recent") return recentlyPlayed.length > 0
-          return games.some(g => g.genre === cat)
+          return games.some(g => g.genre === cat || g.system === cat || g.emulator === cat.toLowerCase())
         }).map(cat => (
           <button
             key={cat}
@@ -536,7 +536,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
             )}
             {cat !== "Favorites" && cat !== "Recent" && (
               <span className={styles.catCount}>
-                {cat === "All" ? games.length : games.filter(g => g.genre === cat).length}
+                {cat === "All" ? games.length : games.filter(g => g.genre === cat || g.system === cat || g.emulator === cat.toLowerCase()).length}
               </span>
             )}
           </button>
@@ -701,12 +701,18 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
                 onClick={() => toggleFavorite(current.id || current.profile)}
                 title="Toggle favorite (F)"
               >
-                {isFavorite(current.id || current.profile) ? "?" : "?"}
+                {isFavorite(current.id || current.profile) ? "<3" : "+"}
               </button>
             </div>
             <div className={styles.infoExe}>
-              {current.isPinball ? "VPX: " : "TeknoParrotUi.exe --profile="}
-              <span>{current.profile}</span>
+              {current.emulator === 'mame' ? 'mame.exe ' + (current.romName || '') :
+               current.emulator === 'rpcs3' ? 'rpcs3.exe ' + (current.profile || '') :
+               current.emulator === 'xenia' ? 'xenia.exe ' + (current.romName || '') :
+               current.emulator === 'dolphin' ? 'Dolphin.exe ' + (current.romName || '') :
+               current.emulator === 'pcsx2' ? 'pcsx2-qt.exe ' + (current.romName || '') :
+               current.emulator === 'ryujinx' ? 'Ryujinx.exe ' + (current.romName || '') :
+               current.isPinball ? 'VPXStarter.exe ' + (current.romName || '') :
+               'TeknoParrotUi.exe --profile=' + (current.profile || '')}
             </div>
           </div>
           <div className={styles.infoRight}>
