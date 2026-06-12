@@ -967,7 +967,10 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
 })
 
-// -- Auto-configure TeknoParrot game paths ------------------------------------
+// -- App version --------------------------------------------------------------
+ipcMain.on('get-version', (event) => {
+  event.returnValue = 'v' + app.getVersion()
+})
 ipcMain.handle('tp-auto-configure', async () => {
   const cfg = config.load()
   const tpPath        = cfg.teknoParrotPath || 'F:\\TeknoParrot\\'
