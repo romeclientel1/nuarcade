@@ -24,7 +24,7 @@ export default function SortMenu({ current, onChange, onClose }) {
           >
             <span className={styles.icon}>{opt.icon}</span>
             <span className={styles.label}>{opt.label}</span>
-            {current === opt.id && <span className={styles.check}>?</span>}
+            {current === opt.id && <span className={styles.check}>OK</span>}
           </button>
         ))}
       </div>

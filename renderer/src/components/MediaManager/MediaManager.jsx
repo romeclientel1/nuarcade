@@ -41,7 +41,7 @@ export default function MediaManager({ onClose }) {
       if (window.nuarcade && window.nuarcade.platform === "win32") {
         const config = await window.nuarcade.getConfig()
         const scanners = [
-          () => window.nuarcade.scanGames(config.teknoParrotPath, config.gamesFolderPath),
+          () => window.nuarcade.scanGames({ teknoParrotPath: config.teknoParrotPath, gamesFolderPath: config.gamesFolderPath }),
           () => window.nuarcade.scanMameGames(config.mameGamesPath),
           () => window.nuarcade.scanPs2Games && window.nuarcade.scanPs2Games(config.ps2GamesPath),
           () => window.nuarcade.scanPs3Games && window.nuarcade.scanPs3Games(config.ps3GamesPath),
@@ -220,12 +220,12 @@ export default function MediaManager({ onClose }) {
                     <div className={styles.gameThumb}>
                       {game.id
                         ? <img src={THUMBNAIL_BASE + game.id + ".png"} alt="" onError={e => e.target.style.display="none"} />
-                        : <span style={{ fontSize: 20 }}>{game.icon || "?"}</span>
+                        : <span style={{ fontSize: 20 }}>{game.icon || (game.emulator || "?").slice(0,3).toUpperCase()}</span>
                       }
                     </div>
                     <div className={styles.gameInfo}>
                       <div className={styles.gameName}>{game.title}</div>
-                      <div className={styles.gameMeta}>{game.system} ? {game.genre}</div>
+                      <div className={styles.gameMeta}>{game.system}{game.system && game.genre ? " -- " : ""}{game.genre}</div>
                     </div>
                     <div className={styles.gameStatus}>
                       <span className={styles.statusBadge + " " + (game.hasVideo ? styles.badgeGreen : styles.badgeAmber)}>

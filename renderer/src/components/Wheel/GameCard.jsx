@@ -141,7 +141,7 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork 
         {/* Pinball fallback */}
         {game.isPinball && !showVideo && !showCapsule && (
           <div className={styles.pinballFallback} style={{ borderColor: colors.accent + "44" }}>
-            <div className={styles.pinballIcon}>?</div>
+            <div className={styles.pinballIcon}>PIN</div>
             <div className={styles.pinballName} style={{ color: colors.accent }}>{game.title}</div>
             <div className={styles.pinballSys}>Visual Pinball X</div>
           </div>

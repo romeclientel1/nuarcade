@@ -85,12 +85,12 @@ export default function Updater({ onDismiss }) {
   if (phase === 'newgames') {
     return (
       <div className={styles.banner} style={{ borderColor: 'rgba(0,200,255,0.4)', background: 'rgba(0,200,255,0.06)' }}>
-        <div className={styles.icon}>?</div>
+        <div className={styles.icon}>UP</div>
         <div className={styles.content}>
           <div className={styles.title}>{newGames.length} new game{newGames.length > 1 ? 's' : ''} added to TeknoParrot!</div>
           <div className={styles.sub}>{newGames[0]}{newGames.length > 1 ? ` and ${newGames.length - 1} more` : ''}</div>
         </div>
-        <button className={styles.dismissBtn} onClick={onDismiss}>?</button>
+        <button className={styles.dismissBtn} onClick={onDismiss}>X</button>
       </div>
     )
   }

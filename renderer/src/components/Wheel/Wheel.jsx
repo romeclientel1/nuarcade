@@ -506,7 +506,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
                   setSelectedIndex(Math.floor(Math.random() * filteredGames.length))
                   sounds.navigate()
                 }
-              }} title="Random game (R)">?</button>
+              }} title="Random game (R)">RND</button>
               <button className={styles.colBtn} onClick={() => setShowCollections(true)} title="Collections (N)">[]</button>
               <button className={styles.statsBtn} onClick={() => setShowStats(true)} title="My Stats (T)">#</button>
               <button className={styles.achieveBtn} onClick={() => setShowAchievements(true)} title="Achievements (A)">*</button>
@@ -595,7 +595,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
 
       {libraryEmpty ? (
         <div className={styles.libraryEmpty}>
-          <div className={styles.emptyBigIcon}>?</div>
+          <div className={styles.emptyBigIcon}>[ ]</div>
           <div className={styles.emptyBigTitle}>Your library is empty</div>
           <div className={styles.emptyBigSub}>
             NuArcade is ready -- you just need to add games.

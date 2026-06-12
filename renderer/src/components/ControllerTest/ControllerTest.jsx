@@ -50,7 +50,7 @@ export default function ControllerTest({ onClose }) {
 
         {pads.length === 0 ? (
           <div className={styles.empty}>
-            <div className={styles.emptyIcon}>?</div>
+            <div className={styles.emptyIcon}>[ ]</div>
             <div className={styles.emptyText}>No controllers detected</div>
             <div className={styles.emptySub}>Plug in a gamepad and press any button</div>
           </div>
