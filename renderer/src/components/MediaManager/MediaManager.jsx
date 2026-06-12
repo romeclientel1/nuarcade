@@ -85,34 +85,44 @@ export default function MediaManager({ onClose }) {
     }
   }
 
+  const [diagLog, setDiagLog] = useState([])
+
+  const log = (msg, type = 'info') => {
+    const ts = new Date().toLocaleTimeString()
+    setDiagLog(prev => [...prev.slice(-49), { ts, msg, type }])
+  }
+
   const handleSearch = async (game) => {
     setPreviewing(p => ({ ...p, [game.id]: "searching" }))
+    log(`Searching ScreenScraper for: "${game.title}"`)
     try {
       if (window.nuarcade && window.nuarcade.searchVideo) {
-        const result = await window.nuarcade.searchVideo(game.title + " arcade gameplay")
-        setSearchResults(r => ({ ...r, [game.id]: result }))
-        setPreviewing(p => ({ ...p, [game.id]: result ? "found" : "notfound" }))
+        const result = await window.nuarcade.searchVideo(game.title)
+        if (result) {
+          log(`Found game ID: ${result.videoId} -- "${result.title}"`, 'ok')
+          log(`Video URL: ${result.url}`, 'ok')
+          setSearchResults(r => ({ ...r, [game.id]: result }))
+          setPreviewing(p => ({ ...p, [game.id]: "found" }))
+        } else {
+          log(`No video found on ScreenScraper for "${game.title}"`, 'warn')
+          setPreviewing(p => ({ ...p, [game.id]: "notfound" }))
+        }
       } else {
-        // Dev mode simulation
-        await new Promise(r => setTimeout(r, 800))
-        setSearchResults(r => ({ ...r, [game.id]: {
-          videoId: "dQw4w9WgXcQ",
-          title: game.title + " Gameplay",
-          url: "https://youtube.com/watch?v=dQw4w9WgXcQ",
-          thumbnail: "https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg"
-        }}))
-        setPreviewing(p => ({ ...p, [game.id]: "found" }))
+        log('window.nuarcade.searchVideo not available -- check preload', 'error')
+        setPreviewing(p => ({ ...p, [game.id]: "notfound" }))
       }
-    } catch {
+    } catch (e) {
+      log(`Search error: ${e.message || String(e)}`, 'error')
       setPreviewing(p => ({ ...p, [game.id]: "notfound" }))
     }
   }
 
   const handleDownload = async (game) => {
     const result = searchResults[game.id]
-    if (!result) return
+    if (!result) { log(`No search result for ${game.title} -- search first`, 'warn'); return }
 
     setDownloading(d => ({ ...d, [game.id]: "downloading" }))
+    log(`Downloading video for "${game.title}"...`)
     try {
       if (window.nuarcade && window.nuarcade.downloadVideo) {
         const dl = await window.nuarcade.downloadVideo({
@@ -120,18 +130,19 @@ export default function MediaManager({ onClose }) {
           gameId: game.id,
         })
         if (dl.success) {
+          log(`Downloaded OK -- saved to ${dl.outputFile}`, 'ok')
           setGames(g => g.map(x => x.id === game.id ? { ...x, hasVideo: true } : x))
           setDownloading(d => ({ ...d, [game.id]: "done" }))
         } else {
+          log(`Download failed: ${dl.error || 'unknown error'}`, 'error')
           setDownloading(d => ({ ...d, [game.id]: "error" }))
         }
       } else {
-        // Dev mode
-        await new Promise(r => setTimeout(r, 2000))
-        setGames(g => g.map(x => x.id === game.id ? { ...x, hasVideo: true } : x))
-        setDownloading(d => ({ ...d, [game.id]: "done" }))
+        log('window.nuarcade.downloadVideo not available', 'error')
+        setDownloading(d => ({ ...d, [game.id]: "error" }))
       }
-    } catch {
+    } catch (e) {
+      log(`Download exception: ${e.message || String(e)}`, 'error')
       setDownloading(d => ({ ...d, [game.id]: "error" }))
     }
   }
@@ -286,6 +297,28 @@ export default function MediaManager({ onClose }) {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {diagLog.length > 0 && (
+              <div className={styles.diagPanel}>
+                <div className={styles.diagHeader}>
+                  Diagnostic Log
+                  <button className={styles.diagClear} onClick={() => setDiagLog([])}>Clear</button>
+                </div>
+                <div className={styles.diagBody}>
+                  {diagLog.map((entry, i) => (
+                    <div key={i} className={styles.diagLine} style={{
+                      color: entry.type === 'error' ? '#ef4444' :
+                             entry.type === 'warn'  ? '#f59e0b' :
+                             entry.type === 'ok'    ? '#00ff88' :
+                             'rgba(255,255,255,0.6)'
+                    }}>
+                      <span className={styles.diagTs}>{entry.ts}</span>
+                      {entry.msg}
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
