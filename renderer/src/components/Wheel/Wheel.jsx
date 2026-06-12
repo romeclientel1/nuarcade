@@ -582,7 +582,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
                     <img src={thumb} alt={g.title} className={styles.recentThumb} />
                   ) : (
                     <div className={styles.recentFallback} style={{ background: accent + "18", borderColor: accent + "33" }}>
-                      <span className={styles.recentIcon}>{g.icon || g.genre?.[0] || "?"}</span>
+                      <span className={styles.recentIcon}>{g.icon || (g.genre ? g.genre.slice(0,3).toUpperCase() : "?")}</span>
                     </div>
                   )}
                   <div className={styles.recentTitle}>{g.title}</div>
@@ -634,7 +634,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       ) : filteredGames.length === 0 ? (
         <div className={styles.emptyState}>
           <div className={styles.emptyIcon}>
-            {activeCategory === "Favorites" ? "?" : activeCategory === "Recent" ? "?" : activeCategory === "Pinball" ? "?" : activeCategory === "PS3" ? "?" : activeCategory === "Xbox360" ? "?" : activeCategory === "GCWii" ? "?" : activeCategory === "PS2" ? "?" : "??"}
+            {activeCategory === "Favorites" ? "<3" : activeCategory === "Recent" ? "[]" : activeCategory === "Pinball" ? "PIN" : activeCategory === "PS3" ? "PS3" : activeCategory === "Xbox360" ? "360" : activeCategory === "GCWii" ? "GCN" : activeCategory === "PS2" ? "PS2" : "?"}
           </div>
           <div className={styles.emptyTitle}>
             {activeCategory === "Favorites" ? "No favorites yet" :

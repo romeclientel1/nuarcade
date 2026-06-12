@@ -229,7 +229,7 @@ export default function MediaManager({ onClose }) {
                     </div>
                     <div className={styles.gameStatus}>
                       <span className={styles.statusBadge + " " + (game.hasVideo ? styles.badgeGreen : styles.badgeAmber)}>
-                        {game.hasVideo ? "OK Video" : "-- Video"}
+                        {game.hasVideo ? "Has Video" : "No Video"}
                       </span>
                     </div>
                     <div className={styles.gameAction}>
