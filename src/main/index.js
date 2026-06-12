@@ -150,28 +150,56 @@ ipcMain.handle('search-video', async (event, gameTitle) => {
     const ssPass = cfg.screenscraper?.pass || ''
     if (!ssUser || !ssPass) return null
 
-    // Search ScreenScraper for game
-    const searchUrl = `https://www.screenscraper.fr/api2/jeuRecherche.php?devid=nuarcade&devpassword=nuarcade123&softname=nuarcade&output=json&ssid=${encodeURIComponent(ssUser)}&sspassword=${encodeURIComponent(ssPass)}&recherche=${encodeURIComponent(gameTitle)}`
-    const res  = await fetch(searchUrl)
-    const data = await res.json()
-    const jeux = data?.response?.jeux
+    // Use user credentials as dev credentials (standard for personal use)
+    const devid = ssUser
+    const devpass = ssPass
+    const base = `https://www.screenscraper.fr/api2`
+    const auth = `devid=${encodeURIComponent(devid)}&devpassword=${encodeURIComponent(devpass)}&softname=nuarcade&output=json&ssid=${encodeURIComponent(ssUser)}&sspassword=${encodeURIComponent(ssPass)}`
+
+    // Search by game name
+    const searchUrl = `${base}/jeuRecherche.php?${auth}&recherche=${encodeURIComponent(gameTitle)}`
+    const res = await fetch(searchUrl, { headers: { 'User-Agent': 'NuArcade/1.0' } })
+    const text = await res.text()
+
+    let jeux = null
+    try {
+      const data = JSON.parse(text)
+      jeux = data?.response?.jeux || data?.jeux
+    } catch { return null }
+
     if (!jeux || jeux.length === 0) return null
+    const gameId = jeux[0].id || jeux[0].jeuId
 
-    const game = jeux[0]
-    const gameId = game.id
+    // Get full game info with media
+    const detailUrl = `${base}/jeuInfos.php?${auth}&gameid=${gameId}`
+    const detailRes = await fetch(detailUrl, { headers: { 'User-Agent': 'NuArcade/1.0' } })
+    const detailText = await detailRes.text()
 
-    // Get game details with video URL
-    const detailUrl = `https://www.screenscraper.fr/api2/jeuInfos.php?devid=nuarcade&devpassword=nuarcade123&softname=nuarcade&output=json&ssid=${encodeURIComponent(ssUser)}&sspassword=${encodeURIComponent(ssPass)}&gameid=${gameId}`
-    const detailRes  = await fetch(detailUrl)
-    const detailData = await detailRes.json()
-    const medias = detailData?.response?.jeu?.medias || []
-    const videoMedia = medias.find(m => m.type === 'video' || m.type === 'video-normalized')
+    let jeu = null
+    try {
+      const detailData = JSON.parse(detailText)
+      jeu = detailData?.response?.jeu
+    } catch { return null }
+    if (!jeu) return null
+
+    // Find video in medias array
+    const medias = jeu.medias || []
+    const videoMedia = medias.find(m =>
+      m.type === 'video' ||
+      m.type === 'video-normalized' ||
+      m.type === 'video-snap'
+    )
     if (!videoMedia) return null
 
+    // Build video URL with credentials
+    const videoUrl = videoMedia.url +
+      (videoMedia.url.includes('?') ? '&' : '?') +
+      `maxwidth=640&ssid=${encodeURIComponent(ssUser)}&sspassword=${encodeURIComponent(ssPass)}`
+
     return {
-      videoId: gameId,
-      title: game.noms?.[0]?.text || gameTitle,
-      url: videoMedia.url,
+      videoId: String(gameId),
+      title: (jeu.noms && jeu.noms[0]?.text) || gameTitle,
+      url: videoUrl,
       thumbnail: null,
       source: 'screenscraper',
     }
