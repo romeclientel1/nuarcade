@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import styles from "./MediaManager.module.css"
+import ArtworkManager from "../ArtworkManager/ArtworkManager"
 
 const THUMBNAIL_BASE = "https://raw.githubusercontent.com/teknogods/TeknoParrotUIThumbnails/master/Icons/"
 
@@ -17,6 +18,8 @@ export default function MediaManager({ onClose }) {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState("all")
   const [tab, setTab] = useState("library")
+  const [showArtworkMgr, setShowArtworkMgr] = useState(false)
+  const [mmConfig, setMmConfig] = useState({})
   const [downloading, setDownloading] = useState({})
   const [previewing, setPreviewing] = useState({})
   const [searchResults, setSearchResults] = useState({})
@@ -25,6 +28,7 @@ export default function MediaManager({ onClose }) {
   useEffect(() => {
     scanLibrary()
     checkSsCredentials()
+    window.nuarcade?.getConfig?.().then(cfg => setMmConfig(cfg || {})).catch(() => {})
   }, [])
 
   const checkSsCredentials = async () => {
@@ -165,8 +169,25 @@ export default function MediaManager({ onClose }) {
 
         <div className={styles.tabs}>
           <button className={styles.tab + (tab === "library" ? " " + styles.tabActive : "")} onClick={() => setTab("library")}>Library</button>
+          <button className={styles.tab + (tab === "artwork" ? " " + styles.tabActive : "")} onClick={() => setTab("artwork")}>Artwork</button>
           <button className={styles.tab + (tab === "about" ? " " + styles.tabActive : "")} onClick={() => setTab("about")}>About</button>
         </div>
+
+        {tab === "artwork" && (
+          <div className={styles.body}>
+            <div style={{ padding: '12px 0 8px', color: 'rgba(255,255,255,0.5)', fontSize: 11 }}>
+              Download box art, hero images and logos for all your games using SteamGridDB -- no account needed.
+            </div>
+            <ArtworkManager
+              games={games}
+              apiKey={mmConfig?.sgdbApiKey}
+              ssUser={mmConfig?.screenscraper?.user}
+              ssPass={mmConfig?.screenscraper?.pass}
+              onClose={() => setTab("library")}
+              onArtworkUpdate={() => {}}
+            />
+          </div>
+        )}
 
         {tab === "library" && (
           <div className={styles.body}>

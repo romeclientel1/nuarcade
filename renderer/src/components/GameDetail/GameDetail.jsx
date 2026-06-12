@@ -46,14 +46,14 @@ const GENRE_ICONS = {
   Flying:   "FLY",
   Sports:   "SPT",
   Pinball:  "PIN",
-  Other:    "?",
+  Other:    "OTH",
 }
 
 const CONTROLLERS = [
-  { id: "auto",     label: "Auto",         icon: "?", desc: "Use genre default" },
-  { id: "wheel",    label: "Racing Wheel",  icon: "?", desc: "DirectInput wheel" },
-  { id: "lightgun", label: "Light Gun",     icon: "?", desc: "Sinden / GUN4IR" },
-  { id: "gamepad",  label: "Xbox Gamepad",  icon: "?", desc: "XInput controller" },
+  { id: "auto",     label: "Auto",         icon: "A",  desc: "Use genre default" },
+  { id: "wheel",    label: "Racing Wheel",  icon: "W",  desc: "DirectInput wheel" },
+  { id: "lightgun", label: "Light Gun",     icon: "G",  desc: "Sinden / GUN4IR" },
+  { id: "gamepad",  label: "Xbox Gamepad",  icon: "GP", desc: "XInput controller" },
 ]
 
 function getControls(genre) {
@@ -85,20 +85,20 @@ function getControls(genre) {
       { icon: "ST",  label: "Start" },
     ],
     Flying:   [
-      { icon: "?", label: "Left stick - pitch/roll" },
-      { icon: "?", label: "RT - fire" },
-      { icon: "?", label: "LT - afterburner" },
+      { icon: "LS",  label: "Left stick - pitch/roll" },
+      { icon: "RT",  label: "RT - fire" },
+      { icon: "LT",  label: "LT - afterburner" },
     ],
     Pinball:  [
-      { icon: "?", label: "LB - left flipper" },
-      { icon: "?", label: "RB - right flipper" },
-      { icon: "?", label: "Up - plunge" },
+      { icon: "LB",  label: "LB - left flipper" },
+      { icon: "RB",  label: "RB - right flipper" },
+      { icon: "UP",  label: "Up - plunge" },
     ],
   }
   return maps[genre] || [
     { icon: "LS",  label: "Left stick - move" },
-    { icon: "?", label: "A - confirm" },
-    { icon: "?", label: "B - back" },
+    { icon: "A",   label: "A - confirm" },
+    { icon: "B",   label: "B - back" },
     { icon: "ST",  label: "Start" },
   ]
 }
@@ -119,7 +119,7 @@ export default function GameDetail({ game, onClose, onLaunch, launching, artwork
   const colors = GENRE_COLORS[game.genre] || GENRE_COLORS.Other
   const statusColor = STATUS_COLORS[game.status] || "#888888"
   const imgUrl = game.id && !game.isPinball ? THUMBNAIL_BASE + game.id + ".png" : null
-  const fallbackIcon = game.icon || GENRE_ICONS[game.genre] || "?"
+  const fallbackIcon = game.icon || GENRE_ICONS[game.genre] || "--"
 
   const gameId  = game.id || game.profile
   const pt      = getPlaytime(gameId)
@@ -428,7 +428,7 @@ export default function GameDetail({ game, onClose, onLaunch, launching, artwork
                             <img src={thumb} alt={g.title} className={styles.similarThumb} />
                           ) : (
                             <div className={styles.similarFallback} style={{ background: "rgba(255,255,255,0.05)" }}>
-                              <span style={{ fontSize: 18 }}>{g.icon || "?"}</span>
+                              <span style={{ fontSize: 18 }}>{g.icon || "--"}</span>
                             </div>
                           )}
                           <div className={styles.similarTitle}>{g.title}</div>

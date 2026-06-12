@@ -161,7 +161,7 @@ function scanGames(teknoParrotPath, gamesFolderPath) {
     }
 
     const resolvedPath = resolveExePath(game, gamesFolderPath)
-    if (!resolvedPath) {
+    if (!resolvedPath || !fs.existsSync(resolvedPath)) {
       stats.hidden++
       stats.reasons.missingFiles++
       continue

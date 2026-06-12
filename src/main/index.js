@@ -598,11 +598,28 @@ app.whenReady().then(() => {
 // -- MAME --------------------------------------------------------------------
 ipcMain.handle('launch-mame-game', async (event, gamePath) => {
   const cfg = config.load()
-  const mameExe = path.join(cfg.mamePath || 'F:\\MAME\\', 'mame.exe')
+  const mameDir = cfg.mamePath || 'F:\\MAME\\'
+
+  // Find mame exe -- could be mame.exe, mame64.exe, mame0270.exe etc
+  let mameExe = path.join(mameDir, 'mame.exe')
+  if (!fs.existsSync(mameExe)) {
+    try {
+      const entries = fs.readdirSync(mameDir)
+      const mameFile = entries.find(f =>
+        f.toLowerCase().startsWith('mame') && f.toLowerCase().endsWith('.exe')
+      )
+      if (mameFile) mameExe = path.join(mameDir, mameFile)
+    } catch {}
+  }
+
   const { spawn } = require('child_process')
   const romFile = path.basename(gamePath, path.extname(gamePath))
   const romsDir = path.dirname(gamePath)
-  spawn(mameExe, [romFile, '-rompath', romsDir], { detached: true, stdio: 'ignore' }).unref()
+  spawn(mameExe, [romFile, '-rompath', romsDir], {
+    detached: true,
+    stdio: 'ignore',
+    cwd: mameDir,
+  }).unref()
   return { launched: true }
 })
 
