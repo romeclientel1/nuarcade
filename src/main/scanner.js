@@ -478,6 +478,66 @@ const MAME_TITLES = {
   'dkong3': 'Donkey Kong 3',
   'dkongx': 'Donkey Kong (hack)', 'dkongx11': 'Donkey Kong (hack)',
   'donpachi': 'DonPachi', 'dodonpachi': 'DoDonPachi',
+  // Modern arcade / NESiCA / rhythm games
+  'mamt6': 'Wangan Midnight Maximum Tuning 6',
+  'mamt6r': 'Wangan Midnight Maximum Tuning 6R',
+  'mamt6rr': 'Wangan Midnight Maximum Tuning 6RR',
+  'wmmt5': 'Wangan Midnight Maximum Tuning 5',
+  'wmmt5dx': 'Wangan Midnight Maximum Tuning 5DX',
+  'wmmt5dxp': 'Wangan Midnight Maximum Tuning 5DX+',
+  'fnfsb': 'Fast and Furious: Drift',
+  'fnfsb2': 'Fast and Furious: SuperCars',
+  'fnfsc': 'Fast and Furious: SuperCars',
+  'fr': 'Fast and Furious',
+  'frenzyexpress': 'Frenzy Express',
+  'exceptionnesica': 'Exception NESiCA',
+  'farcryparadiselost': 'Far Cry Paradise Lost',
+  'bbtag': 'BlazBlue Cross Tag Battle',
+  'bbcf': 'BlazBlue Central Fiction',
+  'sfvae': 'Street Fighter V Arcade Edition',
+  'tekken7': 'Tekken 7',
+  'tekken7fr': 'Tekken 7 Fated Retribution',
+  'ggxrd': 'Guilty Gear Xrd',
+  'ggxrdr': 'Guilty Gear Xrd Revelator',
+  'ggst': 'Guilty Gear Strive',
+  'dariusburst': 'Darius Burst',
+  'crossbeats': 'Crossbeats Rev',
+  'groovecoaster': 'Groove Coaster',
+  'ddr': 'Dance Dance Revolution',
+  'iidx': 'Beatmania IIDX',
+  'sdvx': 'Sound Voltex',
+  'taiko': 'Taiko no Tatsujin',
+  'divaac': 'Hatsune Miku Project DIVA Arcade',
+  'farcryparadiselost': 'Far Cry Paradise Lost',
+  'fnfsd': 'Fast and Furious: Drift',
+  'frenzyexpress': 'Frenzy Express',
+  'exception': 'Exception',
+  'bladestrangers': 'Blade Strangers',
+  'dengeki': 'Dengeki Bunko Fighting Climax',
+  'gunslinger': 'Gunslinger Stratos',
+  'gunslinger2': 'Gunslinger Stratos 2',
+  'gunslinger3': 'Gunslinger Stratos 3',
+  'lord': 'Lord of Vermilion',
+  'p4u': 'Persona 4 Arena',
+  'p4u2': 'Persona 4 Arena Ultimax',
+  'chaos': 'Chaos Code',
+  'kof13': 'King of Fighters XIII',
+  'kof14': 'King of Fighters XIV',
+  'kof15': 'King of Fighters XV',
+  'under night': 'Under Night In-Birth',
+  'unib': 'Under Night In-Birth',
+  'uniclr': 'Under Night In-Birth EXE Late ClR',
+  'marvelvscapcom': 'Marvel vs. Capcom',
+  'mvc3': 'Marvel vs. Capcom 3',
+  'umvc3': 'Ultimate Marvel vs. Capcom 3',
+  'dragonballfz': 'Dragon Ball FighterZ',
+  'dbfz': 'Dragon Ball FighterZ',
+  'granblue': 'Granblue Fantasy Versus',
+  'gbvs': 'Granblue Fantasy Versus',
+  'samuraishodown': 'Samurai Shodown',
+  'samsho': 'Samurai Shodown',
+  'skullgirls': 'Skullgirls',
+  'dissidia': 'Dissidia Final Fantasy NT',
   'doomarch': 'Doom (arcade)', 'doubldragon': 'Double Dragon',
   'ddragon': 'Double Dragon', 'ddragon2': 'Double Dragon II',
   'ddragon3': 'Double Dragon 3',
@@ -687,8 +747,16 @@ function mameTitle(romName) {
   // Strip trailing version suffixes like 'sf2hf' -> try 'sf2'
   const stripped = lower.replace(/[a-z]$/, '')
   if (MAME_TITLES[stripped]) return MAME_TITLES[stripped]
-  // Fall back to formatted ROM name
-  return romName.charAt(0).toUpperCase() + romName.slice(1)
+  // Try stripping numbers too: 'dkong3' -> 'dkong'
+  const noNum = lower.replace(/[0-9]+[a-z]*$/, '')
+  if (MAME_TITLES[noNum]) return MAME_TITLES[noNum]
+  // Smart fallback: split camelCase/underscores and capitalize words
+  // e.g. "galaga88" -> "Galaga 88", "mspacman" -> "Ms Pac-Man"
+  const cleaned = romName
+    .replace(/_/g, ' ')
+    .replace(/([a-z])([0-9])/g, '$1 $2')
+    .replace(/([0-9])([a-z])/g, '$1 $2')
+  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1)
 }
 
 // -- MAME Scanner ------------------------------------------------------------
