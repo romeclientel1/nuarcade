@@ -30,6 +30,47 @@ const GENRE_MAP = {
 
 const BROKEN_STATUS = ['Broken', 'Nothing', 'DoesNotBoot']
 
+
+// TeknoParrot game title lookup (filename -> proper title)
+const TP_TITLES = {
+  'Daytona3': 'Daytona Championship USA',
+  'Daytona3NSE': 'Daytona Championship USA (NSE)',
+  'DealOrNoDeal': 'Deal or No Deal',
+  'DOA5': 'Dead or Alive 5',
+  'DoNotFallRunforYourDrink': 'Do Not Fall: Run for Your Drink',
+  'KADP': 'Knuckle Dash',
+  'EnEinsPerfektewelt': 'Ein Perfektes Leben',
+  'WanganMidnightMaximumTune5DX': 'Wangan Midnight Maximum Tuning 5DX',
+  'WanganMidnightMaximumTune5DXPlus': 'Wangan Midnight Maximum Tuning 5DX+',
+  'WanganMidnightMaximumTune6': 'Wangan Midnight Maximum Tuning 6',
+  'WanganMidnightMaximumTune6RR': 'Wangan Midnight Maximum Tuning 6RR',
+  'CruisnBlast': "Cruis'n Blast",
+  'AliensArmageddon': 'Aliens Armageddon',
+  'DariusBurst': 'Darius Burst Another Chronicle',
+  'CrossbeatsRev': 'Crossbeats Rev Sunrise',
+  'BlazBlueCrossTagBattle': 'BlazBlue Cross Tag Battle',
+  'Tekken7': 'Tekken 7',
+  'StreetFighterV': 'Street Fighter V',
+  'GuiltyGearXrd': 'Guilty Gear Xrd',
+  'HouseOfTheDead4': 'The House of the Dead 4',
+  'HouseOfTheDead3': 'The House of the Dead 3',
+  'AfterBurnerClimax': 'After Burner Climax',
+  'InitialD8': 'Initial D Arcade Stage 8',
+  'InitialD9': 'Initial D Arcade Stage 9',
+  'MarioKartArcadeGP': 'Mario Kart Arcade GP',
+  'MarioKartArcadeGP2': 'Mario Kart Arcade GP 2',
+  'MarioKartArcadeGPDX': 'Mario Kart Arcade GP DX',
+  'PokkenTournament': 'Pokkén Tournament',
+  'StarWars': 'Star Wars Battle Pod',
+  'TheCrew': 'The Crew',
+  'RidgeRacer': 'Ridge Racer',
+  'TimecrisisRazing': 'Time Crisis: Razing Storm',
+  'GunSurvivor': 'Resident Evil: Survivor',
+  'VirtuaFighter5': 'Virtua Fighter 5',
+  'VirtuaCop3': 'Virtua Cop 3',
+  'Ringedge2': 'Ringedge 2',
+}
+
 const SUBSCRIPTION_PROFILES = new Set([
   'SWDC.xml', 'Wangan6R.xml', 'MK11.xml', 'DOA6.xml',
   'Tekken7.xml', 'SoulCalibur6.xml', 'GundamExVs2.xml',
@@ -44,17 +85,27 @@ function parseProfile(xmlPath) {
     if (!profile) return null
 
     const fileName = path.basename(xmlPath)
-    const title    = profile.GameName || profile.Description || fileName.replace('.xml', '')
-    const gamePath = profile.GamePath || profile.ExecutablePath || ''
-    const exeName  = profile.ExecutableName || profile.Executable || ''
-    const rawStatus = profile.GameStatus || profile.Status || 'Unknown'
-    const genre    = normalizeGenre(profile.Genre || profile.GameType || '')
-    const system   = profile.EmulationProfile || profile.System || 'Unknown'
-    const year       = profile.Year || profile.ReleaseYear || ''
-    const manufacturer = profile.Manufacturer || profile.Developer || ''
-    const players    = profile.MaxPlayers || profile.Players || 1
+    const fileBase = fileName.replace('.xml', '')
+    // GameName can be an element OR an attribute depending on TP version
+    const title = profile.GameName ||
+                  profile['@_GameName'] ||
+                  profile.Description ||
+                  profile['@_Description'] ||
+                  profile.GameDescription ||
+                  profile['@_GameDescription'] ||
+                  TP_TITLES[fileBase] ||
+                  fileBase
+    const gamePath = profile.GamePath || profile['@_GamePath'] || profile.ExecutablePath || profile['@_ExecutablePath'] || ''
+    const exeName  = profile.ExecutableName || profile['@_ExecutableName'] || profile.Executable || profile['@_Executable'] || ''
+    const rawStatus = profile.GameStatus || profile['@_GameStatus'] || profile.Status || profile['@_Status'] || 'Unknown'
+    const genre    = normalizeGenre(profile.Genre || profile['@_Genre'] || profile.GameType || profile['@_GameType'] || '')
+    const system   = profile.EmulationProfile || profile['@_EmulationProfile'] || profile.System || profile['@_System'] || 'Unknown'
+    const year       = profile.Year || profile['@_Year'] || profile.ReleaseYear || ''
+    const manufacturer = profile.Manufacturer || profile['@_Manufacturer'] || profile.Developer || ''
+    const players    = profile.MaxPlayers || profile['@_MaxPlayers'] || profile.Players || 1
     const description = profile.Description2 || profile.Notes || ''
     const isSubscription = profile.RequiresSubscription === true ||
+                           profile['@_RequiresSubscription'] === true ||
                            profile.Patreon === true ||
                            SUBSCRIPTION_PROFILES.has(fileName)
 
@@ -66,10 +117,11 @@ function parseProfile(xmlPath) {
     }
 
     const exePath = gamePath ||
-      (profile.GameLocation ? path.join(profile.GameLocation, exeName) : '')
+      (profile.GameLocation ? path.join(profile.GameLocation, exeName) :
+       profile['@_GameLocation'] ? path.join(profile['@_GameLocation'], exeName) : '')
 
     return {
-      id: fileName.replace('.xml', ''),
+      id: fileBase,
       year, manufacturer, players, description,
       profile: fileName,
       profilePath: xmlPath,
