@@ -103,7 +103,11 @@ export function useGameLibrary() {
 
   useEffect(() => { loadLibrary() }, [])
 
-  const loadLibrary = async () => {
+  const CACHE_KEY = 'nuarcade_game_cache'
+  const CACHE_TS_KEY = 'nuarcade_game_cache_ts'
+  const CACHE_TTL = 24 * 60 * 60 * 1000 // 24 hours
+
+  const loadLibrary = async (forceRescan = false) => {
     setLoading(true)
     setError(null)
     try {
@@ -112,6 +116,23 @@ export function useGameLibrary() {
         setConfig(cfg)
 
         if (cfg.setupComplete) {
+          // Check cache first (skip if forceRescan or cache expired)
+          if (!forceRescan) {
+            try {
+              const cached = localStorage.getItem(CACHE_KEY)
+              const cachedTs = parseInt(localStorage.getItem(CACHE_TS_KEY) || '0')
+              if (cached && Date.now() - cachedTs < CACHE_TTL) {
+                const cachedGames = JSON.parse(cached)
+                if (cachedGames.length > 0) {
+                  setGames(cachedGames)
+                  setLibraryEmpty(false)
+                  setLoading(false)
+                  return
+                }
+              }
+            } catch {}
+          }
+
           let allGames = []
 
           // TeknoParrot
@@ -324,6 +345,13 @@ export function useGameLibrary() {
             isSample: libraryEmpty,
           }))
           localStorage.setItem('nuarcade_last_game_count', markedGames.length)
+          // Cache the scan results so next startup is instant
+          if (!libraryEmpty && markedGames.length > 0) {
+            try {
+              localStorage.setItem(CACHE_KEY, JSON.stringify(markedGames))
+              localStorage.setItem(CACHE_TS_KEY, String(Date.now()))
+            } catch {}
+          }
           setLibraryEmpty(libraryEmpty)
           setGames(markedGames)
         } else {
@@ -374,7 +402,7 @@ export function useGameLibrary() {
 
   return {
     games, stats, loading, error, config, libraryEmpty,
-    refreshLibrary: loadLibrary,
+    refreshLibrary: () => loadLibrary(true),
     favorites, toggleFavorite, isFavorite: (id) => favorites.includes(id),
     recentlyPlayed, addRecentlyPlayed,
     newGameCount: games.length > 0 ? getNewGameCount() : 0,

@@ -150,7 +150,10 @@ ipcMain.handle('search-video', async (event, gameTitle) => {
   if (!ssUser || !ssPass) return { error: 'No ScreenScraper credentials set' }
 
   const base = 'https://www.screenscraper.fr/api2'
-  const auth = `devid=${encodeURIComponent(ssUser)}&devpassword=${encodeURIComponent(ssPass)}&softname=nuarcade&output=json&ssid=${encodeURIComponent(ssUser)}&sspassword=${encodeURIComponent(ssPass)}`
+  // NuArcade registered dev credentials -- separate from user credentials
+  const DEVID = 'nuarcade'
+  const DEVPASS = 'nuarcade2024'
+  const auth = `devid=${DEVID}&devpassword=${DEVPASS}&softname=nuarcade&output=json&ssid=${encodeURIComponent(ssUser)}&sspassword=${encodeURIComponent(ssPass)}`
 
   try {
     // Step 1: Search for the game
