@@ -28,6 +28,7 @@ export default function MediaManager({ onClose }) {
   const [ytSearching, setYtSearching] = useState({})
   const [ytDownloading, setYtDownloading] = useState({})
   const [ytdlpAvailable, setYtdlpAvailable] = useState(null) // null=unknown, true, false
+  const [ytdlpInstalling, setYtdlpInstalling] = useState(false)
 
   useEffect(() => {
     scanLibrary()
@@ -168,8 +169,34 @@ export default function MediaManager({ onClose }) {
     }
   }
 
+  const handleEnsureYtdlp = async () => {
+    if (ytdlpAvailable) return true
+    setYtdlpInstalling(true)
+    log('yt-dlp not found -- downloading from GitHub...')
+    try {
+      const result = await window.nuarcade.ensureYtdlp()
+      if (result.success) {
+        setYtdlpAvailable(true)
+        if (!result.alreadyPresent) log('yt-dlp downloaded and ready', 'ok')
+        setYtdlpInstalling(false)
+        return true
+      } else {
+        log('yt-dlp auto-download failed: ' + result.error, 'error')
+        setYtdlpInstalling(false)
+        return false
+      }
+    } catch (e) {
+      log('yt-dlp install error: ' + (e.message || String(e)), 'error')
+      setYtdlpInstalling(false)
+      return false
+    }
+  }
+
   const handleYtSearch = async (game) => {
     const gid = game.id || game.profile
+    // Auto-install yt-dlp first if needed
+    const ready = await handleEnsureYtdlp()
+    if (!ready) return
     setYtSearching(s => ({ ...s, [gid]: true }))
     log(`YouTube search: "${game.title}"`)
     try {
@@ -357,6 +384,14 @@ export default function MediaManager({ onClose }) {
                           </div>
                         )
 
+                        // yt-dlp installing
+                        if (ytdlpInstalling) return (
+                          <div className={styles.dlProgress}>
+                            <div className={styles.spinner} />
+                            Getting yt-dlp...
+                          </div>
+                        )
+
                         // SS download states
                         if (downloading[gid] === 'downloading') return (
                           <div className={styles.dlProgress}>
@@ -368,11 +403,9 @@ export default function MediaManager({ onClose }) {
                         if (downloading[gid] === 'error') return (
                           <div style={{ display: 'flex', gap: 4, flexDirection: 'column', alignItems: 'flex-end' }}>
                             <span style={{ color: '#ff4444', fontSize: 10 }}>SS error</span>
-                            {ytdlpAvailable && (
-                              <button className={styles.dlBtn} style={{ borderColor: 'rgba(255,80,80,0.4)', color: '#ff5050' }} onClick={() => handleYtSearch(game)}>
-                                Try YouTube
-                              </button>
-                            )}
+                            <button className={styles.dlBtn} style={{ borderColor: 'rgba(255,80,80,0.4)', color: '#ff5050' }} onClick={() => handleYtSearch(game)}>
+                              Try YouTube
+                            </button>
                           </div>
                         )
 
@@ -401,14 +434,9 @@ export default function MediaManager({ onClose }) {
                         if (previewing[gid] === 'notfound') return (
                           <div style={{ display: 'flex', gap: 4, flexDirection: 'column', alignItems: 'flex-end' }}>
                             <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 9 }}>Not on SS</span>
-                            {ytdlpAvailable && (
-                              <button className={styles.dlBtn} style={{ borderColor: 'rgba(255,80,80,0.4)', color: '#ff5050' }} onClick={() => handleYtSearch(game)}>
-                                Try YouTube
-                              </button>
-                            )}
-                            {!ytdlpAvailable && ytdlpAvailable !== null && (
-                              <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 9 }}>No yt-dlp</span>
-                            )}
+                            <button className={styles.dlBtn} style={{ borderColor: 'rgba(255,80,80,0.4)', color: '#ff5050' }} onClick={() => handleYtSearch(game)}>
+                              Try YouTube
+                            </button>
                           </div>
                         )
 
@@ -418,11 +446,9 @@ export default function MediaManager({ onClose }) {
                             <button className={styles.dlBtn} onClick={() => handleSearch(game)}>
                               Find video
                             </button>
-                            {ytdlpAvailable && (
-                              <button className={styles.dlBtn} style={{ borderColor: 'rgba(255,80,80,0.3)', color: 'rgba(255,80,80,0.7)' }} onClick={() => handleYtSearch(game)} title="Search YouTube directly">
-                                YT
-                              </button>
-                            )}
+                            <button className={styles.dlBtn} style={{ borderColor: 'rgba(255,80,80,0.3)', color: 'rgba(255,80,80,0.7)' }} onClick={() => handleYtSearch(game)} title="Search YouTube directly">
+                              YT
+                            </button>
                           </div>
                         )
                       })()}

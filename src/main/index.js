@@ -1066,12 +1066,76 @@ ipcMain.handle('get-videos', async () => {
 
 // -- yt-dlp: search YouTube for a game video preview --------------------------
 // Returns { title, videoId, thumbnail, duration } or { error }
+// -- yt-dlp: auto-download the exe if missing ---------------------------------
+// Downloads yt-dlp.exe from GitHub releases into the configured path.
+// Returns { success, path } or { success: false, error }
+ipcMain.handle('ensure-ytdlp', async (event) => {
+  const cfg = config.load()
+  const ytdlpExe = cfg.ytdlpPath || 'F:\\Tools\\yt-dlp.exe'
+
+  // Already present -- nothing to do
+  if (fs.existsSync(ytdlpExe)) {
+    return { success: true, path: ytdlpExe, alreadyPresent: true }
+  }
+
+  // Make sure the parent folder exists
+  try {
+    fs.mkdirSync(path.dirname(ytdlpExe), { recursive: true })
+  } catch (e) {
+    return { success: false, error: 'Could not create folder ' + path.dirname(ytdlpExe) + ': ' + e.message }
+  }
+
+  const YTDLP_URL = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe'
+
+  try {
+    // GitHub redirects /latest/download/ -- follow redirects
+    const res = await fetch(YTDLP_URL, {
+      headers: { 'User-Agent': 'NuArcade/1.0' },
+      redirect: 'follow',
+      signal: AbortSignal.timeout(60000), // 60s for ~15MB
+    })
+
+    if (!res.ok) {
+      return { success: false, error: 'GitHub returned HTTP ' + res.status }
+    }
+
+    const buffer = await res.arrayBuffer()
+    fs.writeFileSync(ytdlpExe, Buffer.from(buffer))
+
+    return { success: true, path: ytdlpExe, alreadyPresent: false }
+  } catch (e) {
+    return { success: false, error: 'Download failed: ' + (e.message || String(e)) }
+  }
+})
+
+// -- yt-dlp: search YouTube for a game video preview --------------------------
+// Auto-bootstraps yt-dlp if missing before searching.
+// Returns { title, videoId, thumbnail, duration } or { error }
 ipcMain.handle('ytdlp-search', async (event, { gameTitle, gameId }) => {
   const cfg = config.load()
   const ytdlpExe = cfg.ytdlpPath || 'F:\\Tools\\yt-dlp.exe'
 
+  // Auto-download if missing
   if (!fs.existsSync(ytdlpExe)) {
-    return { error: 'yt-dlp not found at ' + ytdlpExe + '. Download yt-dlp.exe and place it there.' }
+    const ensureResult = await new Promise(async (resolve) => {
+      try {
+        fs.mkdirSync(path.dirname(ytdlpExe), { recursive: true })
+        const res = await fetch('https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe', {
+          headers: { 'User-Agent': 'NuArcade/1.0' },
+          redirect: 'follow',
+          signal: AbortSignal.timeout(60000),
+        })
+        if (!res.ok) { resolve({ success: false, error: 'GitHub HTTP ' + res.status }); return }
+        const buf = await res.arrayBuffer()
+        fs.writeFileSync(ytdlpExe, Buffer.from(buf))
+        resolve({ success: true })
+      } catch (e) {
+        resolve({ success: false, error: e.message || String(e) })
+      }
+    })
+    if (!ensureResult.success) {
+      return { error: 'Could not auto-download yt-dlp: ' + ensureResult.error }
+    }
   }
 
   return new Promise((resolve) => {
@@ -1126,8 +1190,21 @@ ipcMain.handle('ytdlp-download', async (event, { videoId, gameId }) => {
   const videosDir = path.join(cfg.mediaPath || 'F:\\Media\\', 'Videos')
   const outputFile = path.join(videosDir, gameId + '.mp4')
 
+  // Auto-download yt-dlp if missing (same bootstrap as ytdlp-search)
   if (!fs.existsSync(ytdlpExe)) {
-    return { success: false, error: 'yt-dlp not found at ' + ytdlpExe }
+    try {
+      fs.mkdirSync(path.dirname(ytdlpExe), { recursive: true })
+      const res = await fetch('https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe', {
+        headers: { 'User-Agent': 'NuArcade/1.0' },
+        redirect: 'follow',
+        signal: AbortSignal.timeout(60000),
+      })
+      if (!res.ok) return { success: false, error: 'Could not auto-download yt-dlp: HTTP ' + res.status }
+      const buf = await res.arrayBuffer()
+      fs.writeFileSync(ytdlpExe, Buffer.from(buf))
+    } catch (e) {
+      return { success: false, error: 'Could not auto-download yt-dlp: ' + (e.message || String(e)) }
+    }
   }
 
   try {

@@ -23,6 +23,7 @@ const [showArtworkMgr, setShowArtworkMgr] = useState(false)
 const [biosResult, setBiosResult] = useState(null)
 const [checkingBios, setCheckingBios] = useState(false)
 const [marqueeOpen, setMarqueeOpen] = useState(false)
+const [ytdlpStatus, setYtdlpStatus] = useState(null) // null=unchecked, 'present', 'missing', 'installing', 'error'
 
   useEffect(() => { loadConfig() }, [])
 
@@ -30,6 +31,12 @@ const [marqueeOpen, setMarqueeOpen] = useState(false)
     if (window.nuarcade) {
       const cfg = await window.nuarcade.getConfig()
       setConfig(cfg)
+      // Check if yt-dlp is already present
+      if (window.nuarcade.checkPath && cfg.ytdlpPath) {
+        window.nuarcade.checkPath(cfg.ytdlpPath)
+          .then(r => setYtdlpStatus(r?.exists ? 'present' : 'missing'))
+          .catch(() => setYtdlpStatus('missing'))
+      }
     } else {
       setConfig({
         teknoParrotPath: "F:/TeknoParrot/",
@@ -587,8 +594,37 @@ const handleSave = async () => {
                 placeholder="F:/Tools/yt-dlp.exe"
               />
             </div>
+            <div className={styles.inputRow}>
+              <label className={styles.inputLabel}>yt-dlp status</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{
+                  fontSize: 10,
+                  padding: '3px 8px',
+                  borderRadius: 3,
+                  border: '1px solid',
+                  borderColor: ytdlpStatus === 'present' ? 'rgba(0,255,136,0.4)' : ytdlpStatus === 'installing' ? 'rgba(0,200,255,0.4)' : 'rgba(255,170,0,0.4)',
+                  color: ytdlpStatus === 'present' ? '#00ff88' : ytdlpStatus === 'installing' ? '#00c8ff' : '#ffaa00',
+                  background: ytdlpStatus === 'present' ? 'rgba(0,255,136,0.08)' : ytdlpStatus === 'installing' ? 'rgba(0,200,255,0.08)' : 'rgba(255,170,0,0.08)',
+                }}>
+                  {ytdlpStatus === 'present' ? 'Installed' : ytdlpStatus === 'installing' ? 'Downloading...' : ytdlpStatus === 'error' ? 'Error' : ytdlpStatus === 'missing' ? 'Not installed' : 'Checking...'}
+                </span>
+                <button
+                  className={styles.exportBtn}
+                  disabled={ytdlpStatus === 'installing'}
+                  onClick={async () => {
+                    setYtdlpStatus('installing')
+                    try {
+                      const r = await window.nuarcade.ensureYtdlp()
+                      setYtdlpStatus(r.success ? 'present' : 'error')
+                    } catch { setYtdlpStatus('error') }
+                  }}
+                >
+                  {ytdlpStatus === 'present' ? 'Re-download' : 'Install now'}
+                </button>
+              </div>
+            </div>
             <div className={styles.emuNote}>
-              YouTube fallback for games not on ScreenScraper. Download yt-dlp.exe from github.com/yt-dlp/yt-dlp and put it at the path above. Videos are trimmed to 40s automatically.
+              YouTube video fallback -- auto-installs on first use. Videos are trimmed to 40s and saved to F:/Media/Videos/.
             </div>
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>Bulk fetch</label>
