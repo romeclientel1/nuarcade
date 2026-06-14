@@ -1064,6 +1064,123 @@ ipcMain.handle('get-videos', async () => {
   }
 })
 
+// -- yt-dlp: search YouTube for a game video preview --------------------------
+// Returns { title, videoId, thumbnail, duration } or { error }
+ipcMain.handle('ytdlp-search', async (event, { gameTitle, gameId }) => {
+  const cfg = config.load()
+  const ytdlpExe = cfg.ytdlpPath || 'F:\\Tools\\yt-dlp.exe'
+
+  if (!fs.existsSync(ytdlpExe)) {
+    return { error: 'yt-dlp not found at ' + ytdlpExe + '. Download yt-dlp.exe and place it there.' }
+  }
+
+  return new Promise((resolve) => {
+    // Search YouTube: grab the top result metadata only (no download)
+    const query = '"' + gameTitle + '" arcade gameplay'
+    const args = [
+      'ytsearch1:' + query,
+      '--get-id',
+      '--get-title',
+      '--get-thumbnail',
+      '--get-duration',
+      '--no-playlist',
+      '--no-warnings',
+      '--socket-timeout', '15',
+    ]
+
+    let stdout = ''
+    let stderr = ''
+    const proc = spawn(ytdlpExe, args, { stdio: ['ignore', 'pipe', 'pipe'] })
+    proc.stdout.on('data', d => { stdout += d.toString() })
+    proc.stderr.on('data', d => { stderr += d.toString() })
+
+    const timer = setTimeout(() => { proc.kill(); resolve({ error: 'Search timed out' }) }, 20000)
+
+    proc.on('close', (code) => {
+      clearTimeout(timer)
+      const lines = stdout.trim().split('\n').map(l => l.trim()).filter(Boolean)
+      // yt-dlp --get-id --get-title --get-thumbnail --get-duration outputs 4 lines per result
+      if (lines.length < 2) {
+        return resolve({ error: 'No YouTube results for: ' + gameTitle + (stderr ? ' -- ' + stderr.slice(0, 100) : '') })
+      }
+      resolve({
+        videoId:   lines[0] || '',
+        title:     lines[1] || gameTitle,
+        thumbnail: lines[2] || null,
+        duration:  lines[3] || null,
+      })
+    })
+
+    proc.on('error', (e) => {
+      clearTimeout(timer)
+      resolve({ error: 'yt-dlp spawn error: ' + e.message })
+    })
+  })
+})
+
+// -- yt-dlp: download and trim a YouTube video to 40s -------------------------
+// Returns { success, outputFile } or { success: false, error }
+ipcMain.handle('ytdlp-download', async (event, { videoId, gameId }) => {
+  const cfg = config.load()
+  const ytdlpExe = cfg.ytdlpPath || 'F:\\Tools\\yt-dlp.exe'
+  const videosDir = path.join(cfg.mediaPath || 'F:\\Media\\', 'Videos')
+  const outputFile = path.join(videosDir, gameId + '.mp4')
+
+  if (!fs.existsSync(ytdlpExe)) {
+    return { success: false, error: 'yt-dlp not found at ' + ytdlpExe }
+  }
+
+  try {
+    if (!fs.existsSync(videosDir)) fs.mkdirSync(videosDir, { recursive: true })
+  } catch (e) {
+    return { success: false, error: 'Could not create Videos folder: ' + e.message }
+  }
+
+  return new Promise((resolve) => {
+    const url = 'https://www.youtube.com/watch?v=' + videoId
+    const args = [
+      url,
+      '--format', 'bestvideo[ext=mp4][height<=720]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+      '--merge-output-format', 'mp4',
+      '--postprocessor-args', 'ffmpeg:-t 40',  // trim to 40 seconds
+      '--output', outputFile,
+      '--no-playlist',
+      '--no-warnings',
+      '--socket-timeout', '30',
+      '--retries', '3',
+    ]
+
+    let stderr = ''
+    const proc = spawn(ytdlpExe, args, { stdio: ['ignore', 'ignore', 'pipe'] })
+    proc.stderr.on('data', d => { stderr += d.toString() })
+
+    // 3-minute timeout for download + encode
+    const timer = setTimeout(() => { proc.kill(); resolve({ success: false, error: 'Download timed out after 3 minutes' }) }, 180000)
+
+    proc.on('close', (code) => {
+      clearTimeout(timer)
+      if (code === 0 && fs.existsSync(outputFile)) {
+        // Register in videos.json
+        try {
+          const registryPath = path.join(cfg.mediaPath || 'F:\\Media\\', 'videos.json')
+          const videos = JSON.parse(fs.existsSync(registryPath) ? fs.readFileSync(registryPath, 'utf8') : '{}')
+          videos[gameId] = outputFile
+          fs.writeFileSync(registryPath, JSON.stringify(videos))
+        } catch {}
+        resolve({ success: true, outputFile })
+      } else {
+        const errMsg = stderr.slice(-300) || ('yt-dlp exited with code ' + code)
+        resolve({ success: false, error: errMsg })
+      }
+    })
+
+    proc.on('error', (e) => {
+      clearTimeout(timer)
+      resolve({ success: false, error: 'yt-dlp spawn error: ' + e.message })
+    })
+  })
+})
+
 // -- App version --------------------------------------------------------------
 ipcMain.on('get-version', (event) => {
   event.returnValue = 'v' + app.getVersion()

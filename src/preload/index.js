@@ -53,6 +53,8 @@ contextBridge.exposeInMainWorld('nuarcade', {
   searchVideo:   (title) => ipcRenderer.invoke('search-video', title),
   downloadVideo: (opts)  => ipcRenderer.invoke('download-video', opts),
   getVideos:     ()      => ipcRenderer.invoke('get-videos'),
+  ytdlpSearch:   (opts)  => ipcRenderer.invoke('ytdlp-search', opts),
+  ytdlpDownload: (opts)  => ipcRenderer.invoke('ytdlp-download', opts),
 
   // Windows Defender exclusions
   addExclusions: (paths) => ipcRenderer.invoke('add-exclusions', paths),

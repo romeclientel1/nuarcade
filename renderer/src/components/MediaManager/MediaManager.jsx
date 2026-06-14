@@ -24,11 +24,21 @@ export default function MediaManager({ onClose }) {
   const [previewing, setPreviewing] = useState({})
   const [searchResults, setSearchResults] = useState({})
   const [ssReady, setSsReady] = useState(false)
+  const [ytResults, setYtResults] = useState({})
+  const [ytSearching, setYtSearching] = useState({})
+  const [ytDownloading, setYtDownloading] = useState({})
+  const [ytdlpAvailable, setYtdlpAvailable] = useState(null) // null=unknown, true, false
 
   useEffect(() => {
     scanLibrary()
     checkSsCredentials()
-    window.nuarcade?.getConfig?.().then(cfg => setMmConfig(cfg || {})).catch(() => {})
+    window.nuarcade?.getConfig?.().then(cfg => {
+      setMmConfig(cfg || {})
+      // Check if yt-dlp.exe actually exists on disk
+      if (window.nuarcade?.checkPath && cfg?.ytdlpPath) {
+        window.nuarcade.checkPath(cfg.ytdlpPath).then(r => setYtdlpAvailable(!!r?.exists)).catch(() => setYtdlpAvailable(false))
+      }
+    }).catch(() => {})
   }, [])
 
   const checkSsCredentials = async () => {
@@ -158,6 +168,47 @@ export default function MediaManager({ onClose }) {
     }
   }
 
+  const handleYtSearch = async (game) => {
+    const gid = game.id || game.profile
+    setYtSearching(s => ({ ...s, [gid]: true }))
+    log(`YouTube search: "${game.title}"`)
+    try {
+      const result = await window.nuarcade.ytdlpSearch({ gameTitle: game.title, gameId: gid })
+      if (result?.error) {
+        log(`yt-dlp search error: ${result.error}`, 'error')
+        setYtResults(r => ({ ...r, [gid]: null }))
+      } else {
+        log(`YouTube found: "${result.title}" (${result.duration || '?'})`, 'ok')
+        setYtResults(r => ({ ...r, [gid]: result }))
+      }
+    } catch (e) {
+      log(`yt-dlp exception: ${e.message || String(e)}`, 'error')
+    }
+    setYtSearching(s => ({ ...s, [gid]: false }))
+  }
+
+  const handleYtDownload = async (game) => {
+    const gid = game.id || game.profile
+    const result = ytResults[gid]
+    if (!result?.videoId) { log('No YouTube result to download -- search first', 'warn'); return }
+    setYtDownloading(d => ({ ...d, [gid]: 'downloading' }))
+    log(`Downloading from YouTube: "${result.title}" (trimmed to 40s)...`)
+    try {
+      const dl = await window.nuarcade.ytdlpDownload({ videoId: result.videoId, gameId: gid })
+      if (dl.success) {
+        log(`YouTube download complete: ${dl.outputFile}`, 'ok')
+        setGames(g => g.map(x => (x.id || x.profile) === gid ? { ...x, hasVideo: true } : x))
+        setYtDownloading(d => ({ ...d, [gid]: 'done' }))
+      } else {
+        log(`YouTube download failed: ${dl.error}`, 'error')
+        setYtDownloading(d => ({ ...d, [gid]: 'error' }))
+      }
+    } catch (e) {
+      log(`yt-dlp download exception: ${e.message || String(e)}`, 'error')
+      setYtDownloading(d => ({ ...d, [gid]: 'error' }))
+    }
+  }
+
   const filteredGames = games.filter(g => {
     if (filter === "missing") return !g.hasVideo
     if (filter === "ready") return g.hasVideo
@@ -268,35 +319,113 @@ export default function MediaManager({ onClose }) {
                       </span>
                     </div>
                     <div className={styles.gameAction}>
-                      {game.hasVideo ? (
-                        <span className={styles.readyLabel}>Ready</span>
-                      ) : downloading[game.id] === "downloading" ? (
-                        <div className={styles.dlProgress}>
-                          <div className={styles.spinner} />
-                          Downloading...
-                        </div>
-                      ) : downloading[game.id] === "done" ? (
-                        <span className={styles.readyLabel}>Downloaded!</span>
-                      ) : downloading[game.id] === "error" ? (
-                        <span style={{ color: "#ff4444", fontSize: 10 }}>Error -- tap to retry</span>
-                      ) : previewing[game.id] === "searching" ? (
-                        <div className={styles.dlProgress}>
-                          <div className={styles.spinner} />
-                          Searching...
-                        </div>
-                      ) : searchResults[game.id] ? (
-                        <div className={styles.searchResult}>
-                          <img src={searchResults[game.id].thumbnail} alt="" className={styles.ytThumb} />
-                          <div className={styles.ytTitle}>{searchResults[game.id].title.slice(0, 40)}</div>
-                          <button className={styles.dlBtn} onClick={() => handleDownload(game)}>
-                            Download
-                          </button>
-                        </div>
-                      ) : (
-                        <button className={styles.dlBtn} onClick={() => handleSearch(game)}>
-                          Find video
-                        </button>
-                      )}
+                      {(() => {
+                        const gid = game.id || game.profile
+                        if (game.hasVideo) return <span className={styles.readyLabel}>Ready</span>
+
+                        // yt-dlp download states
+                        if (ytDownloading[gid] === 'downloading') return (
+                          <div className={styles.dlProgress}>
+                            <div className={styles.spinner} />
+                            YT downloading...
+                          </div>
+                        )
+                        if (ytDownloading[gid] === 'done') return <span className={styles.readyLabel}>Downloaded!</span>
+                        if (ytDownloading[gid] === 'error') return <span style={{ color: '#ff4444', fontSize: 10 }}>YT error -- retry?</span>
+
+                        // yt-dlp result ready to download
+                        if (ytResults[gid]) return (
+                          <div className={styles.searchResult}>
+                            {ytResults[gid].thumbnail && (
+                              <img src={ytResults[gid].thumbnail} alt="" className={styles.ytThumb} onError={e => { e.target.style.display = 'none' }} />
+                            )}
+                            <div className={styles.ytSource} title={ytResults[gid].title}>
+                              YT: {ytResults[gid].title.slice(0, 30)}{ytResults[gid].title.length > 30 ? '...' : ''}
+                              {ytResults[gid].duration ? <span style={{ color: 'rgba(255,255,255,0.3)', marginLeft: 4 }}>{ytResults[gid].duration}</span> : null}
+                            </div>
+                            <button className={styles.dlBtn} style={{ borderColor: 'rgba(255,80,80,0.4)', color: '#ff5050' }} onClick={() => handleYtDownload(game)}>
+                              Get clip
+                            </button>
+                          </div>
+                        )
+
+                        // yt-dlp searching
+                        if (ytSearching[gid]) return (
+                          <div className={styles.dlProgress}>
+                            <div className={styles.spinner} />
+                            YouTube...
+                          </div>
+                        )
+
+                        // SS download states
+                        if (downloading[gid] === 'downloading') return (
+                          <div className={styles.dlProgress}>
+                            <div className={styles.spinner} />
+                            Downloading...
+                          </div>
+                        )
+                        if (downloading[gid] === 'done') return <span className={styles.readyLabel}>Downloaded!</span>
+                        if (downloading[gid] === 'error') return (
+                          <div style={{ display: 'flex', gap: 4, flexDirection: 'column', alignItems: 'flex-end' }}>
+                            <span style={{ color: '#ff4444', fontSize: 10 }}>SS error</span>
+                            {ytdlpAvailable && (
+                              <button className={styles.dlBtn} style={{ borderColor: 'rgba(255,80,80,0.4)', color: '#ff5050' }} onClick={() => handleYtSearch(game)}>
+                                Try YouTube
+                              </button>
+                            )}
+                          </div>
+                        )
+
+                        // SS searching
+                        if (previewing[gid] === 'searching') return (
+                          <div className={styles.dlProgress}>
+                            <div className={styles.spinner} />
+                            Searching SS...
+                          </div>
+                        )
+
+                        // SS found -- ready to download
+                        if (searchResults[gid]) return (
+                          <div className={styles.searchResult}>
+                            {searchResults[gid].thumbnail && (
+                              <img src={searchResults[gid].thumbnail} alt="" className={styles.ytThumb} onError={e => { e.target.style.display = 'none' }} />
+                            )}
+                            <div className={styles.ytTitle}>{(searchResults[gid].title || '').slice(0, 35)}</div>
+                            <button className={styles.dlBtn} onClick={() => handleDownload(game)}>
+                              Download
+                            </button>
+                          </div>
+                        )
+
+                        // SS returned not-found -- offer YouTube fallback
+                        if (previewing[gid] === 'notfound') return (
+                          <div style={{ display: 'flex', gap: 4, flexDirection: 'column', alignItems: 'flex-end' }}>
+                            <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 9 }}>Not on SS</span>
+                            {ytdlpAvailable && (
+                              <button className={styles.dlBtn} style={{ borderColor: 'rgba(255,80,80,0.4)', color: '#ff5050' }} onClick={() => handleYtSearch(game)}>
+                                Try YouTube
+                              </button>
+                            )}
+                            {!ytdlpAvailable && ytdlpAvailable !== null && (
+                              <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 9 }}>No yt-dlp</span>
+                            )}
+                          </div>
+                        )
+
+                        // Default: Find video button (try SS first)
+                        return (
+                          <div style={{ display: 'flex', gap: 4 }}>
+                            <button className={styles.dlBtn} onClick={() => handleSearch(game)}>
+                              Find video
+                            </button>
+                            {ytdlpAvailable && (
+                              <button className={styles.dlBtn} style={{ borderColor: 'rgba(255,80,80,0.3)', color: 'rgba(255,80,80,0.7)' }} onClick={() => handleYtSearch(game)} title="Search YouTube directly">
+                                YT
+                              </button>
+                            )}
+                          </div>
+                        )
+                      })()}
                     </div>
                   </div>
                 ))}

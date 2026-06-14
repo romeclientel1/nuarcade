@@ -579,6 +579,18 @@ const handleSave = async () => {
               Free account at screenscraper.fr -- covers MAME, retro, and all classic systems.
             </div>
             <div className={styles.inputRow}>
+              <label className={styles.inputLabel}>yt-dlp path</label>
+              <input
+                className={styles.textInput}
+                value={config.ytdlpPath || "F:/Tools/yt-dlp.exe"}
+                onChange={e => update("ytdlpPath", e.target.value)}
+                placeholder="F:/Tools/yt-dlp.exe"
+              />
+            </div>
+            <div className={styles.emuNote}>
+              YouTube fallback for games not on ScreenScraper. Download yt-dlp.exe from github.com/yt-dlp/yt-dlp and put it at the path above. Videos are trimmed to 40s automatically.
+            </div>
+            <div className={styles.inputRow}>
               <label className={styles.inputLabel}>Bulk fetch</label>
               <button className={styles.exportBtn} onClick={() => setShowArtworkMgr(true)}>
                 Open Artwork Manager

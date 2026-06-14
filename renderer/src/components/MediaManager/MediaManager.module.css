@@ -281,7 +281,17 @@
 .badgeAmber { border-color: rgba(255,170,0,0.3); color: #ffaa00; background: rgba(255,170,0,0.05); }
 .badgeGray  { border-color: rgba(255,255,255,0.1); color: rgba(255,255,255,0.25); }
 
-.gameAction { flex-shrink: 0; min-width: 110px; text-align: right; }
+.gameAction { flex-shrink: 0; min-width: 160px; text-align: right; }
+
+.ytSource {
+  font-size: 9px;
+  color: rgba(255,255,255,0.4);
+  max-width: 140px;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
 
 .readyLabel {
   font-size: 10px;

@@ -40,6 +40,7 @@ const DEFAULTS = {
   pinballPath:        'F:\\vPinball\\',
   tablesPath:         'F:\\PinballTables\\',
   mediaPath:          'F:\\Media\\',
+  ytdlpPath:          'F:\\Tools\\yt-dlp.exe',
   enabledEmulators: {
     teknoparrot: true,
     rpcs3:       true,
