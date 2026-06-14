@@ -144,57 +144,70 @@ ipcMain.handle('launch-vpx-table', async (event, tablePath) => {
 
 // -- Video via ScreenScraper --------------------------------------------------
 ipcMain.handle('search-video', async (event, gameTitle) => {
+  const cfg = config.load()
+  const ssUser = cfg.screenscraper?.user || ''
+  const ssPass = cfg.screenscraper?.pass || ''
+  if (!ssUser || !ssPass) return { error: 'No ScreenScraper credentials set' }
+
+  const base = 'https://www.screenscraper.fr/api2'
+  const auth = `devid=${encodeURIComponent(ssUser)}&devpassword=${encodeURIComponent(ssPass)}&softname=nuarcade&output=json&ssid=${encodeURIComponent(ssUser)}&sspassword=${encodeURIComponent(ssPass)}`
+
   try {
-    const cfg = config.load()
-    const ssUser = cfg.screenscraper?.user || ''
-    const ssPass = cfg.screenscraper?.pass || ''
-    if (!ssUser || !ssPass) return null
-
-    // Use user credentials as dev credentials (standard for personal use)
-    const devid = ssUser
-    const devpass = ssPass
-    const base = `https://www.screenscraper.fr/api2`
-    const auth = `devid=${encodeURIComponent(devid)}&devpassword=${encodeURIComponent(devpass)}&softname=nuarcade&output=json&ssid=${encodeURIComponent(ssUser)}&sspassword=${encodeURIComponent(ssPass)}`
-
-    // Search by game name
+    // Step 1: Search for the game
     const searchUrl = `${base}/jeuRecherche.php?${auth}&recherche=${encodeURIComponent(gameTitle)}`
-    const res = await fetch(searchUrl, { headers: { 'User-Agent': 'NuArcade/1.0' } })
+    const res = await fetch(searchUrl, { headers: { 'User-Agent': 'NuArcade/1.0' }, signal: AbortSignal.timeout(8000) })
     const text = await res.text()
+
+    // Check for API errors
+    if (text.includes('API closed') || text.includes('Erreur') || text.includes('error')) {
+      // Try to extract error message
+      const errMatch = text.match(/"message"\s*:\s*"([^"]+)"/)
+      return { error: 'SS API error: ' + (errMatch ? errMatch[1] : text.slice(0, 100)) }
+    }
 
     let jeux = null
     try {
       const data = JSON.parse(text)
       jeux = data?.response?.jeux || data?.jeux
-    } catch { return null }
+    } catch {
+      return { error: 'SS search parse error. Response: ' + text.slice(0, 150) }
+    }
 
-    if (!jeux || jeux.length === 0) return null
+    if (!jeux || jeux.length === 0) {
+      return { error: 'No game found on ScreenScraper for: ' + gameTitle }
+    }
+
     const gameId = jeux[0].id || jeux[0].jeuId
+    if (!gameId) return { error: 'No game ID in SS response' }
 
-    // Get full game info with media
+    // Step 2: Get full game info with media
     const detailUrl = `${base}/jeuInfos.php?${auth}&gameid=${gameId}`
-    const detailRes = await fetch(detailUrl, { headers: { 'User-Agent': 'NuArcade/1.0' } })
+    const detailRes = await fetch(detailUrl, { headers: { 'User-Agent': 'NuArcade/1.0' }, signal: AbortSignal.timeout(8000) })
     const detailText = await detailRes.text()
 
     let jeu = null
     try {
       const detailData = JSON.parse(detailText)
       jeu = detailData?.response?.jeu
-    } catch { return null }
-    if (!jeu) return null
+    } catch {
+      return { error: 'SS detail parse error. Response: ' + detailText.slice(0, 150) }
+    }
 
-    // Find video in medias array
+    if (!jeu) return { error: 'No game detail returned for ID: ' + gameId }
+
+    // Step 3: Find video media
     const medias = jeu.medias || []
-    const videoMedia = medias.find(m =>
-      m.type === 'video' ||
-      m.type === 'video-normalized' ||
-      m.type === 'video-snap'
-    )
-    if (!videoMedia) return null
+    const videoTypes = ['video', 'video-normalized', 'video-snap', 'video-hd']
+    const videoMedia = medias.find(m => videoTypes.includes(m.type))
 
-    // Build video URL with credentials
-    const videoUrl = videoMedia.url +
-      (videoMedia.url.includes('?') ? '&' : '?') +
-      `maxwidth=640&ssid=${encodeURIComponent(ssUser)}&sspassword=${encodeURIComponent(ssPass)}`
+    if (!videoMedia) {
+      const availableTypes = [...new Set(medias.map(m => m.type))].join(', ')
+      return { error: `No video found for "${jeu.noms?.[0]?.text || gameTitle}" (ID: ${gameId}). Available media: ${availableTypes || 'none'}` }
+    }
+
+    // Build authenticated video URL
+    const sep = videoMedia.url.includes('?') ? '&' : '?'
+    const videoUrl = videoMedia.url + sep + `maxwidth=640&ssid=${encodeURIComponent(ssUser)}&sspassword=${encodeURIComponent(ssPass)}`
 
     return {
       videoId: String(gameId),
@@ -204,7 +217,7 @@ ipcMain.handle('search-video', async (event, gameTitle) => {
       source: 'screenscraper',
     }
   } catch (e) {
-    return null
+    return { error: 'SS fetch exception: ' + (e.message || String(e)) }
   }
 })
 

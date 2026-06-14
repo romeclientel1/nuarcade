@@ -98,7 +98,10 @@ export default function MediaManager({ onClose }) {
     try {
       if (window.nuarcade && window.nuarcade.searchVideo) {
         const result = await window.nuarcade.searchVideo(game.title)
-        if (result) {
+        if (result && result.error) {
+          log(`SS error: ${result.error}`, 'error')
+          setPreviewing(p => ({ ...p, [game.id]: "notfound" }))
+        } else if (result && result.url) {
           log(`Found game ID: ${result.videoId} -- "${result.title}"`, 'ok')
           log(`Video URL: ${result.url}`, 'ok')
           setSearchResults(r => ({ ...r, [game.id]: result }))
