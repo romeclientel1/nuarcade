@@ -1028,6 +1028,42 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
 })
 
+// -- Video library scan -------------------------------------------------------
+// Returns { [gameId]: filePath } for every .mp4 found in the Videos folder.
+// Also merges in anything recorded in videos.json from prior downloads.
+ipcMain.handle('get-videos', async () => {
+  try {
+    const cfg = config.load()
+    const videosDir = path.join(cfg.mediaPath || 'F:\\Media\\', 'Videos')
+    const result = {}
+
+    // Merge persisted download registry
+    const registryPath = path.join(cfg.mediaPath || 'F:\\Media\\', 'videos.json')
+    if (fs.existsSync(registryPath)) {
+      try {
+        const reg = JSON.parse(fs.readFileSync(registryPath, 'utf8'))
+        Object.assign(result, reg)
+      } catch {}
+    }
+
+    // Scan folder for any manually dropped .mp4 files
+    if (fs.existsSync(videosDir)) {
+      const files = fs.readdirSync(videosDir)
+      files.forEach(f => {
+        if (f.toLowerCase().endsWith('.mp4')) {
+          const gameId = f.slice(0, -4) // strip .mp4
+          const fullPath = path.join(videosDir, f)
+          if (!result[gameId]) result[gameId] = fullPath
+        }
+      })
+    }
+
+    return { videos: result }
+  } catch (e) {
+    return { videos: {}, error: e.message }
+  }
+})
+
 // -- App version --------------------------------------------------------------
 ipcMain.on('get-version', (event) => {
   event.returnValue = 'v' + app.getVersion()

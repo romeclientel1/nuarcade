@@ -339,11 +339,26 @@ export function useGameLibrary() {
           // Fall back to samples if nothing found
           const prevCount = parseInt(localStorage.getItem('nuarcade_last_game_count') || '0')
           const libraryEmpty = allGames.length === 0
-          const markedGames = (!libraryEmpty ? allGames : SAMPLE_GAMES).map((g, i) => ({
-            ...g,
-            isNew: !libraryEmpty && prevCount > 0 && i >= prevCount,
-            isSample: libraryEmpty,
-          }))
+
+          // Load video map from disk (F:/Media/Videos/*.mp4 + videos.json registry)
+          let videosMap = {}
+          try {
+            if (window.nuarcade.getVideos) {
+              const vResult = await window.nuarcade.getVideos()
+              videosMap = vResult.videos || {}
+            }
+          } catch {}
+
+          const markedGames = (!libraryEmpty ? allGames : SAMPLE_GAMES).map((g, i) => {
+            const gameId = g.id || g.profile?.replace('.xml', '').replace('.vpx', '')
+            const videoFilePath = videosMap[gameId]
+            return {
+              ...g,
+              isNew: !libraryEmpty && prevCount > 0 && i >= prevCount,
+              isSample: libraryEmpty,
+              videoPath: videoFilePath ? ('file:///' + videoFilePath.replace(/\\/g, '/')) : undefined,
+            }
+          })
           localStorage.setItem('nuarcade_last_game_count', markedGames.length)
           // Cache the scan results so next startup is instant
           if (!libraryEmpty && markedGames.length > 0) {

@@ -76,7 +76,7 @@ const handleRescan = async () => {
         return 0
       }
     }
-    await scan("TeknoParrot", () => window.nuarcade.scanGames(cfg.teknoParrotPath, cfg.gamesFolderPath))
+    await scan("TeknoParrot", () => window.nuarcade.scanGames({ teknoParrotPath: cfg.teknoParrotPath, gamesFolderPath: cfg.gamesFolderPath }))
     await scan("MAME",        () => window.nuarcade.scanMameGames(cfg.mameGamesPath))
     await scan("Model 2",     () => window.nuarcade.scanModel2Games(cfg.model2GamesPath))
     await scan("Model 3",     () => window.nuarcade.scanModel3Games(cfg.model3GamesPath))
