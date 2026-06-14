@@ -104,67 +104,70 @@ export default function MediaManager({ onClose }) {
   }
 
   const handleSearch = async (game) => {
-    setPreviewing(p => ({ ...p, [game.id]: "searching" }))
+    const gid = game.id || game.profile
+    setPreviewing(p => ({ ...p, [gid]: "searching" }))
     log(`Searching ScreenScraper for: "${game.title}"`)
     try {
       if (window.nuarcade && window.nuarcade.searchVideo) {
         const result = await window.nuarcade.searchVideo(game.title)
         if (result && result.error) {
           log(`SS error: ${result.error}`, 'error')
-          setPreviewing(p => ({ ...p, [game.id]: "notfound" }))
+          setPreviewing(p => ({ ...p, [gid]: "notfound" }))
         } else if (result && result.url) {
           log(`Found game ID: ${result.videoId} -- "${result.title}"`, 'ok')
           log(`Video URL: ${result.url}`, 'ok')
-          setSearchResults(r => ({ ...r, [game.id]: result }))
-          setPreviewing(p => ({ ...p, [game.id]: "found" }))
+          setSearchResults(r => ({ ...r, [gid]: result }))
+          setPreviewing(p => ({ ...p, [gid]: "found" }))
         } else {
           log(`No video found on ScreenScraper for "${game.title}"`, 'warn')
-          setPreviewing(p => ({ ...p, [game.id]: "notfound" }))
+          setPreviewing(p => ({ ...p, [gid]: "notfound" }))
         }
       } else {
         log('window.nuarcade.searchVideo not available -- check preload', 'error')
-        setPreviewing(p => ({ ...p, [game.id]: "notfound" }))
+        setPreviewing(p => ({ ...p, [gid]: "notfound" }))
       }
     } catch (e) {
       log(`Search error: ${e.message || String(e)}`, 'error')
-      setPreviewing(p => ({ ...p, [game.id]: "notfound" }))
+      setPreviewing(p => ({ ...p, [gid]: "notfound" }))
     }
   }
 
   const handleDownload = async (game) => {
-    const result = searchResults[game.id]
+    const gid = game.id || game.profile
+    const result = searchResults[gid]
     if (!result) { log(`No search result for ${game.title} -- search first`, 'warn'); return }
 
-    setDownloading(d => ({ ...d, [game.id]: "downloading" }))
+    setDownloading(d => ({ ...d, [gid]: "downloading" }))
     log(`Downloading video for "${game.title}"...`)
     try {
       if (window.nuarcade && window.nuarcade.downloadVideo) {
         const dl = await window.nuarcade.downloadVideo({
           videoUrl: result.url,
-          gameId: game.id,
+          gameId: gid,
         })
         if (dl.success) {
           log(`Downloaded OK -- saved to ${dl.outputFile}`, 'ok')
-          setGames(g => g.map(x => x.id === game.id ? { ...x, hasVideo: true } : x))
-          setDownloading(d => ({ ...d, [game.id]: "done" }))
+          setGames(g => g.map(x => (x.id || x.profile) === gid ? { ...x, hasVideo: true } : x))
+          setDownloading(d => ({ ...d, [gid]: "done" }))
         } else {
           log(`Download failed: ${dl.error || 'unknown error'}`, 'error')
-          setDownloading(d => ({ ...d, [game.id]: "error" }))
+          setDownloading(d => ({ ...d, [gid]: "error" }))
         }
       } else {
         log('window.nuarcade.downloadVideo not available', 'error')
-        setDownloading(d => ({ ...d, [game.id]: "error" }))
+        setDownloading(d => ({ ...d, [gid]: "error" }))
       }
     } catch (e) {
       log(`Download exception: ${e.message || String(e)}`, 'error')
-      setDownloading(d => ({ ...d, [game.id]: "error" }))
+      setDownloading(d => ({ ...d, [gid]: "error" }))
     }
   }
 
   const handleDownloadAll = async () => {
     const missing = filteredGames.filter(g => !g.hasVideo)
     for (const game of missing) {
-      if (!searchResults[game.id]) await handleSearch(game)
+      const gid = game.id || game.profile
+      if (!searchResults[gid]) await handleSearch(game)
       await handleDownload(game)
     }
   }
