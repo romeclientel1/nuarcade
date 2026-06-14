@@ -78,6 +78,143 @@ function sortGames(games, sortBy) {
   }
 }
 
+
+// -- BUILD 100 Easter Egg -----------------------------------------------------
+function KonamiCelebration({ onClose }) {
+  const canvasRef = useRef(null)
+  const frameRef  = useRef(null)
+  const startRef  = useRef(Date.now())
+
+  useEffect(() => {
+    const t = setTimeout(onClose, 8000)
+    return () => clearTimeout(t)
+  }, [onClose])
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    canvas.width  = window.innerWidth
+    canvas.height = window.innerHeight
+
+    const COLORS = ['#ff003c','#ff6600','#ffcc00','#00ff88','#00c8ff','#cc00ff','#ffffff']
+    const COUNT  = 180
+
+    const particles = Array.from({ length: COUNT }, () => ({
+      x:    Math.random() * canvas.width,
+      y:    Math.random() * canvas.height * 0.4,
+      vx:   (Math.random() - 0.5) * 6,
+      vy:   Math.random() * 4 + 2,
+      size: Math.random() * 8 + 4,
+      color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      spin:  (Math.random() - 0.5) * 0.3,
+      angle: Math.random() * Math.PI * 2,
+      shape: Math.random() > 0.5 ? 'rect' : 'circle',
+    }))
+
+    const draw = () => {
+      const elapsed = (Date.now() - startRef.current) / 1000
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      particles.forEach(p => {
+        p.x     += p.vx
+        p.vy    += 0.12
+        p.y     += p.vy
+        p.angle += p.spin
+        if (p.x < -20) p.x = canvas.width + 20
+        if (p.x > canvas.width + 20) p.x = -20
+        if (p.y > canvas.height + 20) {
+          p.y  = -20
+          p.vy = Math.random() * 3 + 1
+          p.vx = (Math.random() - 0.5) * 6
+        }
+        ctx.save()
+        ctx.translate(p.x, p.y)
+        ctx.rotate(p.angle)
+        ctx.globalAlpha = Math.max(0, 1 - Math.max(0, elapsed - 6) / 2)
+        ctx.fillStyle = p.color
+        if (p.shape === 'rect') {
+          ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2)
+        } else {
+          ctx.beginPath()
+          ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2)
+          ctx.fill()
+        }
+        ctx.restore()
+      })
+      frameRef.current = requestAnimationFrame(draw)
+    }
+
+    draw()
+    return () => cancelAnimationFrame(frameRef.current)
+  }, [])
+
+  const overlayStyle = {
+    position: 'fixed',
+    inset: 0,
+    zIndex: 9999,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: 'rgba(0,0,0,0.82)',
+    cursor: 'pointer',
+  }
+
+  const headStyle = {
+    fontFamily: 'Orbitron, sans-serif',
+    fontSize: 'clamp(48px, 10vw, 120px)',
+    fontWeight: 900,
+    letterSpacing: '0.05em',
+    background: 'linear-gradient(135deg, #ff003c 0%, #ff6600 20%, #ffcc00 40%, #00ff88 60%, #00c8ff 80%, #cc00ff 100%)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    backgroundClip: 'text',
+    lineHeight: 1,
+    animation: 'konami-pulse 0.6s ease-in-out infinite alternate',
+  }
+
+  const subStyle = {
+    fontFamily: 'Share Tech Mono, monospace',
+    fontSize: 'clamp(14px, 2.5vw, 28px)',
+    color: '#ffffff',
+    letterSpacing: '0.25em',
+    marginTop: 16,
+    opacity: 0.85,
+  }
+
+  const tagStyle = {
+    fontFamily: 'Share Tech Mono, monospace',
+    fontSize: 'clamp(10px, 1.5vw, 16px)',
+    color: 'rgba(255,255,255,0.4)',
+    letterSpacing: '0.2em',
+    marginTop: 32,
+  }
+
+  const codeStyle = {
+    fontFamily: 'Share Tech Mono, monospace',
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.2)',
+    letterSpacing: '0.15em',
+    marginTop: 48,
+  }
+
+  return (
+    <div style={overlayStyle} onClick={onClose}>
+      <style>{"@keyframes konami-pulse { from { filter: brightness(1) drop-shadow(0 0 20px rgba(255,200,0,0.5)); } to { filter: brightness(1.2) drop-shadow(0 0 60px rgba(255,200,0,0.9)); } }"}</style>
+      <canvas
+        ref={canvasRef}
+        style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+      />
+      <div style={{ position: 'relative', textAlign: 'center', padding: '0 24px' }}>
+        <div style={headStyle}>BUILD 100</div>
+        <div style={subStyle}>PLAYER ONE HAS ENTERED THE ARENA</div>
+        <div style={tagStyle}>NUARCADE // JEROME EMANUEL // 2025</div>
+        <div style={codeStyle}>UP UP DOWN DOWN LEFT RIGHT LEFT RIGHT B A</div>
+      </div>
+    </div>
+  )
+}
+
 export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange, onSetupWizard }) {
   const {
     games, stats, loading, libraryEmpty, config,
@@ -108,6 +245,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const [showStats, setShowStats] = useState(false)
   const [showAchievements, setShowAchievements] = useState(false)
   const [showBoot, setShowBoot] = useState(false)
+  const [showKonami, setShowKonami] = useState(false)
+  const konamiSeq = useRef([])
 
   // Show boot screen once after library loads (only on cabinet, only if games exist)
   const bootShown = useRef(false)
@@ -363,6 +502,16 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       // Single-key shortcuts only fire when no overlay is open
       const anyOverlay = showDetail || showHelp || showStats || showAchievements || showCollections || showSettings || showMediaManager
       if (anyOverlay) return
+
+      // Konami code detector: UP UP DOWN DOWN LEFT RIGHT LEFT RIGHT b a
+      const KONAMI = ["ArrowUp","ArrowUp","ArrowDown","ArrowDown","ArrowLeft","ArrowRight","ArrowLeft","ArrowRight","b","a"]
+      konamiSeq.current = [...konamiSeq.current, e.key].slice(-KONAMI.length)
+      if (konamiSeq.current.join(",") === KONAMI.join(",")) {
+        konamiSeq.current = []
+        setShowKonami(true)
+        sounds.coin?.()
+        return
+      }
 
       if (e.key === "f" || e.key === "F") { if (current) toggleFavorite(current.id || current.profile) }
       if (e.key === "?") setShowHelp(h => !h)
@@ -793,6 +942,11 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
           artwork={artwork}
           onComplete={() => setShowBoot(false)}
         />
+      )}
+
+      {/* Konami code easter egg -- BUILD 100 celebration */}
+      {showKonami && (
+        <KonamiCelebration onClose={() => setShowKonami(false)} />
       )}
     </div>
   )
