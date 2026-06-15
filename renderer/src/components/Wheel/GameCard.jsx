@@ -70,7 +70,6 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork 
     if (!videoRef.current) return
 
     if (isCenter && videoUrl && !videoError) {
-      console.log('[NuArcade] Playing video:', videoUrl)
       videoRef.current.load()
       // Small delay so the element settles before play -- avoids AbortError
       // on rapid wheel navigation

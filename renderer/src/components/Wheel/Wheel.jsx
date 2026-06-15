@@ -256,9 +256,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   useEffect(() => {
     if (bootShown.current || loading || !games.length) return
     bootShown.current = true
-    // Patch videoPath onto cached games right after startup load
-    refreshVideoPaths()
-    if (window.nuarcade?.platform === "win32") {
+    if (window.nuarcade?.platform === 'win32') {
       setShowBoot(true)
     }
   }, [games.length, loading])
@@ -960,7 +958,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
         <BootScreen
           games={games}
           artwork={artwork}
-          onComplete={() => setShowBoot(false)}
+          onComplete={() => { setShowBoot(false); refreshVideoPaths() }}
         />
       )}
 
