@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import styles from "./MediaManager.module.css"
 import ArtworkManager from "../ArtworkManager/ArtworkManager"
 
@@ -29,6 +29,9 @@ export default function MediaManager({ onClose }) {
   const [ytDownloading, setYtDownloading] = useState({})
   const [ytdlpAvailable, setYtdlpAvailable] = useState(null) // null=unknown, true, false
   const [ytdlpInstalling, setYtdlpInstalling] = useState(false)
+  const [bulkRunning, setBulkRunning] = useState(false)
+  const [bulkProgress, setBulkProgress] = useState(null) // { current, total, title, done, failed }
+  const bulkCancelRef = useRef(false)
 
   useEffect(() => {
     scanLibrary()
@@ -164,12 +167,87 @@ export default function MediaManager({ onClose }) {
   }
 
   const handleDownloadAll = async () => {
+    // Legacy SS bulk -- kept but SS doesn't work without dev creds
     const missing = filteredGames.filter(g => !g.hasVideo)
     for (const game of missing) {
       const gid = game.id || game.profile
       if (!searchResults[gid]) await handleSearch(game)
       await handleDownload(game)
     }
+  }
+
+  const handleBulkYouTube = async () => {
+    if (bulkRunning) {
+      // Cancel a running bulk
+      bulkCancelRef.current = true
+      return
+    }
+
+    // Ensure yt-dlp is ready first
+    const ready = await handleEnsureYtdlp()
+    if (!ready) return
+
+    const missing = filteredGames.filter(g => !g.hasVideo)
+    if (!missing.length) { log('No missing videos -- all games have clips', 'ok'); return }
+
+    bulkCancelRef.current = false
+    setBulkRunning(true)
+    setBulkProgress({ current: 0, total: missing.length, title: '', done: 0, failed: 0 })
+    log(`Starting YouTube bulk fetch -- ${missing.length} games...`)
+
+    let done = 0
+    let failed = 0
+
+    for (let i = 0; i < missing.length; i++) {
+      if (bulkCancelRef.current) {
+        log(`Bulk fetch cancelled at ${i}/${missing.length} (${done} downloaded, ${failed} failed)`, 'warn')
+        break
+      }
+
+      const game = missing[i]
+      const gid = game.id || game.profile
+      setBulkProgress({ current: i + 1, total: missing.length, title: game.title || gid, done, failed })
+      log(`[${i + 1}/${missing.length}] Searching: "${game.title || gid}"`)
+
+      try {
+        // Search YouTube
+        const searchResult = await window.nuarcade.ytdlpSearch({ gameTitle: game.title || gid, gameId: gid })
+        if (searchResult?.error || !searchResult?.videoId) {
+          log(`  No result: ${searchResult?.error || 'no match'}`, 'warn')
+          failed++
+          continue
+        }
+
+        if (bulkCancelRef.current) break
+
+        log(`  Found: "${searchResult.title}" -- downloading...`)
+        const dl = await window.nuarcade.ytdlpDownload({ videoId: searchResult.videoId, gameId: gid })
+
+        if (dl.success) {
+          done++
+          log(`  Done: ${dl.outputFile}`, 'ok')
+          setGames(g => g.map(x => (x.id || x.profile) === gid ? { ...x, hasVideo: true } : x))
+          setYtDownloading(d => ({ ...d, [gid]: 'done' }))
+        } else {
+          failed++
+          log(`  Failed: ${dl.error}`, 'error')
+          setYtDownloading(d => ({ ...d, [gid]: 'error' }))
+        }
+      } catch (e) {
+        failed++
+        log(`  Exception: ${e.message || String(e)}`, 'error')
+      }
+
+      // Small pause between games so YouTube doesn't rate-limit
+      if (i < missing.length - 1 && !bulkCancelRef.current) {
+        await new Promise(r => setTimeout(r, 1500))
+      }
+    }
+
+    log(`Bulk fetch complete -- ${done} downloaded, ${failed} failed`, done > 0 ? 'ok' : 'warn')
+    setBulkProgress(p => ({ ...p, title: 'Complete', done, failed }))
+    setBulkRunning(false)
+    setTimeout(() => setBulkProgress(null), 5000)
   }
 
   const handleEnsureYtdlp = async () => {
@@ -306,9 +384,39 @@ export default function MediaManager({ onClose }) {
                 <div className={styles.statNum} style={{ color: "#ffaa00" }}>{stats.missing}</div>
                 <div className={styles.statLbl}>Missing video</div>
               </div>
-              <button className={styles.downloadAllBtn} onClick={handleDownloadAll} disabled={stats.missing === 0}>
-                Download all missing
-              </button>
+              <div style={{ marginLeft: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+                <button
+                  className={styles.downloadAllBtn}
+                  style={bulkRunning ? { borderColor: '#ff4444', color: '#ff4444', background: 'rgba(255,68,68,0.1)' } : {}}
+                  onClick={handleBulkYouTube}
+                  disabled={stats.missing === 0 && !bulkRunning}
+                >
+                  {bulkRunning ? 'Cancel fetch' : 'Auto-fetch via YouTube'}
+                </button>
+                {bulkProgress && (
+                  <div style={{ width: '100%', minWidth: 220 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: 'rgba(255,255,255,0.4)', marginBottom: 4, fontFamily: 'Share Tech Mono, monospace' }}>
+                      <span style={{ maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {bulkProgress.title}
+                      </span>
+                      <span>{bulkProgress.current}/{bulkProgress.total}</span>
+                    </div>
+                    <div style={{ height: 3, background: 'rgba(255,255,255,0.08)', borderRadius: 2, overflow: 'hidden' }}>
+                      <div style={{
+                        height: '100%',
+                        width: `${(bulkProgress.current / bulkProgress.total) * 100}%`,
+                        background: bulkRunning ? '#00c8ff' : '#00ff88',
+                        borderRadius: 2,
+                        transition: 'width 0.3s ease',
+                      }} />
+                    </div>
+                    <div style={{ display: 'flex', gap: 12, marginTop: 4, fontSize: 9, fontFamily: 'Share Tech Mono, monospace' }}>
+                      <span style={{ color: '#00ff88' }}>{bulkProgress.done} done</span>
+                      {bulkProgress.failed > 0 && <span style={{ color: '#ff4444' }}>{bulkProgress.failed} failed</span>}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className={styles.filterRow}>
