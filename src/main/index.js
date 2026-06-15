@@ -1050,28 +1050,43 @@ ipcMain.handle('get-videos', async () => {
       } catch {}
     }
 
-    // Scan folder for any manually dropped .mp4 files
-    // Also handles temp files that weren't renamed (strips _tmp_TIMESTAMP suffix)
+    // Scan folder -- clean up yt-dlp fragments and find real merged .mp4 files
     if (fs.existsSync(videosDir)) {
       const files = fs.readdirSync(videosDir)
+
+      // First pass: delete junk files yt-dlp left behind
+      // Fragment files: AAA.f140.m4a, AAA.f397.mp4, ActionDeka.f135.mp4 etc.
+      // Pattern: contains .fNNN. before the extension (format code)
       files.forEach(f => {
-        if (f.toLowerCase().endsWith('.mp4')) {
-          let gameId = f.slice(0, -4) // strip .mp4
-          const isTemp = /_tmp_\d+$/.test(gameId)
-          if (isTemp) {
-            // Rename temp file to proper gameId.mp4 so it's findable next time
-            gameId = gameId.replace(/_tmp_\d+$/, '')
-            const tempPath = path.join(videosDir, f)
-            const cleanPath = path.join(videosDir, gameId + '.mp4')
-            if (!fs.existsSync(cleanPath)) {
-              try { fs.renameSync(tempPath, cleanPath) } catch {}
-            }
-            const fullPath = fs.existsSync(cleanPath) ? cleanPath : tempPath
-            if (!result[gameId]) result[gameId] = fullPath
+        if (/\.f\d+\.(mp4|m4a|webm|mkv)$/i.test(f)) {
+          try { fs.unlinkSync(path.join(videosDir, f)) } catch {}
+        }
+      })
+
+      // Second pass: re-read after cleanup, find real merged .mp4 files
+      const cleanFiles = fs.readdirSync(videosDir)
+      cleanFiles.forEach(f => {
+        if (!f.toLowerCase().endsWith('.mp4')) return
+        // Skip any remaining fragment files
+        if (/\.f\d+\.mp4$/i.test(f)) return
+
+        let gameId = f.slice(0, -4)
+        const isTemp = /_tmp_\d+$/.test(gameId)
+
+        if (isTemp) {
+          // Rename leftover temp file to proper gameId.mp4
+          gameId = gameId.replace(/_tmp_\d+$/, '')
+          const tempPath = path.join(videosDir, f)
+          const cleanPath = path.join(videosDir, gameId + '.mp4')
+          if (!fs.existsSync(cleanPath)) {
+            try { fs.renameSync(tempPath, cleanPath) } catch {}
           } else {
-            const fullPath = path.join(videosDir, f)
-            if (!result[gameId]) result[gameId] = fullPath
+            try { fs.unlinkSync(tempPath) } catch {}
           }
+          const fullPath = fs.existsSync(cleanPath) ? cleanPath : tempPath
+          if (!result[gameId]) result[gameId] = fullPath
+        } else {
+          if (!result[gameId]) result[gameId] = path.join(videosDir, f)
         }
       })
     }
@@ -1388,6 +1403,8 @@ ipcMain.handle('ytdlp-download', async (event, { videoId, gameId }) => {
       '--format', 'bestvideo[ext=mp4][height<=480]+bestaudio[ext=m4a]/best[ext=mp4][height<=480]/best[height<=480]/best',
       '--merge-output-format', 'mp4',
       '--postprocessor-args', 'ffmpeg:-t 40',
+      '--no-keep-video',   // delete video fragment after merge
+      '--no-part',         // don't leave .part files on interruption
       '--output', tempFile,
       '--no-playlist',
       '--no-warnings',
