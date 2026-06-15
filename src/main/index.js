@@ -1070,6 +1070,8 @@ ipcMain.handle('get-videos', async () => {
 // Downloads yt-dlp.exe from GitHub releases into the configured path.
 // Returns { success, path } or { success: false, error }
 ipcMain.handle('ensure-ytdlp', async (event) => {
+  const fs = require('fs')
+  const https = require('https')
   const cfg = config.load()
   const ytdlpExe = cfg.ytdlpPath || 'F:\\Tools\\yt-dlp.exe'
 
@@ -1087,21 +1089,25 @@ ipcMain.handle('ensure-ytdlp', async (event) => {
 
   const YTDLP_URL = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe'
 
+  // Download via https.get (follows redirects, works in Electron main process)
+  const downloadFile = (url, destPath, redirectCount = 0) => new Promise((resolve, reject) => {
+    if (redirectCount > 5) { reject(new Error('Too many redirects')); return }
+    https.get(url, { headers: { 'User-Agent': 'NuArcade/1.0' } }, (res) => {
+      if (res.statusCode === 301 || res.statusCode === 302 || res.statusCode === 307 || res.statusCode === 308) {
+        resolve(downloadFile(res.headers.location, destPath, redirectCount + 1))
+        return
+      }
+      if (res.statusCode !== 200) { reject(new Error('HTTP ' + res.statusCode)); return }
+      const out = fs.createWriteStream(destPath)
+      res.pipe(out)
+      out.on('finish', () => out.close(resolve))
+      out.on('error', reject)
+      res.on('error', reject)
+    }).on('error', reject)
+  })
+
   try {
-    // GitHub redirects /latest/download/ -- follow redirects
-    const res = await fetch(YTDLP_URL, {
-      headers: { 'User-Agent': 'NuArcade/1.0' },
-      redirect: 'follow',
-      signal: AbortSignal.timeout(60000), // 60s for ~15MB
-    })
-
-    if (!res.ok) {
-      return { success: false, error: 'GitHub returned HTTP ' + res.status }
-    }
-
-    const buffer = await res.arrayBuffer()
-    fs.writeFileSync(ytdlpExe, Buffer.from(buffer))
-
+    await downloadFile(YTDLP_URL, ytdlpExe)
     return { success: true, path: ytdlpExe, alreadyPresent: false }
   } catch (e) {
     return { success: false, error: 'Download failed: ' + (e.message || String(e)) }
@@ -1112,26 +1118,34 @@ ipcMain.handle('ensure-ytdlp', async (event) => {
 // Auto-bootstraps yt-dlp if missing before searching.
 // Returns { title, videoId, thumbnail, duration } or { error }
 ipcMain.handle('ytdlp-search', async (event, { gameTitle, gameId }) => {
+  const fs = require('fs')
+  const { spawn } = require('child_process')
   const cfg = config.load()
   const ytdlpExe = cfg.ytdlpPath || 'F:\\Tools\\yt-dlp.exe'
 
-  // Auto-download if missing
+  // Auto-download if missing using https.get (works in Electron main process)
   if (!fs.existsSync(ytdlpExe)) {
-    const ensureResult = await new Promise(async (resolve) => {
+    const ensureResult = await new Promise((resolve) => {
       try {
         fs.mkdirSync(path.dirname(ytdlpExe), { recursive: true })
-        const res = await fetch('https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe', {
-          headers: { 'User-Agent': 'NuArcade/1.0' },
-          redirect: 'follow',
-          signal: AbortSignal.timeout(60000),
-        })
-        if (!res.ok) { resolve({ success: false, error: 'GitHub HTTP ' + res.status }); return }
-        const buf = await res.arrayBuffer()
-        fs.writeFileSync(ytdlpExe, Buffer.from(buf))
-        resolve({ success: true })
-      } catch (e) {
-        resolve({ success: false, error: e.message || String(e) })
+      } catch (e) { resolve({ success: false, error: e.message }); return }
+
+      const https = require('https')
+      const downloadFile = (url, dest, hops = 0) => {
+        if (hops > 5) { resolve({ success: false, error: 'Too many redirects' }); return }
+        https.get(url, { headers: { 'User-Agent': 'NuArcade/1.0' } }, (res) => {
+          if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+            downloadFile(res.headers.location, dest, hops + 1); return
+          }
+          if (res.statusCode !== 200) { resolve({ success: false, error: 'HTTP ' + res.statusCode }); return }
+          const out = fs.createWriteStream(dest)
+          res.pipe(out)
+          out.on('finish', () => out.close(() => resolve({ success: true })))
+          out.on('error', e => resolve({ success: false, error: e.message }))
+          res.on('error', e => resolve({ success: false, error: e.message }))
+        }).on('error', e => resolve({ success: false, error: e.message }))
       }
+      downloadFile('https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe', ytdlpExe)
     })
     if (!ensureResult.success) {
       return { error: 'Could not auto-download yt-dlp: ' + ensureResult.error }
@@ -1185,26 +1199,36 @@ ipcMain.handle('ytdlp-search', async (event, { gameTitle, gameId }) => {
 // -- yt-dlp: download and trim a YouTube video to 40s -------------------------
 // Returns { success, outputFile } or { success: false, error }
 ipcMain.handle('ytdlp-download', async (event, { videoId, gameId }) => {
+  const fs = require('fs')
+  const { spawn } = require('child_process')
   const cfg = config.load()
   const ytdlpExe = cfg.ytdlpPath || 'F:\\Tools\\yt-dlp.exe'
   const videosDir = path.join(cfg.mediaPath || 'F:\\Media\\', 'Videos')
   const outputFile = path.join(videosDir, gameId + '.mp4')
 
-  // Auto-download yt-dlp if missing (same bootstrap as ytdlp-search)
+  // Auto-download yt-dlp if missing using https.get
   if (!fs.existsSync(ytdlpExe)) {
-    try {
-      fs.mkdirSync(path.dirname(ytdlpExe), { recursive: true })
-      const res = await fetch('https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe', {
-        headers: { 'User-Agent': 'NuArcade/1.0' },
-        redirect: 'follow',
-        signal: AbortSignal.timeout(60000),
-      })
-      if (!res.ok) return { success: false, error: 'Could not auto-download yt-dlp: HTTP ' + res.status }
-      const buf = await res.arrayBuffer()
-      fs.writeFileSync(ytdlpExe, Buffer.from(buf))
-    } catch (e) {
-      return { success: false, error: 'Could not auto-download yt-dlp: ' + (e.message || String(e)) }
-    }
+    const dlResult = await new Promise((resolve) => {
+      try { fs.mkdirSync(path.dirname(ytdlpExe), { recursive: true }) }
+      catch (e) { resolve({ success: false, error: e.message }); return }
+      const https = require('https')
+      const downloadFile = (url, dest, hops = 0) => {
+        if (hops > 5) { resolve({ success: false, error: 'Too many redirects' }); return }
+        https.get(url, { headers: { 'User-Agent': 'NuArcade/1.0' } }, (res) => {
+          if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+            downloadFile(res.headers.location, dest, hops + 1); return
+          }
+          if (res.statusCode !== 200) { resolve({ success: false, error: 'HTTP ' + res.statusCode }); return }
+          const out = fs.createWriteStream(dest)
+          res.pipe(out)
+          out.on('finish', () => out.close(() => resolve({ success: true })))
+          out.on('error', e => resolve({ success: false, error: e.message }))
+          res.on('error', e => resolve({ success: false, error: e.message }))
+        }).on('error', e => resolve({ success: false, error: e.message }))
+      }
+      downloadFile('https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe', ytdlpExe)
+    })
+    if (!dlResult.success) return { success: false, error: 'Could not auto-download yt-dlp: ' + dlResult.error }
   }
 
   try {
