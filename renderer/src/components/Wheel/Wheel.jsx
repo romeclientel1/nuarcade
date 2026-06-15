@@ -914,7 +914,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
           resultCount={filteredGames.length}
         />
       )}
-      {showMediaManager && <MediaManager onClose={() => { setShowMediaManager(false); refreshVideoPaths() }} onVideosUpdated={refreshVideoPaths} />}
+      {showMediaManager && <MediaManager onClose={() => setShowMediaManager(false)} onVideosUpdated={refreshVideoPaths} />}
       {showSettings && <Settings games={games} onClose={() => setShowSettings(false)} onCRTChange={onCRTChange} crtEnabled={crtEnabled} themeId={themeId} onThemeChange={onThemeChange} onSetupWizard={onSetupWizard} />}
       {showDetail && current && (
         <GameDetail
