@@ -1157,7 +1157,9 @@ ipcMain.handle('ytdlp-search', async (event, { gameTitle, gameId, system, emulat
   // -- AI query refinement ---------------------------------------------------
   // Use claude-haiku-4-5 to generate the optimal YouTube search string.
   // An 8-second timeout ensures this never blocks the search.
-  let searchQuery = gameTitle + ' arcade gameplay'
+  // Default query -- system context helps narrow results even without AI
+  const systemHint = system && system !== 'MAME' ? ' ' + system : system === 'MAME' ? ' MAME arcade' : ' arcade'
+  let searchQuery = gameTitle + systemHint + ' gameplay'
 
   const anthropicKey = cfg.anthropicApiKey || ''
   if (anthropicKey) {
@@ -1242,8 +1244,17 @@ ipcMain.handle('ytdlp-search', async (event, { gameTitle, gameId, system, emulat
       if (lines.length < 2) {
         return resolve({ error: 'No results for: ' + gameTitle + (stderr ? ' -- ' + stderr.slice(0, 100) : '') })
       }
+
+      // Validate that we got a real YouTube video ID (exactly 11 alphanumeric/dash/underscore chars)
+      // yt-dlp can return playlist IDs, channel IDs, or garbage when search results are ambiguous
+      const rawId = lines[0] || ''
+      const validId = /^[a-zA-Z0-9_-]{11}$/.test(rawId)
+      if (!validId) {
+        return resolve({ error: 'Search returned invalid video ID ("' + rawId.slice(0, 20) + '") -- try a different query' })
+      }
+
       resolve({
-        videoId:   lines[0] || '',
+        videoId:   rawId,
         title:     lines[1] || gameTitle,
         thumbnail: lines[2] || null,
         duration:  lines[3] || null,
@@ -1264,6 +1275,11 @@ ipcMain.handle('ytdlp-download', async (event, { videoId, gameId }) => {
   const fs = require('fs')
   const { spawn } = require('child_process')
   const cfg = config.load()
+
+  // Validate video ID before doing anything -- prevents "Unsupported URL" errors
+  if (!videoId || !/^[a-zA-Z0-9_-]{11}$/.test(videoId)) {
+    return { success: false, error: 'Invalid video ID: "' + String(videoId).slice(0, 20) + '"' }
+  }
   const ytdlpExe = cfg.ytdlpPath || 'F:\\Tools\\yt-dlp.exe'
   const videosDir = path.join(cfg.mediaPath || 'F:\\Media\\', 'Videos')
   const outputFile = path.join(videosDir, gameId + '.mp4')
