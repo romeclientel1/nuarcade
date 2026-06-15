@@ -1037,6 +1037,7 @@ ipcMain.handle('close-app', () => {
 // Also merges in anything recorded in videos.json from prior downloads.
 ipcMain.handle('get-videos', async () => {
   try {
+    const fs = require('fs')
     const cfg = config.load()
     const videosDir = path.join(cfg.mediaPath || 'F:\\Media\\', 'Videos')
     const result = {}
