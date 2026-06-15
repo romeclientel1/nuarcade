@@ -1221,15 +1221,38 @@ ipcMain.handle('ytdlp-search', async (event, { gameTitle, gameId, system, emulat
     }
   }
 
-  // -- YouTube search via yt-dlp ---------------------------------------------
-  // Use --print with JSON template instead of --get-id/title/etc.
-  // The --get-* flags output lines in order but any warning or extra output
-  // from yt-dlp shifts the line positions and causes title to be parsed as ID.
-  // --print outputs a single line per field with an explicit delimiter we control.
-  return new Promise((resolve) => {
+  // -- YouTube search with automatic fallback retry -------------------------
+  // Attempt up to 3 queries with progressively simpler terms.
+  // This handles games where the full title returns no valid result.
+
+  // Build fallback query ladder
+  const buildFallbacks = (title, sys) => {
+    // Fallback 1: strip subtitles (after : - / |), version numbers, region codes
+    const stripped = title
+      .replace(/[:\-/|].*$/, '')          // remove subtitle
+      .replace(/\b(v\d+|\d+st|\d+nd|\d+rd|\d+th|edition|ver\.?\s*\d+)\b/gi, '')
+      .replace(/[^a-zA-Z0-9 ]/g, ' ')     // remove special chars
+      .replace(/\s+/g, ' ')
+      .trim()
+    const fb1 = (stripped || title) + ' arcade gameplay'
+
+    // Fallback 2: first two significant words only + "game"
+    const words = (stripped || title)
+      .split(' ')
+      .filter(w => w.length > 2 && !/^(the|and|for|of|in|on|at|to|a|an)$/i.test(w))
+    const fb2 = words.slice(0, 2).join(' ') + ' game gameplay'
+
+    return [fb1, fb2].filter(Boolean)
+  }
+
+  const fallbacks = buildFallbacks(gameTitle, system)
+  const queryLadder = [searchQuery, ...fallbacks].filter((q, i, arr) => arr.indexOf(q) === i) // dedupe
+
+  // Run one yt-dlp search attempt
+  const runSearch = (query) => new Promise((resolve) => {
     const DELIM = '|||NUARCADE|||'
     const args = [
-      'ytsearch1:' + searchQuery,
+      'ytsearch1:' + query,
       '--print', '%(id)s' + DELIM + '%(title)s' + DELIM + '%(thumbnail)s' + DELIM + '%(duration_string)s',
       '--no-playlist',
       '--no-warnings',
@@ -1242,37 +1265,40 @@ ipcMain.handle('ytdlp-search', async (event, { gameTitle, gameId, system, emulat
     proc.stdout.on('data', d => { stdout += d.toString() })
     proc.stderr.on('data', d => { stderr += d.toString() })
 
-    const timer = setTimeout(() => { proc.kill(); resolve({ error: 'Search timed out' }) }, 25000)
+    const timer = setTimeout(() => { proc.kill(); resolve(null) }, 20000)
 
-    proc.on('close', (code) => {
+    proc.on('close', () => {
       clearTimeout(timer)
       const line = stdout.trim().split('\n')[0] || ''
       const parts = line.split(DELIM)
-
-      if (parts.length < 2 || !parts[0]) {
-        return resolve({ error: 'No results for: ' + gameTitle + (stderr ? ' -- ' + stderr.slice(0, 120) : '') })
-      }
-
-      // Validate that we got a real YouTube video ID (exactly 11 chars)
+      if (parts.length < 2 || !parts[0]) { resolve(null); return }
       const rawId = parts[0].trim()
-      if (!/^[a-zA-Z0-9_-]{11}$/.test(rawId)) {
-        return resolve({ error: 'Invalid video ID ("' + rawId.slice(0, 20) + '") for: ' + gameTitle })
-      }
-
+      if (!/^[a-zA-Z0-9_-]{11}$/.test(rawId)) { resolve(null); return }
       resolve({
         videoId:   rawId,
         title:     (parts[1] || gameTitle).trim(),
         thumbnail: (parts[2] || '').trim() || null,
         duration:  (parts[3] || '').trim() || null,
-        query:     searchQuery,
       })
     })
 
-    proc.on('error', (e) => {
-      clearTimeout(timer)
-      resolve({ error: 'yt-dlp spawn error: ' + e.message })
-    })
+    proc.on('error', () => { clearTimeout(timer); resolve(null) })
   })
+
+  // Try each query in the ladder until one returns a valid result
+  for (let attempt = 0; attempt < queryLadder.length; attempt++) {
+    const q = queryLadder[attempt]
+    const result = await runSearch(q)
+    if (result) {
+      return {
+        ...result,
+        query: q,
+        attempt: attempt + 1,
+      }
+    }
+  }
+
+  return { error: 'No valid YouTube result found after ' + queryLadder.length + ' attempts for: ' + gameTitle }
 })
 
 // -- yt-dlp: download and trim a YouTube video to 40s -------------------------

@@ -246,7 +246,8 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
         }
 
         const queryNote = result.query && result.query !== label ? ' [' + result.query + ']' : ''
-        log(`  [${label}] Found: "${result.title}"${queryNote}`)
+        const attemptNote = result.attempt > 1 ? ' (attempt ' + result.attempt + ')' : ''
+        log(`  [${label}] Found: "${result.title}"${queryNote}${attemptNote}`)
 
         const dl = await window.nuarcade.ytdlpDownload({ videoId: result.videoId, gameId: gid })
 
@@ -307,7 +308,8 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
         setYtResults(r => ({ ...r, [gid]: null }))
       } else {
         const queryNote = result.query && result.query !== game.title ? ' [AI query: ' + result.query + ']' : ''
-        log(`YouTube found: "${result.title}" (${result.duration || '?'})${queryNote}`, 'ok')
+        const attemptNote = result.attempt > 1 ? ' (retry ' + (result.attempt - 1) + ')' : ''
+        log(`YouTube found: "${result.title}" (${result.duration || '?'})${queryNote}${attemptNote}`, 'ok')
         setYtResults(r => ({ ...r, [gid]: result }))
       }
     } catch (e) {
