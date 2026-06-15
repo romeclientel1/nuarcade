@@ -415,9 +415,27 @@ export function useGameLibrary() {
     } catch { return 0 }
   }
 
+  // Reload only the video map and patch videoPath onto existing games --
+  // called after bulk download completes so new clips appear without rescan
+  const refreshVideoPaths = async () => {
+    try {
+      if (!window.nuarcade?.getVideos) return
+      const vResult = await window.nuarcade.getVideos()
+      const videosMap = vResult.videos || {}
+      setGames(prev => prev.map(g => {
+        const gameId = g.id || g.profile?.replace('.xml', '').replace('.vpx', '')
+        const filePath = videosMap[gameId]
+        return filePath
+          ? { ...g, videoPath: 'file:///' + filePath.replace(/\\/g, '/') }
+          : g
+      }))
+    } catch {}
+  }
+
   return {
     games, stats, loading, error, config, libraryEmpty,
     refreshLibrary: () => loadLibrary(true),
+    refreshVideoPaths,
     favorites, toggleFavorite, isFavorite: (id) => favorites.includes(id),
     recentlyPlayed, addRecentlyPlayed,
     newGameCount: games.length > 0 ? getNewGameCount() : 0,

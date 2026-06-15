@@ -13,7 +13,7 @@ const SAMPLE_GAMES = [
   { id: "BlazBlueCrossTagBattle", title: "BlazBlue Cross Tag Battle",  genre: "Fighting", system: "NESiCAxLive", hasVideo: false },
 ]
 
-export default function MediaManager({ onClose }) {
+export default function MediaManager({ onClose, onVideosUpdated }) {
   const [games, setGames] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState("all")
@@ -283,6 +283,7 @@ export default function MediaManager({ onClose }) {
     log(`Bulk fetch complete -- ${done} downloaded, ${failed} failed`, done > 0 ? 'ok' : 'warn')
     setBulkProgress(p => ({ ...p, title: 'Complete', done, failed }))
     setBulkRunning(false)
+    if (done > 0) onVideosUpdated?.()
     setTimeout(() => setBulkProgress(null), 6000)
   }
 
@@ -327,6 +328,7 @@ export default function MediaManager({ onClose }) {
         log(`YouTube download complete: ${dl.outputFile}${dl.startSec > 0 ? ' (gameplay starts at ' + Math.round(dl.startSec) + 's)' : ''}`, 'ok')
         setGames(g => g.map(x => (x.id || x.profile) === gid ? { ...x, hasVideo: true } : x))
         setYtDownloading(d => ({ ...d, [gid]: 'done' }))
+        onVideosUpdated?.()
       } else {
         log(`YouTube download failed: ${dl.error}`, 'error')
         setYtDownloading(d => ({ ...d, [gid]: 'error' }))

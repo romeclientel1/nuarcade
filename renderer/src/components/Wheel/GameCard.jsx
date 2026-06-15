@@ -62,22 +62,37 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork 
     : game.id ? `${THUMBNAIL_BASE}${game.id}.png` : null
 
   const videoId   = game.id || game.profile?.replace(".xml","").replace(".vpx","")
-  const videoUrl  = game.videoPath ||
-    (window.nuarcade?.platform === "win32"
-      ? `file:///F:/Media/Videos/${videoId}.mp4`
-      : null)
+  // Only use explicit videoPath from the video registry.
+  // The old fallback guess caused silent errors on every game without a clip.
+  const videoUrl  = game.videoPath || null
 
   useEffect(() => {
     if (!videoRef.current) return
+
     if (isCenter && videoUrl && !videoError) {
-      videoRef.current.currentTime = 0
-      videoRef.current.play().catch(() => setVideoError(true))
+      videoRef.current.load()
+      // Small delay so the element settles before play -- avoids AbortError
+      // on rapid wheel navigation
+      const t = setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.currentTime = 0
+          videoRef.current.play().catch(() => setVideoError(true))
+        }
+      }, 120)
+      return () => clearTimeout(t)
     } else {
       videoRef.current.pause()
       videoRef.current.currentTime = 0
       setVideoReady(false)
     }
-  }, [isCenter, videoUrl, videoError])
+  }, [isCenter, videoUrl])
+
+  // Reset video error state when game changes so a bad clip on one
+  // game doesn't permanently disable video on the next
+  useEffect(() => {
+    setVideoError(false)
+    setVideoReady(false)
+  }, [game.id, game.profile])
 
   const showVideo   = isCenter && videoUrl && !videoError && videoReady
   const showHero    = isCenter && heroUrl && !showVideo

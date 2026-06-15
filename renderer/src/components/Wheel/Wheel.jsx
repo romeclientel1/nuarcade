@@ -221,6 +221,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     toggleFavorite, isFavorite,
     recentlyPlayed, addRecentlyPlayed,
     newGameCount,
+    refreshVideoPaths,
   } = useGameLibrary()
 
   const { getCollections } = useCollections()
@@ -913,7 +914,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
           resultCount={filteredGames.length}
         />
       )}
-      {showMediaManager && <MediaManager onClose={() => setShowMediaManager(false)} />}
+      {showMediaManager && <MediaManager onClose={() => setShowMediaManager(false)} onVideosUpdated={refreshVideoPaths} />}
       {showSettings && <Settings games={games} onClose={() => setShowSettings(false)} onCRTChange={onCRTChange} crtEnabled={crtEnabled} themeId={themeId} onThemeChange={onThemeChange} onSetupWizard={onSetupWizard} />}
       {showDetail && current && (
         <GameDetail
