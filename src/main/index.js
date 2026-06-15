@@ -1299,12 +1299,9 @@ ipcMain.handle('ytdlp-download', async (event, { videoId, gameId }) => {
     return { success: false, error: 'Could not create Videos folder: ' + e.message }
   }
 
-  // -- Smart trim strategy ---------------------------------------------------
-  // Step 1: Download first 90s of the video (enough to find actual gameplay)
-  // Step 2: Use ffmpeg scene change detection to find the first high-motion
-  //         frame (scene score > 0.25), skip to that point, then clip 40s.
-  //         This skips title cards, loading screens, and intros automatically.
-  // Falls back to a simple 0:00-0:40 clip if scene detection fails.
+  // -- Download and trim to 40s -----------------------------------------------
+  // Simple, reliable approach: yt-dlp downloads and trims in one pass.
+  // Scene detection trimming is handled as a post-process if ffmpeg is present.
 
   const rawFile = outputFile.replace('.mp4', '_raw.mp4')
 
@@ -1319,18 +1316,21 @@ ipcMain.handle('ytdlp-download', async (event, { videoId, gameId }) => {
 
   // Find ffmpeg next to yt-dlp or on PATH
   const ffmpegPath = path.join(path.dirname(ytdlpExe), 'ffmpeg.exe')
-  const ffmpegExe  = fs.existsSync(ffmpegPath) ? ffmpegPath : 'ffmpeg'
+  const ffmpegAvailable = fs.existsSync(ffmpegPath)
+  const ffmpegExe = ffmpegAvailable ? ffmpegPath : 'ffmpeg'
 
   return new Promise((resolve) => {
     const url = 'https://www.youtube.com/watch?v=' + videoId
 
-    // Step 1 -- download first 90s
+    // Step 1: Download best available MP4 trimmed to 60s
+    // We grab 60s so scene detection has room to find gameplay start,
+    // then trim to 40s from the best starting point.
     const dlArgs = [
       url,
       '--format', 'bestvideo[ext=mp4][height<=720]+bestaudio[ext=m4a]/best[ext=mp4]/best',
       '--merge-output-format', 'mp4',
-      '--postprocessor-args', 'ffmpeg:-t 90',
-      '--output', rawFile,
+      '--postprocessor-args', 'ffmpeg:-t 60',
+      '--output', ffmpegAvailable ? rawFile : outputFile,
       '--no-playlist',
       '--no-warnings',
       '--socket-timeout', '30',
@@ -1343,7 +1343,7 @@ ipcMain.handle('ytdlp-download', async (event, { videoId, gameId }) => {
 
     const dlTimer = setTimeout(() => {
       dlProc.kill()
-      resolve({ success: false, error: 'Download timed out' })
+      resolve({ success: false, error: 'Download timed out after 4 minutes' })
     }, 240000)
 
     dlProc.on('error', (e) => {
@@ -1353,18 +1353,29 @@ ipcMain.handle('ytdlp-download', async (event, { videoId, gameId }) => {
 
     dlProc.on('close', (code) => {
       clearTimeout(dlTimer)
-      if (code !== 0 || !fs.existsSync(rawFile)) {
-        return resolve({ success: false, error: dlStderr.slice(-300) || 'Download failed (code ' + code + ')' })
+
+      // If no ffmpeg, yt-dlp wrote directly to outputFile -- we are done
+      if (!ffmpegAvailable) {
+        if (code === 0 && fs.existsSync(outputFile)) {
+          saveRegistry()
+          resolve({ success: true, outputFile, startSec: 0 })
+        } else {
+          resolve({ success: false, error: dlStderr.slice(-400) || 'Download failed (code ' + code + ')' })
+        }
+        return
       }
 
-      // Step 2 -- scene change detection to find first gameplay frame
-      // ffmpeg showinfo filter reports scene scores; we parse to find
-      // the first timestamp where scene_score > 0.25
+      if (code !== 0 || !fs.existsSync(rawFile)) {
+        return resolve({ success: false, error: dlStderr.slice(-400) || 'Download failed (code ' + code + ')' })
+      }
+
+      // Step 2: Scene change detection to find first gameplay frame
       const detectArgs = [
         '-i', rawFile,
-        '-vf', 'select=gt(scene\,0.25),showinfo',
+        '-vf', 'select=gt(scene\\,0.25)',
         '-vsync', 'vfr',
         '-f', 'null',
+        '-loglevel', 'level+verbose',
         '-',
       ]
 
@@ -1374,54 +1385,62 @@ ipcMain.handle('ytdlp-download', async (event, { videoId, gameId }) => {
 
       const detectTimer = setTimeout(() => {
         detectProc.kill()
-        // Timed out -- fall back to 0:00
         trimFrom(0)
       }, 20000)
 
-      detectProc.on('error', () => {
-        clearTimeout(detectTimer)
-        trimFrom(0)
-      })
+      detectProc.on('error', () => { clearTimeout(detectTimer); trimFrom(0) })
 
       detectProc.on('close', () => {
         clearTimeout(detectTimer)
-        // Parse "pts_time:X.XXX" from showinfo output
+        // Parse pts_time from verbose output
         const match = detectOut.match(/pts_time:([\d.]+)/)
         const startTime = match ? parseFloat(match[1]) : 0
-        // Cap start time -- if scene not found until > 60s, just use 5s
-        trimFrom(Math.min(startTime, 60))
+        trimFrom(Math.min(startTime, 50)) // cap at 50s so we always get 10s of content
       })
 
-      // Step 3 -- trim 40s from the detected start point
+      // Step 3: Trim 40s from detected start point
       function trimFrom(startSec) {
         const trimArgs = [
-          '-i', rawFile,
           '-ss', String(startSec),
+          '-i', rawFile,
           '-t', '40',
-          '-c', 'copy',
+          '-c:v', 'libx264',
+          '-c:a', 'aac',
+          '-preset', 'fast',
           '-y',
           outputFile,
         ]
 
         const trimProc = spawn(ffmpegExe, trimArgs, { stdio: ['ignore', 'ignore', 'pipe'] })
-        const trimTimer = setTimeout(() => { trimProc.kill() }, 30000)
+        const trimTimer = setTimeout(() => { trimProc.kill() }, 60000)
 
         trimProc.on('error', () => {
           clearTimeout(trimTimer)
-          // ffmpeg not available -- just rename the raw file as-is
+          // ffmpeg re-encode failed -- try simple rename of raw
           try { fs.renameSync(rawFile, outputFile) } catch {}
-          if (fs.existsSync(outputFile)) { saveRegistry(); resolve({ success: true, outputFile, startSec: 0 }) }
-          else resolve({ success: false, error: 'ffmpeg not found and rename failed' })
+          if (fs.existsSync(outputFile)) {
+            saveRegistry()
+            resolve({ success: true, outputFile, startSec: 0 })
+          } else {
+            resolve({ success: false, error: 'ffmpeg trim failed and rename failed' })
+          }
         })
 
-        trimProc.on('close', () => {
+        trimProc.on('close', (trimCode) => {
           clearTimeout(trimTimer)
           try { fs.unlinkSync(rawFile) } catch {}
-          if (fs.existsSync(outputFile)) {
+          if (trimCode === 0 && fs.existsSync(outputFile)) {
             saveRegistry()
             resolve({ success: true, outputFile, startSec })
           } else {
-            resolve({ success: false, error: 'Trim produced no output file' })
+            // Re-encode failed -- fall back to raw file rename
+            try { fs.renameSync(rawFile, outputFile) } catch {}
+            if (fs.existsSync(outputFile)) {
+              saveRegistry()
+              resolve({ success: true, outputFile, startSec: 0 })
+            } else {
+              resolve({ success: false, error: 'Trim failed (code ' + trimCode + ')' })
+            }
           }
         })
       }
