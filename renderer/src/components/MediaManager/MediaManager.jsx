@@ -166,6 +166,30 @@ export default function MediaManager({ onClose }) {
     }
   }
 
+  // Must be defined before handleBulkYouTube and handleYtSearch which both call it
+  const handleEnsureYtdlp = async () => {
+    if (ytdlpAvailable) return true
+    setYtdlpInstalling(true)
+    log('yt-dlp not found -- downloading from GitHub...')
+    try {
+      const result = await window.nuarcade.ensureYtdlp()
+      if (result.success) {
+        setYtdlpAvailable(true)
+        if (!result.alreadyPresent) log('yt-dlp downloaded and ready', 'ok')
+        setYtdlpInstalling(false)
+        return true
+      } else {
+        log('yt-dlp auto-download failed: ' + result.error, 'error')
+        setYtdlpInstalling(false)
+        return false
+      }
+    } catch (e) {
+      log('yt-dlp install error: ' + (e.message || String(e)), 'error')
+      setYtdlpInstalling(false)
+      return false
+    }
+  }
+
   const handleDownloadAll = async () => {
     // Legacy SS bulk -- kept but SS doesn't work without dev creds
     const missing = filteredGames.filter(g => !g.hasVideo)
@@ -248,29 +272,6 @@ export default function MediaManager({ onClose }) {
     setBulkProgress(p => ({ ...p, title: 'Complete', done, failed }))
     setBulkRunning(false)
     setTimeout(() => setBulkProgress(null), 5000)
-  }
-
-  const handleEnsureYtdlp = async () => {
-    if (ytdlpAvailable) return true
-    setYtdlpInstalling(true)
-    log('yt-dlp not found -- downloading from GitHub...')
-    try {
-      const result = await window.nuarcade.ensureYtdlp()
-      if (result.success) {
-        setYtdlpAvailable(true)
-        if (!result.alreadyPresent) log('yt-dlp downloaded and ready', 'ok')
-        setYtdlpInstalling(false)
-        return true
-      } else {
-        log('yt-dlp auto-download failed: ' + result.error, 'error')
-        setYtdlpInstalling(false)
-        return false
-      }
-    } catch (e) {
-      log('yt-dlp install error: ' + (e.message || String(e)), 'error')
-      setYtdlpInstalling(false)
-      return false
-    }
   }
 
   const handleYtSearch = async (game) => {
