@@ -202,12 +202,10 @@ export default function MediaManager({ onClose }) {
 
   const handleBulkYouTube = async () => {
     if (bulkRunning) {
-      // Cancel a running bulk
       bulkCancelRef.current = true
       return
     }
 
-    // Ensure yt-dlp is ready first
     const ready = await handleEnsureYtdlp()
     if (!ready) return
 
@@ -217,67 +215,75 @@ export default function MediaManager({ onClose }) {
     bulkCancelRef.current = false
     setBulkRunning(true)
     setBulkProgress({ current: 0, total: missing.length, title: '', done: 0, failed: 0 })
-    log(`Starting YouTube bulk fetch -- ${missing.length} games...`)
+    log(`Starting YouTube bulk fetch -- ${missing.length} games, 4 parallel...`)
 
     let done = 0
     let failed = 0
+    let processed = 0
+    const CONCURRENCY = 4
 
-    for (let i = 0; i < missing.length; i++) {
-      if (bulkCancelRef.current) {
-        log(`Bulk fetch cancelled at ${i}/${missing.length} (${done} downloaded, ${failed} failed)`, 'warn')
-        break
-      }
-
-      const game = missing[i]
+    // Process one game: search + download
+    const processGame = async (game) => {
+      if (bulkCancelRef.current) return
       const gid = game.id || game.profile
-      setBulkProgress({ current: i + 1, total: missing.length, title: game.title || gid, done, failed })
-      log(`[${i + 1}/${missing.length}] Searching: "${game.title || gid}"`)
+      const label = game.title || gid
 
       try {
-        // Search YouTube with AI-refined query
         const result = await window.nuarcade.ytdlpSearch({
-            gameTitle: game.title || gid,
-            gameId: gid,
-            system: game.system || '',
-            emulator: game.emulator || '',
-            genre: game.genre || '',
-          })
+          gameTitle: label,
+          gameId: gid,
+          system: game.system || '',
+          emulator: game.emulator || '',
+          genre: game.genre || '',
+        })
+
+        if (bulkCancelRef.current) return
+
         if (result?.error || !result?.videoId) {
-          log(`  No result: ${result?.error || 'no match'}`, 'warn')
           failed++
-          continue
+          log(`  [${label}] No result: ${result?.error || 'no match'}`, 'warn')
+          return
         }
 
-        if (bulkCancelRef.current) break
+        const queryNote = result.query && result.query !== label ? ' [' + result.query + ']' : ''
+        log(`  [${label}] Found: "${result.title}"${queryNote}`)
 
-        log(`  Found: "${result.title}"${result.query && result.query !== (game.title || gid) ? ' [query: ' + result.query + ']' : ''} -- downloading...`)
         const dl = await window.nuarcade.ytdlpDownload({ videoId: result.videoId, gameId: gid })
 
         if (dl.success) {
           done++
-          log(`  Done: ${dl.outputFile}`, 'ok')
+          log(`  [${label}] Done`, 'ok')
           setGames(g => g.map(x => (x.id || x.profile) === gid ? { ...x, hasVideo: true } : x))
           setYtDownloading(d => ({ ...d, [gid]: 'done' }))
         } else {
           failed++
-          log(`  Failed: ${dl.error}`, 'error')
+          log(`  [${label}] Failed: ${dl.error}`, 'error')
           setYtDownloading(d => ({ ...d, [gid]: 'error' }))
         }
       } catch (e) {
         failed++
-        log(`  Exception: ${e.message || String(e)}`, 'error')
+        log(`  [${label}] Exception: ${e.message || String(e)}`, 'error')
+      } finally {
+        processed++
+        setBulkProgress({ current: processed, total: missing.length, title: label, done, failed })
       }
+    }
 
-      // Small pause between games so YouTube doesn't rate-limit
-      if (i < missing.length - 1 && !bulkCancelRef.current) {
-        await new Promise(r => setTimeout(r, 1500))
+    // Run in batches of CONCURRENCY
+    for (let i = 0; i < missing.length; i += CONCURRENCY) {
+      if (bulkCancelRef.current) {
+        log(`Bulk fetch cancelled (${done} done, ${failed} failed)`, 'warn')
+        break
       }
+      const batch = missing.slice(i, i + CONCURRENCY)
+      setBulkProgress({ current: processed, total: missing.length, title: batch.map(g => g.title || g.id || g.profile).join(', ').slice(0, 40), done, failed })
+      await Promise.all(batch.map(processGame))
     }
 
     log(`Bulk fetch complete -- ${done} downloaded, ${failed} failed`, done > 0 ? 'ok' : 'warn')
     setBulkProgress(p => ({ ...p, title: 'Complete', done, failed }))
     setBulkRunning(false)
-    setTimeout(() => setBulkProgress(null), 5000)
+    setTimeout(() => setBulkProgress(null), 6000)
   }
 
   const handleYtSearch = async (game) => {
@@ -405,7 +411,7 @@ export default function MediaManager({ onClose }) {
                   onClick={handleBulkYouTube}
                   disabled={stats.missing === 0 && !bulkRunning}
                 >
-                  {bulkRunning ? 'Cancel fetch' : 'Auto-fetch via YouTube'}
+                  {bulkRunning ? 'Cancel fetch' : 'Auto-fetch via YouTube (4x parallel)'}
                 </button>
                 {bulkProgress && (
                   <div style={{ width: '100%', minWidth: 220 }}>
