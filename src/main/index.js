@@ -1366,20 +1366,24 @@ ipcMain.handle('ytdlp-download', async (event, { videoId, gameId }) => {
 
     const dlArgs = [
       url,
-      // 480p cap -- sufficient for cabinet previews, 2-3x faster than 720p
       '--format', 'bestvideo[ext=mp4][height<=480]+bestaudio[ext=m4a]/best[ext=mp4][height<=480]/best[height<=480]/best',
       '--merge-output-format', 'mp4',
-      // Trim via yt-dlp bundled ffmpeg -- no separate ffmpeg install needed
       '--postprocessor-args', 'ffmpeg:-t 40',
+      // Restrict to ASCII filenames so output path matches outputFile exactly
+      '--restrict-filenames',
       '--output', outputFile,
       '--no-playlist',
       '--no-warnings',
       '--socket-timeout', '20',
       '--retries', '2',
+      // Print actual filepath after download so we can locate the file
+      '--print', 'after:filepath',
     ]
 
+    let dlStdout = ''
     let dlStderr = ''
-    const dlProc = spawn(ytdlpExe, dlArgs, { stdio: ['ignore', 'ignore', 'pipe'] })
+    const dlProc = spawn(ytdlpExe, dlArgs, { stdio: ['ignore', 'pipe', 'pipe'] })
+    dlProc.stdout.on('data', d => { dlStdout += d.toString() })
     dlProc.stderr.on('data', d => { dlStderr += d.toString() })
 
     const dlTimer = setTimeout(() => {
@@ -1394,12 +1398,45 @@ ipcMain.handle('ytdlp-download', async (event, { videoId, gameId }) => {
 
     dlProc.on('close', (code) => {
       clearTimeout(dlTimer)
-      if (code === 0 && fs.existsSync(outputFile)) {
+
+      if (code !== 0) {
+        return resolve({ success: false, error: dlStderr.slice(-400) || 'yt-dlp exited with code ' + code })
+      }
+
+      // Use --print after:filepath output to find the actual file yt-dlp wrote
+      const printedPath = (dlStdout.trim().split('\n').pop() || '').trim()
+      const finalPath = (printedPath && fs.existsSync(printedPath)) ? printedPath
+                      : fs.existsSync(outputFile) ? outputFile
+                      : null
+
+      if (finalPath) {
+        if (finalPath !== outputFile) {
+          try { fs.renameSync(finalPath, outputFile) } catch {}
+        }
         saveRegistry()
         resolve({ success: true, outputFile, startSec: 0 })
-      } else {
-        resolve({ success: false, error: dlStderr.slice(-400) || 'Download failed (code ' + code + ')' })
+        return
       }
+
+      // Last resort: find any .mp4 written to Videos folder in last 30s
+      try {
+        const now = Date.now()
+        const recent = fs.readdirSync(videosDir)
+          .filter(f => f.endsWith('.mp4'))
+          .map(f => ({ f, mt: fs.statSync(path.join(videosDir, f)).mtimeMs }))
+          .filter(x => now - x.mt < 30000)
+          .sort((a, b) => b.mt - a.mt)[0]
+        if (recent) {
+          const foundPath = path.join(videosDir, recent.f)
+          if (foundPath !== outputFile) {
+            try { fs.renameSync(foundPath, outputFile) } catch {}
+          }
+          saveRegistry()
+          return resolve({ success: true, outputFile, startSec: 0 })
+        }
+      } catch {}
+
+      resolve({ success: false, error: 'yt-dlp finished but output file not found' })
     })
   })
 })
