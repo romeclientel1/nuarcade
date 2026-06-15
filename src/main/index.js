@@ -1114,23 +1114,25 @@ ipcMain.handle('ensure-ytdlp', async (event) => {
   }
 })
 
-// -- yt-dlp: search YouTube for a game video preview --------------------------
-// Auto-bootstraps yt-dlp if missing before searching.
-// Returns { title, videoId, thumbnail, duration } or { error }
-ipcMain.handle('ytdlp-search', async (event, { gameTitle, gameId }) => {
+// -- yt-dlp: AI-refined YouTube search ---------------------------------------
+// Uses Anthropic API (claude-haiku-4-5) to generate the optimal search query
+// for the game, then searches YouTube and returns the top result metadata.
+// Falls back to a basic query if the API call fails or is not configured.
+// Returns { title, videoId, thumbnail, duration, query } or { error }
+ipcMain.handle('ytdlp-search', async (event, { gameTitle, gameId, system, emulator, genre }) => {
   const fs = require('fs')
+  const https = require('https')
   const { spawn } = require('child_process')
   const cfg = config.load()
   const ytdlpExe = cfg.ytdlpPath || 'F:\\Tools\\yt-dlp.exe'
 
-  // Auto-download if missing using https.get (works in Electron main process)
+  // Auto-download yt-dlp if missing
   if (!fs.existsSync(ytdlpExe)) {
     const ensureResult = await new Promise((resolve) => {
       try {
         fs.mkdirSync(path.dirname(ytdlpExe), { recursive: true })
       } catch (e) { resolve({ success: false, error: e.message }); return }
 
-      const https = require('https')
       const downloadFile = (url, dest, hops = 0) => {
         if (hops > 5) { resolve({ success: false, error: 'Too many redirects' }); return }
         https.get(url, { headers: { 'User-Agent': 'NuArcade/1.0' } }, (res) => {
@@ -1152,11 +1154,71 @@ ipcMain.handle('ytdlp-search', async (event, { gameTitle, gameId }) => {
     }
   }
 
+  // -- AI query refinement ---------------------------------------------------
+  // Use claude-haiku-4-5 to generate the optimal YouTube search string.
+  // An 8-second timeout ensures this never blocks the search.
+  let searchQuery = gameTitle + ' arcade gameplay'
+
+  const anthropicKey = cfg.anthropicApiKey || ''
+  if (anthropicKey) {
+    try {
+      const systemContext = [
+        system   ? 'System: ' + system   : null,
+        emulator ? 'Emulator: ' + emulator : null,
+        genre    ? 'Genre: ' + genre     : null,
+      ].filter(Boolean).join(', ')
+
+      const prompt = 'Generate a YouTube search query to find authentic arcade gameplay footage of this game.\n\nGame: "' + gameTitle + '"' + (systemContext ? '\n' + systemContext : '') + '\n\nRules:\n- Include the game title and platform/system if it helps\n- Include "gameplay" or "arcade" \n- Do NOT include: review, unboxing, reaction, speedrun, tutorial\n- 4-8 words maximum\n- No quotation marks\n\nRespond with ONLY the search query, nothing else.'
+
+      const apiResult = await new Promise((resolve) => {
+        const body = JSON.stringify({
+          model: 'claude-haiku-4-5',
+          max_tokens: 60,
+          messages: [{ role: 'user', content: prompt }],
+        })
+
+        const req = https.request({
+          hostname: 'api.anthropic.com',
+          path: '/v1/messages',
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': anthropicKey,
+            'anthropic-version': '2023-06-01',
+            'Content-Length': Buffer.byteLength(body),
+          },
+        }, (res) => {
+          let data = ''
+          res.on('data', d => { data += d })
+          res.on('end', () => {
+            try {
+              const parsed = JSON.parse(data)
+              const text = (parsed && parsed.content && parsed.content[0] && parsed.content[0].text || '').trim()
+              resolve({ success: true, query: text || null })
+            } catch (e) {
+              resolve({ success: false })
+            }
+          })
+        })
+
+        req.on('error', () => resolve({ success: false }))
+        req.setTimeout(8000, () => { req.destroy(); resolve({ success: false }) })
+        req.write(body)
+        req.end()
+      })
+
+      if (apiResult.success && apiResult.query && apiResult.query.length > 3) {
+        searchQuery = apiResult.query
+      }
+    } catch (e) {
+      // Fall through to default query -- never block the search
+    }
+  }
+
+  // -- YouTube search via yt-dlp ---------------------------------------------
   return new Promise((resolve) => {
-    // Search YouTube: grab the top result metadata only (no download)
-    const query = '"' + gameTitle + '" arcade gameplay'
     const args = [
-      'ytsearch1:' + query,
+      'ytsearch1:' + searchQuery,
       '--get-id',
       '--get-title',
       '--get-thumbnail',
@@ -1172,20 +1234,20 @@ ipcMain.handle('ytdlp-search', async (event, { gameTitle, gameId }) => {
     proc.stdout.on('data', d => { stdout += d.toString() })
     proc.stderr.on('data', d => { stderr += d.toString() })
 
-    const timer = setTimeout(() => { proc.kill(); resolve({ error: 'Search timed out' }) }, 20000)
+    const timer = setTimeout(() => { proc.kill(); resolve({ error: 'Search timed out' }) }, 25000)
 
     proc.on('close', (code) => {
       clearTimeout(timer)
       const lines = stdout.trim().split('\n').map(l => l.trim()).filter(Boolean)
-      // yt-dlp --get-id --get-title --get-thumbnail --get-duration outputs 4 lines per result
       if (lines.length < 2) {
-        return resolve({ error: 'No YouTube results for: ' + gameTitle + (stderr ? ' -- ' + stderr.slice(0, 100) : '') })
+        return resolve({ error: 'No results for: ' + gameTitle + (stderr ? ' -- ' + stderr.slice(0, 100) : '') })
       }
       resolve({
         videoId:   lines[0] || '',
         title:     lines[1] || gameTitle,
         thumbnail: lines[2] || null,
         duration:  lines[3] || null,
+        query:     searchQuery,
       })
     })
 
@@ -1237,47 +1299,132 @@ ipcMain.handle('ytdlp-download', async (event, { videoId, gameId }) => {
     return { success: false, error: 'Could not create Videos folder: ' + e.message }
   }
 
+  // -- Smart trim strategy ---------------------------------------------------
+  // Step 1: Download first 90s of the video (enough to find actual gameplay)
+  // Step 2: Use ffmpeg scene change detection to find the first high-motion
+  //         frame (scene score > 0.25), skip to that point, then clip 40s.
+  //         This skips title cards, loading screens, and intros automatically.
+  // Falls back to a simple 0:00-0:40 clip if scene detection fails.
+
+  const rawFile = outputFile.replace('.mp4', '_raw.mp4')
+
+  const saveRegistry = () => {
+    try {
+      const registryPath = path.join(cfg.mediaPath || 'F:\\Media\\', 'videos.json')
+      const videos = JSON.parse(fs.existsSync(registryPath) ? fs.readFileSync(registryPath, 'utf8') : '{}')
+      videos[gameId] = outputFile
+      fs.writeFileSync(registryPath, JSON.stringify(videos))
+    } catch {}
+  }
+
+  // Find ffmpeg next to yt-dlp or on PATH
+  const ffmpegPath = path.join(path.dirname(ytdlpExe), 'ffmpeg.exe')
+  const ffmpegExe  = fs.existsSync(ffmpegPath) ? ffmpegPath : 'ffmpeg'
+
   return new Promise((resolve) => {
     const url = 'https://www.youtube.com/watch?v=' + videoId
-    const args = [
+
+    // Step 1 -- download first 90s
+    const dlArgs = [
       url,
       '--format', 'bestvideo[ext=mp4][height<=720]+bestaudio[ext=m4a]/best[ext=mp4]/best',
       '--merge-output-format', 'mp4',
-      '--postprocessor-args', 'ffmpeg:-t 40',  // trim to 40 seconds
-      '--output', outputFile,
+      '--postprocessor-args', 'ffmpeg:-t 90',
+      '--output', rawFile,
       '--no-playlist',
       '--no-warnings',
       '--socket-timeout', '30',
       '--retries', '3',
     ]
 
-    let stderr = ''
-    const proc = spawn(ytdlpExe, args, { stdio: ['ignore', 'ignore', 'pipe'] })
-    proc.stderr.on('data', d => { stderr += d.toString() })
+    let dlStderr = ''
+    const dlProc = spawn(ytdlpExe, dlArgs, { stdio: ['ignore', 'ignore', 'pipe'] })
+    dlProc.stderr.on('data', d => { dlStderr += d.toString() })
 
-    // 3-minute timeout for download + encode
-    const timer = setTimeout(() => { proc.kill(); resolve({ success: false, error: 'Download timed out after 3 minutes' }) }, 180000)
+    const dlTimer = setTimeout(() => {
+      dlProc.kill()
+      resolve({ success: false, error: 'Download timed out' })
+    }, 240000)
 
-    proc.on('close', (code) => {
-      clearTimeout(timer)
-      if (code === 0 && fs.existsSync(outputFile)) {
-        // Register in videos.json
-        try {
-          const registryPath = path.join(cfg.mediaPath || 'F:\\Media\\', 'videos.json')
-          const videos = JSON.parse(fs.existsSync(registryPath) ? fs.readFileSync(registryPath, 'utf8') : '{}')
-          videos[gameId] = outputFile
-          fs.writeFileSync(registryPath, JSON.stringify(videos))
-        } catch {}
-        resolve({ success: true, outputFile })
-      } else {
-        const errMsg = stderr.slice(-300) || ('yt-dlp exited with code ' + code)
-        resolve({ success: false, error: errMsg })
-      }
+    dlProc.on('error', (e) => {
+      clearTimeout(dlTimer)
+      resolve({ success: false, error: 'yt-dlp spawn error: ' + e.message })
     })
 
-    proc.on('error', (e) => {
-      clearTimeout(timer)
-      resolve({ success: false, error: 'yt-dlp spawn error: ' + e.message })
+    dlProc.on('close', (code) => {
+      clearTimeout(dlTimer)
+      if (code !== 0 || !fs.existsSync(rawFile)) {
+        return resolve({ success: false, error: dlStderr.slice(-300) || 'Download failed (code ' + code + ')' })
+      }
+
+      // Step 2 -- scene change detection to find first gameplay frame
+      // ffmpeg showinfo filter reports scene scores; we parse to find
+      // the first timestamp where scene_score > 0.25
+      const detectArgs = [
+        '-i', rawFile,
+        '-vf', 'select=gt(scene\,0.25),showinfo',
+        '-vsync', 'vfr',
+        '-f', 'null',
+        '-',
+      ]
+
+      let detectOut = ''
+      const detectProc = spawn(ffmpegExe, detectArgs, { stdio: ['ignore', 'ignore', 'pipe'] })
+      detectProc.stderr.on('data', d => { detectOut += d.toString() })
+
+      const detectTimer = setTimeout(() => {
+        detectProc.kill()
+        // Timed out -- fall back to 0:00
+        trimFrom(0)
+      }, 20000)
+
+      detectProc.on('error', () => {
+        clearTimeout(detectTimer)
+        trimFrom(0)
+      })
+
+      detectProc.on('close', () => {
+        clearTimeout(detectTimer)
+        // Parse "pts_time:X.XXX" from showinfo output
+        const match = detectOut.match(/pts_time:([\d.]+)/)
+        const startTime = match ? parseFloat(match[1]) : 0
+        // Cap start time -- if scene not found until > 60s, just use 5s
+        trimFrom(Math.min(startTime, 60))
+      })
+
+      // Step 3 -- trim 40s from the detected start point
+      function trimFrom(startSec) {
+        const trimArgs = [
+          '-i', rawFile,
+          '-ss', String(startSec),
+          '-t', '40',
+          '-c', 'copy',
+          '-y',
+          outputFile,
+        ]
+
+        const trimProc = spawn(ffmpegExe, trimArgs, { stdio: ['ignore', 'ignore', 'pipe'] })
+        const trimTimer = setTimeout(() => { trimProc.kill() }, 30000)
+
+        trimProc.on('error', () => {
+          clearTimeout(trimTimer)
+          // ffmpeg not available -- just rename the raw file as-is
+          try { fs.renameSync(rawFile, outputFile) } catch {}
+          if (fs.existsSync(outputFile)) { saveRegistry(); resolve({ success: true, outputFile, startSec: 0 }) }
+          else resolve({ success: false, error: 'ffmpeg not found and rename failed' })
+        })
+
+        trimProc.on('close', () => {
+          clearTimeout(trimTimer)
+          try { fs.unlinkSync(rawFile) } catch {}
+          if (fs.existsSync(outputFile)) {
+            saveRegistry()
+            resolve({ success: true, outputFile, startSec })
+          } else {
+            resolve({ success: false, error: 'Trim produced no output file' })
+          }
+        })
+      }
     })
   })
 })

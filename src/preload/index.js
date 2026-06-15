@@ -54,7 +54,7 @@ contextBridge.exposeInMainWorld('nuarcade', {
   downloadVideo: (opts)  => ipcRenderer.invoke('download-video', opts),
   getVideos:     ()      => ipcRenderer.invoke('get-videos'),
   ensureYtdlp:   ()      => ipcRenderer.invoke('ensure-ytdlp'),
-  ytdlpSearch:   (opts)  => ipcRenderer.invoke('ytdlp-search', opts),
+  ytdlpSearch:   (opts)  => ipcRenderer.invoke('ytdlp-search', opts),   // { gameTitle, gameId, system, emulator, genre }
   ytdlpDownload: (opts)  => ipcRenderer.invoke('ytdlp-download', opts),
 
   // Windows Defender exclusions

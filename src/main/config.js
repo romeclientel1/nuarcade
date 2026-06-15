@@ -41,6 +41,7 @@ const DEFAULTS = {
   tablesPath:         'F:\\PinballTables\\',
   mediaPath:          'F:\\Media\\',
   ytdlpPath:          'F:\\Tools\\yt-dlp.exe',
+  anthropicApiKey:    '',
   enabledEmulators: {
     teknoparrot: true,
     rpcs3:       true,

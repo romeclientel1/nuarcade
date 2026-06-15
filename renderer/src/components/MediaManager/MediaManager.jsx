@@ -234,18 +234,24 @@ export default function MediaManager({ onClose }) {
       log(`[${i + 1}/${missing.length}] Searching: "${game.title || gid}"`)
 
       try {
-        // Search YouTube
-        const searchResult = await window.nuarcade.ytdlpSearch({ gameTitle: game.title || gid, gameId: gid })
-        if (searchResult?.error || !searchResult?.videoId) {
-          log(`  No result: ${searchResult?.error || 'no match'}`, 'warn')
+        // Search YouTube with AI-refined query
+        const result = await window.nuarcade.ytdlpSearch({
+            gameTitle: game.title || gid,
+            gameId: gid,
+            system: game.system || '',
+            emulator: game.emulator || '',
+            genre: game.genre || '',
+          })
+        if (result?.error || !result?.videoId) {
+          log(`  No result: ${result?.error || 'no match'}`, 'warn')
           failed++
           continue
         }
 
         if (bulkCancelRef.current) break
 
-        log(`  Found: "${searchResult.title}" -- downloading...`)
-        const dl = await window.nuarcade.ytdlpDownload({ videoId: searchResult.videoId, gameId: gid })
+        log(`  Found: "${result.title}"${result.query && result.query !== (game.title || gid) ? ' [query: ' + result.query + ']' : ''} -- downloading...`)
+        const dl = await window.nuarcade.ytdlpDownload({ videoId: result.videoId, gameId: gid })
 
         if (dl.success) {
           done++
@@ -282,12 +288,19 @@ export default function MediaManager({ onClose }) {
     setYtSearching(s => ({ ...s, [gid]: true }))
     log(`YouTube search: "${game.title}"`)
     try {
-      const result = await window.nuarcade.ytdlpSearch({ gameTitle: game.title, gameId: gid })
+      const result = await window.nuarcade.ytdlpSearch({
+          gameTitle: game.title,
+          gameId: gid,
+          system: game.system || '',
+          emulator: game.emulator || '',
+          genre: game.genre || '',
+        })
       if (result?.error) {
         log(`yt-dlp search error: ${result.error}`, 'error')
         setYtResults(r => ({ ...r, [gid]: null }))
       } else {
-        log(`YouTube found: "${result.title}" (${result.duration || '?'})`, 'ok')
+        const queryNote = result.query && result.query !== game.title ? ' [AI query: ' + result.query + ']' : ''
+        log(`YouTube found: "${result.title}" (${result.duration || '?'})${queryNote}`, 'ok')
         setYtResults(r => ({ ...r, [gid]: result }))
       }
     } catch (e) {
@@ -301,11 +314,11 @@ export default function MediaManager({ onClose }) {
     const result = ytResults[gid]
     if (!result?.videoId) { log('No YouTube result to download -- search first', 'warn'); return }
     setYtDownloading(d => ({ ...d, [gid]: 'downloading' }))
-    log(`Downloading from YouTube: "${result.title}" (trimmed to 40s)...`)
+    log(`Downloading from YouTube: "${result.title}" (trimmed to 40s from gameplay start)...`)
     try {
       const dl = await window.nuarcade.ytdlpDownload({ videoId: result.videoId, gameId: gid })
       if (dl.success) {
-        log(`YouTube download complete: ${dl.outputFile}`, 'ok')
+        log(`YouTube download complete: ${dl.outputFile}${dl.startSec > 0 ? ' (gameplay starts at ' + Math.round(dl.startSec) + 's)' : ''}`, 'ok')
         setGames(g => g.map(x => (x.id || x.profile) === gid ? { ...x, hasVideo: true } : x))
         setYtDownloading(d => ({ ...d, [gid]: 'done' }))
       } else {

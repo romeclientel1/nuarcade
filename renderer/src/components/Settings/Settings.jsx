@@ -627,6 +627,19 @@ const handleSave = async () => {
               YouTube video fallback -- auto-installs on first use. Videos are trimmed to 40s and saved to F:/Media/Videos/.
             </div>
             <div className={styles.inputRow}>
+              <label className={styles.inputLabel}>Anthropic API key</label>
+              <input
+                className={styles.textInput}
+                type="password"
+                value={config.anthropicApiKey || ""}
+                onChange={e => update("anthropicApiKey", e.target.value)}
+                placeholder="sk-ant-..."
+              />
+            </div>
+            <div className={styles.emuNote}>
+              Optional -- enables AI-powered YouTube search query refinement. Each game search uses one fast Haiku call to generate a better query before fetching the clip. Get a key at console.anthropic.com.
+            </div>
+            <div className={styles.inputRow}>
               <label className={styles.inputLabel}>Bulk fetch</label>
               <button className={styles.exportBtn} onClick={() => setShowArtworkMgr(true)}>
                 Open Artwork Manager
