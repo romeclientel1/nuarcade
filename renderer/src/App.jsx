@@ -54,7 +54,7 @@ export default function App() {
   const [showUpdater, setShowUpdater] = useState(false)
   const [lastLaunch, setLastLaunch] = useState(null)
   const { themeId, setTheme } = useTheme()
-  const VERSION = "3.8.3"
+  const VERSION = "3.8.4"
   const { hasUpdate, newVersion, releaseUrl, releaseNotes, dismiss } = useAutoUpdate(VERSION)
 
   const [crtEnabled, setCrtEnabled] = useState(() => {

@@ -86,8 +86,16 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
             if (window.nuarcade.getVideos) {
               const vResult = await window.nuarcade.getVideos()
               videosMap = vResult.videos || {}
+              // Debug: log first few keys from each side to diagnose mismatch
+              const videoKeys = Object.keys(videosMap).slice(0, 5)
+              const gameKeys = gameList.slice(0, 5).map(g => g.id || g.profile?.replace('.xml','').replace('.vpx',''))
+              console.log('[NuArcade] getVideos keys sample:', videoKeys)
+              console.log('[NuArcade] game id sample:', gameKeys)
+              console.log('[NuArcade] total video keys:', Object.keys(videosMap).length)
             }
-          } catch {}
+          } catch (e) {
+            console.log('[NuArcade] getVideos error:', e.message)
+          }
           gameList = gameList.map(g => {
             const gid = g.id || g.profile?.replace('.xml','').replace('.vpx','')
             return {
