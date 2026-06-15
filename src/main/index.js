@@ -1051,13 +1051,27 @@ ipcMain.handle('get-videos', async () => {
     }
 
     // Scan folder for any manually dropped .mp4 files
+    // Also handles temp files that weren't renamed (strips _tmp_TIMESTAMP suffix)
     if (fs.existsSync(videosDir)) {
       const files = fs.readdirSync(videosDir)
       files.forEach(f => {
         if (f.toLowerCase().endsWith('.mp4')) {
-          const gameId = f.slice(0, -4) // strip .mp4
-          const fullPath = path.join(videosDir, f)
-          if (!result[gameId]) result[gameId] = fullPath
+          let gameId = f.slice(0, -4) // strip .mp4
+          const isTemp = /_tmp_\d+$/.test(gameId)
+          if (isTemp) {
+            // Rename temp file to proper gameId.mp4 so it's findable next time
+            gameId = gameId.replace(/_tmp_\d+$/, '')
+            const tempPath = path.join(videosDir, f)
+            const cleanPath = path.join(videosDir, gameId + '.mp4')
+            if (!fs.existsSync(cleanPath)) {
+              try { fs.renameSync(tempPath, cleanPath) } catch {}
+            }
+            const fullPath = fs.existsSync(cleanPath) ? cleanPath : tempPath
+            if (!result[gameId]) result[gameId] = fullPath
+          } else {
+            const fullPath = path.join(videosDir, f)
+            if (!result[gameId]) result[gameId] = fullPath
+          }
         }
       })
     }
