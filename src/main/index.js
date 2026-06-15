@@ -1347,10 +1347,10 @@ ipcMain.handle('ytdlp-download', async (event, { videoId, gameId }) => {
     return { success: false, error: 'Could not create Videos folder: ' + e.message }
   }
 
-  // -- Fast single-pass download: 480p, direct 40s section cut ----------------
-  // --download-sections tells yt-dlp to fetch only *0:00-0:40 of the stream.
-  // Combined with 480p cap this is 3-5x faster than downloading the full video.
-  // No separate ffmpeg trim step needed -- yt-dlp handles the cut natively.
+  // -- Download: 480p + trim to 40s via yt-dlp's bundled ffmpeg ---------------
+  // --download-sections requires a standalone ffmpeg install -- not reliable
+  // on cabinet PCs. --postprocessor-args 'ffmpeg:-t 40' uses yt-dlp's own
+  // bundled ffmpeg for the merge/trim, which is always present.
 
   const saveRegistry = () => {
     try {
@@ -1369,14 +1369,13 @@ ipcMain.handle('ytdlp-download', async (event, { videoId, gameId }) => {
       // 480p cap -- sufficient for cabinet previews, 2-3x faster than 720p
       '--format', 'bestvideo[ext=mp4][height<=480]+bestaudio[ext=m4a]/best[ext=mp4][height<=480]/best[height<=480]/best',
       '--merge-output-format', 'mp4',
-      // Direct section cut -- only fetches first 40s of the stream data
-      '--download-sections', '*0:00-0:40',
+      // Trim via yt-dlp bundled ffmpeg -- no separate ffmpeg install needed
+      '--postprocessor-args', 'ffmpeg:-t 40',
       '--output', outputFile,
       '--no-playlist',
       '--no-warnings',
       '--socket-timeout', '20',
       '--retries', '2',
-      '--concurrent-fragments', '4',
     ]
 
     let dlStderr = ''
