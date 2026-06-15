@@ -1222,13 +1222,15 @@ ipcMain.handle('ytdlp-search', async (event, { gameTitle, gameId, system, emulat
   }
 
   // -- YouTube search via yt-dlp ---------------------------------------------
+  // Use --print with JSON template instead of --get-id/title/etc.
+  // The --get-* flags output lines in order but any warning or extra output
+  // from yt-dlp shifts the line positions and causes title to be parsed as ID.
+  // --print outputs a single line per field with an explicit delimiter we control.
   return new Promise((resolve) => {
+    const DELIM = '|||NUARCADE|||'
     const args = [
       'ytsearch1:' + searchQuery,
-      '--get-id',
-      '--get-title',
-      '--get-thumbnail',
-      '--get-duration',
+      '--print', '%(id)s' + DELIM + '%(title)s' + DELIM + '%(thumbnail)s' + DELIM + '%(duration_string)s',
       '--no-playlist',
       '--no-warnings',
       '--socket-timeout', '15',
@@ -1244,24 +1246,24 @@ ipcMain.handle('ytdlp-search', async (event, { gameTitle, gameId, system, emulat
 
     proc.on('close', (code) => {
       clearTimeout(timer)
-      const lines = stdout.trim().split('\n').map(l => l.trim()).filter(Boolean)
-      if (lines.length < 2) {
-        return resolve({ error: 'No results for: ' + gameTitle + (stderr ? ' -- ' + stderr.slice(0, 100) : '') })
+      const line = stdout.trim().split('\n')[0] || ''
+      const parts = line.split(DELIM)
+
+      if (parts.length < 2 || !parts[0]) {
+        return resolve({ error: 'No results for: ' + gameTitle + (stderr ? ' -- ' + stderr.slice(0, 120) : '') })
       }
 
-      // Validate that we got a real YouTube video ID (exactly 11 alphanumeric/dash/underscore chars)
-      // yt-dlp can return playlist IDs, channel IDs, or garbage when search results are ambiguous
-      const rawId = lines[0] || ''
-      const validId = /^[a-zA-Z0-9_-]{11}$/.test(rawId)
-      if (!validId) {
-        return resolve({ error: 'Search returned invalid video ID ("' + rawId.slice(0, 20) + '") -- try a different query' })
+      // Validate that we got a real YouTube video ID (exactly 11 chars)
+      const rawId = parts[0].trim()
+      if (!/^[a-zA-Z0-9_-]{11}$/.test(rawId)) {
+        return resolve({ error: 'Invalid video ID ("' + rawId.slice(0, 20) + '") for: ' + gameTitle })
       }
 
       resolve({
         videoId:   rawId,
-        title:     lines[1] || gameTitle,
-        thumbnail: lines[2] || null,
-        duration:  lines[3] || null,
+        title:     (parts[1] || gameTitle).trim(),
+        thumbnail: (parts[2] || '').trim() || null,
+        duration:  (parts[3] || '').trim() || null,
         query:     searchQuery,
       })
     })
