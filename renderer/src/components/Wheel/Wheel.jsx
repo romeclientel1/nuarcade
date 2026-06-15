@@ -247,6 +247,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const [showBoot, setShowBoot] = useState(false)
   const [showKonami, setShowKonami] = useState(false)
   const konamiSeq = useRef([])
+  const [exitConfirm, setExitConfirm] = useState(false)
+  const exitConfirmTimer = useRef(null)
 
   // Show boot screen once after library loads (only on cabinet, only if games exist)
   const bootShown = useRef(false)
@@ -662,6 +664,21 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
               <button className={styles.mediaBtn} onClick={() => setShowMediaManager(true)}>Media</button>
               <button className={styles.settingsBtn} onClick={() => setShowSettings(true)}>Settings</button>
               <button className={styles.helpBtn} onClick={() => setShowHelp(true)}>?</button>
+              <button
+                className={styles.exitBtn + (exitConfirm ? ' ' + styles.exitConfirm : '')}
+                onClick={() => {
+                  if (exitConfirm) {
+                    window.nuarcade?.closeApp?.()
+                  } else {
+                    setExitConfirm(true)
+                    clearTimeout(exitConfirmTimer.current)
+                    exitConfirmTimer.current = setTimeout(() => setExitConfirm(false), 3000)
+                  }
+                }}
+                title="Exit NuArcade"
+              >
+                {exitConfirm ? 'CONFIRM' : 'EXIT'}
+              </button>
             </div>
           )}
         </div>

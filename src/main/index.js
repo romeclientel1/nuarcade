@@ -1028,6 +1028,10 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
 })
 
+ipcMain.handle('close-app', () => {
+  app.quit()
+})
+
 // -- Video library scan -------------------------------------------------------
 // Returns { [gameId]: filePath } for every .mp4 found in the Videos folder.
 // Also merges in anything recorded in videos.json from prior downloads.

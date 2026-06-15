@@ -113,6 +113,6 @@ contextBridge.exposeInMainWorld('nuarcade', {
   // TeknoParrot auto-configure
   tpAutoConfigure: () => ipcRenderer.invoke('tp-auto-configure'),
 
-  // App version
-  version: require('electron').ipcRenderer.sendSync('get-version'),
+  // App control
+  closeApp: () => ipcRenderer.invoke('close-app'),
 })
