@@ -197,7 +197,11 @@ function resolveExePath(game, gamesFolderPath) {
   return game.exePath || ''
 }
 
-function scanGames(teknoParrotPath, gamesFolderPath) {
+// Yield helper -- hands the event loop back for one tick so the main
+// process stays responsive and Windows doesn't show "Not Responding"
+const yieldToEventLoop = () => new Promise(r => setImmediate(r))
+
+async function scanGames(teknoParrotPath, gamesFolderPath) {
   const profilesDir = path.join(teknoParrotPath, 'GameProfiles')
 
   if (!fs.existsSync(profilesDir)) {
@@ -220,7 +224,11 @@ function scanGames(teknoParrotPath, gamesFolderPath) {
 
   const games = []
 
-  for (const xmlFile of xmlFiles) {
+  for (let i = 0; i < xmlFiles.length; i++) {
+    // Yield every 10 files so the main process stays responsive
+    if (i > 0 && i % 10 === 0) await yieldToEventLoop()
+
+    const xmlFile = xmlFiles[i]
     const xmlPath = path.join(profilesDir, xmlFile)
     const game = parseProfile(xmlPath)
 
@@ -895,7 +903,9 @@ async function scanMameGames(mameGamesPath) {
   try { entries = fs.readdirSync(mameGamesPath, { withFileTypes: true }) }
   catch (e) { return { games, count: 0, error: e.message } }
 
-  for (const entry of entries) {
+  for (let i = 0; i < entries.length; i++) {
+    if (i > 0 && i % 50 === 0) await yieldToEventLoop()
+    const entry = entries[i]
     if (!entry.isFile()) continue
     const ext = path.extname(entry.name).toLowerCase()
     if (!EXTS.includes(ext)) continue
@@ -970,14 +980,18 @@ async function scanRetroArchGames(retroarchGamesPath) {
   catch (e) { return { games, count: 0, error: e.message } }
 
   const seen = new Set()
-  for (const entry of entries) {
+  for (let i = 0; i < entries.length; i++) {
+    if (i > 0 && i % 25 === 0) await yieldToEventLoop()
+    const entry = entries[i]
     // Recurse one level into system subfolders
     if (entry.isDirectory()) {
       const subPath = path.join(retroarchGamesPath, entry.name)
       let subEntries
       try { subEntries = fs.readdirSync(subPath, { withFileTypes: true }) }
       catch (e) { continue }
-      for (const sub of subEntries) {
+      for (let j = 0; j < subEntries.length; j++) {
+        if (j > 0 && j % 25 === 0) await yieldToEventLoop()
+        const sub = subEntries[j]
         if (!sub.isFile()) continue
         const ext = path.extname(sub.name).toLowerCase()
         if (!EXT_MAP[ext]) continue

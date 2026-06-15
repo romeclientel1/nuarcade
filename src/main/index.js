@@ -110,7 +110,7 @@ ipcMain.handle('run-updater', async () => {
 // -- Scan TeknoParrot games --------------------------------------------------
 ipcMain.handle('scan-games', async (event, { teknoParrotPath, gamesFolderPath }) => {
   const { scanGames } = require('./scanner')
-  return scanGames(teknoParrotPath, gamesFolderPath)
+  return await scanGames(teknoParrotPath, gamesFolderPath)
 })
 
 // -- Scan RPCS3 games --------------------------------------------------------
