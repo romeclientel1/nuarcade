@@ -1364,15 +1364,17 @@ ipcMain.handle('ytdlp-download', async (event, { videoId, gameId }) => {
   return new Promise((resolve) => {
     const url = 'https://www.youtube.com/watch?v=' + videoId
 
-    // Record start time so we can find the file by recency after download
-    const startTime = Date.now()
+    // Use a unique temp filename so parallel downloads don't collide.
+    // yt-dlp downloads to tempFile, we rename to outputFile on success.
+    const tempId = gameId + '_tmp_' + Date.now()
+    const tempFile = path.join(videosDir, tempId + '.mp4')
 
     const dlArgs = [
       url,
       '--format', 'bestvideo[ext=mp4][height<=480]+bestaudio[ext=m4a]/best[ext=mp4][height<=480]/best[height<=480]/best',
       '--merge-output-format', 'mp4',
       '--postprocessor-args', 'ffmpeg:-t 40',
-      '--output', outputFile,
+      '--output', tempFile,
       '--no-playlist',
       '--no-warnings',
       '--socket-timeout', '20',
@@ -1385,6 +1387,7 @@ ipcMain.handle('ytdlp-download', async (event, { videoId, gameId }) => {
 
     const dlTimer = setTimeout(() => {
       dlProc.kill()
+      try { if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile) } catch {}
       resolve({ success: false, error: 'Download timed out after 3 minutes' })
     }, 180000)
 
@@ -1397,41 +1400,40 @@ ipcMain.handle('ytdlp-download', async (event, { videoId, gameId }) => {
       clearTimeout(dlTimer)
 
       if (code !== 0) {
+        try { if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile) } catch {}
         return resolve({ success: false, error: dlStderr.slice(-400) || 'yt-dlp exited with code ' + code })
       }
 
-      // Strategy 1: expected path
-      if (fs.existsSync(outputFile)) {
-        saveRegistry()
-        return resolve({ success: true, outputFile, startSec: 0 })
+      // Find what yt-dlp actually wrote -- it may have sanitized the temp name too
+      let foundFile = null
+
+      if (fs.existsSync(tempFile)) {
+        foundFile = tempFile
+      } else {
+        // Scan for any file starting with our tempId prefix
+        try {
+          const match = fs.readdirSync(videosDir)
+            .filter(f => f.startsWith(tempId) && f.toLowerCase().endsWith('.mp4'))
+          if (match.length > 0) foundFile = path.join(videosDir, match[0])
+        } catch {}
       }
 
-      // Strategy 2: yt-dlp may have sanitized the filename differently.
-      // Scan the Videos folder for any .mp4 written since we started.
+      if (!foundFile) {
+        return resolve({ success: false, error: 'yt-dlp finished but temp file not found (tempId: ' + tempId + ')' })
+      }
+
+      // Rename temp -> final gameId path
       try {
-        const files = fs.readdirSync(videosDir)
-          .filter(f => f.toLowerCase().endsWith('.mp4'))
-          .map(f => {
-            const fp = path.join(videosDir, f)
-            try { return { fp, mt: fs.statSync(fp).mtimeMs } }
-            catch { return null }
-          })
-          .filter(x => x && x.mt >= startTime - 5000)
-          .sort((a, b) => b.mt - a.mt)
+        if (fs.existsSync(outputFile)) fs.unlinkSync(outputFile)
+        fs.renameSync(foundFile, outputFile)
+      } catch (e) {
+        // Rename failed -- use whatever path we have
+        saveRegistry()
+        return resolve({ success: true, outputFile: foundFile, startSec: 0 })
+      }
 
-        if (files.length > 0) {
-          const found = files[0].fp
-          // Rename to our expected gameId.mp4 so the registry key is consistent
-          try {
-            if (found !== outputFile) fs.renameSync(found, outputFile)
-          } catch {}
-          const registeredPath = fs.existsSync(outputFile) ? outputFile : found
-          saveRegistry()
-          return resolve({ success: true, outputFile: registeredPath, startSec: 0 })
-        }
-      } catch {}
-
-      resolve({ success: false, error: 'yt-dlp finished (code 0) but no .mp4 found in ' + videosDir })
+      saveRegistry()
+      resolve({ success: true, outputFile, startSec: 0 })
     })
   })
 })
