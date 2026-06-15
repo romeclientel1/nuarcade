@@ -1364,26 +1364,23 @@ ipcMain.handle('ytdlp-download', async (event, { videoId, gameId }) => {
   return new Promise((resolve) => {
     const url = 'https://www.youtube.com/watch?v=' + videoId
 
+    // Record start time so we can find the file by recency after download
+    const startTime = Date.now()
+
     const dlArgs = [
       url,
       '--format', 'bestvideo[ext=mp4][height<=480]+bestaudio[ext=m4a]/best[ext=mp4][height<=480]/best[height<=480]/best',
       '--merge-output-format', 'mp4',
       '--postprocessor-args', 'ffmpeg:-t 40',
-      // Restrict to ASCII filenames so output path matches outputFile exactly
-      '--restrict-filenames',
       '--output', outputFile,
       '--no-playlist',
       '--no-warnings',
       '--socket-timeout', '20',
       '--retries', '2',
-      // Print actual filepath after download so we can locate the file
-      '--print', 'after:filepath',
     ]
 
-    let dlStdout = ''
     let dlStderr = ''
-    const dlProc = spawn(ytdlpExe, dlArgs, { stdio: ['ignore', 'pipe', 'pipe'] })
-    dlProc.stdout.on('data', d => { dlStdout += d.toString() })
+    const dlProc = spawn(ytdlpExe, dlArgs, { stdio: ['ignore', 'ignore', 'pipe'] })
     dlProc.stderr.on('data', d => { dlStderr += d.toString() })
 
     const dlTimer = setTimeout(() => {
@@ -1403,40 +1400,38 @@ ipcMain.handle('ytdlp-download', async (event, { videoId, gameId }) => {
         return resolve({ success: false, error: dlStderr.slice(-400) || 'yt-dlp exited with code ' + code })
       }
 
-      // Use --print after:filepath output to find the actual file yt-dlp wrote
-      const printedPath = (dlStdout.trim().split('\n').pop() || '').trim()
-      const finalPath = (printedPath && fs.existsSync(printedPath)) ? printedPath
-                      : fs.existsSync(outputFile) ? outputFile
-                      : null
-
-      if (finalPath) {
-        if (finalPath !== outputFile) {
-          try { fs.renameSync(finalPath, outputFile) } catch {}
-        }
+      // Strategy 1: expected path
+      if (fs.existsSync(outputFile)) {
         saveRegistry()
-        resolve({ success: true, outputFile, startSec: 0 })
-        return
+        return resolve({ success: true, outputFile, startSec: 0 })
       }
 
-      // Last resort: find any .mp4 written to Videos folder in last 30s
+      // Strategy 2: yt-dlp may have sanitized the filename differently.
+      // Scan the Videos folder for any .mp4 written since we started.
       try {
-        const now = Date.now()
-        const recent = fs.readdirSync(videosDir)
-          .filter(f => f.endsWith('.mp4'))
-          .map(f => ({ f, mt: fs.statSync(path.join(videosDir, f)).mtimeMs }))
-          .filter(x => now - x.mt < 30000)
-          .sort((a, b) => b.mt - a.mt)[0]
-        if (recent) {
-          const foundPath = path.join(videosDir, recent.f)
-          if (foundPath !== outputFile) {
-            try { fs.renameSync(foundPath, outputFile) } catch {}
-          }
+        const files = fs.readdirSync(videosDir)
+          .filter(f => f.toLowerCase().endsWith('.mp4'))
+          .map(f => {
+            const fp = path.join(videosDir, f)
+            try { return { fp, mt: fs.statSync(fp).mtimeMs } }
+            catch { return null }
+          })
+          .filter(x => x && x.mt >= startTime - 5000)
+          .sort((a, b) => b.mt - a.mt)
+
+        if (files.length > 0) {
+          const found = files[0].fp
+          // Rename to our expected gameId.mp4 so the registry key is consistent
+          try {
+            if (found !== outputFile) fs.renameSync(found, outputFile)
+          } catch {}
+          const registeredPath = fs.existsSync(outputFile) ? outputFile : found
           saveRegistry()
-          return resolve({ success: true, outputFile, startSec: 0 })
+          return resolve({ success: true, outputFile: registeredPath, startSec: 0 })
         }
       } catch {}
 
-      resolve({ success: false, error: 'yt-dlp finished but output file not found' })
+      resolve({ success: false, error: 'yt-dlp finished (code 0) but no .mp4 found in ' + videosDir })
     })
   })
 })
