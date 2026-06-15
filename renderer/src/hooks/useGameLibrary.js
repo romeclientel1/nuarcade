@@ -422,13 +422,32 @@ export function useGameLibrary() {
       if (!window.nuarcade?.getVideos) return
       const vResult = await window.nuarcade.getVideos()
       const videosMap = vResult.videos || {}
-      setGames(prev => prev.map(g => {
-        const gameId = g.id || g.profile?.replace('.xml', '').replace('.vpx', '')
-        const filePath = videosMap[gameId]
-        return filePath
-          ? { ...g, videoPath: 'file:///' + filePath.replace(/\\/g, '/') }
-          : g
-      }))
+
+      setGames(prev => {
+        const updated = prev.map(g => {
+          const gameId = g.id || g.profile?.replace('.xml', '').replace('.vpx', '')
+          const filePath = videosMap[gameId]
+          return filePath
+            ? { ...g, videoPath: 'file:///' + filePath.replace(/\\/g, '/') }
+            : g
+        })
+        // Also patch the localStorage cache so videos survive page reloads
+        try {
+          const cached = localStorage.getItem(CACHE_KEY)
+          if (cached) {
+            const cachedGames = JSON.parse(cached)
+            const patchedCache = cachedGames.map(g => {
+              const gameId = g.id || g.profile?.replace('.xml', '').replace('.vpx', '')
+              const filePath = videosMap[gameId]
+              return filePath
+                ? { ...g, videoPath: 'file:///' + filePath.replace(/\\/g, '/') }
+                : g
+            })
+            localStorage.setItem(CACHE_KEY, JSON.stringify(patchedCache))
+          }
+        } catch {}
+        return updated
+      })
     } catch {}
   }
 

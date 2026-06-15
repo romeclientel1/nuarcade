@@ -78,15 +78,24 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
             }
           } catch {}
         }
-        // Check existing artwork
+        // Check existing videos from disk registry (not localStorage which is stale)
         try {
           const artwork = JSON.parse(localStorage.getItem("nuarcade_artwork") || "{}")
-          const videos  = JSON.parse(localStorage.getItem("nuarcade_videos")  || "{}")
-          gameList = gameList.map(g => ({
-            ...g,
-            hasArtwork: !!(artwork[g.id || g.profile]),
-            hasVideo:   !!(videos[g.id || g.profile]),
-          }))
+          let videosMap = {}
+          try {
+            if (window.nuarcade.getVideos) {
+              const vResult = await window.nuarcade.getVideos()
+              videosMap = vResult.videos || {}
+            }
+          } catch {}
+          gameList = gameList.map(g => {
+            const gid = g.id || g.profile?.replace('.xml','').replace('.vpx','')
+            return {
+              ...g,
+              hasArtwork: !!(artwork[g.id || g.profile]),
+              hasVideo: !!(videosMap[gid]),
+            }
+          })
         } catch {}
       } else {
         gameList = SAMPLE_GAMES
