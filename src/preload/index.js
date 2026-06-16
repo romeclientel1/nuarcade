@@ -118,4 +118,7 @@ contextBridge.exposeInMainWorld('nuarcade', {
 
   // App control
   closeApp: () => ipcRenderer.invoke('close-app'),
+
+  // App version -- sync call so it's available immediately
+  version: ipcRenderer.sendSync('get-version'),
 })
