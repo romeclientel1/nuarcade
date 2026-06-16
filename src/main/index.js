@@ -1541,6 +1541,7 @@ ipcMain.handle('install-update', async (event, { installerPath }) => {
 // -- AI Game Coach -----------------------------------------------------------
 // Calls Railway proxy server which handles the Anthropic API call server-side
 const COACH_API_URL = 'https://nuarcade-coach-api-production.up.railway.app/coach'
+const COACH_SECRET  = 'f4254611727ff019d5fe9fb1042967ba433e5c3c0451e96991687d33e31d48f7'
 
 ipcMain.handle('game-coach', async (event, { gameTitle, system, genre, emulator }) => {
   const https = require('https')
@@ -1556,6 +1557,7 @@ ipcMain.handle('game-coach', async (event, { gameTitle, system, genre, emulator 
       headers: {
         'Content-Type': 'application/json',
         'Content-Length': Buffer.byteLength(body),
+        'x-nuarcade-secret': COACH_SECRET,
       },
     }
 
