@@ -158,7 +158,7 @@
   height: 320px;
 }
 
-/* ── Background video ─────────────────────────────────────────────── */
+/* -- Background video ----------------------------------------------- */
 .bgVideo {
   position: absolute;
   inset: 0;
@@ -175,7 +175,7 @@
   opacity: 0;
 }
 
-/* ── Card slot and 3D transforms ─────────────────────────────────── */
+/* -- Card slot and 3D transforms ----------------------------------- */
 .cardCenter {
   width: 240px;
   height: 320px;
