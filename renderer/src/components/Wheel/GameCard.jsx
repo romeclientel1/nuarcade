@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react"
+import { useState, useEffect } from "react"
 import styles from "./GameCard.module.css"
 import { generatePlaceholderSvg } from "../../hooks/generatePlaceholder"
 import { useGameNotes } from "../../hooks/useGameNotes"
@@ -42,9 +42,6 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork 
   const [imgError,    setImgError   ] = useState(false)
   const [heroLoaded,  setHeroLoaded ] = useState(false)
   const [capsLoaded,  setCapsLoaded ] = useState(false)
-  const [videoReady,  setVideoReady ] = useState(false)
-  const [videoError,  setVideoError ] = useState(false)
-  const videoRef = useRef(null)
   const { getRating, getNote } = useGameNotes()
   const rating = getRating(game)
   const note   = getNote(game)
@@ -61,43 +58,13 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork 
   const tpThumb   = game.isPinball ? null
     : game.id ? `${THUMBNAIL_BASE}${game.id}.png` : null
 
-  const videoId   = game.id || game.profile?.replace(".xml","").replace(".vpx","")
-  // Only use explicit videoPath from the video registry.
-  // The old fallback guess caused silent errors on every game without a clip.
-  const videoUrl  = game.videoPath || null
 
-  useEffect(() => {
-    if (!videoRef.current) return
 
-    if (isCenter && videoUrl && !videoError) {
-      videoRef.current.load()
-      // Small delay so the element settles before play -- avoids AbortError
-      // on rapid wheel navigation
-      const t = setTimeout(() => {
-        if (videoRef.current) {
-          videoRef.current.currentTime = 0
-          videoRef.current.play().catch(() => setVideoError(true))
-        }
-      }, 120)
-      return () => clearTimeout(t)
-    } else {
-      videoRef.current.pause()
-      videoRef.current.currentTime = 0
-      setVideoReady(false)
-    }
-  }, [isCenter, videoUrl])
 
-  // Reset video error state when game changes so a bad clip on one
-  // game doesn't permanently disable video on the next
-  useEffect(() => {
-    setVideoError(false)
-    setVideoReady(false)
-  }, [game.id, game.profile])
 
-  const showVideo   = isCenter && videoUrl && !videoError && videoReady
-  const showHero    = isCenter && heroUrl && !showVideo
-  const showCapsule = capsuleUrl && !showVideo
-  const showThumb   = tpThumb && !imgError && !showCapsule && !showVideo
+  const showHero    = isCenter && heroUrl
+  const showCapsule = capsuleUrl
+  const showThumb   = tpThumb && !imgError && !showCapsule
 
   return (
     <div
@@ -118,25 +85,16 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork 
 
       <div className={styles.artWrap}>
         {/* Placeholder always renders as background -- real art overlays it */}
-        {!game.isPinball && !showVideo && (
+        {!game.isPinball && (
           <img
             src={generatePlaceholderSvg(game)}
             alt=""
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85, zIndex: 1 }}
           />
         )}
-
-        {/* Video snap -- z-index 3, above placeholder and art */}
-        {isCenter && videoUrl && !videoError && (
           <video
-            ref={videoRef}
-            className={`${styles.videoEl} ${videoReady ? styles.videoVisible : ""}`}
-            src={videoUrl}
             muted
             loop
-            playsInline
-            onCanPlay={() => setVideoReady(true)}
-            onError={() => setVideoError(true)}
             style={{ zIndex: 3 }}
           />
         )}
@@ -146,10 +104,9 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork 
           <img
             src={capsuleUrl}
             alt={game.title}
-            className={`${styles.artImg} ${capsLoaded ? styles.artLoaded : ""} ${showVideo ? styles.artHidden : ""}`}
             onLoad={() => setCapsLoaded(true)}
             onError={() => {}}
-            style={{ zIndex: 2 }}
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 2, opacity: capsLoaded ? 1 : 0, transition: 'opacity 0.3s ease' }}
           />
         )}
 
@@ -158,15 +115,14 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork 
           <img
             src={tpThumb}
             alt={game.title}
-            className={`${styles.artImg} ${imgLoaded ? styles.artLoaded : ""} ${showVideo ? styles.artHidden : ""}`}
             onLoad={() => setImgLoaded(true)}
             onError={() => setImgError(true)}
-            style={{ zIndex: 2 }}
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 2, opacity: imgLoaded ? 1 : 0, transition: 'opacity 0.3s ease' }}
           />
         )}
 
         {/* Pinball fallback */}
-        {game.isPinball && !showVideo && !showCapsule && (
+        {game.isPinball && !showCapsule && (
           <div className={styles.pinballFallback} style={{ borderColor: colors.accent + "44" }}>
             <div className={styles.pinballIcon}>PIN</div>
             <div className={styles.pinballName} style={{ color: colors.accent }}>{game.title}</div>
@@ -174,10 +130,9 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork 
           </div>
         )}
 
-        {showVideo && <div className={styles.videoBadge}>LIVE</div>}
 
         {/* Logo overlay on capsule/hero */}
-        {isCenter && logoUrl && !showVideo && (
+        {isCenter && logoUrl && (
           <img src={logoUrl} alt="" className={styles.logoOverlay} />
         )}
       </div>

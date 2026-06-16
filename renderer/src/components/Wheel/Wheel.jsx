@@ -251,6 +251,14 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const [exitConfirm, setExitConfirm] = useState(false)
   const exitConfirmTimer = useRef(null)
 
+  // Background video -- A/B crossfade
+  const bgVideoARef = useRef(null)
+  const bgVideoBRef = useRef(null)
+  const [bgVideoA, setBgVideoA] = useState(null)
+  const [bgVideoB, setBgVideoB] = useState(null)
+  const [bgActive, setBgActive] = useState('a') // which slot is visible
+  const bgLastId = useRef(null)
+
   // Show boot screen once after library loads (only on cabinet, only if games exist)
   const bootShown = useRef(false)
   useEffect(() => {
@@ -327,7 +335,29 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
 
   useEffect(() => { setSelectedIndex(0) }, [activeCategory, debouncedSearch, sortBy])
 
-  // Update marquee display when selected game changes + fire LED game-selected event
+  // Background video crossfade when center game changes
+  useEffect(() => {
+    if (!current) return
+    const newId = current.id || current.profile
+    if (newId === bgLastId.current) return
+    bgLastId.current = newId
+    const videoPath = current.videoPath || null
+    if (!videoPath) return
+    // Load into inactive slot, then swap
+    if (bgActive === 'a') {
+      setBgVideoB(videoPath)
+      setTimeout(() => {
+        if (bgVideoBRef.current) { bgVideoBRef.current.load(); bgVideoBRef.current.play().catch(() => {}) }
+        setBgActive('b')
+      }, 50)
+    } else {
+      setBgVideoA(videoPath)
+      setTimeout(() => {
+        if (bgVideoARef.current) { bgVideoARef.current.load(); bgVideoARef.current.play().catch(() => {}) }
+        setBgActive('a')
+      }, 50)
+    }
+  }, [current?.id, current?.profile, current?.videoPath])
   useEffect(() => {
     if (!current || !window.nuarcade?.updateMarquee) return
     const art = artwork?.[current.id || current.profile]
@@ -590,6 +620,30 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     <div className={styles.stage + (cabinetMode ? " " + styles.cabinetMode : "") + (screenshotMode ? " " + styles.screenshotMode : "")}>
       <div className={styles.bgGrid} />
       <div className={styles.bgVignette} />
+
+      {/* Background gameplay video -- A/B crossfade */}
+      {bgVideoA && (
+        <video
+          ref={bgVideoARef}
+          className={`${styles.bgVideo} ${bgActive !== 'a' ? styles.bgVideoHidden : ''}`}
+          src={bgVideoA}
+          muted
+          loop
+          playsInline
+          autoPlay
+        />
+      )}
+      {bgVideoB && (
+        <video
+          ref={bgVideoBRef}
+          className={`${styles.bgVideo} ${bgActive !== 'b' ? styles.bgVideoHidden : ''}`}
+          src={bgVideoB}
+          muted
+          loop
+          playsInline
+          autoPlay
+        />
+      )}
 
       <AttractMode
         games={filteredGames}
