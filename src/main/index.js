@@ -1457,6 +1457,26 @@ ipcMain.handle('ytdlp-download', async (event, { videoId, gameId }) => {
   })
 })
 
+// -- Music: scan F:/Media/Music/ for mp3 files ----------------------------
+ipcMain.handle('get-music-tracks', async () => {
+  const fs = require('fs')
+  const cfg = config.load()
+  const musicDir = path.join(cfg.mediaPath || 'F:\\Media\\', 'Music')
+  if (!fs.existsSync(musicDir)) return { tracks: [], dir: musicDir }
+  try {
+    const files = fs.readdirSync(musicDir)
+    const tracks = files
+      .filter(f => /\.(mp3|ogg|wav|flac|m4a)$/i.test(f))
+      .map(f => ({
+        name: f.replace(/\.[^.]+$/, '').replace(/_/g, ' '),
+        path: 'file:///' + path.join(musicDir, f).replace(/\\/g, '/'),
+      }))
+    return { tracks, dir: musicDir }
+  } catch (e) {
+    return { tracks: [], dir: musicDir, error: e.message }
+  }
+})
+
 // -- App version --------------------------------------------------------------
 ipcMain.on('get-version', (event) => {
   event.returnValue = 'v' + app.getVersion()

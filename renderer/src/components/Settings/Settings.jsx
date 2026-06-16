@@ -377,6 +377,40 @@ const handleSave = async () => {
           </div>
 
           <div className={styles.section}>
+            <div className={styles.sectionTitle}>Background music</div>
+            <div className={styles.inputRow}>
+              <label className={styles.inputLabel}>Music</label>
+              <div className={styles.toggleRow}>
+                {["on","off"].map(m => (
+                  <button
+                    key={m}
+                    className={styles.toggleBtn + (((config.musicEnabled !== false) === (m === "on")) ? " " + styles.toggleActive : "")}
+                    onClick={() => update("musicEnabled", m === "on")}
+                  >{m.toUpperCase()}</button>
+                ))}
+              </div>
+            </div>
+            <div className={styles.inputRow}>
+              <label className={styles.inputLabel}>Music volume</label>
+              <div className={styles.sliderWrap}>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="5"
+                  value={config.musicVolume ?? 60}
+                  onChange={e => update("musicVolume", parseInt(e.target.value))}
+                  className={styles.slider}
+                />
+                <span className={styles.sliderVal}>{config.musicVolume ?? 60}%</span>
+              </div>
+            </div>
+            <div className={styles.emuNote}>
+              Drop .mp3 files into F:/Media/Music/ -- NuArcade shuffles and plays them while you browse. Music fades when gameplay video is active. Click the Now Playing badge to skip tracks.
+            </div>
+          </div>
+
+          <div className={styles.section}>
             <div className={styles.sectionTitle}>Attract mode</div>
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>Idle timeout</label>

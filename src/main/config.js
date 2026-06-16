@@ -42,6 +42,8 @@ const DEFAULTS = {
   mediaPath:          'F:\\Media\\',
   ytdlpPath:          'F:\\Tools\\yt-dlp.exe',
   anthropicApiKey:    '',
+  musicEnabled:       true,
+  musicVolume:        60,
   enabledEmulators: {
     teknoparrot: true,
     rpcs3:       true,

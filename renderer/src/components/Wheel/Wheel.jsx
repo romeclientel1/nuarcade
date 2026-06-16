@@ -18,6 +18,7 @@ import { useErrorToast, ErrorToastContainer } from "./ErrorToast"
 import SortMenu from "./SortMenu"
 import { useGamepad } from "./useGamepad"
 import { useArcadeSounds } from "../../hooks/useArcadeSounds"
+import { useMusicPlayer  } from "../../hooks/useMusicPlayer"
 import { usePlaytime } from "../../hooks/usePlaytime"
 import { useSteamGridDB } from "../../hooks/useSteamGridDB"
 
@@ -298,6 +299,14 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     searchDebounce.current = setTimeout(() => setDebouncedSearch(val), 120)
   }
   const sounds = useArcadeSounds()
+
+  // Background music
+  const hasBgVideo = !!(bgVideoA || bgVideoB)
+  const { nowPlaying, trackCount, skip: skipTrack } = useMusicPlayer({
+    enabled: config?.musicEnabled !== false,
+    volume:  config?.musicVolume ?? 60,
+    hasBgVideo,
+  })
   const { startSession, endSession, getPlaytime, formatTime, recordLaunch } = usePlaytime()
   const [artwork, setArtwork] = useState(() => {
     try { return JSON.parse(localStorage.getItem("nuarcade_artwork") || "{}") } catch { return {} }
@@ -1054,6 +1063,39 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       {/* Konami code easter egg -- BUILD 100 celebration */}
       {showKonami && (
         <KonamiCelebration onClose={() => setShowKonami(false)} />
+      )}
+
+      {/* Now Playing badge -- bottom left, subtle */}
+      {nowPlaying && config?.musicEnabled !== false && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: 20,
+            left: 24,
+            zIndex: 40,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            background: 'rgba(0,0,0,0.55)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 4,
+            padding: '5px 10px',
+            fontFamily: 'Share Tech Mono, monospace',
+            fontSize: 10,
+            color: 'rgba(255,255,255,0.4)',
+            letterSpacing: '0.08em',
+            cursor: 'pointer',
+            maxWidth: 260,
+          }}
+          onClick={skipTrack}
+          title="Click to skip track"
+        >
+          <span style={{ color: 'rgba(0,200,255,0.5)', fontSize: 9 }}>MUSIC</span>
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {nowPlaying}
+          </span>
+          <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 9, flexShrink: 0 }}>skip</span>
+        </div>
       )}
     </div>
   )
