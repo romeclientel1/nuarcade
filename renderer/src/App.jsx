@@ -56,9 +56,9 @@ export default function App() {
   const [showUpdater, setShowUpdater] = useState(false)
   const [lastLaunch, setLastLaunch] = useState(null)
   const { themeId, setTheme } = useTheme()
-  const VERSION = "4.0.9"
+  const VERSION = "4.1.0"
   const { hasUpdate, newVersion, releaseUrl, downloadUrl, releaseNotes, dismiss } = useAutoUpdate(VERSION)
-  const { profiles, activeProfile, addProfile, selectProfile, selectGuest, recordPlay } = usePlayerProfiles()
+  const { profiles, activeProfile, addProfile, selectProfile, selectGuest, deleteProfile, recordPlay } = usePlayerProfiles()
 
   const [crtEnabled, setCrtEnabled] = useState(() => {
     try { return localStorage.getItem("nuarcade_crt") === "true" } catch { return false }
@@ -133,15 +133,8 @@ export default function App() {
               profiles={profiles}
               onSelect={(id) => { selectProfile(id); setPhase("wheel"); setShowUpdater(true) }}
               onGuest={() => { selectGuest(); setPhase("wheel"); setShowUpdater(true) }}
-              onAdd={(name) => {
-                const p = addProfile(name)
-                // Set active ID directly in localStorage so it persists immediately
-                // without waiting for selectProfile to re-read updated profiles state
-                localStorage.setItem('nuarcade_active_profile', p.id)
-                selectProfile(p.id)
-                setPhase("wheel")
-                setShowUpdater(true)
-              }}
+              onAdd={(name) => { addProfile(name); setPhase("wheel"); setShowUpdater(true) }}
+              onDelete={(id) => deleteProfile(id)}
             />
           )}
           {(phase === "wheel" || phase === "fallback") && <Wheel onCRTChange={handleCRTChange} crtEnabled={crtEnabled} themeId={themeId} onThemeChange={setTheme} lastLaunch={lastLaunch} setLastLaunch={setLastLaunch} activeProfile={activeProfile} onSwitchPlayer={() => setPhase("playerSelect")} onSetupWizard={() => { window.nuarcade?.resetSetup?.().then(() => setPhase("wizard")) }} />}

@@ -1,6 +1,3 @@
-// usePlayerProfiles -- manages player profiles stored in localStorage
-// Each profile: { id, name, color, createdAt, lastSeen, totalPlaytime, favoriteGame }
-
 import { useState, useCallback } from 'react'
 
 const STORAGE_KEY = 'nuarcade_profiles'
@@ -19,15 +16,21 @@ function saveProfiles(profiles) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(profiles))
 }
 
+function getActiveId() {
+  return localStorage.getItem(ACTIVE_KEY) || null
+}
+
 export function usePlayerProfiles() {
   const [profiles, setProfiles] = useState(() => loadProfiles())
-  const [activeId, setActiveId] = useState(() => localStorage.getItem(ACTIVE_KEY) || null)
+  const [activeId, setActiveId] = useState(() => getActiveId())
 
+  // Always derive from current profiles + current activeId
   const activeProfile = profiles.find(p => p.id === activeId) || null
 
   const addProfile = useCallback((name) => {
+    const current = loadProfiles() // read fresh from storage
     const id = 'player_' + Date.now()
-    const color = COLORS[profiles.length % COLORS.length]
+    const color = COLORS[current.length % COLORS.length]
     const profile = {
       id,
       name: name.trim().slice(0, 12).toUpperCase(),
@@ -38,71 +41,74 @@ export function usePlayerProfiles() {
       gamesPlayed: 0,
       favoriteGame: null,
     }
-    const next = [...profiles, profile]
-    setProfiles(next)
+    const next = [...current, profile]
+    // Write to storage FIRST, then update state
     saveProfiles(next)
-    // Also set active immediately so the wheel shows correct profile
-    setActiveId(id)
     localStorage.setItem(ACTIVE_KEY, id)
+    // Update state synchronously in one batch
+    setProfiles(next)
+    setActiveId(id)
     return profile
-  }, [profiles])
+  }, [])
 
   const selectProfile = useCallback((id) => {
-    // Update lastSeen
-    const next = profiles.map(p =>
+    const current = loadProfiles()
+    const next = current.map(p =>
       p.id === id ? { ...p, lastSeen: Date.now() } : p
     )
-    setProfiles(next)
     saveProfiles(next)
-    setActiveId(id)
     localStorage.setItem(ACTIVE_KEY, id)
-  }, [profiles])
+    setProfiles(next)
+    setActiveId(id)
+  }, [])
 
   const selectGuest = useCallback(() => {
-    setActiveId(null)
     localStorage.removeItem(ACTIVE_KEY)
+    setActiveId(null)
   }, [])
 
   const updateProfile = useCallback((id, updates) => {
-    const next = profiles.map(p => p.id === id ? { ...p, ...updates } : p)
-    setProfiles(next)
+    const current = loadProfiles()
+    const next = current.map(p => p.id === id ? { ...p, ...updates } : p)
     saveProfiles(next)
-  }, [profiles])
+    setProfiles(next)
+  }, [])
 
   const deleteProfile = useCallback((id) => {
-    const next = profiles.filter(p => p.id !== id)
-    setProfiles(next)
+    const current = loadProfiles()
+    const next = current.filter(p => p.id !== id)
     saveProfiles(next)
-    if (activeId === id) {
-      setActiveId(null)
+    if (getActiveId() === id) {
       localStorage.removeItem(ACTIVE_KEY)
+      setActiveId(null)
     }
-  }, [profiles, activeId])
+    setProfiles(next)
+  }, [])
 
-  // Record a game play session
   const recordPlay = useCallback((gameId, gameTitle, playtimeMs) => {
-    if (!activeId) return
-    const profile = profiles.find(p => p.id === activeId)
+    const id = getActiveId()
+    if (!id) return
+    const current = loadProfiles()
+    const profile = current.find(p => p.id === id)
     if (!profile) return
 
-    // Track per-game playtime
-    const ptKey = 'nuarcade_playtime_' + activeId
+    const ptKey = 'nuarcade_playtime_' + id
     try {
       const pt = JSON.parse(localStorage.getItem(ptKey) || '{}')
       pt[gameId] = (pt[gameId] || 0) + playtimeMs
       localStorage.setItem(ptKey, JSON.stringify(pt))
-
-      // Find favorite (most played)
       const sorted = Object.entries(pt).sort((a, b) => b[1] - a[1])
       const favoriteGame = sorted[0]?.[0] || null
-
-      updateProfile(activeId, {
-        totalPlaytime: (profile.totalPlaytime || 0) + playtimeMs,
-        gamesPlayed: (profile.gamesPlayed || 0) + 1,
+      const next = current.map(p => p.id === id ? {
+        ...p,
+        totalPlaytime: (p.totalPlaytime || 0) + playtimeMs,
+        gamesPlayed: (p.gamesPlayed || 0) + 1,
         favoriteGame,
-      })
+      } : p)
+      saveProfiles(next)
+      setProfiles(next)
     } catch {}
-  }, [activeId, profiles, updateProfile])
+  }, [])
 
   return {
     profiles,

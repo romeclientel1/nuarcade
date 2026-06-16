@@ -3,7 +3,7 @@ import styles from './PlayerSelect.module.css'
 
 const MAX_NAME_LEN = 12
 
-export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd }) {
+export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDelete }) {
   const [adding,    setAdding   ] = useState(false)
   const [name,      setName     ] = useState('')
   const [selected,  setSelected ] = useState(null)
@@ -71,6 +71,15 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd }) {
               onClick={() => setSelected(selected === p.id ? null : p.id)}
               onDoubleClick={() => onSelect(p.id)}
             >
+              {onDelete && (
+                <button
+                  className={styles.deleteBtn}
+                  onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete ' + p.name + '?')) onDelete(p.id) }}
+                  title="Delete profile"
+                >
+                  x
+                </button>
+              )}
               <div className={styles.avatar} style={{ background: p.color + '22', borderColor: p.color + '66' }}>
                 <span style={{ color: p.color }}>{p.name[0]}</span>
               </div>
