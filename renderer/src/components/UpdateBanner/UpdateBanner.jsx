@@ -1,30 +1,111 @@
-import styles from "./UpdateBanner.module.css"
+import { useState, useEffect } from 'react'
+import styles from './UpdateBanner.module.css'
 
-export default function UpdateBanner({ newVersion, releaseUrl, onDismiss }) {
-  const handleDownload = () => {
-    if (window.nuarcade?.platform === "win32") {
-      require("electron").shell.openExternal(releaseUrl)
-    } else {
-      window.open(releaseUrl, "_blank")
+// States: idle -> downloading -> ready -> installing
+export default function UpdateBanner({ newVersion, releaseUrl, downloadUrl, releaseNotes, onDismiss }) {
+  const [phase,    setPhase   ] = useState('idle')
+  const [progress, setProgress] = useState(0)
+  const [error,    setError   ] = useState(null)
+
+  useEffect(() => {
+    if (!window.nuarcade?.onUpdateProgress) return
+    window.nuarcade.onUpdateProgress(({ pct }) => setProgress(pct))
+  }, [])
+
+  const handleDownload = async () => {
+    if (!downloadUrl) {
+      // No direct download URL -- open GitHub releases page
+      window.open(releaseUrl, '_blank')
+      return
+    }
+    setPhase('downloading')
+    setProgress(0)
+    try {
+      const result = await window.nuarcade.downloadUpdate({
+        version: newVersion,
+        downloadUrl,
+      })
+      if (result.success) {
+        setPhase('ready')
+      } else {
+        setError(result.error || 'Download failed')
+        setPhase('error')
+      }
+    } catch (e) {
+      setError(e.message || 'Download failed')
+      setPhase('error')
+    }
+  }
+
+  const handleInstall = async () => {
+    setPhase('installing')
+    // installer path is in temp dir
+    const os = window.require ? window.require('os') : null
+    const installerPath = (os?.tmpdir() || 'C:\\Users\\Public') + '\\NuArcade-Setup-' + newVersion + '.exe'
+    try {
+      await window.nuarcade.installUpdate({ installerPath })
+      // app will quit itself after spawning installer
+    } catch (e) {
+      setError(e.message || 'Install failed')
+      setPhase('error')
     }
   }
 
   return (
     <div className={styles.banner}>
       <div className={styles.left}>
-        <div className={styles.badge}>NEW</div>
+        <div className={styles.badge}>UPDATE</div>
         <div className={styles.text}>
-          <span className={styles.title}>NuArcade {newVersion} is available</span>
-          <span className={styles.notes}>A new version is ready to download</span>
+          <span className={styles.title}>NuArcade v{newVersion} is available</span>
+          {phase === 'idle' && (
+            <span className={styles.notes}>{releaseNotes || 'A new version is ready to download'}</span>
+          )}
+          {phase === 'downloading' && (
+            <div className={styles.progressWrap}>
+              <div className={styles.progressBar} style={{ width: progress + '%' }} />
+              <span className={styles.progressLabel}>{progress}% downloading...</span>
+            </div>
+          )}
+          {phase === 'ready' && (
+            <span className={styles.notes}>Downloaded -- ready to install. NuArcade will restart.</span>
+          )}
+          {phase === 'installing' && (
+            <span className={styles.notes}>Installing... NuArcade will restart automatically.</span>
+          )}
+          {phase === 'error' && (
+            <span className={styles.notes} style={{ color: '#ff5555' }}>Error: {error}</span>
+          )}
         </div>
       </div>
       <div className={styles.right}>
-        <button className={styles.downloadBtn} onClick={handleDownload}>
-          Download
-        </button>
-        <button className={styles.dismissBtn} onClick={onDismiss}>
-          Later
-        </button>
+        {phase === 'idle' && (
+          <>
+            <button className={styles.downloadBtn} onClick={handleDownload}>
+              {downloadUrl ? 'Download' : 'View release'}
+            </button>
+            <button className={styles.dismissBtn} onClick={onDismiss}>Later</button>
+          </>
+        )}
+        {phase === 'downloading' && (
+          <button className={styles.dismissBtn} disabled>Downloading...</button>
+        )}
+        {phase === 'ready' && (
+          <>
+            <button className={styles.downloadBtn} onClick={handleInstall}>Install now</button>
+            <button className={styles.dismissBtn} onClick={onDismiss}>Later</button>
+          </>
+        )}
+        {phase === 'error' && (
+          <>
+            <button className={styles.downloadBtn} onClick={() => window.open(releaseUrl, '_blank')}>
+              Manual download
+            </button>
+            <button className={styles.dismissBtn} onClick={onDismiss}>Dismiss</button>
+          </>
+        )}
+        {phase === 'installing' && (
+          <button className={styles.dismissBtn} disabled>Restarting...</button>
+        )}
       </div>
     </div>
   )

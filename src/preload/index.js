@@ -53,7 +53,10 @@ contextBridge.exposeInMainWorld('nuarcade', {
   searchVideo:   (title) => ipcRenderer.invoke('search-video', title),
   downloadVideo: (opts)  => ipcRenderer.invoke('download-video', opts),
   getVideos:     ()      => ipcRenderer.invoke('get-videos'),
-  getMusicTracks: () => ipcRenderer.invoke('get-music-tracks'),
+  getMusicTracks:  () => ipcRenderer.invoke('get-music-tracks'),
+  downloadUpdate:  (opts) => ipcRenderer.invoke('download-update', opts),
+  installUpdate:   (opts) => ipcRenderer.invoke('install-update', opts),
+  onUpdateProgress: (cb) => ipcRenderer.on('update-progress', (_, data) => cb(data)),
   ytdlpSearch:   (opts)  => ipcRenderer.invoke('ytdlp-search', opts),   // { gameTitle, gameId, system, emulator, genre }
   ytdlpDownload: (opts)  => ipcRenderer.invoke('ytdlp-download', opts),
 

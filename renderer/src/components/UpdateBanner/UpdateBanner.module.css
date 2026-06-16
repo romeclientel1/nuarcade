@@ -62,3 +62,36 @@
   transition: all 0.2s;
 }
 .dismissBtn:hover { border-color: rgba(255,255,255,0.3); color: rgba(255,255,255,0.7); }
+.dismissBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+.downloadBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.progressWrap {
+  position: relative;
+  height: 18px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 9px;
+  overflow: hidden;
+  min-width: 200px;
+  margin-top: 2px;
+}
+
+.progressBar {
+  position: absolute;
+  inset: 0;
+  width: 0%;
+  background: linear-gradient(90deg, #00ff88, #00c8ff);
+  border-radius: 9px;
+  transition: width 0.3s ease;
+}
+
+.progressLabel {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: rgba(255,255,255,0.7);
+  font-family: 'Share Tech Mono', monospace;
+  letter-spacing: 0.05em;
+}

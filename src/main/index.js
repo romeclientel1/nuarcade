@@ -1477,6 +1477,67 @@ ipcMain.handle('get-music-tracks', async () => {
   }
 })
 
+// -- Auto-updater: download installer and run it ----------------------------
+ipcMain.handle('download-update', async (event, { version, downloadUrl }) => {
+  const fs = require('fs')
+  const https = require('https')
+  const os = require('os')
+
+  const tmpDir = os.tmpdir()
+  const installerPath = path.join(tmpDir, 'NuArcade-Setup-' + version + '.exe')
+
+  // If already downloaded, skip
+  if (fs.existsSync(installerPath)) {
+    return { success: true, installerPath, cached: true }
+  }
+
+  return new Promise((resolve) => {
+    const downloadFile = (url, dest, hops = 0) => {
+      if (hops > 5) { resolve({ success: false, error: 'Too many redirects' }); return }
+      https.get(url, { headers: { 'User-Agent': 'NuArcade/' + app.getVersion() } }, (res) => {
+        if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+          downloadFile(res.headers.location, dest, hops + 1); return
+        }
+        if (res.statusCode !== 200) {
+          resolve({ success: false, error: 'HTTP ' + res.statusCode }); return
+        }
+        const out = fs.createWriteStream(dest)
+        let downloaded = 0
+        const total = parseInt(res.headers['content-length'] || '0')
+        res.on('data', chunk => {
+          downloaded += chunk.length
+          if (total > 0) {
+            const pct = Math.round((downloaded / total) * 100)
+            event.sender.send('update-progress', { pct, downloaded, total })
+          }
+        })
+        res.pipe(out)
+        out.on('finish', () => out.close(() => resolve({ success: true, installerPath: dest })))
+        out.on('error', e => resolve({ success: false, error: e.message }))
+        res.on('error', e => resolve({ success: false, error: e.message }))
+      }).on('error', e => resolve({ success: false, error: e.message }))
+    }
+    downloadFile(downloadUrl, installerPath)
+  })
+})
+
+ipcMain.handle('install-update', async (event, { installerPath }) => {
+  const fs = require('fs')
+  const { spawn } = require('child_process')
+  if (!fs.existsSync(installerPath)) {
+    return { success: false, error: 'Installer not found at ' + installerPath }
+  }
+  // Run installer with /S for silent install -- NSIS silent flag
+  // The installer will close NuArcade as part of install process
+  spawn(installerPath, ['/S'], {
+    detached: true,
+    stdio: 'ignore',
+  }).unref()
+  // Give the installer a moment to start, then quit so it can replace files
+  setTimeout(() => app.quit(), 1500)
+  return { success: true }
+})
+
 // -- App version --------------------------------------------------------------
 ipcMain.on('get-version', (event) => {
   event.returnValue = 'v' + app.getVersion()

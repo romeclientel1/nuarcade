@@ -7,6 +7,7 @@ const CHECK_INTERVAL = 1000 * 60 * 60 * 6 // 6 hours
 export function useAutoUpdate(currentVersion) {
   const [newVersion,   setNewVersion  ] = useState(null)
   const [releaseUrl,   setReleaseUrl  ] = useState(null)
+  const [downloadUrl,  setDownloadUrl ] = useState(null)
   const [releaseNotes, setReleaseNotes] = useState(null)
   const [dismissed,    setDismissed   ] = useState(false)
 
@@ -29,6 +30,13 @@ export function useAutoUpdate(currentVersion) {
         setNewVersion(latest)
         setReleaseUrl(data.html_url)
         setReleaseNotes(data.body?.slice(0, 200) || null)
+
+        // Find the .exe installer asset in the release
+        const exeAsset = (data.assets || []).find(a =>
+          a.name.toLowerCase().endsWith('.exe') &&
+          a.name.toLowerCase().includes('setup')
+        ) || (data.assets || [])[0]
+        if (exeAsset) setDownloadUrl(exeAsset.browser_download_url)
       } catch {}
     }
     check()
@@ -40,6 +48,7 @@ export function useAutoUpdate(currentVersion) {
     hasUpdate: !!newVersion && !dismissed,
     newVersion,
     releaseUrl,
+    downloadUrl,
     releaseNotes,
     dismiss,
   }

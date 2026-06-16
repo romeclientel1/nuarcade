@@ -54,7 +54,7 @@ export default function App() {
   const [showUpdater, setShowUpdater] = useState(false)
   const [lastLaunch, setLastLaunch] = useState(null)
   const { themeId, setTheme } = useTheme()
-  const VERSION = "4.0.5"
+  const VERSION = "4.0.6"
   const { hasUpdate, newVersion, releaseUrl, releaseNotes, dismiss } = useAutoUpdate(VERSION)
 
   const [crtEnabled, setCrtEnabled] = useState(() => {
@@ -114,6 +114,7 @@ export default function App() {
         <UpdateBanner
           newVersion={newVersion}
           releaseUrl={releaseUrl}
+          downloadUrl={downloadUrl}
           releaseNotes={releaseNotes}
           onDismiss={dismiss}
         />
