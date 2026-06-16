@@ -54,6 +54,8 @@ contextBridge.exposeInMainWorld('nuarcade', {
   downloadVideo: (opts)  => ipcRenderer.invoke('download-video', opts),
   getVideos:     ()      => ipcRenderer.invoke('get-videos'),
   getMusicTracks:  () => ipcRenderer.invoke('get-music-tracks'),
+  gameCoach:       (opts) => ipcRenderer.invoke('game-coach', opts),
+  onCoachChunk:    (cb) => ipcRenderer.on('coach-chunk', (_, data) => cb(data)),
   downloadUpdate:  (opts) => ipcRenderer.invoke('download-update', opts),
   installUpdate:   (opts) => ipcRenderer.invoke('install-update', opts),
   onUpdateProgress: (cb) => ipcRenderer.on('update-progress', (_, data) => cb(data)),

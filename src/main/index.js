@@ -1538,6 +1538,78 @@ ipcMain.handle('install-update', async (event, { installerPath }) => {
   return { success: true }
 })
 
+// -- AI Game Coach -----------------------------------------------------------
+// Calls claude-sonnet-4-6 to generate game tips, history, secrets
+ipcMain.handle('game-coach', async (event, { gameTitle, system, genre, emulator }) => {
+  const cfg = config.load()
+  const apiKey = cfg.anthropicApiKey || ''
+  if (!apiKey) return { error: 'No Anthropic API key set. Add it in Settings -> Media.' }
+
+  const https = require('https')
+
+  const systemPrompt = `You are an expert arcade game coach and gaming historian. 
+When given a game, provide a concise but rich breakdown covering:
+1. ABOUT - 2-3 sentences on what makes this game special/historical significance
+2. HOW TO WIN - 3-4 essential tips for getting a high score or beating it
+3. SECRETS - 1-2 hidden tricks, cheats, or easter eggs if any exist
+4. PRO MOVE - one advanced technique that separates good players from great ones
+
+Keep each section brief and punchy. Use arcade cabinet energy. No markdown headers -- just the labels in caps followed by a colon.`
+
+  const userMsg = `Game: ${gameTitle}
+System: ${system || 'Arcade'}
+Genre: ${genre || 'Unknown'}
+Emulator: ${emulator || 'Unknown'}`
+
+  const body = JSON.stringify({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 600,
+    system: systemPrompt,
+    messages: [{ role: 'user', content: userMsg }],
+    stream: true,
+  })
+
+  return new Promise((resolve) => {
+    const options = {
+      hostname: 'api.anthropic.com',
+      path: '/v1/messages',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'Content-Length': Buffer.byteLength(body),
+      },
+    }
+
+    let fullText = ''
+    const req = https.request(options, (res) => {
+      res.on('data', (chunk) => {
+        const lines = chunk.toString().split('\n')
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue
+          const data = line.slice(6).trim()
+          if (data === '[DONE]') continue
+          try {
+            const parsed = JSON.parse(data)
+            const delta = parsed.delta?.text || ''
+            if (delta) {
+              fullText += delta
+              event.sender.send('coach-chunk', { text: delta })
+            }
+          } catch {}
+        }
+      })
+      res.on('end', () => resolve({ success: true, text: fullText }))
+      res.on('error', (e) => resolve({ error: e.message }))
+    })
+
+    req.on('error', (e) => resolve({ error: e.message }))
+    req.write(body)
+    req.end()
+  })
+})
+
 // -- App version --------------------------------------------------------------
 ipcMain.on('get-version', (event) => {
   event.returnValue = 'v' + app.getVersion()

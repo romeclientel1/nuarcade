@@ -14,6 +14,7 @@ import { AchievementToastContainer, useAchievementToasts } from "../Achievements
 import VirtualKeyboard from "../VirtualKeyboard/VirtualKeyboard"
 import BootScreen from "./BootScreen"
 import IntroVideo from "./IntroVideo"
+import GameCoach from "../GameCoach/GameCoach"
 import { useErrorToast, ErrorToastContainer } from "./ErrorToast"
 import SortMenu from "./SortMenu"
 import { useGamepad } from "./useGamepad"
@@ -243,6 +244,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const [showSettings, setShowSettings] = useState(false)
   const [showDetail, setShowDetail] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
+  const [showCoach, setShowCoach] = useState(false)
   const [showSort, setShowSort] = useState(false)
   const [showCollections, setShowCollections] = useState(false)
   const [showStats, setShowStats] = useState(false)
@@ -550,7 +552,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
 
       if (e.key === "ArrowLeft")  { sounds.navigate(); setSelectedIndex(i => (i - 1 + filteredGames.length) % filteredGames.length) }
       if (e.key === "ArrowRight") { sounds.navigate(); setSelectedIndex(i => (i + 1) % filteredGames.length) }
-      if (e.key === "Enter")      { if (!showDetail && !showHelp && !showStats && !showAchievements && !showCollections && !showSettings && !showMediaManager) { sounds.select(); setShowDetail(true) } }
+      if (e.key === "Enter")      { if (!showDetail && !showHelp && !showStats && !showAchievements && !showCollections && !showSettings && !showMediaManager && !showCoach) { sounds.select(); setShowDetail(true) } }
+      if ((e.key === "c" || e.key === "C") && !showDetail && !showHelp && !showStats && !showCoach && !showSettings && !showMediaManager) { sounds.select?.(); setShowCoach(true) }
       if (e.key === "Escape") {
         sounds.back()
         setShowDetail(false); setShowSearch(false); setSearch(""); setDebouncedSearch("")
@@ -560,7 +563,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       }
 
       // Single-key shortcuts only fire when no overlay is open
-      const anyOverlay = showDetail || showHelp || showStats || showAchievements || showCollections || showSettings || showMediaManager
+      const anyOverlay = showDetail || showHelp || showStats || showAchievements || showCollections || showSettings || showMediaManager || showCoach
       if (anyOverlay) return
 
       // Konami code detector: UP UP DOWN DOWN LEFT RIGHT LEFT RIGHT b a
@@ -588,7 +591,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     }
     window.addEventListener("keydown", handler)
     return () => window.removeEventListener("keydown", handler)
-  }, [filteredGames, selectedIndex, showSearch, showVirtualKeyboard, showDetail, showHelp, showStats, showAchievements, showCollections, showSettings, showMediaManager, current, handleLaunch])
+  }, [filteredGames, selectedIndex, showSearch, showVirtualKeyboard, showDetail, showHelp, showStats, showAchievements, showCollections, showSettings, showMediaManager, showCoach, current, handleLaunch])
 
   useEffect(() => {
     if (showSearch && searchRef.current) searchRef.current.focus()
@@ -993,6 +996,13 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
 
       {showSort && <SortMenu current={sortBy} onChange={setSortBy} onClose={() => setShowSort(false)} />}
       {showHelp && <Help onClose={() => setShowHelp(false)} />}
+
+      {showCoach && current && (
+        <GameCoach
+          game={current}
+          onClose={() => setShowCoach(false)}
+        />
+      )}
       {showCollections && (
         <Collections
           games={games}
@@ -1045,6 +1055,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
           <span className={styles.hint}><kbd>T</kbd> Stats</span>
           <span className={styles.hint}><kbd>A</kbd> Achievements</span>
           <span className={styles.hint}><kbd>Search</kbd> Keyboard</span>
+          <span className={styles.hint}><kbd>C</kbd> Coach</span>
           <span className={styles.hint}><kbd>?</kbd> Help</span>
         </div>
       )}
