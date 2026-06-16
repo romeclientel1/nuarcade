@@ -1589,15 +1589,21 @@ ipcMain.handle('game-coach', async (event, { gameTitle, system, genre, emulator 
       path: url.pathname,
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(body),
+        'Content-Type':      'application/json',
+        'Content-Length':    Buffer.byteLength(body),
         'x-nuarcade-secret': COACH_SECRET,
+        'Connection':        'keep-alive',
+        'Accept':            'text/event-stream',
       },
     }
 
     const req = https.request(options, (res) => {
+      res.socket && res.socket.setTimeout(60000)
+      let buffer = ''
       res.on('data', (chunk) => {
-        const lines = chunk.toString().split('\n')
+        buffer += chunk.toString()
+        const lines = buffer.split('\n')
+        buffer = lines.pop()
         for (const line of lines) {
           if (!line.startsWith('data: ')) continue
           const data = line.slice(6).trim()
@@ -1614,6 +1620,7 @@ ipcMain.handle('game-coach', async (event, { gameTitle, system, genre, emulator 
       res.on('error', (e) => resolve({ error: e.message }))
     })
 
+    req.setTimeout(60000, () => { req.destroy(); resolve({ error: 'Request timed out' }) })
     req.on('error', (e) => resolve({ error: e.message }))
     req.write(body)
     req.end()
