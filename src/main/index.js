@@ -1538,6 +1538,40 @@ ipcMain.handle('install-update', async (event, { installerPath }) => {
   return { success: true }
 })
 
+// -- AI Natural Language Search ----------------------------------------------
+const SEARCH_API_URL = 'https://nuarcade-coach-api-production.up.railway.app/search'
+
+ipcMain.handle('ai-search', async (event, { query, games }) => {
+  const https = require('https')
+  const url = new URL(SEARCH_API_URL)
+  const body = JSON.stringify({ query, games })
+
+  return new Promise((resolve) => {
+    const options = {
+      hostname: url.hostname,
+      path: url.pathname,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(body),
+        'x-nuarcade-secret': 'f4254611727ff019d5fe9fb1042967ba433e5c3c0451e96991687d33e31d48f7',
+      },
+    }
+    let data = ''
+    const req = https.request(options, (res) => {
+      res.on('data', c => { data += c })
+      res.on('end', () => {
+        try { resolve(JSON.parse(data)) }
+        catch { resolve({ error: 'Invalid response', results: [] }) }
+      })
+      res.on('error', e => resolve({ error: e.message, results: [] }))
+    })
+    req.on('error', e => resolve({ error: e.message, results: [] }))
+    req.write(body)
+    req.end()
+  })
+})
+
 // -- AI Game Coach -----------------------------------------------------------
 // Calls Railway proxy server which handles the Anthropic API call server-side
 const COACH_API_URL = 'https://nuarcade-coach-api-production.up.railway.app/coach'

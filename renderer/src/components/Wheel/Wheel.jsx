@@ -15,6 +15,7 @@ import VirtualKeyboard from "../VirtualKeyboard/VirtualKeyboard"
 import BootScreen from "./BootScreen"
 import IntroVideo from "./IntroVideo"
 import GameCoach from "../GameCoach/GameCoach"
+import HighScoreBoard from "../HighScoreBoard/HighScoreBoard"
 import { useErrorToast, ErrorToastContainer } from "./ErrorToast"
 import SortMenu from "./SortMenu"
 import { useGamepad } from "./useGamepad"
@@ -291,6 +292,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const [sortBy, setSortBy] = useState("default")
   const [search,        setSearch       ] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
+  const [aiResults,       setAiResults      ] = useState(null)  // null = not active, [] = searching, [...] = results
+  const [aiSearching,     setAiSearching    ] = useState(false)
   const [showSearch,    setShowSearch   ] = useState(false)
   const searchRef = useRef(null)
   const searchDebounce = useRef(null)
@@ -332,6 +335,9 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const idleTimer = useRef(null)
 
   const getFilteredGames = () => {
+    // If AI search returned results, use those directly
+    if (aiResults && aiResults.length > 0) return aiResults
+
     let list = games
     if (activeCategory === "Favorites") {
       list = games.filter(g => isFavorite(g.id || g.profile))
@@ -350,7 +356,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
         const haystack = [
           g.title, g.system, g.genre, g.romName, g.serial
         ].filter(Boolean).join(" ").toLowerCase()
-        // All terms must appear somewhere in the haystack (AND logic)
         return terms.every(term => haystack.includes(term))
       })
     }
@@ -360,7 +365,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const filteredGames = getFilteredGames()
   const current = filteredGames[selectedIndex] || filteredGames[0]
 
-  useEffect(() => { setSelectedIndex(0) }, [activeCategory, debouncedSearch, sortBy])
+  useEffect(() => { setSelectedIndex(0); setAiResults(null); setAiSearching(false) }, [activeCategory, debouncedSearch, sortBy])
 
   // Background video crossfade when center game changes
   useEffect(() => {
@@ -553,7 +558,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       if (e.key === "ArrowLeft")  { sounds.navigate(); setSelectedIndex(i => (i - 1 + filteredGames.length) % filteredGames.length) }
       if (e.key === "ArrowRight") { sounds.navigate(); setSelectedIndex(i => (i + 1) % filteredGames.length) }
       if (e.key === "Enter")      { if (!showDetail && !showHelp && !showStats && !showAchievements && !showCollections && !showSettings && !showMediaManager && !showCoach) { sounds.select(); setShowDetail(true) } }
-      if ((e.key === "c" || e.key === "C") && !showDetail && !showHelp && !showStats && !showCoach && !showSettings && !showMediaManager) { sounds.select?.(); setShowCoach(true) }
+      if ((e.key === "c" || e.key === "C") && !showDetail && !showHelp && !showStats && !showCoach && !showSettings && !showMediaManager && !showHighScores) { sounds.select?.(); setShowCoach(true) }
+      if ((e.key === "h" || e.key === "H") && !showDetail && !showHelp && !showStats && !showCoach && !showSettings && !showMediaManager) { sounds.select?.(); setShowHighScores(true) }
       if (e.key === "Escape") {
         sounds.back()
         setShowDetail(false); setShowSearch(false); setSearch(""); setDebouncedSearch("")
@@ -563,7 +569,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       }
 
       // Single-key shortcuts only fire when no overlay is open
-      const anyOverlay = showDetail || showHelp || showStats || showAchievements || showCollections || showSettings || showMediaManager || showCoach
+      const anyOverlay = showDetail || showHelp || showStats || showAchievements || showCollections || showSettings || showMediaManager || showCoach || showHighScores
       if (anyOverlay) return
 
       // Konami code detector: UP UP DOWN DOWN LEFT RIGHT LEFT RIGHT b a
@@ -591,7 +597,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     }
     window.addEventListener("keydown", handler)
     return () => window.removeEventListener("keydown", handler)
-  }, [filteredGames, selectedIndex, showSearch, showVirtualKeyboard, showDetail, showHelp, showStats, showAchievements, showCollections, showSettings, showMediaManager, showCoach, current, handleLaunch])
+  }, [filteredGames, selectedIndex, showSearch, showVirtualKeyboard, showDetail, showHelp, showStats, showAchievements, showCollections, showSettings, showMediaManager, showCoach, showHighScores, current, handleLaunch])
 
   useEffect(() => {
     if (showSearch && searchRef.current) searchRef.current.focus()
@@ -706,17 +712,43 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
                 onChange={e => handleSearchChange(e.target.value)}
                 placeholder="Search games, systems, ROM names..."
                 onKeyDown={e => {
-                  if (e.key === "Escape") { setShowSearch(false); setSearch(""); setDebouncedSearch(""); setShowVirtualKeyboard(false) }
+                  if (e.key === "Escape") { setShowSearch(false); setSearch(""); setDebouncedSearch(""); setAiResults(null); setAiSearching(false); setShowVirtualKeyboard(false) }
+                  if (e.key === "Enter" && debouncedSearch.trim() && window.nuarcade?.aiSearch) {
+                    const directMatches = getFilteredGames().length
+                    if (directMatches < 3) {
+                      // Too few direct matches -- try AI search
+                      setAiSearching(true)
+                      setAiResults([])
+                      window.nuarcade.aiSearch({
+                        query: debouncedSearch.trim(),
+                        games: games.map(g => ({ id: g.id || g.profile, title: g.title, genre: g.genre, system: g.system }))
+                      }).then(res => {
+                        setAiSearching(false)
+                        if (res.results && res.results.length > 0) {
+                          // Map back to full game objects
+                          const fullResults = res.results.map(r => games.find(g => (g.id || g.profile) === r.id)).filter(Boolean)
+                          setAiResults(fullResults)
+                        } else {
+                          setAiResults(null)
+                        }
+                      }).catch(() => { setAiSearching(false); setAiResults(null) })
+                    }
+                  }
                 }}
                 onFocus={() => setShowVirtualKeyboard(false)}
               />
               {debouncedSearch && (
-                <span className={styles.searchCount}>
-                  {filteredGames.length} result{filteredGames.length !== 1 ? "s" : ""}
+                <span className={styles.searchCount} style={{ color: aiResults ? '#00c8ff' : undefined }}>
+                  {aiSearching ? 'AI searching...' : aiResults ? 'AI: ' + aiResults.length + ' results' : filteredGames.length + ' result' + (filteredGames.length !== 1 ? 's' : '')}
                 </span>
               )}
+              {aiResults && (
+                <button className={styles.searchClose} style={{ fontSize: 9, padding: '2px 6px', marginRight: 4 }} onClick={() => setAiResults(null)} title="Clear AI results">
+                  CLEAR AI
+                </button>
+              )}
               <button className={styles.searchClose} onClick={() => {
-                setShowSearch(false); setSearch(""); setDebouncedSearch(""); setShowVirtualKeyboard(false)
+                setShowSearch(false); setSearch(""); setDebouncedSearch(""); setAiResults(null); setAiSearching(false); setShowVirtualKeyboard(false)
               }}>x</button>
             </div>
           ) : (
@@ -1003,6 +1035,14 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
           onClose={() => setShowCoach(false)}
         />
       )}
+
+      {showHighScores && (
+        <HighScoreBoard
+          games={filteredGames}
+          onClose={() => setShowHighScores(false)}
+          activeProfile={activeProfile}
+        />
+      )}
       {showCollections && (
         <Collections
           games={games}
@@ -1021,7 +1061,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
           value={search}
           onChange={val => handleSearchChange(val)}
           onDone={() => setShowVirtualKeyboard(false)}
-          onClose={() => { setShowSearch(false); setSearch(""); setDebouncedSearch(""); setShowVirtualKeyboard(false) }}
+          onClose={() => { setShowSearch(false); setSearch(""); setDebouncedSearch(""); setAiResults(null); setAiSearching(false); setShowVirtualKeyboard(false) }}
           resultCount={filteredGames.length}
         />
       )}
@@ -1056,6 +1096,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
           <span className={styles.hint}><kbd>A</kbd> Achievements</span>
           <span className={styles.hint}><kbd>Search</kbd> Keyboard</span>
           <span className={styles.hint}><kbd>C</kbd> Coach</span>
+          <span className={styles.hint}><kbd>H</kbd> Scores</span>
           <span className={styles.hint}><kbd>?</kbd> Help</span>
         </div>
       )}
