@@ -12,18 +12,7 @@ export default function GameCoach({ game, onClose }) {
     if (!game || doneRef.current) return
     doneRef.current = true
 
-    // Listen for streamed chunks
-    if (window.nuarcade?.onCoachChunk) {
-      window.nuarcade.onCoachChunk(({ text: chunk }) => {
-        setText(prev => prev + chunk)
-        // Auto-scroll to bottom as text streams in
-        if (scrollRef.current) {
-          scrollRef.current.scrollTop = scrollRef.current.scrollHeight
-        }
-      })
-    }
-
-    // Fire the IPC call
+    // Fire the IPC call -- response comes back as { success, text } or { error }
     window.nuarcade?.gameCoach({
       gameTitle: game.title || game.id || game.profile,
       system:    game.system || '',
@@ -31,19 +20,38 @@ export default function GameCoach({ game, onClose }) {
       emulator:  game.emulator || '',
     }).then(result => {
       setLoading(false)
-      if (result?.error) setError(result.error)
+      if (result?.error) {
+        setError(result.error)
+      } else if (result?.text) {
+        setText(result.text)
+      } else {
+        // Fallback: check for chunks that may have arrived via IPC event
+        setError(null)
+      }
     }).catch(e => {
       setLoading(false)
       setError(e.message || 'Failed to connect to AI coach')
     })
 
-    // Close on Escape
+    // Also listen for chunk events as fallback
+    const handler = (_, { text: chunk }) => {
+      setText(prev => prev + chunk)
+      setLoading(false)
+      if (scrollRef.current) {
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+      }
+    }
+    window.nuarcade?.onCoachChunk?.(({ text: chunk }) => {
+      setText(prev => prev + chunk)
+      setLoading(false)
+    })
+
+    // Close on Escape or C
     const onKey = (e) => { if (e.key === 'Escape' || e.key === 'c' || e.key === 'C') onClose() }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  // Format the streamed text -- highlight section labels
   const formatText = (raw) => {
     if (!raw) return null
     return raw.split('\n').map((line, i) => {
@@ -74,7 +82,7 @@ export default function GameCoach({ game, onClose }) {
         </div>
 
         <div className={styles.body} ref={scrollRef}>
-          {loading && !text && (
+          {loading && (
             <div className={styles.thinking}>
               <div className={styles.dot} /><div className={styles.dot} /><div className={styles.dot} />
               <span>Analyzing {gameTitle}...</span>
@@ -84,15 +92,16 @@ export default function GameCoach({ game, onClose }) {
           {error && (
             <div className={styles.error}>
               {error.includes('API key') ? (
-                <>No Anthropic API key set. Add it in Settings &gt; Media &gt; Anthropic API Key.</>
+                <>No Anthropic API key set. Add it in Settings.</>
               ) : error}
             </div>
           )}
 
-          <div className={styles.content}>
-            {formatText(text)}
-            {loading && text && <span className={styles.cursor}>|</span>}
-          </div>
+          {text && (
+            <div className={styles.content}>
+              {formatText(text)}
+            </div>
+          )}
         </div>
 
         <div className={styles.footer}>

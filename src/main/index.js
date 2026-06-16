@@ -1593,9 +1593,8 @@ ipcMain.handle('game-coach', async (event, { gameTitle, system, genre, emulator 
         try {
           const parsed = JSON.parse(data)
           if (parsed.error) return resolve({ error: parsed.error })
-          // Send full text as single chunk then done
-          if (parsed.text) event.sender.send('coach-chunk', { text: parsed.text })
-          resolve({ success: true })
+          // Return text directly in resolve value -- component reads result.text
+          resolve({ success: true, text: parsed.text || '' })
         } catch (e) {
           resolve({ error: e.message })
         }
