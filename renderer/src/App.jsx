@@ -5,7 +5,9 @@ import Wheel from "./components/Wheel/Wheel"
 import Updater from "./components/Updater/Updater"
 import CRT from "./components/CRT/CRT"
 import UpdateBanner from "./components/UpdateBanner/UpdateBanner"
+import PlayerSelect from "./components/PlayerSelect/PlayerSelect"
 import { useAutoUpdate } from "./hooks/useAutoUpdate"
+import { usePlayerProfiles } from "./hooks/usePlayerProfiles"
 import VolumeOverlay from "./components/VolumeOverlay/VolumeOverlay"
 import CoinCounter from "./components/CoinCounter/CoinCounter"
 import { useTheme } from "./hooks/useTheme"
@@ -54,8 +56,9 @@ export default function App() {
   const [showUpdater, setShowUpdater] = useState(false)
   const [lastLaunch, setLastLaunch] = useState(null)
   const { themeId, setTheme } = useTheme()
-  const VERSION = "4.0.7"
-  const { hasUpdate, newVersion, releaseUrl, releaseNotes, dismiss } = useAutoUpdate(VERSION)
+  const VERSION = "4.0.8"
+  const { hasUpdate, newVersion, releaseUrl, downloadUrl, releaseNotes, dismiss } = useAutoUpdate(VERSION)
+  const { profiles, activeProfile, addProfile, selectProfile, selectGuest, recordPlay } = usePlayerProfiles()
 
   const [crtEnabled, setCrtEnabled] = useState(() => {
     try { return localStorage.getItem("nuarcade_crt") === "true" } catch { return false }
@@ -90,8 +93,7 @@ export default function App() {
     if (goToWizard) {
       setPhase("wizard")
     } else {
-      setPhase("wheel")
-      setShowUpdater(true)
+      setPhase("playerSelect")
     }
   }
 
@@ -124,10 +126,17 @@ export default function App() {
           {phase === "intro" && <Intro onComplete={handleIntroComplete} />}
           {phase === "wizard" && <Wizard onComplete={() => {
             if (window.nuarcade?.setupComplete) window.nuarcade.setupComplete()
-            setPhase("wheel")
-            setShowUpdater(true)
+            setPhase("playerSelect")
           }} />}
-          {(phase === "wheel" || phase === "fallback") && <Wheel onCRTChange={handleCRTChange} crtEnabled={crtEnabled} themeId={themeId} onThemeChange={setTheme} lastLaunch={lastLaunch} setLastLaunch={setLastLaunch} onSetupWizard={() => { window.nuarcade?.resetSetup?.().then(() => setPhase("wizard")) }} />}
+          {phase === "playerSelect" && (
+            <PlayerSelect
+              profiles={profiles}
+              onSelect={(id) => { selectProfile(id); setPhase("wheel"); setShowUpdater(true) }}
+              onGuest={() => { selectGuest(); setPhase("wheel"); setShowUpdater(true) }}
+              onAdd={(name) => { const p = addProfile(name); selectProfile(p.id); setPhase("wheel"); setShowUpdater(true) }}
+            />
+          )}
+          {(phase === "wheel" || phase === "fallback") && <Wheel onCRTChange={handleCRTChange} crtEnabled={crtEnabled} themeId={themeId} onThemeChange={setTheme} lastLaunch={lastLaunch} setLastLaunch={setLastLaunch} activeProfile={activeProfile} onSwitchPlayer={() => setPhase("playerSelect")} onSetupWizard={() => { window.nuarcade?.resetSetup?.().then(() => setPhase("wizard")) }} />}
           {phase === "wheel" && showUpdater && (
             <Updater onDismiss={() => setShowUpdater(false)} />
           )}

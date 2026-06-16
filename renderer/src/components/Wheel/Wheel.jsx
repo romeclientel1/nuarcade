@@ -217,7 +217,7 @@ function KonamiCelebration({ onClose }) {
   )
 }
 
-export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange, onSetupWizard }) {
+export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange, onSetupWizard, activeProfile, onSwitchPlayer }) {
   const {
     games, stats, loading, libraryEmpty, config,
     toggleFavorite, isFavorite,
@@ -746,6 +746,21 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
               <button className={styles.colBtn} onClick={() => setShowCollections(true)} title="Collections (N)">[]</button>
               <button className={styles.statsBtn} onClick={() => setShowStats(true)} title="My Stats (T)">#</button>
               <button className={styles.achieveBtn} onClick={() => setShowAchievements(true)} title="Achievements (A)">*</button>
+              {activeProfile && (
+                <button
+                  className={styles.settingsBtn}
+                  style={{ borderColor: activeProfile.color + '44', color: activeProfile.color }}
+                  onClick={onSwitchPlayer}
+                  title="Switch player"
+                >
+                  {activeProfile.name[0]} {activeProfile.name}
+                </button>
+              )}
+              {!activeProfile && onSwitchPlayer && (
+                <button className={styles.settingsBtn} onClick={onSwitchPlayer} title="Select player">
+                  GUEST
+                </button>
+              )}
               <button className={styles.mediaBtn} onClick={() => setShowMediaManager(true)}>Media</button>
               <button className={styles.settingsBtn} onClick={() => setShowSettings(true)}>Settings</button>
               <button className={styles.helpBtn} onClick={() => setShowHelp(true)}>?</button>
