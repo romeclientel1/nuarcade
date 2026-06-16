@@ -225,6 +225,7 @@ ipcMain.handle('search-video', async (event, gameTitle) => {
 })
 
 ipcMain.handle('download-video', async (event, { videoUrl, gameId }) => {
+  const fs = require('fs')
   return new Promise(async (resolve) => {
     try {
       const cfg = config.load()
@@ -641,6 +642,7 @@ app.whenReady().then(() => {
 
 // -- MAME --------------------------------------------------------------------
 ipcMain.handle('launch-mame-game', async (event, gamePath) => {
+  const fs = require('fs')
   const cfg = config.load()
   const mameDir = cfg.mamePath || 'F:\\MAME\\'
 
@@ -674,6 +676,7 @@ ipcMain.handle('scan-mame-games', async (event, mameGamesPath) => {
 
 // -- RetroArch ---------------------------------------------------------------
 ipcMain.handle('launch-retroarch-game', async (event, gamePath) => {
+  const fs = require('fs')
   const cfg = config.load()
   const retroDir = cfg.retroarchPath || 'F:\\RetroArch\\'
   const retroExe = path.join(retroDir, 'retroarch.exe')
@@ -776,6 +779,7 @@ ipcMain.handle('scan-dreamcast-games', async (event, dreamcastGamesPath) => {
 // -- BIOS file checker -------------------------------------------------------
 // Returns which BIOS files are present/missing for each emulator that needs them
 ipcMain.handle('check-bios', async () => {
+  const fs = require('fs')
   const cfg = config.load()
   const results = {}
 
@@ -888,6 +892,7 @@ ipcMain.handle('scan-wiiu-games', async (event, wiiUGamesPath) => {
 
 // -- Path verification -------------------------------------------------------
 ipcMain.handle('check-path', async (event, folderPath) => {
+  const fs = require('fs')
   try {
     return { exists: fs.existsSync(folderPath) }
   } catch (e) {
@@ -1451,6 +1456,7 @@ ipcMain.on('get-version', (event) => {
   event.returnValue = 'v' + app.getVersion()
 })
 ipcMain.handle('tp-auto-configure', async () => {
+  const fs = require('fs')
   const cfg = config.load()
   const tpPath        = cfg.teknoParrotPath || 'F:\\TeknoParrot\\'
   const gamesFolders  = cfg.arcadeGamesPath || 'F:\\ArcadeGames\\'

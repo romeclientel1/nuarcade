@@ -953,7 +953,9 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
                current.emulator === 'dolphin' ? 'Dolphin.exe ' + (current.romName || '') :
                current.emulator === 'pcsx2' ? 'pcsx2-qt.exe ' + (current.romName || '') :
                current.emulator === 'ryujinx' ? 'Ryujinx.exe ' + (current.romName || '') :
+               current.emulator === 'retroarch' ? 'retroarch.exe ' + (current.romName || '') :
                current.isPinball ? 'VPXStarter.exe ' + (current.romName || '') :
+               current.system === 'MAME' ? 'mame.exe ' + (current.romName || '') :
                'TeknoParrotUi.exe --profile=' + (current.profile || '')}
             </div>
           </div>
