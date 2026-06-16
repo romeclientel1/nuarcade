@@ -1,5 +1,7 @@
 .card {
   position: absolute;
+  width: 240px;
+  height: 320px;
   border-radius: 6px;
   overflow: hidden;
   cursor: pointer;
