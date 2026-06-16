@@ -662,9 +662,18 @@ const handleSave = async () => {
             <div className={styles.sectionTitle}>Library</div>
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>Rescan games</label>
-              <button className={styles.exportBtn} onClick={handleRescan} disabled={rescanning}>
-                {rescanning ? "Scanning..." : "Rescan all emulators"}
-              </button>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button className={styles.exportBtn} onClick={handleRescan} disabled={rescanning}>
+                  {rescanning ? "Scanning..." : "Rescan all emulators"}
+                </button>
+                <button className={styles.exportBtn} style={{ borderColor: 'rgba(255,170,0,0.4)', color: '#ffaa00' }} onClick={() => {
+                  localStorage.removeItem('nuarcade_game_cache')
+                  localStorage.removeItem('nuarcade_game_cache_ts')
+                  alert('Cache cleared -- close Settings and reopen NuArcade to fresh scan')
+                }}>
+                  Clear cache
+                </button>
+              </div>
             </div>
             {rescanResult && (
               <div className={styles.rescanResult}>

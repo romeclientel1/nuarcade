@@ -958,7 +958,11 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
         <BootScreen
           games={games}
           artwork={artwork}
-          onComplete={() => { setShowBoot(false); refreshVideoPaths() }}
+          onComplete={() => {
+            setShowBoot(false)
+            // Delay so wheel layout settles before patching videoPath
+            setTimeout(() => refreshVideoPaths(), 500)
+          }}
         />
       )}
 
