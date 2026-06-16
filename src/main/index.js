@@ -1542,23 +1542,16 @@ ipcMain.handle('install-update', async (event, { installerPath }) => {
 const SEARCH_API_URL = 'https://nuarcade-coach-api-production.up.railway.app/search'
 
 ipcMain.handle('ai-search', async (event, { query, games }) => {
-  const https = require('https')
-  const url = new URL(SEARCH_API_URL)
+  const { net } = require('electron')
   const body = JSON.stringify({ query, games })
 
   return new Promise((resolve) => {
-    const options = {
-      hostname: url.hostname,
-      path: url.pathname,
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(body),
-        'x-nuarcade-secret': 'f4254611727ff019d5fe9fb1042967ba433e5c3c0451e96991687d33e31d48f7',
-      },
-    }
-    let data = ''
-    const req = https.request(options, (res) => {
+    const req = net.request({ method: 'POST', url: SEARCH_API_URL })
+    req.setHeader('Content-Type', 'application/json')
+    req.setHeader('x-nuarcade-secret', 'f4254611727ff019d5fe9fb1042967ba433e5c3c0451e96991687d33e31d48f7')
+
+    req.on('response', (res) => {
+      let data = ''
       res.on('data', c => { data += c })
       res.on('end', () => {
         try { resolve(JSON.parse(data)) }
@@ -1573,32 +1566,26 @@ ipcMain.handle('ai-search', async (event, { query, games }) => {
 })
 
 // -- AI Game Coach -----------------------------------------------------------
-// Calls Railway proxy server which handles the Anthropic API call server-side
+// Calls Railway proxy server using Electron net module (HTTP/2 compatible)
 const COACH_API_URL = 'https://nuarcade-coach-api-production.up.railway.app/coach'
 const COACH_SECRET  = 'f4254611727ff019d5fe9fb1042967ba433e5c3c0451e96991687d33e31d48f7'
 
 ipcMain.handle('game-coach', async (event, { gameTitle, system, genre, emulator }) => {
-  const https = require('https')
-  const url = new URL(COACH_API_URL)
+  const { net } = require('electron')
 
   const body = JSON.stringify({ gameTitle, system, genre, emulator })
 
   return new Promise((resolve) => {
-    const options = {
-      hostname: url.hostname,
-      path: url.pathname,
+    const req = net.request({
       method: 'POST',
-      headers: {
-        'Content-Type':      'application/json',
-        'Content-Length':    Buffer.byteLength(body),
-        'x-nuarcade-secret': COACH_SECRET,
-        'Connection':        'keep-alive',
-        'Accept':            'text/event-stream',
-      },
-    }
+      url: COACH_API_URL,
+    })
 
-    const req = https.request(options, (res) => {
-      res.socket && res.socket.setTimeout(60000)
+    req.setHeader('Content-Type', 'application/json')
+    req.setHeader('x-nuarcade-secret', COACH_SECRET)
+    req.setHeader('Accept', 'text/event-stream')
+
+    req.on('response', (res) => {
       let buffer = ''
       res.on('data', (chunk) => {
         buffer += chunk.toString()
@@ -1620,7 +1607,6 @@ ipcMain.handle('game-coach', async (event, { gameTitle, system, genre, emulator 
       res.on('error', (e) => resolve({ error: e.message }))
     })
 
-    req.setTimeout(60000, () => { req.destroy(); resolve({ error: 'Request timed out' }) })
     req.on('error', (e) => resolve({ error: e.message }))
     req.write(body)
     req.end()

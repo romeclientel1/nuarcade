@@ -56,7 +56,7 @@ export default function App() {
   const [showUpdater, setShowUpdater] = useState(false)
   const [lastLaunch, setLastLaunch] = useState(null)
   const { themeId, setTheme } = useTheme()
-  const VERSION = "4.1.6"
+  const VERSION = "4.1.7"
   const { hasUpdate, newVersion, releaseUrl, downloadUrl, releaseNotes, dismiss } = useAutoUpdate(VERSION)
   const { profiles, activeProfile, addProfile, selectProfile, selectGuest, deleteProfile, recordPlay } = usePlayerProfiles()
 
