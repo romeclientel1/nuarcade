@@ -69,6 +69,7 @@ ipcMain.handle('browse-folder', async () => {
 
 // -- Launch TeknoParrot game -------------------------------------------------
 ipcMain.handle('launch-game', async (event, profilePath) => {
+  const { spawn } = require('child_process')
   return new Promise((resolve) => {
     const cfg = config.load()
     const teknoParrotExe = path.join(cfg.teknoParrotPath, 'TeknoParrotUi.exe')
@@ -87,6 +88,7 @@ ipcMain.handle('launch-game', async (event, profilePath) => {
 
 // -- Launch RPCS3 game -------------------------------------------------------
 ipcMain.handle('launch-ps3-game', async (event, gamePath) => {
+  const { spawn } = require('child_process')
   return new Promise((resolve) => {
     const cfg = config.load()
     const rpcs3Exe = path.join(cfg.rpcs3Path || 'F:\\RPCS3\\', 'rpcs3.exe')
@@ -263,6 +265,7 @@ ipcMain.handle('download-video', async (event, { videoUrl, gameId }) => {
 
 // -- Launch Xenia / Xbox 360 -------------------------------------------------
 ipcMain.handle('launch-xbox360-game', async (event, gamePath) => {
+  const { spawn } = require('child_process')
   return new Promise((resolve) => {
     const cfg = config.load()
     const xeniaExe = path.join(cfg.xeniaPath || 'F:\\Xenia\\', 'xenia.exe')
@@ -274,6 +277,7 @@ ipcMain.handle('launch-xbox360-game', async (event, gamePath) => {
 
 // -- Launch Dolphin / GC+Wii -------------------------------------------------
 ipcMain.handle('launch-gcwii-game', async (event, gamePath) => {
+  const { spawn } = require('child_process')
   return new Promise((resolve) => {
     const cfg = config.load()
     const dolphinExe = path.join(cfg.dolphinPath || 'F:\\Dolphin\\', 'Dolphin.exe')
@@ -285,6 +289,7 @@ ipcMain.handle('launch-gcwii-game', async (event, gamePath) => {
 
 // -- Launch PCSX2 / PS2 ------------------------------------------------------
 ipcMain.handle('launch-ps2-game', async (event, gamePath) => {
+  const { spawn } = require('child_process')
   return new Promise((resolve) => {
     const cfg = config.load()
     const pcsx2Exe = path.join(cfg.pcsx2Path || 'F:\\PCSX2\\', 'pcsx2.exe')
@@ -315,6 +320,7 @@ ipcMain.handle('scan-ps2-games', async (event, ps2GamesPath) => {
 
 // -- Launch Ryujinx / Switch --------------------------------------------------
 ipcMain.handle('launch-switch-game', async (event, gamePath) => {
+  const { spawn } = require('child_process')
   return new Promise((resolve) => {
     const cfg = config.load()
     const ryujinxExe = path.join(cfg.ryujinxPath || 'F:\\Ryujinx\\', 'Ryujinx.exe')
