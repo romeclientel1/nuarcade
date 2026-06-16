@@ -325,11 +325,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const filteredGames = getFilteredGames()
   const current = filteredGames[selectedIndex] || filteredGames[0]
 
-  // Debug: log when selectedIndex changes
-  useEffect(() => {
-    console.log('[NuArcade] selectedIndex changed to:', selectedIndex, 'filteredGames.length:', filteredGames.length)
-  }, [selectedIndex])
-
   useEffect(() => { setSelectedIndex(0) }, [activeCategory, debouncedSearch, sortBy])
 
   // Update marquee display when selected game changes + fire LED game-selected event
@@ -587,6 +582,9 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   }
 
   if (loading) return <div style={{ width:"100vw", height:"100vh", background:"#000", display:"flex", alignItems:"center", justifyContent:"center", color:"#888", fontFamily:"monospace", fontSize:14 }}>Scanning game library...</div>
+
+  // Also wait if games haven't populated yet (async cache + video patch still running)
+  if (!libraryEmpty && games.length === 0) return <div style={{ width:"100vw", height:"100vh", background:"#000", display:"flex", alignItems:"center", justifyContent:"center", color:"#888", fontFamily:"monospace", fontSize:14 }}>Loading...</div>
 
   return (
     <div className={styles.stage + (cabinetMode ? " " + styles.cabinetMode : "") + (screenshotMode ? " " + styles.screenshotMode : "")}>

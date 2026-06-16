@@ -124,26 +124,24 @@ export function useGameLibrary() {
               if (cached && Date.now() - cachedTs < CACHE_TTL) {
                 const cachedGames = JSON.parse(cached)
                 if (cachedGames.length > 0) {
-                  // Patch videoPath from disk registry into cached games in one pass
-                  // so videos work without a full rescan, and without a second setGames call
-                  try {
-                    if (window.nuarcade?.getVideos) {
-                      const vResult = await window.nuarcade.getVideos()
-                      const videosMap = vResult.videos || {}
-                      const patched = cachedGames.map(g => {
-                        const gameId = g.id || g.profile?.replace('.xml', '').replace('.vpx', '')
-                        const filePath = videosMap[gameId]
-                        return filePath ? { ...g, videoPath: 'file:///' + filePath.replace(/\\/g, '/') } : g
-                      })
-                      setGames(patched)
-                      setLibraryEmpty(false)
-                      setLoading(false)
-                      return
-                    }
-                  } catch {}
+                  // Set games immediately from cache so wheel renders right away
                   setGames(cachedGames)
                   setLibraryEmpty(false)
                   setLoading(false)
+                  // Then patch videoPath asynchronously without blocking render
+                  try {
+                    if (window.nuarcade?.getVideos) {
+                      window.nuarcade.getVideos().then(vResult => {
+                        const videosMap = vResult.videos || {}
+                        if (Object.keys(videosMap).length === 0) return
+                        setGames(prev => prev.map(g => {
+                          const gameId = g.id || g.profile?.replace('.xml', '').replace('.vpx', '')
+                          const filePath = videosMap[gameId]
+                          return filePath ? { ...g, videoPath: 'file:///' + filePath.replace(/\\/g, '/') } : g
+                        }))
+                      }).catch(() => {})
+                    }
+                  } catch {}
                   return
                 }
               }
