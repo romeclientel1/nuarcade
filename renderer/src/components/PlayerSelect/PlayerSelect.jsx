@@ -28,7 +28,7 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd }) {
   const handleAdd = () => {
     const trimmed = name.trim().toUpperCase().slice(0, MAX_NAME_LEN)
     if (!trimmed) return
-    onAdd(trimmed)
+    onAdd(trimmed)  // parent handles create + select + phase change
     setAdding(false)
     setName('')
   }

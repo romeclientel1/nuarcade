@@ -41,6 +41,9 @@ export function usePlayerProfiles() {
     const next = [...profiles, profile]
     setProfiles(next)
     saveProfiles(next)
+    // Also set active immediately so the wheel shows correct profile
+    setActiveId(id)
+    localStorage.setItem(ACTIVE_KEY, id)
     return profile
   }, [profiles])
 
