@@ -102,7 +102,7 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork 
   return (
     <div
       className={`${styles.card} ${isCenter ? styles.center : ""}`}
-      style={{ background: isCenter ? '#1a0000' : colors.bg, border: isCenter ? '3px solid red' : undefined }}
+      style={{ background: colors.bg }}
       onClick={onClick}
     >
       {/* Hero image -- full bleed background on center card */}

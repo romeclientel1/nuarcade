@@ -124,6 +124,23 @@ export function useGameLibrary() {
               if (cached && Date.now() - cachedTs < CACHE_TTL) {
                 const cachedGames = JSON.parse(cached)
                 if (cachedGames.length > 0) {
+                  // Patch videoPath from disk registry into cached games in one pass
+                  // so videos work without a full rescan, and without a second setGames call
+                  try {
+                    if (window.nuarcade?.getVideos) {
+                      const vResult = await window.nuarcade.getVideos()
+                      const videosMap = vResult.videos || {}
+                      const patched = cachedGames.map(g => {
+                        const gameId = g.id || g.profile?.replace('.xml', '').replace('.vpx', '')
+                        const filePath = videosMap[gameId]
+                        return filePath ? { ...g, videoPath: 'file:///' + filePath.replace(/\\/g, '/') } : g
+                      })
+                      setGames(patched)
+                      setLibraryEmpty(false)
+                      setLoading(false)
+                      return
+                    }
+                  } catch {}
                   setGames(cachedGames)
                   setLibraryEmpty(false)
                   setLoading(false)

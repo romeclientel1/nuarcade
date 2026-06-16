@@ -960,8 +960,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
           artwork={artwork}
           onComplete={() => {
             setShowBoot(false)
-            // Delay so wheel layout settles before patching videoPath
-            setTimeout(() => refreshVideoPaths(), 500)
+            // TODO: restore refreshVideoPaths once center card issue is solved
+            // setTimeout(() => refreshVideoPaths(), 500)
           }}
         />
       )}
