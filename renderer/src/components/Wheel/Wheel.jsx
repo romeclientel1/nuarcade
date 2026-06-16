@@ -448,8 +448,10 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     setTimeout(() => setLaunching(false), 3000)
   }
 
+  const autoLaunchRan = useRef(false)
   useEffect(() => {
-    if (!games.length) return
+    if (!games.length || autoLaunchRan.current) return
+    autoLaunchRan.current = true
     try {
       const raw = localStorage.getItem("nuarcade_auto_launch")
       if (!raw) return
