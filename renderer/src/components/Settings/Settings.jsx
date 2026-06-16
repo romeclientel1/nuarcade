@@ -671,7 +671,7 @@ const handleSave = async () => {
               />
             </div>
             <div className={styles.emuNote}>
-              Optional -- enables AI-powered YouTube search query refinement. Each game search uses one fast Haiku call to generate a better query before fetching the clip. Get a key at console.anthropic.com.
+              Optional -- enables AI-powered YouTube search query refinement. The AI Game Coach (press C) works without a key. Get one at console.anthropic.com.
             </div>
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>Bulk fetch</label>

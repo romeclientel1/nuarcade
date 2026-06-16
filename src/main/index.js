@@ -1539,50 +1539,26 @@ ipcMain.handle('install-update', async (event, { installerPath }) => {
 })
 
 // -- AI Game Coach -----------------------------------------------------------
-// Calls claude-sonnet-4-6 to generate game tips, history, secrets
+// Calls Railway proxy server which handles the Anthropic API call server-side
+const COACH_API_URL = 'https://nuarcade-coach-api-production.up.railway.app/coach'
+
 ipcMain.handle('game-coach', async (event, { gameTitle, system, genre, emulator }) => {
-  const cfg = config.load()
-  const apiKey = cfg.anthropicApiKey || ''
-  if (!apiKey) return { error: 'No Anthropic API key set. Add it in Settings -> Media.' }
-
   const https = require('https')
+  const url = new URL(COACH_API_URL)
 
-  const systemPrompt = `You are an expert arcade game coach and gaming historian. 
-When given a game, provide a concise but rich breakdown covering:
-1. ABOUT - 2-3 sentences on what makes this game special/historical significance
-2. HOW TO WIN - 3-4 essential tips for getting a high score or beating it
-3. SECRETS - 1-2 hidden tricks, cheats, or easter eggs if any exist
-4. PRO MOVE - one advanced technique that separates good players from great ones
-
-Keep each section brief and punchy. Use arcade cabinet energy. No markdown headers -- just the labels in caps followed by a colon.`
-
-  const userMsg = `Game: ${gameTitle}
-System: ${system || 'Arcade'}
-Genre: ${genre || 'Unknown'}
-Emulator: ${emulator || 'Unknown'}`
-
-  const body = JSON.stringify({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 600,
-    system: systemPrompt,
-    messages: [{ role: 'user', content: userMsg }],
-    stream: true,
-  })
+  const body = JSON.stringify({ gameTitle, system, genre, emulator })
 
   return new Promise((resolve) => {
     const options = {
-      hostname: 'api.anthropic.com',
-      path: '/v1/messages',
+      hostname: url.hostname,
+      path: url.pathname,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
         'Content-Length': Buffer.byteLength(body),
       },
     }
 
-    let fullText = ''
     const req = https.request(options, (res) => {
       res.on('data', (chunk) => {
         const lines = chunk.toString().split('\n')
@@ -1592,15 +1568,13 @@ Emulator: ${emulator || 'Unknown'}`
           if (data === '[DONE]') continue
           try {
             const parsed = JSON.parse(data)
-            const delta = parsed.delta?.text || ''
-            if (delta) {
-              fullText += delta
-              event.sender.send('coach-chunk', { text: delta })
-            }
+            if (parsed.error) { resolve({ error: parsed.error }); return }
+            const delta = parsed.text || ''
+            if (delta) event.sender.send('coach-chunk', { text: delta })
           } catch {}
         }
       })
-      res.on('end', () => resolve({ success: true, text: fullText }))
+      res.on('end', () => resolve({ success: true }))
       res.on('error', (e) => resolve({ error: e.message }))
     })
 
