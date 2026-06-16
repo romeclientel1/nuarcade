@@ -117,7 +117,16 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork 
       )}
 
       <div className={styles.artWrap}>
-        {/* Video snap */}
+        {/* Placeholder always renders as background -- real art overlays it */}
+        {!game.isPinball && !showVideo && (
+          <img
+            src={generatePlaceholderSvg(game)}
+            alt=""
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85, zIndex: 1 }}
+          />
+        )}
+
+        {/* Video snap -- z-index 3, above placeholder and art */}
         {isCenter && videoUrl && !videoError && (
           <video
             ref={videoRef}
@@ -128,10 +137,11 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork 
             playsInline
             onCanPlay={() => setVideoReady(true)}
             onError={() => setVideoError(true)}
+            style={{ zIndex: 3 }}
           />
         )}
 
-        {/* SteamGridDB capsule art */}
+        {/* SteamGridDB capsule art -- z-index 2 */}
         {showCapsule && (
           <img
             src={capsuleUrl}
@@ -139,10 +149,11 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork 
             className={`${styles.artImg} ${capsLoaded ? styles.artLoaded : ""} ${showVideo ? styles.artHidden : ""}`}
             onLoad={() => setCapsLoaded(true)}
             onError={() => {}}
+            style={{ zIndex: 2 }}
           />
         )}
 
-        {/* TeknoParrot thumbnail fallback */}
+        {/* TeknoParrot thumbnail fallback -- z-index 2 */}
         {showThumb && (
           <img
             src={tpThumb}
@@ -150,6 +161,7 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork 
             className={`${styles.artImg} ${imgLoaded ? styles.artLoaded : ""} ${showVideo ? styles.artHidden : ""}`}
             onLoad={() => setImgLoaded(true)}
             onError={() => setImgError(true)}
+            style={{ zIndex: 2 }}
           />
         )}
 
@@ -160,16 +172,6 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork 
             <div className={styles.pinballName} style={{ color: colors.accent }}>{game.title}</div>
             <div className={styles.pinballSys}>Visual Pinball X</div>
           </div>
-        )}
-
-        {/* Generated placeholder -- always shows something */}
-        {!game.isPinball && !showThumb && !showCapsule && !showVideo && (
-          <img
-            src={generatePlaceholderSvg(game)}
-            alt={game.title}
-            className={styles.artImg}
-            style={{ opacity: 0.85 }}
-          />
         )}
 
         {showVideo && <div className={styles.videoBadge}>LIVE</div>}
