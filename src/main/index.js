@@ -1566,48 +1566,44 @@ ipcMain.handle('ai-search', async (event, { query, games }) => {
 })
 
 // -- AI Game Coach -----------------------------------------------------------
-// Calls Railway proxy server using Electron net module (HTTP/2 compatible)
+// Calls Railway proxy (non-streaming JSON) - no SSE, no socket issues
 const COACH_API_URL = 'https://nuarcade-coach-api-production.up.railway.app/coach'
 const COACH_SECRET  = 'f4254611727ff019d5fe9fb1042967ba433e5c3c0451e96991687d33e31d48f7'
 
 ipcMain.handle('game-coach', async (event, { gameTitle, system, genre, emulator }) => {
-  const { net } = require('electron')
-
+  const https = require('https')
   const body = JSON.stringify({ gameTitle, system, genre, emulator })
+  const url = new URL(COACH_API_URL)
 
   return new Promise((resolve) => {
-    const req = net.request({
+    const options = {
+      hostname: url.hostname,
+      path: url.pathname,
       method: 'POST',
-      url: COACH_API_URL,
-    })
-
-    req.setHeader('Content-Type', 'application/json')
-    req.setHeader('x-nuarcade-secret', COACH_SECRET)
-    req.setHeader('Accept', 'text/event-stream')
-
-    req.on('response', (res) => {
-      let buffer = ''
-      res.on('data', (chunk) => {
-        buffer += chunk.toString()
-        const lines = buffer.split('\n')
-        buffer = lines.pop()
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue
-          const data = line.slice(6).trim()
-          if (data === '[DONE]') continue
-          try {
-            const parsed = JSON.parse(data)
-            if (parsed.error) { resolve({ error: parsed.error }); return }
-            const delta = parsed.text || ''
-            if (delta) event.sender.send('coach-chunk', { text: delta })
-          } catch {}
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(body),
+        'x-nuarcade-secret': COACH_SECRET,
+      },
+    }
+    let data = ''
+    const req = https.request(options, (res) => {
+      res.on('data', c => { data += c })
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(data)
+          if (parsed.error) return resolve({ error: parsed.error })
+          // Send full text as single chunk then done
+          if (parsed.text) event.sender.send('coach-chunk', { text: parsed.text })
+          resolve({ success: true })
+        } catch (e) {
+          resolve({ error: e.message })
         }
       })
-      res.on('end', () => resolve({ success: true }))
-      res.on('error', (e) => resolve({ error: e.message }))
+      res.on('error', e => resolve({ error: e.message }))
     })
-
-    req.on('error', (e) => resolve({ error: e.message }))
+    req.setTimeout(30000, () => { req.destroy(); resolve({ error: 'Request timed out' }) })
+    req.on('error', e => resolve({ error: e.message }))
     req.write(body)
     req.end()
   })
