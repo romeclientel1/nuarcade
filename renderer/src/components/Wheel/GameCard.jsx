@@ -51,7 +51,6 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork,
 
   // Artwork sources
   const gameArt   = artwork?.[game.id || game.profile] || null
-  const h  // Art preference priority: snap > boxart > sgdb > none
   // pref: 'snap' | 'boxart' | 'sgdb' | 'none'  (default: 'sgdb')
   const pref = artPref || 'sgdb'
   const sgdbHero   = gameArt?.hero    || null
@@ -63,7 +62,8 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork,
     if (pref === 'boxart') return localBox    || sgdbHero  || null
     // default 'sgdb'
     return sgdbHero || localSnap || localBox || null
-  })()capsuleUrl= gameArt?.capsule || null
+  })()
+  const capsuleUrl= gameArt?.capsule || null
   const logoUrl   = gameArt?.logo    || null
 
   const tpThumb   = game.isPinball ? null
