@@ -24,6 +24,8 @@ import { useArcadeSounds } from "../../hooks/useArcadeSounds"
 import { useMusicPlayer  } from "../../hooks/useMusicPlayer"
 import { usePlaytime } from "../../hooks/usePlaytime"
 import { useSteamGridDB } from "../../hooks/useSteamGridDB"
+import { getControllerHint } from "../../data/controllerHints"
+import ControllerPrompt from "../ControllerPrompt/ControllerPrompt"
 
 
 import styles from "./Wheel.module.css"
@@ -241,6 +243,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [activeCategory, setActiveCategory] = useState("All")
   const [launching, setLaunching] = useState(false)
+  const [showControllerPrompt, setShowControllerPrompt] = useState(false)
   const [attractMode, setAttractMode] = useState(false)
   const [showMediaManager, setShowMediaManager] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
@@ -419,6 +422,12 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
 
   // Auto-launch last played game if configured
 
+  const launchGame = () => {
+    if (launching || !current) return
+    const hint = getControllerHint(current)
+    if (hint) { setShowControllerPrompt(true) } else { handleLaunch() }
+  }
+
   const handleLaunch = async () => {
     if (launching || !current) return
     sounds.launch()
@@ -573,7 +582,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       }
 
       // Single-key shortcuts only fire when no overlay is open
-      const anyOverlay = showDetail || showHelp || showStats || showAchievements || showCollections || showSettings || showMediaManager || showCoach || showHighScores || showOperator
+      const anyOverlay = showDetail || showHelp || showStats || showAchievements || showCollections || showSettings || showMediaManager || showCoach || showHighScores || showOperator || showControllerPrompt
       if (anyOverlay) return
 
       // Konami code detector: UP UP DOWN DOWN LEFT RIGHT LEFT RIGHT b a
@@ -596,7 +605,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
         const randomIndex = Math.floor(Math.random() * filteredGames.length)
         setSelectedIndex(randomIndex)
       }
-      if (e.key === " ") { e.preventDefault(); if (current) handleLaunch() }
+      if (e.key === " ") { e.preventDefault(); if (current) launchGame() }
     }
     window.addEventListener("keydown", handler)
     return () => window.removeEventListener("keydown", handler)
@@ -1022,7 +1031,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
             </div>
           </div>
           <div className={styles.infoRight}>
-            <button className={styles.launchBtn} onClick={handleLaunch} disabled={launching}>
+            <button className={styles.launchBtn} onClick={launchGame} disabled={launching}>
               {launching ? "Launching..." : current.isPinball ? "Launch Table" : "Launch Game"}
             </button>
           </div>
@@ -1051,6 +1060,13 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
         <OperatorDashboard
           games={games}
           onClose={() => setShowOperator(false)}
+        />
+      )}
+
+      {showControllerPrompt && current && (
+        <ControllerPrompt
+          game={current}
+          onDone={() => { setShowControllerPrompt(false); handleLaunch() }}
         />
       )}
       {showCollections && (
@@ -1083,7 +1099,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
           games={games}
           artwork={artwork}
           onClose={() => { sounds.back(); setShowDetail(false) }}
-          onLaunch={() => { sounds.back(); setShowDetail(false); handleLaunch() }}
+          onLaunch={() => { sounds.back(); setShowDetail(false); launchGame() }}
           launching={launching}
           onSelectGame={(g) => {
             const idx = filteredGames.findIndex(fg => (fg.id && fg.id === g.id) || (fg.profile && fg.profile === g.profile))
