@@ -29,6 +29,7 @@ import ControllerPrompt from "../ControllerPrompt/ControllerPrompt"
 
 
 import styles from "./Wheel.module.css"
+import { useMediaFolders } from "../../hooks/useMediaFolders"
 
 const CATEGORIES = ["All", "Favorites", "Recent", "Arcade", "MAME", "Retro", "Racing", "Fighting", "Shooter", "Rhythm", "Flying", "Sports", "N64", "PS1", "PSP", "Dreamcast", "Model2", "Model3", "PS3", "Xbox360", "GCWii", "WiiU", "PS2", "Switch", "Pinball", "PC"]
 const ATTRACT_TIMEOUT = 120000
@@ -225,7 +226,8 @@ function KonamiCelebration({ onClose }) {
 export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange, onSetupWizard, activeProfile, onSwitchPlayer }) {
   const {
     games, stats, loading, libraryEmpty, config,
-    toggleFavorite, isFavorite,
+    useMediaFolders()
+  toggleFavorite, isFavorite,
     recentlyPlayed, addRecentlyPlayed,
     newGameCount,
     refreshVideoPaths,
