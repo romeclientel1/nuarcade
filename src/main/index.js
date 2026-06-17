@@ -1707,3 +1707,57 @@ ipcMain.handle('tp-auto-configure', async () => {
 
   return { success: true, configured, notFound, skipped, results }
 })
+
+
+// ─── STEP 1: Ensure media folder structure ───────────────────────────────────
+ipcMain.handle('ensure-media-folders', async (event, customPath) => {
+  const cfg = loadConfig()
+  const mediaRoot = customPath || cfg.mediaPath || 'F:\\Media'
+
+  const systems = [
+    'MAME', 'TeknoParrot', 'RPCS3', 'Xenia', 'Dolphin',
+    'PCSX2', 'Ryujinx', 'DuckStation', 'Flycast', 'PPSSPP',
+    'Cemu', 'Model2', 'Model3', 'RetroArch', 'Steam', 'PC'
+  ]
+  const subFolders = [
+    'Images\\Box Art',
+    'Images\\Cabinet Art',
+    'Images\\Marquee',
+    'Images\\Snap',
+    'Images\\Wheel',
+    'Video'
+  ]
+
+  const created = []
+  const skipped = []
+
+  const ensure = (dir) => {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true })
+      created.push(dir)
+    } else {
+      skipped.push(dir)
+    }
+  }
+
+  try {
+    ensure(mediaRoot)
+    ensure(path.join(mediaRoot, 'Music'))
+
+    for (const sys of systems) {
+      for (const sub of subFolders) {
+        ensure(path.join(mediaRoot, sys, sub))
+      }
+    }
+
+    // Save mediaPath to config if not already set
+    if (!cfg.mediaPath) {
+      cfg.mediaPath = mediaRoot
+      saveConfig(cfg)
+    }
+
+    return { success: true, mediaRoot, created: created.length, skipped: skipped.length }
+  } catch (e) {
+    return { success: false, error: e.message }
+  }
+})
