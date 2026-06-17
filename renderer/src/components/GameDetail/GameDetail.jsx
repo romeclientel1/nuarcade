@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import { usePlaytime } from "../../hooks/usePlaytime"
 import { useGameNotes } from "../../hooks/useGameNotes"
 import { useCollections } from "../Collections/Collections"
+import ControllerBadge from "../ControllerBadge/ControllerBadge"
 import styles from "./GameDetail.module.css"
 
 const GENRE_COLORS = {
@@ -316,6 +317,7 @@ export default function GameDetail({ game, onClose, onLaunch, launching, artwork
                 Controller override
                 {savingController && <span style={{ color: "#00ff88", marginLeft: 8, fontSize: 10 }}>Saved!</span>}
               </div>
+              <ControllerBadge game={game} size="large" />
               <div className={styles.controllerGrid}>
                 {CONTROLLERS.map(c => (
                   <button
