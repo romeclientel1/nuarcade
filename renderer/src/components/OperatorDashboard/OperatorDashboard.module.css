@@ -1,0 +1,230 @@
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.90);
+  z-index: 200; display: flex;
+  align-items: center; justify-content: center;
+  backdrop-filter: blur(6px);
+  animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.panel {
+  background: #060612;
+  border: 1px solid rgba(0,200,255,0.15);
+  border-radius: 12px;
+  width: 900px; max-height: 88vh;
+  display: flex; flex-direction: column;
+  box-shadow: 0 0 80px rgba(0,200,255,0.06);
+  animation: slideUp 0.2s ease;
+  overflow: hidden;
+}
+@keyframes slideUp {
+  from { transform: translateY(12px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.header {
+  display: flex; align-items: center; gap: 16px;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  flex-shrink: 0;
+}
+.headerLeft { display: flex; align-items: center; gap: 10px; }
+.badge {
+  background: #ff6600; color: #000;
+  font-family: Orbitron, sans-serif;
+  font-size: 9px; font-weight: 700;
+  padding: 3px 7px; border-radius: 3px;
+  letter-spacing: 0.1em;
+}
+.title {
+  font-family: Orbitron, sans-serif;
+  font-size: 13px; font-weight: 700;
+  color: #fff; letter-spacing: 0.12em;
+}
+.tabs { display: flex; gap: 4px; margin-left: auto; }
+.tab {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.4);
+  font-size: 10px; font-weight: 600;
+  padding: 5px 12px; border-radius: 4px;
+  cursor: pointer; letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: all 0.15s;
+}
+.tab:hover { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.25); }
+.tabActive {
+  background: rgba(0,200,255,0.12);
+  border-color: rgba(0,200,255,0.4);
+  color: #00c8ff;
+}
+.closeBtn {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.4);
+  width: 28px; height: 28px;
+  border-radius: 4px; cursor: pointer; font-size: 11px;
+  transition: all 0.15s;
+}
+.closeBtn:hover { border-color: rgba(255,255,255,0.3); color: #fff; }
+.body {
+  flex: 1; overflow-y: auto; padding: 20px;
+}
+.body::-webkit-scrollbar { width: 4px; }
+.body::-webkit-scrollbar-thumb { background: rgba(0,200,255,0.2); border-radius: 2px; }
+.footer {
+  padding: 10px 20px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  font-size: 10px; color: rgba(255,255,255,0.25);
+  letter-spacing: 0.06em; text-align: center; flex-shrink: 0;
+}
+.sectionLabel {
+  font-size: 9px; font-weight: 700;
+  color: rgba(255,255,255,0.3);
+  letter-spacing: 0.14em; text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.empty { font-size: 12px; color: rgba(255,255,255,0.2); }
+.overviewGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 12px;
+}
+.statCard {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px; padding: 14px 16px;
+  text-align: center;
+}
+.statValue {
+  font-family: Orbitron, sans-serif;
+  font-size: 22px; font-weight: 700;
+  color: #00c8ff; line-height: 1.1;
+}
+.statSub { font-size: 14px; color: rgba(255,255,255,0.3); }
+.statLabel {
+  font-size: 9px; font-weight: 600;
+  color: rgba(255,255,255,0.35);
+  letter-spacing: 0.1em; text-transform: uppercase;
+  margin-top: 4px;
+}
+.lastPlayed {
+  grid-column: 1 / 3;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px; padding: 14px 16px;
+}
+.lastPlayedName {
+  font-size: 16px; font-weight: 600;
+  color: #fff; margin-bottom: 4px;
+}
+.lastPlayedMeta { font-size: 11px; color: rgba(255,255,255,0.35); }
+.activitySection {
+  grid-column: 3 / 5;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px; padding: 14px 16px;
+}
+.activityGrid {
+  display: grid;
+  grid-template-columns: repeat(35, 1fr);
+  gap: 3px; margin-bottom: 6px;
+}
+.activityCell {
+  aspect-ratio: 1;
+  background: #00c8ff;
+  border-radius: 2px;
+}
+.activityLegend {
+  display: flex; justify-content: space-between;
+  font-size: 9px; color: rgba(255,255,255,0.2);
+}
+.weekSection {
+  grid-column: 1 / 5;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px; padding: 14px 16px;
+}
+.weekRow {
+  display: flex; align-items: center; gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.weekRow:last-child { border-bottom: none; }
+.weekRank {
+  font-family: Orbitron, sans-serif;
+  font-size: 11px; color: rgba(255,255,255,0.2);
+  width: 16px; text-align: center;
+}
+.weekName { flex: 1; font-size: 13px; color: #fff; font-weight: 500; }
+.weekSystem { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; min-width: 80px; }
+.weekCount { font-size: 11px; color: rgba(255,255,255,0.4); min-width: 52px; text-align: right; }
+.gamesTab { display: flex; flex-direction: column; gap: 24px; }
+.gamesList {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px; padding: 16px;
+}
+.gamesListTitle {
+  font-size: 9px; font-weight: 700;
+  color: rgba(255,255,255,0.3);
+  letter-spacing: 0.14em; text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.gameRow {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.gameRow:last-child { border-bottom: none; }
+.gameRank {
+  font-family: Orbitron, sans-serif;
+  font-size: 10px; color: rgba(255,255,255,0.2);
+  width: 18px; text-align: center; flex-shrink: 0;
+}
+.gameInfo { flex: 1; min-width: 0; }
+.gameName {
+  font-size: 13px; font-weight: 500; color: #fff;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.gameMeta {
+  display: flex; gap: 10px; margin-top: 2px;
+  font-size: 10px; color: rgba(255,255,255,0.3);
+}
+.gameBarWrap {
+  width: 120px; height: 4px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 2px; overflow: hidden; flex-shrink: 0;
+}
+.gameBar { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
+.gameTime {
+  font-family: Orbitron, sans-serif;
+  font-size: 11px; color: rgba(255,255,255,0.5);
+  min-width: 48px; text-align: right; flex-shrink: 0;
+}
+.systemsTab { display: flex; flex-direction: column; gap: 8px; }
+.systemCard {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px; padding: 12px 16px;
+}
+.systemHeader {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+}
+.systemDot {
+  width: 8px; height: 8px;
+  border-radius: 50%; flex-shrink: 0;
+}
+.systemName { flex: 1; font-size: 13px; font-weight: 600; color: #fff; }
+.systemTime {
+  font-family: Orbitron, sans-serif;
+  font-size: 12px; color: rgba(255,255,255,0.5);
+}
+.systemBarTrack {
+  height: 3px; background: rgba(255,255,255,0.06);
+  border-radius: 2px; overflow: hidden; margin-bottom: 8px;
+}
+.systemBarFill { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
+.systemMeta {
+  display: flex; gap: 16px;
+  font-size: 10px; color: rgba(255,255,255,0.3);
+}
