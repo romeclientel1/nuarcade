@@ -702,8 +702,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
         artwork={artwork}
         attractConfig={{
           cycleSpeed:  config?.attractCycleSpeed || 6,
-  artwork={artwork}
-              artPref={artPref}:   config?.attractPreferArt !== false,
+  artwork={artwork}:   config?.attractPreferArt !== false,
         }}
       />
 
@@ -982,10 +981,10 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
                   isCenter={index === selectedIndex}
                   isAttract={attractMode}
                   isFavorite={isFavorite(game.id || game.profile)}
+              artPref={artPref}
               artwork={artwork}
                   onClick={() => {
-                    if (index === selectedIndexartwork={artwork}
-              artPref={artPref}rue)
+                    if (index === selectedIndexartwork={artwork}rue)
                     else setSelectedIndex(index)
                   }}
                 />
@@ -1104,8 +1103,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
           games={games}
           artwork={artwork}
           onClose={() => { sounds.back(); setShowDetail(false) }}
-          onLaunartwork={artwork}
-              artPref={artPref}s.back(); setShowDetail(false); launchGame() }}
+          onLaunartwork={artwork}s.back(); setShowDetail(false); launchGame() }}
           launching={launching}
           onSelectGame={(g) => {
             const idx = filteredGames.findIndex(fg => (fg.id && fg.id === g.id) || (fg.profile && fg.profile === g.profile))
@@ -1154,8 +1152,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
           artwork={artwork}
           onComplete={() => {
             setShowBoot(false)
-            // TODO: artwork={artwork}
-              artPref={artPref}deoPaths once center card issue is solved
+            // TODO: artwork={artwork}deoPaths once center card issue is solved
             // setTimeout(() => refreshVideoPaths(), 500)
           }}
         />
