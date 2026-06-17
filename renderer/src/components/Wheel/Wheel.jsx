@@ -1103,7 +1103,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
           games={games}
           artwork={artwork}
           onClose={() => { sounds.back(); setShowDetail(false) }}
-          onLaunartwork={artwork}s.back(); setShowDetail(false); launchGame() }}
+          onLaunch={() => { s.back(); setShowDetail(false); launchGame() }}
           launching={launching}
           onSelectGame={(g) => {
             const idx = filteredGames.findIndex(fg => (fg.id && fg.id === g.id) || (fg.profile && fg.profile === g.profile))
