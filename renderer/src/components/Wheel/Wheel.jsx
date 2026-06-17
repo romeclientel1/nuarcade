@@ -988,7 +988,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
                     else setSelectedIndex(index)
                   }}
                 />
-              </div>              </div>
+              </div>
             ))}
           </div>
           <button className={styles.navBtn} onClick={() => setSelectedIndex(i => (i + 1) % filteredGames.length)}>&#8250;</button>
