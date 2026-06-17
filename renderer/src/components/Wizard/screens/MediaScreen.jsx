@@ -1,147 +1,140 @@
 import { useState } from 'react'
 import styles from './Screen.module.css'
+import mStyles from './MediaScreen.module.css'
 
-export default function MediaScreen({ config, updateConfig, next, prev }) {
-  const [ssUser, setSsUser]     = useState(config.screenscraper?.user || '')
-  const [ssPass, setSsPass]     = useState(config.screenscraper?.pass || '')
-  const [sgdbKey, setSgdbKey]   = useState(config.sgdbKey || '')
-  const [testing, setTesting]   = useState(false)
-  const [testResult, setTestResult] = useState(null)
-  const [showSgdb, setShowSgdb] = useState(false)
+export default function MediaScreen({ config, next, prev }) {
+  const [artStatus, setArtStatus] = useState('idle') // idle | running | done | error
+  const [artCount, setArtCount] = useState(0)
+  const [artError, setArtError] = useState(null)
+  const [showEmuMovies, setShowEmuMovies] = useState(false)
 
-  const save = () => {
-    updateConfig({ screenscraper: { user: ssUser, pass: ssPass }, sgdbKey })
-  }
+  const games = config.scannedGames || []
+  const SGDB_KEY = '8e15be83af3c9840a1a26987bdf6fd13'
 
-  const testLogin = async () => {
-    if (!ssUser || !ssPass) {
-      setTestResult({ ok: false, msg: 'Enter username and password first.' })
-      return
-    }
-    setTesting(true)
-    setTestResult(null)
-    try {
-      const url = `https://www.screenscraper.fr/api2/ssuserInfos.php?devid=nuarcade&devpassword=nuarcade123&softname=nuarcade&output=json&ssid=${encodeURIComponent(ssUser)}&sspassword=${encodeURIComponent(ssPass)}`
-      const res  = await fetch(url)
-      const text = await res.text()
-      if (text.includes('"ssid"') || text.includes('maxthreads')) {
-        setTestResult({ ok: true, msg: 'Login successful! Credentials saved.' })
-        updateConfig({ screenscraper: { user: ssUser, pass: ssPass }, sgdbKey })
-      } else if (text.includes('ACCES')) {
-        setTestResult({ ok: false, msg: 'Wrong username or password.' })
-      } else {
-        setTestResult({ ok: true, msg: 'Connected -- credentials saved.' })
-        updateConfig({ screenscraper: { user: ssUser, pass: ssPass }, sgdbKey })
+  async function fetchArt() {
+    if (artStatus === 'running') return
+    setArtStatus('running')
+    setArtCount(0)
+    setArtError(null)
+
+    let fetched = 0
+    const existing = JSON.parse(localStorage.getItem('nuarcade_artwork') || '{}')
+
+    for (const game of games) {
+      const key = game.id || game.profile || game.title
+      if (!key) continue
+      if (existing[key]?.hero) { fetched++; continue }
+
+      try {
+        const searchRes = await fetch(
+          'https://www.steamgriddb.com/api/v2/search/autocomplete/' + encodeURIComponent(game.title),
+          { headers: { Authorization: 'Bearer ' + SGDB_KEY } }
+        )
+        const searchData = await searchRes.json()
+        const gameId = searchData.data?.[0]?.id
+        if (!gameId) continue
+
+        const heroRes = await fetch(
+          'https://www.steamgriddb.com/api/v2/heroes/game/' + gameId + '?limit=1',
+          { headers: { Authorization: 'Bearer ' + SGDB_KEY } }
+        )
+        const heroData = await heroRes.json()
+        const heroUrl = heroData.data?.[0]?.url
+        if (!heroUrl) continue
+
+        existing[key] = { ...(existing[key] || {}), hero: heroUrl }
+        fetched++
+        setArtCount(fetched)
+        localStorage.setItem('nuarcade_artwork', JSON.stringify(existing))
+      } catch (e) {
+        // skip individual failures
       }
-    } catch {
-      setTestResult({ ok: false, msg: 'Could not reach ScreenScraper. Check your connection.' })
     }
-    setTesting(false)
+
+    setArtCount(fetched)
+    setArtStatus('done')
   }
 
-  const handleContinue = () => {
-    updateConfig({ screenscraper: { user: ssUser, pass: ssPass }, sgdbKey })
-    next()
+  function openEmuMovies() {
+    window.electron.ipcRenderer.invoke('open-url', 'https://emumovies.com')
+  }
+
+  function pickSnapsFolder() {
+    window.electron.ipcRenderer.invoke('pick-folder').then(folder => {
+      if (folder) {
+        window.electron.ipcRenderer.invoke('link-snaps-folder', folder)
+      }
+    })
   }
 
   return (
     <div className={styles.screen}>
-      <div className={styles.eyebrow}>Step 7 -- Media Setup</div>
-      <div className={styles.title}>Set up artwork and video previews.</div>
+      <div className={styles.eyebrow}>Step 7 of 8</div>
+      <div className={styles.title}>Get Media</div>
       <div className={styles.sub}>
-        SteamGridDB works out of the box for box art and logos. Add a ScreenScraper account to unlock video previews and deeper retro game coverage.
+        Choose how to get artwork and video snaps for your games.
+        You can always add more later.
       </div>
 
-      <div className={styles.mediaPanel}>
+      <div className={mStyles.optionGrid}>
 
-        <div className={styles.mediaBlock}>
-          <div className={styles.mediaBlockHeader}>
-            <div className={styles.mediaBlockTitle}>ScreenScraper</div>
-            <div className={styles.mediaBlockBadge}>Videos + Retro Art</div>
+        {/* Option A - SteamGridDB */}
+        <div className={mStyles.optionCard + (artStatus === 'done' ? ' ' + mStyles.done : '')}>
+          <div className={mStyles.optionBadge}>A</div>
+          <div className={mStyles.optionTitle}>Fetch Art Now</div>
+          <div className={mStyles.optionDesc}>
+            Downloads hero artwork for your games from SteamGridDB.
+            Works immediately, no account needed. Art shows on game cards right away.
           </div>
-          <div className={styles.mediaBlockSub}>
-            Box art, screenshots, and video previews for MAME, PS1, PS2, PS3 and more. Free account at screenscraper.fr.
-          </div>
-
-          <div className={styles.mediaFields}>
-            <div className={styles.mediaField}>
-              <label className={styles.mediaLabel}>Username</label>
-              <input
-                className={styles.mediaInput}
-                value={ssUser}
-                onChange={e => { setSsUser(e.target.value); setTestResult(null) }}
-                placeholder="Your screenscraper.fr username"
-                spellCheck={false}
-                autoComplete="off"
-              />
-            </div>
-            <div className={styles.mediaField}>
-              <label className={styles.mediaLabel}>Password</label>
-              <input
-                className={styles.mediaInput}
-                type="password"
-                value={ssPass}
-                onChange={e => { setSsPass(e.target.value); setTestResult(null) }}
-                placeholder="Your screenscraper.fr password"
-                autoComplete="off"
-              />
-            </div>
-          </div>
-
-          <div className={styles.mediaActions}>
-            <button
-              className={styles.mediaBtn}
-              onClick={() => window.open('https://www.screenscraper.fr/index.php?p=newAccount', '_blank')}
-            >
-              Create Free Account
+          {artStatus === 'idle' && (
+            <button className={mStyles.optionBtn} onClick={fetchArt}>
+              Fetch Art
             </button>
-            <button
-              className={styles.mediaBtnPrimary}
-              onClick={testLogin}
-              disabled={testing}
-            >
-              {testing ? 'Testing...' : 'Test Login'}
-            </button>
-          </div>
-
-          {testResult && (
-            <div className={styles.mediaResult} style={{ color: testResult.ok ? '#00ff88' : '#ef4444' }}>
-              {testResult.ok ? 'OK' : 'X'} {testResult.msg}
+          )}
+          {artStatus === 'running' && (
+            <div className={mStyles.progress}>
+              Fetching... {artCount} / {games.length}
             </div>
+          )}
+          {artStatus === 'done' && (
+            <div className={mStyles.successMsg}>
+              Done - {artCount} games have art
+            </div>
+          )}
+          {artStatus === 'error' && (
+            <div className={mStyles.errorMsg}>{artError}</div>
           )}
         </div>
 
-        <div className={styles.mediaDivider} />
-
-        <div className={styles.mediaBlock}>
-          <div className={styles.mediaBlockHeader}>
-            <div className={styles.mediaBlockTitle}>SteamGridDB</div>
-            <div className={styles.mediaBlockBadge} style={{ background: 'rgba(0,200,255,0.15)', color: '#00c8ff', borderColor: 'rgba(0,200,255,0.3)' }}>
-              No account needed
-            </div>
+        {/* Option B - EmuMovies */}
+        <div className={mStyles.optionCard}>
+          <div className={mStyles.optionBadge}>B</div>
+          <div className={mStyles.optionTitle}>Full Media Pack</div>
+          <div className={mStyles.optionDesc}>
+            Video snaps, box art, marquees, and wheel art via EmuMovies Sync.
+            Requires a free account and the EmuMovies Sync 2.7.1 app.
           </div>
-          <div className={styles.mediaBlockSub}>
-            Box art, hero banners, and logos for arcade and modern games. Works automatically with no setup required.
-          </div>
-
           <button
-            className={styles.mediaToggle}
-            onClick={() => setShowSgdb(s => !s)}
+            className={mStyles.optionBtn}
+            onClick={() => setShowEmuMovies(v => !v)}
           >
-            {showSgdb ? 'v' : '>'} I have my own SteamGridDB API key
+            {showEmuMovies ? 'Hide Steps' : 'Show Steps'}
           </button>
 
-          {showSgdb && (
-            <div className={styles.mediaField} style={{ marginTop: 10 }}>
-              <label className={styles.mediaLabel}>API Key (optional)</label>
-              <input
-                className={styles.mediaInput}
-                value={sgdbKey}
-                onChange={e => setSgdbKey(e.target.value)}
-                placeholder="Leave blank to use built-in key"
-                spellCheck={false}
-                autoComplete="off"
-              />
+          {showEmuMovies && (
+            <div className={mStyles.emuSteps}>
+              <div className={mStyles.emuStep}>1. Create a free account at emumovies.com</div>
+              <div className={mStyles.emuStep}>2. Download EmuMovies Sync 2.7.1</div>
+              <div className={mStyles.emuStep}>3. Run Sync, point it at F:\Media\</div>
+              <div className={mStyles.emuStep}>4. Select the systems you want and sync</div>
+              <div className={mStyles.emuBtns}>
+                <button className={mStyles.linkBtn} onClick={openEmuMovies}>
+                  Open emumovies.com
+                </button>
+                <button className={mStyles.linkBtn} onClick={pickSnapsFolder}>
+                  I have a snaps folder
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -150,8 +143,9 @@ export default function MediaScreen({ config, updateConfig, next, prev }) {
 
       <div className={styles.footer}>
         <button className={styles.btnBack} onClick={prev}>Back</button>
-        <button className={styles.btnSkip} onClick={handleContinue}>Skip for now</button>
-        <button className={styles.btnNext} onClick={handleContinue}>Save and Continue -></button>
+        <button className={styles.btnNext} onClick={next}>
+          {artStatus === 'done' ? 'Continue' : 'Skip for now'}
+        </button>
       </div>
     </div>
   )
