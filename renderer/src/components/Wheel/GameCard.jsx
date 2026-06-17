@@ -37,7 +37,7 @@ const STATUS_COLORS = {
   Unverified: "#888888",
 }
 
-export default function GameCard({ game, isCenter, onClick, isFavorite, artwork }) {
+export default function GameCard({ game, isCenter, onClick, isFavorite, artwork, artPref }) {
   const [imgLoaded,   setImgLoaded  ] = useState(false)
   const [imgError,    setImgError   ] = useState(false)
   const [heroLoaded,  setHeroLoaded ] = useState(false)
@@ -51,8 +51,19 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork 
 
   // Artwork sources
   const gameArt   = artwork?.[game.id || game.profile] || null
-  const heroUrl   = gameArt?.hero    || null
-  const capsuleUrl= gameArt?.capsule || null
+  const h  // Art preference priority: snap > boxart > sgdb > none
+  // pref: 'snap' | 'boxart' | 'sgdb' | 'none'  (default: 'sgdb')
+  const pref = artPref || 'sgdb'
+  const sgdbHero   = gameArt?.hero    || null
+  const localSnap  = game.snapPath    || null
+  const localBox   = game.boxArtPath  || null
+  const heroUrl = (() => {
+    if (pref === 'none') return null
+    if (pref === 'snap')   return localSnap   || sgdbHero  || null
+    if (pref === 'boxart') return localBox    || sgdbHero  || null
+    // default 'sgdb'
+    return sgdbHero || localSnap || localBox || null
+  })()capsuleUrl= gameArt?.capsule || null
   const logoUrl   = gameArt?.logo    || null
 
   const tpThumb   = game.isPinball ? null
