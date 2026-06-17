@@ -226,13 +226,13 @@ function KonamiCelebration({ onClose }) {
 export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange, onSetupWizard, activeProfile, onSwitchPlayer }) {
   const {
     games, stats, loading, libraryEmpty, config,
-    useMediaFolders()
-  const [artPref, setArtPref] = useState(() => localStorage.getItem('nuarcade_art_pref') || 'sgdb')
   toggleFavorite, isFavorite,
     recentlyPlayed, addRecentlyPlayed,
     newGameCount,
     refreshVideoPaths,
   } = useGameLibrary()
+  useMediaFolders()
+  const [artPref, setArtPref] = useState(() => localStorage.getItem('nuarcade_art_pref') || 'sgdb')
 
   const { getCollections } = useCollections()
   const [collections, setCollections] = useState(() => getCollections())
