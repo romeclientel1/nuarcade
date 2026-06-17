@@ -196,7 +196,7 @@ export default function AttractMode({ games, isActive, onWake, onSelect, artwork
       </div>
 
       {/* Version */}
-      <div className={styles.version}>v4.1.9</div>
+      <div className={styles.version}>v4.2.0</div>
     </div>
   )
 }

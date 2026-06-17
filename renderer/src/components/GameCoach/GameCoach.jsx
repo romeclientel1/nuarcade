@@ -19,16 +19,17 @@ export default function GameCoach({ game, onClose }) {
       genre:     game.genre  || '',
       emulator:  game.emulator || '',
     }).then(result => {
+      console.log('[COACH UI] result:', JSON.stringify(result).slice(0, 200))
       setLoading(false)
       if (result?.error) {
         setError(result.error)
       } else if (result?.text) {
         setText(result.text)
       } else {
-        // Fallback: check for chunks that may have arrived via IPC event
-        setError(null)
+        setError('No response received')
       }
     }).catch(e => {
+      console.log('[COACH UI] catch:', e.message)
       setLoading(false)
       setError(e.message || 'Failed to connect to AI coach')
     })

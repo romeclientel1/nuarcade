@@ -1588,18 +1588,21 @@ ipcMain.handle('game-coach', async (event, { gameTitle, system, genre, emulator 
     }
     let data = ''
     const req = https.request(options, (res) => {
+      console.log('[COACH] HTTP status:', res.statusCode)
       res.on('data', c => { data += c })
       res.on('end', () => {
+        console.log('[COACH] Raw response:', data.slice(0, 300))
         try {
           const parsed = JSON.parse(data)
+          console.log('[COACH] text length:', parsed.text && parsed.text.length, 'error:', parsed.error)
           if (parsed.error) return resolve({ error: parsed.error })
-          // Return text directly in resolve value -- component reads result.text
           resolve({ success: true, text: parsed.text || '' })
         } catch (e) {
+          console.log('[COACH] parse error:', e.message)
           resolve({ error: e.message })
         }
       })
-      res.on('error', e => resolve({ error: e.message }))
+      res.on('error', e => { console.log('[COACH] res error:', e.message); resolve({ error: e.message }) })
     })
     req.setTimeout(30000, () => { req.destroy(); resolve({ error: 'Request timed out' }) })
     req.on('error', e => resolve({ error: e.message }))
