@@ -702,7 +702,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
         artwork={artwork}
         attractConfig={{
           cycleSpeed:  config?.attractCycleSpeed || 6,
-  artwork={artwork}:   config?.attractPreferArt !== false,
+          preferArt:   config?.attractPreferArt !== false,
         }}
       />
 
