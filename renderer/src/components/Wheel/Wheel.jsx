@@ -588,7 +588,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       if (e.key === "n" || e.key === "N") setShowCollections(c => !c)
       if (e.key === "t" || e.key === "T") setShowStats(s => !s)
       if (e.key === "a" || e.key === "A") setShowAchievements(s => !s)
-      if (e.key === "c" || e.key === "C") setCabinetMode(m => !m)
       if (e.key === "s" || e.key === "S") setScreenshotMode(m => !m)
       if (e.key === "r" || e.key === "R") {
         const randomIndex = Math.floor(Math.random() * filteredGames.length)
