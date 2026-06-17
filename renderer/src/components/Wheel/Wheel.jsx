@@ -227,6 +227,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const {
     games, stats, loading, libraryEmpty, config,
     useMediaFolders()
+  const [artPref, setArtPref] = useState(() => localStorage.getItem('nuarcade_art_pref') || 'sgdb')
   toggleFavorite, isFavorite,
     recentlyPlayed, addRecentlyPlayed,
     newGameCount,
@@ -701,7 +702,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
         artwork={artwork}
         attractConfig={{
           cycleSpeed:  config?.attractCycleSpeed || 6,
-          preferArt:   config?.attractPreferArt !== false,
+  artwork={artwork}
+              artPref={artPref}:   config?.attractPreferArt !== false,
         }}
       />
 
@@ -982,7 +984,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
                   isFavorite={isFavorite(game.id || game.profile)}
               artwork={artwork}
                   onClick={() => {
-                    if (index === selectedIndex) setShowDetail(true)
+                    if (index === selectedIndexartwork={artwork}
+              artPref={artPref}rue)
                     else setSelectedIndex(index)
                   }}
                 />
@@ -1101,7 +1104,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
           games={games}
           artwork={artwork}
           onClose={() => { sounds.back(); setShowDetail(false) }}
-          onLaunch={() => { sounds.back(); setShowDetail(false); launchGame() }}
+          onLaunartwork={artwork}
+              artPref={artPref}s.back(); setShowDetail(false); launchGame() }}
           launching={launching}
           onSelectGame={(g) => {
             const idx = filteredGames.findIndex(fg => (fg.id && fg.id === g.id) || (fg.profile && fg.profile === g.profile))
@@ -1150,7 +1154,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
           artwork={artwork}
           onComplete={() => {
             setShowBoot(false)
-            // TODO: restore refreshVideoPaths once center card issue is solved
+            // TODO: artwork={artwork}
+              artPref={artPref}deoPaths once center card issue is solved
             // setTimeout(() => refreshVideoPaths(), 500)
           }}
         />
