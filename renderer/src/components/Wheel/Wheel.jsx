@@ -981,14 +981,14 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
                   isCenter={index === selectedIndex}
                   isAttract={attractMode}
                   isFavorite={isFavorite(game.id || game.profile)}
-              artPref={artPref}
-              artwork={artwork}
+                  artPref={artPref}
+                  artwork={artwork}
                   onClick={() => {
-                    if (index === selectedIndexartwork={artwork}rue)
+                    if (index === selectedIndex) { select(); setShowDetail(true) }
                     else setSelectedIndex(index)
                   }}
                 />
-              </div>
+              </div>              </div>
             ))}
           </div>
           <button className={styles.navBtn} onClick={() => setSelectedIndex(i => (i + 1) % filteredGames.length)}>&#8250;</button>
