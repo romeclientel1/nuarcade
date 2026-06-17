@@ -1,0 +1,129 @@
+.optionGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 24px 0;
+  width: 100%;
+}
+
+.optionCard {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  padding: 22px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color 0.2s;
+}
+
+.optionCard.done {
+  border-color: var(--accent, #00e5ff);
+}
+
+.optionBadge {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent, #00e5ff);
+  color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.optionTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 0.02em;
+}
+
+.optionDesc {
+  font-size: 12px;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.5;
+  flex: 1;
+}
+
+.optionBtn {
+  margin-top: 4px;
+  padding: 9px 18px;
+  background: var(--accent, #00e5ff);
+  color: #000;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-start;
+  transition: opacity 0.15s;
+}
+
+.optionBtn:hover {
+  opacity: 0.85;
+}
+
+.progress {
+  font-size: 13px;
+  color: var(--accent, #00e5ff);
+  padding: 6px 0;
+}
+
+.successMsg {
+  font-size: 13px;
+  color: #4cff91;
+  padding: 6px 0;
+  font-weight: 600;
+}
+
+.errorMsg {
+  font-size: 12px;
+  color: #ff5c5c;
+  padding: 6px 0;
+}
+
+.emuSteps {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.emuStep {
+  font-size: 12px;
+  color: rgba(255,255,255,0.7);
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.emuBtns {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.linkBtn {
+  padding: 7px 14px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.18);
+  color: rgba(255,255,255,0.85);
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.linkBtn:hover {
+  background: rgba(255,255,255,0.15);
+}
+
+@media (max-width: 700px) {
+  .optionGrid {
+    grid-template-columns: 1fr;
+  }
+}
