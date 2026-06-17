@@ -16,6 +16,8 @@ const [showControllerTest, setShowControllerTest] = useState(false)
 const [rescanning, setRescanning] = useState(false)
 const [backingUp, setBackingUp] = useState(false)
 const [restoring, setRestoring] = useState(false)
+  const [artPref, setArtPref] = useState(() => localStorage.getItem('nuarcade_art_pref') || 'sgdb')
+  const updateArtPref = (val) => { setArtPref(val); localStorage.setItem('nuarcade_art_pref', val) }
 const [rescanResult, setRescanResult] = useState(null)
 const [tpConfiguring, setTpConfiguring] = useState(false)
 const [tpResult, setTpResult] = useState(null)
@@ -360,7 +362,25 @@ const handleSave = async () => {
           <div className={styles.section}>
             <div className={styles.sectionTitle}>Audio</div>
             <div className={styles.inputRow}>
-              <label className={styles.inputLabel}>Attract volume</label>
+              <label className={styles.inputLabel
+          <div className={styles.section}>
+            <div className={styles.sectionTitle}>Card art type</div>
+            <div className={styles.inputRow}>
+              <label className={styles.inputLabel}>What shows on wheel cards</label>
+              <div className={styles.toggleGroup}>
+                {['snap','boxart','sgdb','none'].map(opt => (
+                  <button
+                    key={opt}
+                    className={styles.toggleBtn + (artPref === opt ? ' ' + styles.toggleBtnActive : '')}
+                    onClick={() => updateArtPref(opt)}
+                  >
+                    {opt === 'snap' ? 'SNAP' : opt === 'boxart' ? 'BOX' : opt === 'sgdb' ? 'SGDB' : 'OFF'}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+}>Attract volume</label>
               <div className={styles.sliderWrap}>
                 <input
                   type="range"
