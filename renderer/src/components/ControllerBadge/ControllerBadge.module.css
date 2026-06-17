@@ -1,0 +1,11 @@
+.badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid; border-radius: 4px; padding: 4px 10px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+  background: rgba(0,0,0,0.4);
+}
+.icon { font-family: 'Share Tech Mono', monospace; font-size: 11px; }
+.label { font-family: Orbitron, sans-serif; font-size: 9px; letter-spacing: 0.12em; }
+.large { padding: 8px 16px; gap: 10px; border-radius: 6px; border-width: 2px; }
+.large .icon { font-size: 15px; }
+.large .label { font-size: 12px; }
