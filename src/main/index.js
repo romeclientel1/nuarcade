@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, screen, dialog } = require('electron')
+const { app, BrowserWindow, ipcMain, screen, dialog, shell } = require('electron')
 const path = require('path')
 const { exec, spawn } = require('child_process')
 const config = require('./config')
@@ -1710,7 +1710,44 @@ ipcMain.handle('tp-auto-configure', async () => {
 })
 
 
-// ─── STEP 1: Ensure media folder structure ──// ─── STEP 2: Scan media folders and patch game objects ──────────────────────
+// ───// ─── Media utility IPC handlers ─────────────────────────────────────────────
+ipcMain.handle('open-url', async (event, url) => {
+  await shell.openExternal(url)
+  return { success: true }
+})
+
+ipcMain.handle('pick-folder', async (event) => {
+  const result = await dialog.showOpenDialog({ properties: ['openDirectory'] })
+  return result.canceled ? null : result.filePaths[0]
+})
+
+ipcMain.handle('link-snaps-folder', async (event, srcFolder) => {
+  const cfg = loadConfig()
+  const mediaRoot = cfg.mediaPath || 'F:\\Media'
+  const systems = [
+    'MAME', 'TeknoParrot', 'RPCS3', 'Xenia', 'Dolphin',
+    'PCSX2', 'Ryujinx', 'DuckStation', 'Flycast', 'PPSSPP',
+    'Cemu', 'Model2', 'Model3', 'RetroArch', 'Steam', 'PC'
+  ]
+  let copied = 0
+  for (const sys of systems) {
+    const destSnap = path.join(mediaRoot, sys, 'Images', 'Snap')
+    if (!fs.existsSync(destSnap)) continue
+    const srcSys = path.join(srcFolder, sys)
+    if (!fs.existsSync(srcSys)) continue
+    try {
+      for (const f of fs.readdirSync(srcSys)) {
+        const ext = path.extname(f).toLowerCase()
+        if (!['.png','.jpg','.jpeg'].includes(ext)) continue
+        fs.copyFileSync(path.join(srcSys, f), path.join(destSnap, f))
+        copied++
+      }
+    } catch (e) { /* skip */ }
+  }
+  return { success: true, copied }
+})
+
+ STEP 1: Ensure media folder structure ──// ─── STEP 2: Scan media folders and patch game objects ──────────────────────
 ipcMain.handle('scan-media', async (event, games) => {
   const cfg = loadConfig()
   const mediaRoot = cfg.mediaPath || 'F:\\Media'
