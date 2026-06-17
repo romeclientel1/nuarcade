@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain, screen, dialog } = require('electron')
 const path = require('path')
 const { exec, spawn } = require('child_process')
 const config = require('./config')
+const { scanMedia } = require('./mediaScanner')
 
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged
 
@@ -1709,7 +1710,19 @@ ipcMain.handle('tp-auto-configure', async () => {
 })
 
 
-// ─── STEP 1: Ensure media folder structure ───────────────────────────────────
+// ─── STEP 1: Ensure media folder structure ──// ─── STEP 2: Scan media folders and patch game objects ──────────────────────
+ipcMain.handle('scan-media', async (event, games) => {
+  const cfg = loadConfig()
+  const mediaRoot = cfg.mediaPath || 'F:\\Media'
+  try {
+    const patched = scanMedia(games, mediaRoot)
+    return { success: true, games: patched }
+  } catch (e) {
+    return { success: false, error: e.message, games }
+  }
+})
+
+─────────────────────────────────
 ipcMain.handle('ensure-media-folders', async (event, customPath) => {
   const cfg = loadConfig()
   const mediaRoot = customPath || cfg.mediaPath || 'F:\\Media'
