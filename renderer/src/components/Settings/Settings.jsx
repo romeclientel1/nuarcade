@@ -362,7 +362,22 @@ const handleSave = async () => {
           <div className={styles.section}>
             <div className={styles.sectionTitle}>Audio</div>
             <div className={styles.inputRow}>
-              <label className={styles.inputLabel
+              <label className={styles.inputLabel}>Attract volume</label>
+              <div className={styles.sliderWrap}>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="5"
+                  value={config.ambientVolume ?? 35}
+                  onChange={e => update("ambientVolume", parseInt(e.target.value))}
+                  className={styles.slider}
+                />
+                <span className={styles.sliderVal}>{config.ambientVolume ?? 35}%</span>
+              </div>
+            </div>
+          </div>
+
           <div className={styles.section}>
             <div className={styles.sectionTitle}>Card art type</div>
             <div className={styles.inputRow}>
@@ -377,21 +392,6 @@ const handleSave = async () => {
                     {opt === 'snap' ? 'SNAP' : opt === 'boxart' ? 'BOX' : opt === 'sgdb' ? 'SGDB' : 'OFF'}
                   </button>
                 ))}
-              </div>
-            </div>
-          </div>
-}>Attract volume</label>
-              <div className={styles.sliderWrap}>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  step="5"
-                  value={config.ambientVolume ?? 35}
-                  onChange={e => update("ambientVolume", parseInt(e.target.value))}
-                  className={styles.slider}
-                />
-                <span className={styles.sliderVal}>{config.ambientVolume ?? 35}%</span>
               </div>
             </div>
           </div>
