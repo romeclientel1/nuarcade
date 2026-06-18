@@ -12,8 +12,8 @@ import ReadyScreen from './screens/ReadyScreen'
 const SCREENS = [
   'Welcome',
   'Security',
-  'Paths',
   'Emulators',
+  'Paths',
   'Controllers',
   'Game Scan',
   'Media',
@@ -73,8 +73,8 @@ export default function Wizard({ onComplete }) {
     switch (step) {
       case 0: return <WelcomeScreen    {...screenProps} />
       case 1: return <SecurityScreen   {...screenProps} />
-      case 2: return <PathsScreen      {...screenProps} />
-      case 3: return <SetupGuideScreen {...screenProps} />
+      case 2: return <SetupGuideScreen {...screenProps} />
+      case 3: return <PathsScreen      {...screenProps} />
       case 4: return <ControllersScreen {...screenProps} />
       case 5: return <ScanScreen       {...screenProps} />
       case 6: return <MediaScreen      {...screenProps} />
