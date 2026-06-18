@@ -122,6 +122,14 @@ contextBridge.exposeInMainWorld('nuarcade', {
   // App control
   closeApp: () => ipcRenderer.invoke('close-app'),
 
+
+  // Media system (v4.4.0)
+  ensureMediaFolders: (customPath) => ipcRenderer.invoke('ensure-media-folders', customPath),
+  scanMedia:          (games)      => ipcRenderer.invoke('scan-media', games),
+  openUrl:            (url)        => ipcRenderer.invoke('open-url', url),
+  pickFolder:         ()           => ipcRenderer.invoke('pick-folder'),
+  linkSnapsFolder:    (src, sys)   => ipcRenderer.invoke('link-snaps-folder', src, sys),
+
   // App version -- sync call so it's available immediately
   version: ipcRenderer.sendSync('get-version'),
 })
