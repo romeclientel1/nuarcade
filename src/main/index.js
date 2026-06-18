@@ -1710,7 +1710,7 @@ ipcMain.handle('tp-auto-configure', async () => {
 })
 
 
-// ───// ─── Media utility IPC handlers ─────────────────────────────────────────────
+// --- Media utility IPC handlers ---
 ipcMain.handle('open-url', async (event, url) => {
   await shell.openExternal(url)
   return { success: true }
@@ -1747,7 +1747,7 @@ ipcMain.handle('link-snaps-folder', async (event, srcFolder) => {
   return { success: true, copied }
 })
 
- STEP 1: Ensure media folder structure ──// ─── STEP 2: Scan media folders and patch game objects ──────────────────────
+// STEP 1: Ensure media folder structure -- STEP 2: Scan media folders and patch game objects
 ipcMain.handle('scan-media', async (event, games) => {
   const cfg = loadConfig()
   const mediaRoot = cfg.mediaPath || 'F:\\Media'
@@ -1759,7 +1759,6 @@ ipcMain.handle('scan-media', async (event, games) => {
   }
 })
 
-─────────────────────────────────
 ipcMain.handle('ensure-media-folders', async (event, customPath) => {
   const cfg = loadConfig()
   const mediaRoot = customPath || cfg.mediaPath || 'F:\\Media'
