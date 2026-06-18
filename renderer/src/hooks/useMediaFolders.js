@@ -10,7 +10,7 @@ export function useMediaFolders() {
     if (already) return
 
     setStatus('running')
-    window.electron.ipcRenderer.invoke('ensure-media-folders')
+    window.nuarcade.ensureMediaFolders()
       .then((res) => {
         if (res.success) {
           localStorage.setItem(STORAGE_KEY, '1')
