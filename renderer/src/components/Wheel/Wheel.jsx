@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react"
+import { useGamepad } from "../../hooks/useGamepad"
 import { useGameLibrary } from "../../hooks/useGameLibrary"
 import GameCard from "./GameCard"
 import AttractMode from "./AttractMode"
@@ -706,7 +707,49 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       zIndex,
       pointerEvents: signed === 0 ? 'auto' : 'none',
     }
-  }
+  
+  // Xbox controller mapping
+  useGamepad({
+    up:         () => navigate(-1),
+    down:       () => navigate(1),
+    left:       () => {
+      const cats = CATEGORIES
+      const idx = cats.indexOf(activeCategory)
+      setActiveCategory(cats[(idx - 1 + cats.length) % cats.length])
+      setSelectedIndex(0)
+    },
+    right:      () => {
+      const cats = CATEGORIES
+      const idx = cats.indexOf(activeCategory)
+      setActiveCategory(cats[(idx + 1) % cats.length])
+      setSelectedIndex(0)
+    },
+    confirm:    () => { if (!showDetail) setShowDetail(true) },
+    back:       () => {
+      if (showDetail)     { setShowDetail(false); return }
+      if (showSettings)   { setShowSettings(false); return }
+      if (showCoach)      { setShowCoach(false); return }
+    },
+    favorite:   () => toggleFavorite(current?.id || current?.profile),
+    detail:     () => setShowDetail(d => !d),
+    launch:     () => handleLaunch(current),
+    filterLeft: () => {
+      const cats = CATEGORIES
+      const idx = cats.indexOf(activeCategory)
+      setActiveCategory(cats[(idx - 1 + cats.length) % cats.length])
+      setSelectedIndex(0)
+    },
+    filterRight: () => {
+      const cats = CATEGORIES
+      const idx = cats.indexOf(activeCategory)
+      setActiveCategory(cats[(idx + 1) % cats.length])
+      setSelectedIndex(0)
+    },
+    random:     () => setSelectedIndex(Math.floor(Math.random() * filteredGames.length)),
+    settings:   () => setShowSettings(s => !s),
+  })
+
+}
 
   if (loading) return <div style={{ width:"100vw", height:"100vh", background:"#000", display:"flex", alignItems:"center", justifyContent:"center", color:"#888", fontFamily:"monospace", fontSize:14 }}>Scanning game library...</div>
 
