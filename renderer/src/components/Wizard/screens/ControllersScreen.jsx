@@ -90,7 +90,7 @@ export default function ControllersScreen({ config, updateConfig, next, prev }) 
               <span>{a.genre}</span>
             </div>
             <div className={styles.assignCtrl}>
-              ? {detected.includes(a.ctrl) ? a.label : 'Xbox controller'}
+              {detected.includes(a.ctrl) ? a.label : 'Xbox controller'}
             </div>
           </div>
         ))}
