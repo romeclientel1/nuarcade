@@ -386,16 +386,16 @@ export function useGameLibrary() {
           setGames(markedGames)
         } else {
           // Setup not complete ? show samples
-          setGames(SAMPLE_GAMES)
+          setGames([])
         }
       } else {
         // Dev / Mac ? show samples
-        setGames(SAMPLE_GAMES)
-        setStats({ total: SAMPLE_GAMES.length, visible: SAMPLE_GAMES.length, hidden: 0, devMode: true })
+        setGames([])
+        setStats({ total: 0, visible: 0, hidden: 0, devMode: true })
       }
     } catch (err) {
       setError(err.message)
-      setGames(SAMPLE_GAMES)
+      setGames([])
     } finally {
       setLoading(false)
     }
