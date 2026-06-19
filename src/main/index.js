@@ -1799,7 +1799,23 @@ ipcMain.handle('ensure-media-folders', async (event, customPath) => {
       }
     }
 
-    // Save mediaPath to config if not already set
+
+    // STEP 2: Scaffold RetroArch roms folder structure
+    const retroarchRoms = cfg.retroarchGamesPath || 'F:\\RetroArch\\roms'
+    const raSystems = [
+      'nes', 'snes', 'n64', 'gba', 'gbc', 'gb', 'nds', 'virtualboy',
+      'gamecube', 'wii', 'genesis', 'megadrive', 'mastersystem', 'gamegear',
+      'saturn', 'segacd', 'sega32x', 'psx', 'psp', 'atari2600', 'atari7800',
+      'atarijaguar', 'atarilynx', 'pcengine', 'neogeo', 'neogeopocket',
+      'arcade', 'fba', 'dos', 'scummvm', 'amstradcpc', 'zxspectrum',
+      'c64', 'amiga', 'vectrex', 'wonderswan'
+    ]
+    ensure(retroarchRoms)
+    for (const sys of raSystems) {
+      ensure(path.join(retroarchRoms, sys))
+    }
+
+        // Save mediaPath to config if not already set
     if (!cfg.mediaPath) {
       cfg.mediaPath = mediaRoot
       saveConfig(cfg)
