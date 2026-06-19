@@ -251,32 +251,28 @@ async function scanGames(teknoParrotPath, gamesFolderPath) {
     }
 
     const resolvedPath = resolveExePath(game, gamesFolderPath)
-    // Check 1: does a specific launchable file exist?
-    const resolvedPath = resolveExePath(game, gamesFolderPath)
-    const exeExists = !!(resolvedPath && fs.existsSync(resolvedPath))
+    // Check if game folder actually exists -- no folder means game not installed
+    const gameLocation = game.exePath ? path.dirname(game.exePath) : ''
+    const folderExists = gameLocation && fs.existsSync(gameLocation)
 
-    // Check 2: does ANY game folder exist in gamesFolderPath for this game?
-    // TP uses --profile launch so folder presence = game is installed
-    let gameFolderExists = exeExists
-    if (!gameFolderExists && gamesFolderPath && game.exeName) {
-      const gameBase = game.exeName.replace(/\.[^.]+$/, '') // strip extension
-      try {
-        const entries = fs.readdirSync(gamesFolderPath, { withFileTypes: true })
-        gameFolderExists = entries.some(e =>
-          e.isDirectory() && e.name.toLowerCase().includes(gameBase.toLowerCase().substring(0, 5))
-        )
-      } catch (e) {}
-    }
+    // Also check the gamesFolderPath for a matching subfolder by exe name
+    const altFolder = gamesFolderPath && game.exeName
+      ? path.join(gamesFolderPath, path.basename(game.exeName, path.extname(game.exeName)))
+      : ''
+    const altFolderExists = altFolder && fs.existsSync(altFolder)
 
-    // No game files at all = exclude (profile exists but game not installed)
-    if (!exeExists && !gameFolderExists) {
+    if (!folderExists && !altFolderExists) {
+      // No game folder found anywhere -- profile exists but game not installed
       stats.hidden++
       stats.reasons.missingFiles = (stats.reasons.missingFiles || 0) + 1
       continue
     }
 
-    game.exePath = resolvedPath || ''
-    game.exeFound = exeExists
+    // Game folder exists -- find the actual launch file (.exe/.bat/.cmd/.lnk)
+    const resolvedPath = resolveExePath(game, gamesFolderPath)
+    game.exePath = resolvedPath || game.exePath || ''
+    game.exeFound = !!(resolvedPath && fs.existsSync(resolvedPath))
+    // Even without a resolved exe, TP can launch via --profile if folder is present
     game.visible = true
     stats.visible++
     games.push(game)
