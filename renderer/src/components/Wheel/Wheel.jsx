@@ -20,7 +20,6 @@ import HighScoreBoard from "../HighScoreBoard/HighScoreBoard"
 import OperatorDashboard from "../OperatorDashboard/OperatorDashboard"
 import { useErrorToast, ErrorToastContainer } from "./ErrorToast"
 import SortMenu from "./SortMenu"
-import { useGamepad } from "./useGamepad"
 import { useArcadeSounds } from "../../hooks/useArcadeSounds"
 import { useMusicPlayer  } from "../../hooks/useMusicPlayer"
 import { usePlaytime } from "../../hooks/usePlaytime"
@@ -709,45 +708,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     }
   
   // Xbox controller mapping
-  useGamepad({
-    up:         () => navigate(-1),
-    down:       () => navigate(1),
-    left:       () => {
-      const cats = CATEGORIES
-      const idx = cats.indexOf(activeCategory)
-      setActiveCategory(cats[(idx - 1 + cats.length) % cats.length])
-      setSelectedIndex(0)
-    },
-    right:      () => {
-      const cats = CATEGORIES
-      const idx = cats.indexOf(activeCategory)
-      setActiveCategory(cats[(idx + 1) % cats.length])
-      setSelectedIndex(0)
-    },
-    confirm:    () => { if (!showDetail) setShowDetail(true) },
-    back:       () => {
-      if (showDetail)     { setShowDetail(false); return }
-      if (showSettings)   { setShowSettings(false); return }
-      if (showCoach)      { setShowCoach(false); return }
-    },
-    favorite:   () => toggleFavorite(current?.id || current?.profile),
-    detail:     () => setShowDetail(d => !d),
-    launch:     () => handleLaunch(current),
-    filterLeft: () => {
-      const cats = CATEGORIES
-      const idx = cats.indexOf(activeCategory)
-      setActiveCategory(cats[(idx - 1 + cats.length) % cats.length])
-      setSelectedIndex(0)
-    },
-    filterRight: () => {
-      const cats = CATEGORIES
-      const idx = cats.indexOf(activeCategory)
-      setActiveCategory(cats[(idx + 1) % cats.length])
-      setSelectedIndex(0)
-    },
-    random:     () => setSelectedIndex(Math.floor(Math.random() * filteredGames.length)),
-    settings:   () => setShowSettings(s => !s),
-  })
+
 
 }
 
