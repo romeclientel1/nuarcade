@@ -60,7 +60,7 @@ const TP_TITLES = {
   'MarioKartArcadeGP': 'Mario Kart Arcade GP',
   'MarioKartArcadeGP2': 'Mario Kart Arcade GP 2',
   'MarioKartArcadeGPDX': 'Mario Kart Arcade GP DX',
-  'PokkenTournament': 'Pokkén Tournament',
+  'PokkenTournament': 'Pokken Tournament',
   'StarWars': 'Star Wars Battle Pod',
   'TheCrew': 'The Crew',
   'RidgeRacer': 'Ridge Racer',
@@ -251,13 +251,16 @@ async function scanGames(teknoParrotPath, gamesFolderPath) {
     }
 
     const resolvedPath = resolveExePath(game, gamesFolderPath)
-    if (!resolvedPath || !fs.existsSync(resolvedPath)) {
-      stats.hidden++
-      stats.reasons.missingFiles++
-      continue
+    // Include game even if exe not found -- user may have game but different path config
+    // Mark as unresolved so UI can indicate it, but don't hide it
+    if (resolvedPath && fs.existsSync(resolvedPath)) {
+      game.exePath = resolvedPath
+      game.exeFound = true
+    } else {
+      game.exePath = resolvedPath || ''
+      game.exeFound = false
+      stats.reasons.missingFiles = (stats.reasons.missingFiles || 0) + 1
     }
-
-    game.exePath = resolvedPath
     game.visible = true
     stats.visible++
     games.push(game)
