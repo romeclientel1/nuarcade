@@ -87,15 +87,15 @@ export default function ScanScreen({ config, updateConfig, next, prev }) {
         withTimeout(window.nuarcade.scanSwitchGames(config.switchGamesPath), 'Switch'),
         withTimeout(window.nuarcade.scanPinball(config.tablesPath), 'Pinball'),
         withTimeout(window.nuarcade.scanMameGames(config.mameGamesPath), 'MAME'),
-        withTimeout(window.nuarcade.scanDuckStationGames(config.ps1GamesPath), 'PS1'),
-        withTimeout(window.nuarcade.scanFlycastGames(config.dreamcastGamesPath), 'Dreamcast'),
+        withTimeout(window.nuarcade.scanPs1Games(config.ps1GamesPath), 'PS1'),
+        withTimeout(window.nuarcade.scanDreamcastGames(config.dreamcastGamesPath), 'Dreamcast'),
         withTimeout(window.nuarcade.scanModel2Games(config.model2GamesPath), 'Model2'),
         withTimeout(window.nuarcade.scanModel3Games(config.model3GamesPath), 'Model3'),
         withTimeout(window.nuarcade.scanRetroArchGames(config.retroarchGamesPath), 'RetroArch'),
         withTimeout(window.nuarcade.scanPspGames(config.pspGamesPath), 'PSP'),
-        withTimeout(window.nuarcade.scanCemuGames(config.wiiuGamesPath), 'WiiU'),
-        withTimeout(window.nuarcade.scanSteamGames(config.steamGamesPath), 'Steam'),
-        withTimeout(window.nuarcade.scanPcGames(config.pcGamesPath), 'PC'),
+        withTimeout(window.nuarcade.scanWiiUGames(config.wiiuGamesPath), 'WiiU'),
+        withTimeout(window.nuarcade.scanSteamGames ? window.nuarcade.scanSteamGames(config.steamGamesPath) : Promise.resolve({games:[]}), 'Steam'),
+        withTimeout(window.nuarcade.scanPcGames ? window.nuarcade.scanPcGames(config.pcGamesPath) : Promise.resolve({games:[]}), 'PC'),
       ])
 
       setProgress(80)
