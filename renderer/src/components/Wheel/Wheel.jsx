@@ -244,10 +244,47 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   }
 
   const [selectedIndex, setSelectedIndex] = useState(0)
+  const velocityRef = useRef(0)
+  const velocityTimerRef = useRef(null)
+  const lastNavTime = useRef(0)
+  // Velocity-based navigation with elastic overshoot
+  const navigate = (dir) => {
+    const now = Date.now()
+    const timeDelta = now - lastNavTime.current
+    lastNavTime.current = now
+
+    // Accelerate if keys come in rapid succession
+    if (timeDelta < 150) {
+      velocityRef.current = Math.min(velocityRef.current + 1, 6)
+    } else {
+      velocityRef.current = 1
+    }
+
+    const steps = velocityRef.current
+    const n = filteredGames.length
+    if (n === 0) return
+
+    // Elastic overshoot: jump one extra then snap back
+    setIsSnapping(true)
+    setSelectedIndex(i => ((i + dir * (steps + 1)) % n + n) % n)
+    setTimeout(() => {
+      setSelectedIndex(i => ((i - dir + n) % n))
+      setTimeout(() => setIsSnapping(false), 120)
+    }, 80)
+
+    // Decay velocity after pause
+    clearTimeout(velocityTimerRef.current)
+    velocityTimerRef.current = setTimeout(() => {
+      velocityRef.current = 1
+    }, 300)
+  }
+
+
   const [activeCategory, setActiveCategory] = useState("All")
   const [launching, setLaunching] = useState(false)
   const [showControllerPrompt, setShowControllerPrompt] = useState(false)
   const [attractMode, setAttractMode] = useState(false)
+  const [isSnapping, setIsSnapping] = useState(false)
   const [showMediaManager, setShowMediaManager] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [showDetail, setShowDetail] = useState(false)
@@ -570,8 +607,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       if (showSearch || showVirtualKeyboard) return
       if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return
 
-      if (e.key === "ArrowLeft")  { sounds.navigate(); setSelectedIndex(i => (i - 1 + filteredGames.length) % filteredGames.length) }
-      if (e.key === "ArrowRight") { sounds.navigate(); setSelectedIndex(i => (i + 1) % filteredGames.length) }
+      if (e.key === "ArrowLeft")  { sounds.navigate(); navigate(-1) }
+      if (e.key === "ArrowRight") { sounds.navigate(); navigate(1) }
       if (e.key === "Enter")      { if (!showDetail && !showHelp && !showStats && !showAchievements && !showCollections && !showSettings && !showMediaManager && !showCoach) { sounds.select(); setShowDetail(true) } }
       if ((e.key === "c" || e.key === "C") && !showDetail && !showHelp && !showStats && !showCoach && !showSettings && !showMediaManager && !showHighScores) { sounds.select?.(); setShowCoach(true) }
       if ((e.key === "h" || e.key === "H") && !showDetail && !showHelp && !showStats && !showCoach && !showSettings && !showMediaManager) { sounds.select?.(); setShowHighScores(true) }
@@ -620,8 +657,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
 
   useGamepad({
     enabled: !showDetail && !showMediaManager && !showSettings && !showSearch && !showHelp && !showVirtualKeyboard,
-    onLeft:          () => setSelectedIndex(i => (i - 1 + filteredGames.length) % filteredGames.length),
-    onRight:         () => setSelectedIndex(i => (i + 1) % filteredGames.length),
+    onLeft:          () => navigate(-1),
+    onRight:         () => navigate(1),
     onConfirm:       () => setShowDetail(true),
     onBack:          () => { sounds.back(); setShowDetail(false); setSearch(""); setDebouncedSearch(""); setShowSearch(false) },
     onFavorite:      () => { if (current) toggleFavorite(current.id || current.profile) },
@@ -645,19 +682,30 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   })
 
 
-  const getCardClass = (index) => {
+  const getCardStyle = (index) => {
     const diff = index - selectedIndex
     const n = filteredGames.length
     const wrapped = ((diff % n) + n) % n
     const signed = wrapped > n / 2 ? wrapped - n : wrapped
-    if (signed === 0)  return styles.cardCenter
-    if (signed === -1) return styles.cardNear
-    if (signed === 1)  return styles.cardNearRight
-    if (signed === -2) return styles.cardFar
-    if (signed === 2)  return styles.cardFarRight
-    if (signed === -3) return styles.cardEdge
-    if (signed === 3)  return styles.cardEdgeRight
-    return styles.cardHidden
+    const absPos = Math.abs(signed)
+    if (absPos > 4) return { display: 'none' }
+    // Arc layout: parametric circle positioning
+    const ARC_RADIUS = 520
+    const ANGLE_STEP = 18  // degrees between cards
+    const angle = signed * ANGLE_STEP
+    const angleRad = (angle * Math.PI) / 180
+    const x = Math.sin(angleRad) * ARC_RADIUS * 0.55
+    const y = (Math.cos(angleRad) - 1) * ARC_RADIUS * 0.28
+    const scale = signed === 0 ? 1 : Math.max(0.48, 1 - absPos * 0.13)
+    const opacity = signed === 0 ? 1 : Math.max(0.25, 1 - absPos * 0.18)
+    const rotateY = signed * -8
+    const zIndex = 10 - absPos
+    return {
+      transform: 'translateX(' + x + 'px) translateY(' + y + 'px) scale(' + scale + ') rotateY(' + rotateY + 'deg)',
+      opacity,
+      zIndex,
+      pointerEvents: signed === 0 ? 'auto' : 'none',
+    }
   }
 
   if (loading) return <div style={{ width:"100vw", height:"100vh", background:"#000", display:"flex", alignItems:"center", justifyContent:"center", color:"#888", fontFamily:"monospace", fontSize:14 }}>Scanning game library...</div>
@@ -969,12 +1017,13 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
         </div>
       ) : (
         <div className={styles.wheelArea}>
-          <button className={styles.navBtn} onClick={() => setSelectedIndex(i => (i - 1 + filteredGames.length) % filteredGames.length)}>&#8249;</button>
+          <button className={styles.navBtn} onClick={() => navigate(-1)}>&#8249;</button>
           <div className={styles.cardTrack}>
             {filteredGames.map((game, index) => (
               <div
                 key={game.id || game.profile}
-                className={styles.cardSlot + " " + getCardClass(index)}
+                className={styles.cardSlot}
+                style={getCardStyle(index)}
               >
                 <GameCard
                   game={game}
@@ -991,7 +1040,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
               </div>
             ))}
           </div>
-          <button className={styles.navBtn} onClick={() => setSelectedIndex(i => (i + 1) % filteredGames.length)}>&#8250;</button>
+          <button className={styles.navBtn} onClick={() => navigate(1)}>&#8250;</button>
         </div>
       )}
 
