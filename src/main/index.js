@@ -1762,20 +1762,11 @@ ipcMain.handle('scan-media', async (event, games) => {
 ipcMain.handle('ensure-media-folders', async (event, customPath) => {
   const cfg = loadConfig()
   const mediaRoot = customPath || cfg.mediaPath || 'F:\\Media'
+  const FOLDER_SCHEMA_VERSION = '4.4.7'
 
-  const systems = [
-    'MAME', 'TeknoParrot', 'RPCS3', 'Xenia', 'Dolphin',
-    'PCSX2', 'Ryujinx', 'DuckStation', 'Flycast', 'PPSSPP',
-    'Cemu', 'Model2', 'Model3', 'RetroArch', 'Steam', 'PC'
-  ]
-  const subFolders = [
-    'Images\\Box Art',
-    'Images\\Cabinet Art',
-    'Images\\Marquee',
-    'Images\\Snap',
-    'Images\\Wheel',
-    'Video'
-  ]
+  // Version-stamped: re-run whenever schema version advances
+  const storedVersion = cfg.mediaFoldersVersion || '0'
+  const alreadyDone = storedVersion === FOLDER_SCHEMA_VERSION
 
   const created = []
   const skipped = []
@@ -1790,17 +1781,92 @@ ipcMain.handle('ensure-media-folders', async (event, customPath) => {
   }
 
   try {
+    // --- STEP 1: NuArcade media folders (art/video per emulator system) ---
+    // NuArcade internal subfolders
+    const nuarcadeSubFolders = [
+      'Images\\Box Art',
+      'Images\\Cabinet Art',
+      'Images\\Marquee',
+      'Images\\Snap',
+      'Images\\Wheel',
+      'Images\\Title',
+      'Images\\Background',
+      'Images\\Banner',
+      'Images\\Logo',
+      'Video',
+    ]
+
+    const systems = [
+      'MAME', 'TeknoParrot', 'RPCS3', 'Xenia', 'Dolphin',
+      'PCSX2', 'Ryujinx', 'DuckStation', 'Flycast', 'PPSSPP',
+      'Cemu', 'Model2', 'Model3', 'RetroArch', 'Steam', 'PC',
+      // RetroArch sub-systems get their own media folders too
+      'NES', 'SNES', 'N64', 'GBA', 'GBC', 'GB', 'NDS',
+      'Genesis', 'Saturn', 'SegaCD', 'Sega32X', 'MasterSystem', 'GameGear',
+      'PlayStation', 'PSP', 'Dreamcast',
+      'NeoGeo', 'PCEngine', 'Atari2600', 'Atari7800', 'AtariJaguar', 'AtariLynx',
+      'Amiga', 'C64', 'DOS', 'ScummVM', 'Arcade',
+    ]
+
     ensure(mediaRoot)
     ensure(path.join(mediaRoot, 'Music'))
+    ensure(path.join(mediaRoot, 'Themes'))
 
     for (const sys of systems) {
-      for (const sub of subFolders) {
+      for (const sub of nuarcadeSubFolders) {
         ensure(path.join(mediaRoot, sys, sub))
       }
     }
 
+    // --- STEP 2: EmuMovies Sync compatible folders (exact naming match) ---
+    // EmuMovies outputs: snap, title, background, banner, cabinet,
+    // marquee, logo, artwork_preview, controls, cp, icon, pcb, Video_MP4
+    const emumoviesSubFolders = [
+      'snap',
+      'title',
+      'background',
+      'banner',
+      'cabinet',
+      'marquee',
+      'logo',
+      'artwork_preview',
+      'controls',
+      'cp',
+      'icon',
+      'pcb',
+      'score',
+      'select',
+      'gameover',
+      'Video_MP4',
+      'Video_FLV',
+    ]
 
-    // STEP 2: Scaffold RetroArch roms folder structure
+    const emumoviesSystems = [
+      'MAME', 'TeknoParrot', 'RPCS3', 'Xenia', 'Dolphin',
+      'PCSX2', 'Ryujinx', 'DuckStation', 'Flycast', 'PPSSPP',
+      'Cemu', 'Model2', 'Model3', 'Steam', 'PC',
+      // Common EmuMovies system names
+      'Nintendo Entertainment System', 'Super Nintendo Entertainment System',
+      'Nintendo 64', 'Game Boy Advance', 'Game Boy Color', 'Game Boy',
+      'Nintendo DS', 'GameCube', 'Wii',
+      'Sega Genesis', 'Sega Saturn', 'Sega CD', 'Sega 32X',
+      'Sega Master System', 'Game Gear', 'Sega Dreamcast',
+      'Sony Playstation', 'Sony Playstation 2', 'Sony PSP',
+      'Neo Geo', 'TurboGrafx-16', 'Atari 2600', 'Atari 7800',
+      'Atari Jaguar', 'Atari Lynx', 'Commodore Amiga', 'Commodore 64',
+      'MAME 2003', 'MAME 2010',
+    ]
+
+    const emumoviesRoot = path.join(mediaRoot, 'EmuMovies')
+    ensure(emumoviesRoot)
+
+    for (const sys of emumoviesSystems) {
+      for (const sub of emumoviesSubFolders) {
+        ensure(path.join(emumoviesRoot, sys, sub))
+      }
+    }
+
+    // --- STEP 3: RetroArch roms folder structure ---
     const retroarchRoms = cfg.retroarchGamesPath || 'F:\\RetroArch\\roms'
     const raSystems = [
       'nes', 'snes', 'n64', 'gba', 'gbc', 'gb', 'nds', 'virtualboy',
@@ -1815,13 +1881,18 @@ ipcMain.handle('ensure-media-folders', async (event, customPath) => {
       ensure(path.join(retroarchRoms, sys))
     }
 
-        // Save mediaPath to config if not already set
-    if (!cfg.mediaPath) {
-      cfg.mediaPath = mediaRoot
-      saveConfig(cfg)
-    }
+    // --- Save version stamp and config ---
+    cfg.mediaPath = mediaRoot
+    cfg.mediaFoldersVersion = FOLDER_SCHEMA_VERSION
+    saveConfig(cfg)
 
-    return { success: true, mediaRoot, created: created.length, skipped: skipped.length }
+    return {
+      success: true,
+      mediaRoot,
+      created: created.length,
+      skipped: skipped.length,
+      version: FOLDER_SCHEMA_VERSION
+    }
   } catch (e) {
     return { success: false, error: e.message }
   }
