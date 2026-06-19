@@ -690,12 +690,12 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     const absPos = Math.abs(signed)
     if (absPos > 4) return { display: 'none' }
     // Arc layout: parametric circle positioning
-    const ARC_RADIUS = 520
-    const ANGLE_STEP = 18  // degrees between cards
+    const ARC_RADIUS = 900
+    const ANGLE_STEP = 22  // degrees between cards
     const angle = signed * ANGLE_STEP
     const angleRad = (angle * Math.PI) / 180
-    const x = Math.sin(angleRad) * ARC_RADIUS * 0.55
-    const y = (Math.cos(angleRad) - 1) * ARC_RADIUS * 0.28
+    const x = Math.sin(angleRad) * ARC_RADIUS * 0.95
+    const y = (Math.cos(angleRad) - 1) * ARC_RADIUS * 0.18
     const scale = signed === 0 ? 1 : Math.max(0.48, 1 - absPos * 0.13)
     const opacity = signed === 0 ? 1 : Math.max(0.25, 1 - absPos * 0.18)
     const rotateY = signed * -8
