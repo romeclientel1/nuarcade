@@ -219,7 +219,7 @@ const EMULATORS = [
     name: 'Model 2 Emulator',
     system: 'Sega Model 2',
     color: '#003366',
-    url: 'https://github.com/m2emulator/m2emulator/releases/latest',
+    url: 'https://emulation.gametechwiki.com/index.php/Model_2_Emulator',
     folder: 'F:\\Model2\\',
     gamesFolder: 'F:\\Model2Games\\',
     bios: false,
