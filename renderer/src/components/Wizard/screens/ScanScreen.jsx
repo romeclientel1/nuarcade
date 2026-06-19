@@ -23,6 +23,16 @@ const STATUS_STEPS = [
   { key: 'ps2',     label: 'PCSX2 PS2 games scanned'         },
   { key: 'switch',  label: 'Ryujinx Switch games scanned'    },
   { key: 'pinball', label: 'Visual Pinball X tables scanned' },
+  { key: 'mame',       label: 'MAME arcade games scanned'         },
+  { key: 'ps1',        label: 'DuckStation PS1 games scanned'     },
+  { key: 'dreamcast',  label: 'Flycast Dreamcast games scanned'   },
+  { key: 'model2',     label: 'Model 2 games scanned'             },
+  { key: 'model3',     label: 'Model 3 games scanned'             },
+  { key: 'retroarch',  label: 'RetroArch games scanned'           },
+  { key: 'psp',        label: 'PPSSPP PSP games scanned'          },
+  { key: 'wiiu',       label: 'Cemu Wii U games scanned'          },
+  { key: 'steam',      label: 'Steam games scanned'               },
+  { key: 'pc',         label: 'PC games scanned'                  },
 ]
 
 export default function ScanScreen({ config, updateConfig, next, prev }) {
@@ -93,6 +103,16 @@ export default function ScanScreen({ config, updateConfig, next, prev }) {
         setRunning('pinball')
         if (config.mode !== 'arcade' && config.tablesPath) {
           const pb = await window.nuarcade.scanPinball(config.tablesPath)
+    const mame = await window.nuarcade.scanMameGames(config.mameGamesPath)
+    const ps1 = await window.nuarcade.scanDuckStationGames(config.ps1GamesPath)
+    const dc = await window.nuarcade.scanFlycastGames(config.dreamcastGamesPath)
+    const m2 = await window.nuarcade.scanModel2Games(config.model2GamesPath)
+    const m3 = await window.nuarcade.scanModel3Games(config.model3GamesPath)
+    const ra = await window.nuarcade.scanRetroArchGames(config.retroarchGamesPath)
+    const psp = await window.nuarcade.scanPspGames(config.pspGamesPath)
+    const wiiu = await window.nuarcade.scanCemuGames(config.wiiuGamesPath)
+    const steam = await window.nuarcade.scanSteamGames(config.steamGamesPath)
+    const pc = await window.nuarcade.scanPcGames(config.pcGamesPath)
           if (pb.games?.length) { allGames = [...allGames, ...pb.games]; addCount('pinball', pb.games.length) }
         }
         setCompleted(c => [...c, 'pinball']); setRunning(null)
