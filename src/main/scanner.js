@@ -931,111 +931,118 @@ async function scanMameGames(mameGamesPath) {
 module.exports = { ...module.exports, scanMameGames }
 
 
-// -- RetroArch Scanner -------------------------------------------------------
-// Scans a games folder for common ROM extensions across all classic systems
+
+// -- RetroArch Scanner (folder-per-system, show only populated systems) ------
+
+const RA_SYSTEM_MAP = {
+  // Nintendo
+  'nes':          { label: 'NES',               genre: 'Platformer', icon: 'NES', exts: ['.nes','.fds','.unf','.unif'] },
+  'snes':         { label: 'SNES',              genre: 'Platformer', icon: 'SNS', exts: ['.sfc','.smc','.swc'] },
+  'n64':          { label: 'Nintendo 64',        genre: 'Platformer', icon: 'N64', exts: ['.n64','.z64','.v64','.ndd'] },
+  'gba':          { label: 'Game Boy Advance',   genre: 'Platformer', icon: 'GBA', exts: ['.gba','.agb'] },
+  'gbc':          { label: 'Game Boy Color',     genre: 'Platformer', icon: 'GBC', exts: ['.gbc','.gb'] },
+  'gb':           { label: 'Game Boy',           genre: 'Platformer', icon: 'GBY', exts: ['.gb','.gbc'] },
+  'nds':          { label: 'Nintendo DS',        genre: 'Platformer', icon: 'NDS', exts: ['.nds','.dsi'] },
+  'virtualboy':   { label: 'Virtual Boy',        genre: 'Platformer', icon: 'VBY', exts: ['.vb','.vboy'] },
+  'gamecube':     { label: 'GameCube',           genre: 'Platformer', icon: 'GCN', exts: ['.iso','.gcm','.rvz','.wbfs'] },
+  'wii':          { label: 'Wii',                genre: 'Platformer', icon: 'WII', exts: ['.iso','.wbfs','.rvz','.wad'] },
+  // Sega
+  'genesis':      { label: 'Sega Genesis',       genre: 'Platformer', icon: 'GEN', exts: ['.md','.gen','.bin','.smd'] },
+  'megadrive':    { label: 'Sega Genesis',       genre: 'Platformer', icon: 'GEN', exts: ['.md','.gen','.bin','.smd'] },
+  'mastersystem': { label: 'Master System',      genre: 'Platformer', icon: 'SMS', exts: ['.sms','.sg'] },
+  'gamegear':     { label: 'Game Gear',          genre: 'Platformer', icon: 'GGR', exts: ['.gg'] },
+  'saturn':       { label: 'Sega Saturn',        genre: 'Fighting',   icon: 'SAT', exts: ['.iso','.cue','.bin','.chd'] },
+  'segacd':       { label: 'Sega CD',            genre: 'Platformer', icon: 'SCD', exts: ['.iso','.cue','.bin','.chd'] },
+  'sega32x':      { label: 'Sega 32X',           genre: 'Platformer', icon: '32X', exts: ['.32x','.bin'] },
+  // Sony
+  'psx':          { label: 'PlayStation 1',      genre: 'Action',     icon: 'PS1', exts: ['.iso','.cue','.bin','.chd','.pbp'] },
+  'ps1':          { label: 'PlayStation 1',      genre: 'Action',     icon: 'PS1', exts: ['.iso','.cue','.bin','.chd','.pbp'] },
+  'psp':          { label: 'PSP',                genre: 'Action',     icon: 'PSP', exts: ['.iso','.cso','.pbp'] },
+  // Atari
+  'atari2600':    { label: 'Atari 2600',         genre: 'Classic',    icon: 'AT2', exts: ['.a26','.bin','.rom'] },
+  'atari7800':    { label: 'Atari 7800',         genre: 'Classic',    icon: 'AT7', exts: ['.a78','.bin'] },
+  'atarijaguar':  { label: 'Atari Jaguar',       genre: 'Action',     icon: 'JAG', exts: ['.j64','.jag','.rom'] },
+  'atarilynx':    { label: 'Atari Lynx',         genre: 'Platformer', icon: 'LYX', exts: ['.lnx','.o'] },
+  // NEC
+  'pcengine':     { label: 'PC Engine',          genre: 'Platformer', icon: 'PCE', exts: ['.pce','.cue','.bin','.chd'] },
+  'pce':          { label: 'PC Engine',          genre: 'Platformer', icon: 'PCE', exts: ['.pce','.cue','.bin','.chd'] },
+  // SNK
+  'neogeo':       { label: 'Neo Geo',            genre: 'Fighting',   icon: 'NEO', exts: ['.neo','.zip','.7z'] },
+  'neogeopocket': { label: 'Neo Geo Pocket',     genre: 'Fighting',   icon: 'NGP', exts: ['.ngp','.ngc'] },
+  // Arcade
+  'mame':         { label: 'MAME',               genre: 'Classic',    icon: 'ARC', exts: ['.zip','.7z','.chd'] },
+  'fba':          { label: 'Final Burn Alpha',   genre: 'Fighting',   icon: 'FBA', exts: ['.zip','.7z'] },
+  // Other
+  'arcade':       { label: 'Arcade',             genre: 'Classic',    icon: 'ARC', exts: ['.zip','.7z','.chd'] },
+  'dos':          { label: 'DOS',                genre: 'Classic',    icon: 'DOS', exts: ['.exe','.com','.bat'] },
+  'scummvm':      { label: 'ScummVM',            genre: 'Adventure',  icon: 'SCM', exts: ['.scummvm'] },
+  'amstradcpc':   { label: 'Amstrad CPC',        genre: 'Classic',    icon: 'CPC', exts: ['.dsk','.cdt'] },
+  'zxspectrum':   { label: 'ZX Spectrum',        genre: 'Classic',    icon: 'ZXS', exts: ['.tap','.tzx','.z80','.sna'] },
+  'c64':          { label: 'Commodore 64',       genre: 'Classic',    icon: 'C64', exts: ['.d64','.t64','.prg','.crt'] },
+  'amiga':        { label: 'Amiga',              genre: 'Classic',    icon: 'AMG', exts: ['.adf','.hdf','.lha'] },
+  'vectrex':      { label: 'Vectrex',            genre: 'Classic',    icon: 'VEC', exts: ['.vec','.bin'] },
+  'wonderswan':   { label: 'WonderSwan',         genre: 'Platformer', icon: 'WSW', exts: ['.ws','.wsc'] },
+}
+
+const RA_ROM_EXTS = new Set([
+  '.nes','.fds','.sfc','.smc','.n64','.z64','.v64','.gba','.agb',
+  '.gbc','.gb','.nds','.iso','.gcm','.rvz','.wbfs','.wad','.md',
+  '.gen','.bin','.smd','.sms','.sg','.gg','.cue','.chd','.pbp',
+  '.a26','.a78','.j64','.jag','.lnx','.pce','.neo','.ngp','.ngc',
+  '.zip','.7z','.exe','.com','.bat','.scummvm','.dsk','.cdt',
+  '.tap','.tzx','.z80','.sna','.d64','.t64','.prg','.crt',
+  '.adf','.hdf','.lha','.vec','.ws','.wsc','.32x','.vb','.vboy',
+  '.dsi','.cso',
+])
+
 async function scanRetroArchGames(retroarchGamesPath) {
   const games = []
   if (!fs.existsSync(retroarchGamesPath)) {
     return { games, count: 0, path: retroarchGamesPath, error: 'Folder not found' }
   }
 
-  // Extension -> system display name
-  const EXT_MAP = {
-    '.nes':  'NES',
-    '.fds':  'NES',
-    '.sfc':  'SNES',
-    '.smc':  'SNES',
-    '.md':   'Genesis',
-    '.gen':  'Genesis',
-    '.smd':  'Genesis',
-    '.gba':  'GBA',
-    '.gbc':  'GBC',
-    '.gb':   'Game Boy',
-    '.n64':  'N64',
-    '.z64':  'N64',
-    '.v64':  'N64',
-    '.ndd':  'N64',
-    '.bin':  'PS1',
-    '.cue':  'PS1',
-    '.iso':  'PS1',
-    '.chd':  'Multi',
-    '.zip':  'Multi',
-    '.pce':  'PC Engine',
-    '.ngp':  'Neo Geo Pocket',
-    '.ngc':  'Neo Geo Pocket',
-    '.ws':   'WonderSwan',
-    '.wsc':  'WonderSwan',
-    '.a26':  'Atari 2600',
-    '.a78':  'Atari 7800',
-    '.lnx':  'Atari Lynx',
-    '.32x':  '32X',
-    '.gg':   'Game Gear',
-    '.sms':  'Master System',
-    '.col':  'ColecoVision',
-    '.vec':  'Vectrex',
+  let entries = []
+  try { entries = fs.readdirSync(retroarchGamesPath, { withFileTypes: true }) } catch (e) {
+    return { games, count: 0, path: retroarchGamesPath, error: e.message }
   }
 
-  let entries
-  try { entries = fs.readdirSync(retroarchGamesPath, { withFileTypes: true }) }
-  catch (e) { return { games, count: 0, error: e.message } }
+  // Walk each subfolder as a system
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue
+    const folderKey = entry.name.toLowerCase()
+    const systemInfo = RA_SYSTEM_MAP[folderKey]
+    const systemLabel = systemInfo ? systemInfo.label : entry.name
+    const genre = systemInfo ? systemInfo.genre : 'Classic'
+    const icon = systemInfo ? systemInfo.icon : 'RTR'
+    const validExts = systemInfo ? new Set(systemInfo.exts) : RA_ROM_EXTS
 
-  const seen = new Set()
-  for (let i = 0; i < entries.length; i++) {
-    if (i > 0 && i % 25 === 0) await yieldToEventLoop()
-    const entry = entries[i]
-    // Recurse one level into system subfolders
-    if (entry.isDirectory()) {
-      const subPath = path.join(retroarchGamesPath, entry.name)
-      let subEntries
-      try { subEntries = fs.readdirSync(subPath, { withFileTypes: true }) }
-      catch (e) { continue }
-      for (let j = 0; j < subEntries.length; j++) {
-        if (j > 0 && j % 25 === 0) await yieldToEventLoop()
-        const sub = subEntries[j]
-        if (!sub.isFile()) continue
-        const ext = path.extname(sub.name).toLowerCase()
-        if (!EXT_MAP[ext]) continue
-        const fullPath = path.join(subPath, sub.name)
-        if (seen.has(fullPath)) continue
-        seen.add(fullPath)
-        const title = sub.name.replace(/\.[^.]+$/, '').replace(/_/g, ' ').trim()
-        games.push({
-          id: 'ra_' + title.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '') + '_' + games.length,
-          title,
-          path: fullPath,
-          emulator: 'retroarch',
-          genre: 'Retro',
-          system: EXT_MAP[ext] || 'RetroArch',
-          status: 'Playable',
-          icon: 'R',
-          artwork: null,
-        })
-      }
-    } else if (entry.isFile()) {
-      const ext = path.extname(entry.name).toLowerCase()
-      if (!EXT_MAP[ext]) continue
-      const fullPath = path.join(retroarchGamesPath, entry.name)
-      if (seen.has(fullPath)) continue
-      seen.add(fullPath)
-      const title = entry.name.replace(/\.[^.]+$/, '').replace(/_/g, ' ').trim()
+    const systemPath = path.join(retroarchGamesPath, entry.name)
+    let romFiles = []
+    try { romFiles = fs.readdirSync(systemPath, { withFileTypes: true }) } catch (e) { continue }
+
+    for (const rom of romFiles) {
+      if (!rom.isFile()) continue
+      const ext = path.extname(rom.name).toLowerCase()
+      if (!validExts.has(ext) && !RA_ROM_EXTS.has(ext)) continue
+      const title = rom.name.replace(/\.[^.]+$/, '')
       games.push({
-        id: 'ra_' + title.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '') + '_' + games.length,
+        id: 'ra_' + folderKey + '_' + title.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase(),
         title,
-        path: fullPath,
+        genre,
+        system: systemLabel,
+        icon,
         emulator: 'retroarch',
-        genre: 'Retro',
-        system: EXT_MAP[ext] || 'RetroArch',
-        status: 'Playable',
-        icon: 'R',
-        artwork: null,
+        romPath: path.join(systemPath, rom.name),
+        core: folderKey,
       })
     }
   }
-  games.sort((a, b) => a.title.localeCompare(b.title))
+
   return { games, count: games.length, path: retroarchGamesPath }
 }
 
 module.exports = { ...module.exports, scanRetroArchGames }
+
 
 
 // -- Project64 / N64 Scanner ------------------------------------------------
