@@ -153,7 +153,8 @@
 
 .cardSlot {
   position: absolute;
-  transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: transform 0.38s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease, filter 0.3s ease;
+  transform-style: preserve-3d;
   width: 240px;
   height: 320px;
 }
@@ -195,57 +196,37 @@
 .cardNear {
   width: 240px;
   height: 320px;
-  transform: translateX(-280px) rotateY(32deg) scale(0.82);
-  opacity: 0.65;
-  z-index: 8;
   filter: drop-shadow(0 12px 24px rgba(0,0,0,0.5));
 }
 
 .cardNearRight {
   width: 240px;
   height: 320px;
-  transform: translateX(280px) rotateY(-32deg) scale(0.82);
-  opacity: 0.65;
-  z-index: 8;
   filter: drop-shadow(0 12px 24px rgba(0,0,0,0.5));
 }
 
 .cardFar {
   width: 240px;
   height: 320px;
-  transform: translateX(-510px) rotateY(48deg) scale(0.64);
-  opacity: 0.35;
-  z-index: 6;
 }
 
 .cardFarRight {
   width: 240px;
   height: 320px;
-  transform: translateX(510px) rotateY(-48deg) scale(0.64);
-  opacity: 0.35;
-  z-index: 6;
 }
 
 .cardEdge {
   width: 240px;
   height: 320px;
-  transform: translateX(-700px) rotateY(58deg) scale(0.5);
-  opacity: 0.12;
-  z-index: 4;
 }
 
 .cardEdgeRight {
   width: 240px;
   height: 320px;
-  transform: translateX(700px) rotateY(-58deg) scale(0.5);
-  opacity: 0.12;
-  z-index: 4;
 }
 
 .cardHidden {
-  opacity: 0;
   pointer-events: none;
-  z-index: 0;
 }
 
 .loadingMsg {
@@ -874,3 +855,53 @@
   transition: all 0.15s;
 }
 .achieveBtn:hover { border-color: rgba(250,204,21,0.4); color: #facc15; }
+
+
+/* -- Arc wheel: shine sweep on center card -------------------------- */
+@keyframes shineSweep {
+  0%   { left: -80%; opacity: 0; }
+  30%  { opacity: 0.6; }
+  100% { left: 130%; opacity: 0; }
+}
+
+.cardShine {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  z-index: 20;
+}
+
+.cardShine::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -80%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.18) 50%, transparent 70%);
+  animation: shineSweep 0.7s ease-out 0.1s both;
+}
+
+/* -- Card reflection ------------------------------------------------ */
+.cardReflection {
+  pointer-events: none;
+  position: absolute;
+  bottom: -60px;
+  left: 0;
+  right: 0;
+  height: 60px;
+  transform: scaleY(-1);
+  opacity: 0.18;
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);
+  filter: blur(1px);
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+/* -- Snapping state: tighten transition for snap-back -------------- */
+.isSnapping .cardSlot {
+  transition: transform 0.12s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.12s ease;
+}
