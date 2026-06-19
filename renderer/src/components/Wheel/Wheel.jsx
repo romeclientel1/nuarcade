@@ -215,9 +215,9 @@ function KonamiCelebration({ onClose }) {
         style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
       />
       <div style={{ position: 'relative', textAlign: 'center', padding: '0 24px' }}>
-        <div style={headStyle}>BUILD 100</div>
-        <div style={subStyle}>PLAYER ONE HAS ENTERED THE ARENA</div>
-        <div style={tagStyle}>NUARCADE // JEROME EMANUEL // 2025</div>
+        <div style={headStyle}>RELEASE 100</div>
+        <div style={subStyle}>100 RELEASES AND COUNTING</div>
+        <div style={tagStyle}>NUARCADE v4.4.9 // ROME CLIENTEL // 2026</div>
         <div style={codeStyle}>UP UP DOWN DOWN LEFT RIGHT LEFT RIGHT B A</div>
       </div>
     </div>
