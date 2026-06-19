@@ -45,6 +45,8 @@ contextBridge.exposeInMainWorld('nuarcade', {
   scanModel3Games:      (model3GamesPath)  => ipcRenderer.invoke('scan-model3-games', model3GamesPath),
   scanPspGames:         (pspGamesPath)         => ipcRenderer.invoke('scan-psp-games', pspGamesPath),
   scanWiiUGames:        (wiiUGamesPath)        => ipcRenderer.invoke('scan-wiiu-games', wiiUGamesPath),
+  scanSteamGames:       (steamGamesPath)      => ipcRenderer.invoke('scan-steam-games', steamGamesPath),
+  scanPcGames:          (pcGamesPath)          => ipcRenderer.invoke('scan-pc-games', pcGamesPath),
 
   // TeknoParrot updater
   runUpdater: () => ipcRenderer.invoke('run-updater'),
