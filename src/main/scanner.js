@@ -251,17 +251,32 @@ async function scanGames(teknoParrotPath, gamesFolderPath) {
     }
 
     const resolvedPath = resolveExePath(game, gamesFolderPath)
-    // TP launches via TeknoParrotUi.exe --profile, so the XML existing is enough
-    // Additional game exe (.exe/.bat/.cmd/.lnk) is optional -- mark but never hide
+    // Check 1: does a specific launchable file exist?
     const resolvedPath = resolveExePath(game, gamesFolderPath)
-    if (resolvedPath && fs.existsSync(resolvedPath)) {
-      game.exePath = resolvedPath
-      game.exeFound = true
-    } else {
-      // XML profile exists (we just read it), so game is launchable via TP
-      game.exePath = resolvedPath || ''
-      game.exeFound = true  // TP handles launch via profile, no direct exe needed
+    const exeExists = !!(resolvedPath && fs.existsSync(resolvedPath))
+
+    // Check 2: does ANY game folder exist in gamesFolderPath for this game?
+    // TP uses --profile launch so folder presence = game is installed
+    let gameFolderExists = exeExists
+    if (!gameFolderExists && gamesFolderPath && game.exeName) {
+      const gameBase = game.exeName.replace(/\.[^.]+$/, '') // strip extension
+      try {
+        const entries = fs.readdirSync(gamesFolderPath, { withFileTypes: true })
+        gameFolderExists = entries.some(e =>
+          e.isDirectory() && e.name.toLowerCase().includes(gameBase.toLowerCase().substring(0, 5))
+        )
+      } catch (e) {}
     }
+
+    // No game files at all = exclude (profile exists but game not installed)
+    if (!exeExists && !gameFolderExists) {
+      stats.hidden++
+      stats.reasons.missingFiles = (stats.reasons.missingFiles || 0) + 1
+      continue
+    }
+
+    game.exePath = resolvedPath || ''
+    game.exeFound = exeExists
     game.visible = true
     stats.visible++
     games.push(game)
