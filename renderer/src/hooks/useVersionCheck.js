@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 
-const CURRENT_VERSION = "4.4.16"
+const CURRENT_VERSION = "4.4.17"
 const RELEASES_API = "https://api.github.com/repos/romeclientel1/nuarcade/releases/latest"
 
 export function useVersionCheck() {
