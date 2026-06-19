@@ -56,7 +56,7 @@ export default function MediaScreen({ config, next, prev }) {
   }
 
   function openEmuMovies() {
-    window.electron.ipcRenderer.invoke('open-url', 'https://emumovies.com')
+    window.nuarcade.openUrl('https://emumovies.com')
   }
 
   function pickSnapsFolder() {
