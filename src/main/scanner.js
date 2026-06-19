@@ -251,15 +251,16 @@ async function scanGames(teknoParrotPath, gamesFolderPath) {
     }
 
     const resolvedPath = resolveExePath(game, gamesFolderPath)
-    // Include game even if exe not found -- user may have game but different path config
-    // Mark as unresolved so UI can indicate it, but don't hide it
+    // TP launches via TeknoParrotUi.exe --profile, so the XML existing is enough
+    // Additional game exe (.exe/.bat/.cmd/.lnk) is optional -- mark but never hide
+    const resolvedPath = resolveExePath(game, gamesFolderPath)
     if (resolvedPath && fs.existsSync(resolvedPath)) {
       game.exePath = resolvedPath
       game.exeFound = true
     } else {
+      // XML profile exists (we just read it), so game is launchable via TP
       game.exePath = resolvedPath || ''
-      game.exeFound = false
-      stats.reasons.missingFiles = (stats.reasons.missingFiles || 0) + 1
+      game.exeFound = true  // TP handles launch via profile, no direct exe needed
     }
     game.visible = true
     stats.visible++
