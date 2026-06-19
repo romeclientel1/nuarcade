@@ -60,9 +60,9 @@ export default function MediaScreen({ config, next, prev }) {
   }
 
   function pickSnapsFolder() {
-    window.electron.ipcRenderer.invoke('pick-folder').then(folder => {
+    window.nuarcade.pickFolder().then(folder => {
       if (folder) {
-        window.electron.ipcRenderer.invoke('link-snaps-folder', folder)
+        window.nuarcade.linkSnapsFolder( folder)
       }
     })
   }
