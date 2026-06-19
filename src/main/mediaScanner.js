@@ -1,7 +1,7 @@
 const fs = require('fs')
 const path = require('path')
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ---
 // mediaScanner.js
 // Scans F:\Media\ folder tree and patches media paths onto game objects.
 //
@@ -11,7 +11,7 @@ const path = require('path')
 //   F:\Media\{System}\Images\Box Art\{name}.png/.jpg
 //   F:\Media\{System}\Images\Marquee\{name}.png/.jpg
 //   F:\Media\{System}\Images\Wheel\{name}.png/.jpg
-// ─────────────────────────────────────────────────────────────────────────────
+// ---
 
 // Map emulator IDs to media folder names
 const EMULATOR_FOLDER = {
@@ -32,6 +32,27 @@ const EMULATOR_FOLDER = {
   RetroArch:   'RetroArch',
   Steam:       'Steam',
   PC:          'PC',
+}
+
+
+// EmuMovies system name mapping (their folder names differ from ours)
+const EMUMOVIES_FOLDER = {
+  teknoparrot: 'MAME',
+  mame:        'MAME 2003',
+  rpcs3:       'Sony Playstation 3',
+  xenia:       'Microsoft XBOX 360',
+  dolphin:     'Nintendo GameCube',
+  pcsx2:       'Sony Playstation 2',
+  ryujinx:     'Nintendo Switch',
+  duckstation: 'Sony Playstation',
+  flycast:     'Sega Dreamcast',
+  ppsspp:      'Sony PSP',
+  cemu:        'Nintendo Wii U',
+  model2:      'Model2',
+  model3:      'Model3',
+  retroarch:   'RetroArch',
+  steam:       'Steam',
+  pc:          'PC',
 }
 
 const VIDEO_EXTS   = ['.mp4', '.avi', '.mkv', '.webm']
@@ -57,7 +78,7 @@ function buildLookup(dir, exts) {
       if (stem) map[stem] = path.join(dir, file)
     }
   } catch (e) {
-    // unreadable dir — skip
+    // unreadable dir - skip
   }
   return map
 }
@@ -76,6 +97,13 @@ function scanMedia(games, mediaRoot) {
 
   // Build lookup tables per system per asset type
   const cache = {}
+
+  function getEmMoviesLookup(emulatorKey, assetType, exts, mediaRoot) {
+    const sysName = EMUMOVIES_FOLDER[emulatorKey?.toLowerCase()] || ''
+    if (!sysName) return {}
+    const emDir = path.join(mediaRoot, 'EmuMovies', sysName, assetType)
+    return buildLookup(emDir, exts)
+  }
 
   function getLookup(system, subFolder, exts) {
     const key = system + '|' + subFolder
