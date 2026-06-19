@@ -59,115 +59,97 @@ export default function ScanScreen({ config, updateConfig, next, prev }) {
   const addCount = (key, n) => setCounts(c => ({ ...c, [key]: n }))
 
   const runScan = async () => {
-    let allGames = []
+    setRunning(true)
+    setProgress(5)
 
-    if (window.nuarcade && window.nuarcade.platform === 'win32') {
-      try {
-        // TeknoParrot
-        setRunning('tp')
-        const tp = await window.nuarcade.scanGames(config.teknoParrotPath, config.gamesFolderPath)
-        if (tp.games?.length) { allGames = [...allGames, ...tp.games]; addCount('tp', tp.games.length) }
-        setCompleted(c => [...c, 'tp']); setRunning(null)
-
-        // RPCS3
-        setRunning('ps3')
-        if (config.mode !== 'pinball' && config.ps3GamesPath) {
-          const ps3 = await window.nuarcade.scanPs3Games(config.ps3GamesPath)
-          if (ps3.games?.length) { allGames = [...allGames, ...ps3.games]; addCount('ps3', ps3.games.length) }
-        }
-        setCompleted(c => [...c, 'ps3']); setRunning(null)
-
-        // Xenia
-        setRunning('xbox360')
-        if (config.mode !== 'pinball' && config.xbox360GamesPath) {
-          const x360 = await window.nuarcade.scanXbox360Games(config.xbox360GamesPath)
-          if (x360.games?.length) { allGames = [...allGames, ...x360.games]; addCount('xbox360', x360.games.length) }
-        }
-        setCompleted(c => [...c, 'xbox360']); setRunning(null)
-
-        // Dolphin
-        setRunning('gcwii')
-        if (config.mode !== 'pinball' && config.gcWiiGamesPath) {
-          const gcwii = await window.nuarcade.scanGCWiiGames(config.gcWiiGamesPath)
-          if (gcwii.games?.length) { allGames = [...allGames, ...gcwii.games]; addCount('gcwii', gcwii.games.length) }
-        }
-        setCompleted(c => [...c, 'gcwii']); setRunning(null)
-
-        // PCSX2
-        setRunning('ps2')
-        if (config.mode !== 'pinball' && config.ps2GamesPath) {
-          const ps2 = await window.nuarcade.scanPs2Games(config.ps2GamesPath)
-          if (ps2.games?.length) { allGames = [...allGames, ...ps2.games]; addCount('ps2', ps2.games.length) }
-        }
-        setCompleted(c => [...c, 'ps2']); setRunning(null)
-
-        // Ryujinx
-        setRunning('switch')
-        if (config.mode !== 'pinball' && config.switchGamesPath) {
-          const sw = await window.nuarcade.scanSwitchGames(config.switchGamesPath)
-          if (sw.games?.length) { allGames = [...allGames, ...sw.games]; addCount('switch', sw.games.length) }
-        }
-        setCompleted(c => [...c, 'switch']); setRunning(null)
-
-        // Pinball
-        setRunning('pinball')
-        if (config.mode !== 'arcade' && config.tablesPath) {
-          const pb = await window.nuarcade.scanPinball(config.tablesPath)
-    const mame = await window.nuarcade.scanMameGames(config.mameGamesPath)
-    const ps1 = await window.nuarcade.scanDuckStationGames(config.ps1GamesPath)
-    const dc = await window.nuarcade.scanFlycastGames(config.dreamcastGamesPath)
-    const m2 = await window.nuarcade.scanModel2Games(config.model2GamesPath)
-    const m3 = await window.nuarcade.scanModel3Games(config.model3GamesPath)
-    const ra = await window.nuarcade.scanRetroArchGames(config.retroarchGamesPath)
-    const psp = await window.nuarcade.scanPspGames(config.pspGamesPath)
-    const wiiu = await window.nuarcade.scanCemuGames(config.wiiuGamesPath)
-    const steam = await window.nuarcade.scanSteamGames(config.steamGamesPath)
-    const pc = await window.nuarcade.scanPcGames(config.pcGamesPath)
-          if (pb.games?.length) { allGames = [...allGames, ...pb.games]; addCount('pinball', pb.games.length) }
-        }
-        setCompleted(c => [...c, 'pinball']); setRunning(null)
-
-        updateConfig({ scannedGames: allGames })
-        setVisibleGames(allGames.slice(0, 10))
-        setProgress(100)
-        if (allGames.length === 0) setEmptyState(true)
-        setDone(true)
-        return
-      } catch (e) { console.error('Scan error:', e) }
+    // Timeout wrapper -- each scanner gets 30 seconds max
+    const withTimeout = (promise, label) => {
+      const timer = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error(label + ' timed out')), 30000)
+      )
+      return Promise.race([promise, timer]).catch(e => {
+        console.warn('[ScanScreen]', e.message)
+        return { games: [] }
+      })
     }
 
-    // ?? Demo animation ????????????????????????????????????????
-    for (let i = 0; i <= 100; i += 2) {
-      await delay(30)
-      setProgress(i)
-      setVisibleGames(SAMPLE_FOUND.slice(0, Math.floor((i / 100) * SAMPLE_FOUND.length)))
+    try {
+      // Run all scanners in parallel -- no more sequential blocking
+      const [
+        tp, ps3, x360, gcwii, ps2, sw, pb,
+        mame, ps1, dc, m2, m3, ra, psp, wiiu, steam, pc
+      ] = await Promise.all([
+        withTimeout(window.nuarcade.scanGames(config.teknoParrotPath, config.gamesFolderPath), 'TeknoParrot'),
+        withTimeout(window.nuarcade.scanPs3Games(config.ps3GamesPath), 'PS3'),
+        withTimeout(window.nuarcade.scanXbox360Games(config.xbox360GamesPath), 'Xbox360'),
+        withTimeout(window.nuarcade.scanGCWiiGames(config.gcWiiGamesPath), 'Dolphin'),
+        withTimeout(window.nuarcade.scanPs2Games(config.ps2GamesPath), 'PS2'),
+        withTimeout(window.nuarcade.scanSwitchGames(config.switchGamesPath), 'Switch'),
+        withTimeout(window.nuarcade.scanPinball(config.tablesPath), 'Pinball'),
+        withTimeout(window.nuarcade.scanMameGames(config.mameGamesPath), 'MAME'),
+        withTimeout(window.nuarcade.scanDuckStationGames(config.ps1GamesPath), 'PS1'),
+        withTimeout(window.nuarcade.scanFlycastGames(config.dreamcastGamesPath), 'Dreamcast'),
+        withTimeout(window.nuarcade.scanModel2Games(config.model2GamesPath), 'Model2'),
+        withTimeout(window.nuarcade.scanModel3Games(config.model3GamesPath), 'Model3'),
+        withTimeout(window.nuarcade.scanRetroArchGames(config.retroarchGamesPath), 'RetroArch'),
+        withTimeout(window.nuarcade.scanPspGames(config.pspGamesPath), 'PSP'),
+        withTimeout(window.nuarcade.scanCemuGames(config.wiiuGamesPath), 'WiiU'),
+        withTimeout(window.nuarcade.scanSteamGames(config.steamGamesPath), 'Steam'),
+        withTimeout(window.nuarcade.scanPcGames(config.pcGamesPath), 'PC'),
+      ])
+
+      setProgress(80)
+
+      const allGames = [
+        ...(tp?.games   || []),
+        ...(ps3?.games  || []),
+        ...(x360?.games || []),
+        ...(gcwii?.games|| []),
+        ...(ps2?.games  || []),
+        ...(sw?.games   || []),
+        ...(pb?.games   || []),
+        ...(mame?.games || []),
+        ...(ps1?.games  || []),
+        ...(dc?.games   || []),
+        ...(m2?.games   || []),
+        ...(m3?.games   || []),
+        ...(ra?.games   || []),
+        ...(psp?.games  || []),
+        ...(wiiu?.games || []),
+        ...(steam?.games|| []),
+        ...(pc?.games   || []),
+      ]
+
+      setCounts({
+        tp:        tp?.games?.length        || 0,
+        mame:      mame?.games?.length      || 0,
+        ps3:       ps3?.games?.length       || 0,
+        xbox360:   x360?.games?.length      || 0,
+        gcwii:     gcwii?.games?.length     || 0,
+        ps2:       ps2?.games?.length       || 0,
+        switch:    sw?.games?.length        || 0,
+        ps1:       ps1?.games?.length       || 0,
+        dreamcast: dc?.games?.length        || 0,
+        model2:    m2?.games?.length        || 0,
+        model3:    m3?.games?.length        || 0,
+        retroarch: ra?.games?.length        || 0,
+        psp:       psp?.games?.length       || 0,
+        wiiu:      wiiu?.games?.length      || 0,
+        steam:     steam?.games?.length     || 0,
+        pc:        pc?.games?.length        || 0,
+        pinball:   pb?.games?.length        || 0,
+      })
+
+      setProgress(95)
+      updateConfig({ scannedGames: allGames })
+      setVisibleGames(allGames.slice(0, 10))
+      setProgress(100)
+      if (allGames.length === 0) setEmptyState(true)
+      setDone(true)
+    } catch (e) {
+      console.error('Scan error:', e)
+      setDone(true)
     }
-    for (let i = 0; i < STATUS_STEPS.length; i++) {
-      setRunning(STATUS_STEPS[i].key)
-      await delay(500)
-      setCompleted(c => [...c, STATUS_STEPS[i].key])
-      setRunning(null)
-    }
-    setCounts({
-          tp:        tp?.games?.length        || 0,
-          mame:      mame?.games?.length      || 0,
-          ps3:       ps3?.games?.length       || 0,
-          xbox360:   x360?.games?.length      || 0,
-          gcwii:     gcwii?.games?.length     || 0,
-          ps2:       ps2?.games?.length       || 0,
-          switch:    sw?.games?.length        || 0,
-          ps1:       ps1?.games?.length       || 0,
-          dreamcast: dc?.games?.length        || 0,
-          model2:    m2?.games?.length        || 0,
-          model3:    m3?.games?.length        || 0,
-          retroarch: ra?.games?.length        || 0,
-          psp:       psp?.games?.length       || 0,
-          wiiu:      wiiu?.games?.length      || 0,
-          steam:     steam?.games?.length     || 0,
-          pc:        pc?.games?.length        || 0,
-          pinball:   pb?.games?.length        || 0,
-        })
-    setDone(true)
   }
 
   const getStatus = (key) => {
