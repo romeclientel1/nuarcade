@@ -24,11 +24,6 @@ const SCREENS = [
 export default function Wizard({ onComplete }) {
   const [step, setStep] = useState(0)
   // Xbox controller: A=Next, B=Back in wizard
-  useGamepad({
-    confirm: () => { if (step < SCREENS.length - 1) setStep(s => s + 1) },
-    back:    () => { if (step > 0) setStep(s => s - 1) },
-  })
-
 
   const [config, setConfig] = useState({
     mode: 'arcade+pinball',
@@ -62,6 +57,12 @@ export default function Wizard({ onComplete }) {
   const prev = () => {
     if (step > 0) setStep(s => s - 1)
   }
+
+useGamepad({
+    confirm: next,
+    back:    prev,
+  })
+
 
   const finish = async () => {
     const finalConfig = { ...config, setupComplete: true }
