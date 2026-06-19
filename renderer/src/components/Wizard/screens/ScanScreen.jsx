@@ -16,13 +16,23 @@ const SAMPLE_FOUND = [
 ]
 
 const STATUS_STEPS = [
-  { key: 'tp',      label: 'TeknoParrot profiles scanned'    },
-  { key: 'ps3',     label: 'RPCS3 game folders scanned'      },
-  { key: 'xbox360', label: 'Xenia Xbox 360 games scanned'    },
-  { key: 'gcwii',   label: 'Dolphin GameCube/Wii games scanned' },
-  { key: 'ps2',     label: 'PCSX2 PS2 games scanned'         },
-  { key: 'switch',  label: 'Ryujinx Switch games scanned'    },
-  { key: 'pinball', label: 'Visual Pinball X tables scanned' },
+  { key: 'tp',        label: 'TeknoParrot arcade games'       },
+  { key: 'mame',      label: 'MAME arcade classics'            },
+  { key: 'ps3',       label: 'RPCS3 PlayStation 3 games'       },
+  { key: 'xbox360',   label: 'Xenia Xbox 360 games'            },
+  { key: 'gcwii',     label: 'Dolphin GameCube / Wii games'    },
+  { key: 'ps2',       label: 'PCSX2 PlayStation 2 games'       },
+  { key: 'switch',    label: 'Ryubing Switch games'            },
+  { key: 'ps1',       label: 'DuckStation PlayStation 1 games' },
+  { key: 'dreamcast', label: 'Flycast Dreamcast games'         },
+  { key: 'model2',    label: 'Sega Model 2 games'              },
+  { key: 'model3',    label: 'Sega Model 3 games'              },
+  { key: 'retroarch', label: 'RetroArch games'                 },
+  { key: 'psp',       label: 'PPSSPP PSP games'                },
+  { key: 'wiiu',      label: 'Cemu Wii U games'                },
+  { key: 'steam',     label: 'Steam games'                     },
+  { key: 'pc',        label: 'PC games'                        },
+  { key: 'pinball',   label: 'Visual Pinball X tables'         },
   { key: 'mame',       label: 'MAME arcade games scanned'         },
   { key: 'ps1',        label: 'DuckStation PS1 games scanned'     },
   { key: 'dreamcast',  label: 'Flycast Dreamcast games scanned'   },
@@ -37,7 +47,7 @@ const STATUS_STEPS = [
 
 export default function ScanScreen({ config, updateConfig, next, prev }) {
   const [progress,     setProgress    ] = useState(0)
-  const [counts,       setCounts      ] = useState({ tp:0, ps3:0, xbox360:0, gcwii:0, ps2:0, switch:0, pinball:0 })
+  const [counts,       setCounts      ] = useState({ tp:0, ps3:0, xbox360:0, gcwii:0, ps2:0, switch:0, pinball:0, mame:0, ps1:0, dreamcast:0, model2:0, model3:0, retroarch:0, psp:0, wiiu:0, steam:0, pc:0 })
   const [completed,    setCompleted   ] = useState([])
   const [running,      setRunning     ] = useState(null)
   const [done,         setDone        ] = useState(false)
@@ -138,7 +148,25 @@ export default function ScanScreen({ config, updateConfig, next, prev }) {
       setCompleted(c => [...c, STATUS_STEPS[i].key])
       setRunning(null)
     }
-    setCounts({ tp: 15, ps3: 3, xbox360: 4, gcwii: 6, ps2: 8, switch: 5, pinball: 3 })
+    setCounts({
+          tp:        tp?.games?.length        || 0,
+          mame:      mame?.games?.length      || 0,
+          ps3:       ps3?.games?.length       || 0,
+          xbox360:   x360?.games?.length      || 0,
+          gcwii:     gcwii?.games?.length     || 0,
+          ps2:       ps2?.games?.length       || 0,
+          switch:    sw?.games?.length        || 0,
+          ps1:       ps1?.games?.length       || 0,
+          dreamcast: dc?.games?.length        || 0,
+          model2:    m2?.games?.length        || 0,
+          model3:    m3?.games?.length        || 0,
+          retroarch: ra?.games?.length        || 0,
+          psp:       psp?.games?.length       || 0,
+          wiiu:      wiiu?.games?.length      || 0,
+          steam:     steam?.games?.length     || 0,
+          pc:        pc?.games?.length        || 0,
+          pinball:   pb?.games?.length        || 0,
+        })
     setDone(true)
   }
 
