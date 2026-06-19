@@ -63,7 +63,20 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork,
   const [imgError,    setImgError   ] = useState(false)
   const [heroLoaded,  setHeroLoaded ] = useState(false)
   const [capsLoaded,  setCapsLoaded ] = useState(false)
+  const [flipped, setFlipped] = useState(false)
   const { getRating, getNote } = useGameNotes()
+
+  // Reset flip when card loses center position
+  useEffect(() => { if (!isCenter) setFlipped(false) }, [isCenter])
+
+  // Tab key toggles flip on center card
+  useEffect(() => {
+    if (!isCenter) return
+    const handler = (e) => { if (e.key === 'Tab') { e.preventDefault(); setFlipped(f => !f) } }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [isCenter])
+
   const rating = getRating(game)
   const note   = getNote(game)
 
@@ -99,11 +112,12 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork,
   const showThumb   = tpThumb && !imgError && !showCapsule
 
   return (
-    <div
-      className={`${styles.card} ${isCenter ? styles.center : ""}`}
-      style={{ background: colors.bg }}
-      onClick={onClick}
-    >
+    <div className={`${styles.flipContainer} ${flipped ? styles.flipped : ''}`}>
+      <div className={styles.flipFront} onClick={isCenter ? () => setFlipped(f => !f) : onClick}>
+        <div
+          className={`${styles.card} ${isCenter ? styles.center : ""}`}
+          style={{ background: colors.bg }}
+        >
       {/* Hero image -- full bleed background on center card */}
       {showHero && (
         <img
@@ -205,6 +219,21 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork,
           style={{ boxShadow: `inset 0 0 20px ${colors.accent}22, 0 0 40px ${colors.accent}33` }}
         />
       )}
+
+        </div>
+      </div>
+      <div className={styles.flipBack} style={{ background: colors.bg, borderColor: colors.accent }} onClick={() => setFlipped(false)}>
+        <div className={styles.flipBackInner}>
+          <div className={styles.flipBackSystem} style={{ color: colors.accent }}>{game.system || game.emulator}</div>
+          <div className={styles.flipBackTitle}>{game.title}</div>
+          <div className={styles.flipBackDivider} style={{ borderColor: colors.accent }} />
+          <div className={styles.flipBackRow}><span>Genre</span><span>{game.genre || 'Classic'}</span></div>
+          <div className={styles.flipBackRow}><span>Status</span><span>{game.status || 'Playable'}</span></div>
+          <div className={styles.flipBackRow}><span>Emulator</span><span>{game.emulator}</span></div>
+          <div className={styles.flipBackHint} style={{ color: colors.accent }}>Tab or tap to flip back</div>
+        </div>
+      </div>
     </div>
+
   )
 }
