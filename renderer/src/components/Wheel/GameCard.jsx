@@ -30,6 +30,27 @@ const GENRE_COLORS = {
   Other:     { bg: "#0a0a0a", accent: "#444444" },
 }
 
+const EMULATOR_COLORS = {
+  teknoparrot: { bg: '#0a0500', accent: '#ff6a00', label: 'ARCADE',  badge: '#ff6a00' },
+  mame:        { bg: '#0d0400', accent: '#ff4400', label: 'MAME',    badge: '#ff4400' },
+  rpcs3:       { bg: '#00050f', accent: '#003087', label: 'PS3',     badge: '#003087' },
+  xenia:       { bg: '#001a00', accent: '#107c10', label: 'XBOX360', badge: '#107c10' },
+  dolphin:     { bg: '#050010', accent: '#6a0dad', label: 'GCN/WII', badge: '#6a0dad' },
+  pcsx2:       { bg: '#00050f', accent: '#00439c', label: 'PS2',     badge: '#00439c' },
+  ryujinx:     { bg: '#0a0000', accent: '#e4000f', label: 'SWITCH',  badge: '#e4000f' },
+  duckstation: { bg: '#00050f', accent: '#003791', label: 'PS1',     badge: '#003791' },
+  flycast:     { bg: '#0d0600', accent: '#f5821f', label: 'DCAST',   badge: '#f5821f' },
+  ppsspp:      { bg: '#00050f', accent: '#00439c', label: 'PSP',     badge: '#00439c' },
+  cemu:        { bg: '#050010', accent: '#009ac7', label: 'WII U',   badge: '#009ac7' },
+  model2:      { bg: '#0d0600', accent: '#ff6a00', label: 'MDL2',    badge: '#ff6a00' },
+  model3:      { bg: '#0d0300', accent: '#ff3300', label: 'MDL3',    badge: '#ff3300' },
+  retroarch:   { bg: '#06000d', accent: '#9933ff', label: 'RETRO',   badge: '#9933ff' },
+  steam:       { bg: '#001020', accent: '#1b9aef', label: 'STEAM',   badge: '#1b9aef' },
+  pc:          { bg: '#001a10', accent: '#00cc66', label: 'PC',      badge: '#00cc66' },
+  pinball:     { bg: '#1a0a00', accent: '#ff6600', label: 'VPX',     badge: '#ff6600' },
+}
+
+
 const STATUS_COLORS = {
   Perfect:    "#00ff88",
   Great:      "#ffaa00",
@@ -46,7 +67,7 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork,
   const rating = getRating(game)
   const note   = getNote(game)
 
-  const colors      = GENRE_COLORS[game.genre] || GENRE_COLORS.Other
+  const colors      = EMULATOR_COLORS[game.emulator] || GENRE_COLORS[game.genre] || GENRE_COLORS.Other
   const statusColor = STATUS_COLORS[game.status] || "#888888"
 
   // Artwork sources
