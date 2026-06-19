@@ -101,7 +101,7 @@ const EMULATORS = [
     name: 'Ryubing (Ryujinx fork)',
     system: 'Nintendo Switch',
     color: '#e4000f',
-    url: 'https://github.com/GreemDev/Ryubing/releases/latest',
+    url: 'https://ryujinx.app/download',
     folder: 'F:\\Ryujinx\\',
     gamesFolder: 'F:\\SwitchGames\\',
     bios: true,
