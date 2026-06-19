@@ -318,7 +318,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     bootShown.current = true
     if (window.nuarcade?.platform === 'win32') {
       // Check if user has a custom intro video
-      const introPath = (config?.mediaPath || 'F:\\Media\\') + 'intro.mp4'
+      const introPath = (config?.mediaPath || (cfg.mediaPath || 'C:\\Media\\') + 'intro.mp4'
       if (window.nuarcade?.checkPath) {
         window.nuarcade.checkPath(introPath)
           .then(r => {
@@ -1014,8 +1014,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
           <div className={styles.emptySub}>
             {activeCategory === "Favorites" ? "Press F on any game to add it" :
              activeCategory === "Recent" ? "Launch a game to see it here" :
-             activeCategory === "Pinball" ? "Add .vpx files to F:/PinballTables/" :
-             activeCategory === "PC" ? "Add game folders to F:/PCGames/" :
+             activeCategory === "Pinball" ? ("Add .vpx files to " + (cfg.tablesPath || "your Pinball tables folder")) :
+             activeCategory === "PC" ? ("Add game folders to " + (cfg.pcGamesPath || "your PC games folder")) :
              "Try selecting a different category"}
           </div>
         </div>
