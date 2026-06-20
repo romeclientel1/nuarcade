@@ -202,26 +202,6 @@ async function scanGames(teknoParrotPath, gamesFolderPath) {
   const fsS  = require('fs')
   const path = require('path')
 
-  // FFB plugin-only folder fingerprint -- these folders have no real game files
-  const FFB_ONLY = new Set([
-    'd3d9.dll', 'ffbplugingui.ini', 'ffbplugingui.exe', 'ffbpluginreadme.txt',
-    'metroframework.dll', 'sdl2.dll'
-  ])
-
-  const isFFBOnlyFolder = (folderPath) => {
-    try {
-      const files = fsS.readdirSync(folderPath).map(f => f.toLowerCase())
-      const hasGameFile = files.some(f => {
-        if (FFB_ONLY.has(f)) return false  // known FFB file -- ignore
-        if (['.exe', '.bat', '.cmd', '.lnk', '.iso', '.xex', '.bin', '.cue'].some(ext => f.endsWith(ext))) return true
-        return false
-      })
-      return !hasGameFile  // if no real game files found, it's FFB-only
-    } catch (e) {
-      return false  // if we can't read it, assume it has a game
-    }
-  }
-
   const stats = { total: 0, visible: 0, hidden: 0, reasons: {} }
 
   if (!teknoParrotPath || !fsS.existsSync(teknoParrotPath)) {
@@ -266,26 +246,10 @@ async function scanGames(teknoParrotPath, gamesFolderPath) {
     if (BROKEN_STATUS.includes(game.status)) { stats.hidden++; continue }
     if (game.isSubscription) { stats.hidden++; continue }
 
-    // Check if game folder exists
+    // Only include games where GameLocation is set AND the folder exists on disk
+    // This matches what TeknoParrot itself shows as configured/runnable
     const gameFolder = game.exePath ? path.dirname(game.exePath) : ''
-    let resolvedFolder = (gameFolder && fsS.existsSync(gameFolder)) ? gameFolder : ''
-
-    if (!resolvedFolder) {
-      const altFolder = gamesFolderPath && game.id
-        ? path.join(gamesFolderPath, game.id)
-        : ''
-      if (altFolder && fsS.existsSync(altFolder)) {
-        resolvedFolder = altFolder
-      }
-    }
-
-    if (!resolvedFolder) {
-      stats.hidden++
-      continue
-    }
-
-    // Skip folders that only contain FFB plugin files -- no actual game installed
-    if (isFFBOnlyFolder(resolvedFolder)) {
+    if (!gameFolder || !fsS.existsSync(gameFolder)) {
       stats.hidden++
       continue
     }
