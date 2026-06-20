@@ -39,6 +39,8 @@ const DEFAULTS = {
   pcGamesPath:        'C:\\PCGames\\',
   pinballPath:        'C:\\vPinball\\',
   tablesPath:         'C:\\PinballTables\\',
+  steamGamesPath:     'C:\\SteamGames\\',
+  pcGamesPath:        'C:\\PCGames\\',
   mediaPath:          'C:\\Media\\',
   ytdlpPath:          'C:\\Tools\\yt-dlp.exe',
   anthropicApiKey:    '',
