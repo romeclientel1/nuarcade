@@ -63,9 +63,8 @@ export default function ScanScreen({ config, updateConfig, next, prev }) {
   const addCount = (key, n) => setCounts(c => ({ ...c, [key]: n }))
 
   const runScan = async () => {
-    // Wait for Electron preload to be ready
     if (!window.nuarcade || !window.nuarcade.scanGames) {
-      console.error('[ScanScreen] window.nuarcade not ready -- preload may not have loaded')
+      console.error('[ScanScreen] window.nuarcade not ready')
       setDone(true)
       setEmptyState(true)
       return
@@ -79,62 +78,64 @@ export default function ScanScreen({ config, updateConfig, next, prev }) {
     setRunning(true)
     setProgress(5)
 
-    // Timeout wrapper -- each scanner gets 30 seconds max
-    const withTimeout = (promise, label, ms = 30000) => {
-      const timer = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error(label + ' timed out')), ms)
-      )
-      return Promise.race([promise, timer]).catch(e => {
-        console.warn('[ScanScreen]', e.message)
-        return { games: [] }
-      })
+    const safe = (fn, label) => {
+      if (!fn) return Promise.resolve({ games: [] })
+      return fn().catch(e => { console.warn('[ScanScreen]', label, e.message); return { games: [] } })
     }
 
     try {
-      // Run all scanners in parallel -- no more sequential blocking
+      // Step 1: Run TP scan first, alone -- same as main screen does it
+      setProgress(15)
+      const tp = await safe(
+        () => window.nuarcade.scanGames({ teknoParrotPath: config.teknoParrotPath, gamesFolderPath: config.gamesFolderPath }),
+        'TeknoParrot'
+      )
+      setCounts(c => ({ ...c, tp: tp?.games?.length || 0 }))
+      setProgress(30)
+
+      // Step 2: Run all other scanners in parallel
       const [
-        tp, ps3, x360, gcwii, ps2, sw, pb,
+        ps3, x360, gcwii, ps2, sw, pb,
         mame, ps1, dc, m2, m3, ra, psp, wiiu, steam, pc
       ] = await Promise.all([
-        withTimeout(window.nuarcade?.scanGames ? window.nuarcade.scanGames({ teknoParrotPath: config.teknoParrotPath, gamesFolderPath: config.gamesFolderPath }) : Promise.resolve({games:[]}), 'TeknoParrot', 120000),
-        withTimeout(window.nuarcade?.scanPs3Games ? window.nuarcade.scanPs3Games(config.ps3GamesPath) : Promise.resolve({games:[]}), 'PS3'),
-        withTimeout(window.nuarcade?.scanXbox360Games ? window.nuarcade.scanXbox360Games(config.xbox360GamesPath) : Promise.resolve({games:[]}), 'Xbox360'),
-        withTimeout(window.nuarcade?.scanGCWiiGames ? window.nuarcade.scanGCWiiGames(config.gcWiiGamesPath) : Promise.resolve({games:[]}), 'Dolphin'),
-        withTimeout(window.nuarcade?.scanPs2Games ? window.nuarcade.scanPs2Games(config.ps2GamesPath) : Promise.resolve({games:[]}), 'PS2'),
-        withTimeout(window.nuarcade?.scanSwitchGames ? window.nuarcade.scanSwitchGames(config.switchGamesPath) : Promise.resolve({games:[]}), 'Switch'),
-        withTimeout(window.nuarcade?.scanPinball ? window.nuarcade.scanPinball(config.tablesPath) : Promise.resolve({games:[]}), 'Pinball'),
-        withTimeout(window.nuarcade?.scanMameGames ? window.nuarcade.scanMameGames(config.mameGamesPath) : Promise.resolve({games:[]}), 'MAME'),
-        withTimeout(window.nuarcade?.scanPs1Games ? window.nuarcade.scanPs1Games(config.ps1GamesPath) : Promise.resolve({games:[]}), 'PS1'),
-        withTimeout(window.nuarcade?.scanDreamcastGames ? window.nuarcade.scanDreamcastGames(config.dreamcastGamesPath) : Promise.resolve({games:[]}), 'Dreamcast'),
-        withTimeout(window.nuarcade?.scanModel2Games ? window.nuarcade.scanModel2Games(config.model2GamesPath) : Promise.resolve({games:[]}), 'Model2'),
-        withTimeout(window.nuarcade?.scanModel3Games ? window.nuarcade.scanModel3Games(config.model3GamesPath) : Promise.resolve({games:[]}), 'Model3'),
-        withTimeout(window.nuarcade?.scanRetroArchGames ? window.nuarcade.scanRetroArchGames(config.retroarchGamesPath) : Promise.resolve({games:[]}), 'RetroArch'),
-        withTimeout(window.nuarcade?.scanPspGames ? window.nuarcade.scanPspGames(config.pspGamesPath) : Promise.resolve({games:[]}), 'PSP'),
-        withTimeout(window.nuarcade?.scanWiiUGames ? window.nuarcade.scanWiiUGames(config.wiiuGamesPath) : Promise.resolve({games:[]}), 'WiiU'),
-        withTimeout(window.nuarcade.scanSteamGames ? window.nuarcade?.scanSteamGames(config.steamGamesPath) : Promise.resolve({games:[]}), 'Steam'),
-        withTimeout(window.nuarcade.scanPcGames ? window.nuarcade?.scanPcGames(config.pcGamesPath) : Promise.resolve({games:[]}), 'PC'),
+        safe(() => window.nuarcade.scanPs3Games(config.ps3GamesPath), 'PS3'),
+        safe(() => window.nuarcade.scanXbox360Games(config.xbox360GamesPath), 'Xbox360'),
+        safe(() => window.nuarcade.scanGCWiiGames(config.gcWiiGamesPath), 'Dolphin'),
+        safe(() => window.nuarcade.scanPs2Games(config.ps2GamesPath), 'PS2'),
+        safe(() => window.nuarcade.scanSwitchGames(config.switchGamesPath), 'Switch'),
+        safe(() => window.nuarcade.scanPinball(config.tablesPath), 'Pinball'),
+        safe(() => window.nuarcade.scanMameGames(config.mameGamesPath), 'MAME'),
+        safe(() => window.nuarcade.scanPs1Games(config.ps1GamesPath), 'PS1'),
+        safe(() => window.nuarcade.scanDreamcastGames(config.dreamcastGamesPath), 'Dreamcast'),
+        safe(() => window.nuarcade.scanModel2Games(config.model2GamesPath), 'Model2'),
+        safe(() => window.nuarcade.scanModel3Games(config.model3GamesPath), 'Model3'),
+        safe(() => window.nuarcade.scanRetroArchGames(config.retroarchGamesPath), 'RetroArch'),
+        safe(() => window.nuarcade.scanPspGames(config.pspGamesPath), 'PSP'),
+        safe(() => window.nuarcade.scanWiiUGames(config.wiiuGamesPath), 'WiiU'),
+        safe(() => window.nuarcade.scanSteamGames ? window.nuarcade.scanSteamGames(config.steamGamesPath) : Promise.resolve({games:[]}), 'Steam'),
+        safe(() => window.nuarcade.scanPcGames ? window.nuarcade.scanPcGames(config.pcGamesPath) : Promise.resolve({games:[]}), 'PC'),
       ])
 
       setProgress(80)
 
       const allGames = [
-        ...(tp?.games   || []),
-        ...(ps3?.games  || []),
-        ...(x360?.games || []),
-        ...(gcwii?.games|| []),
-        ...(ps2?.games  || []),
-        ...(sw?.games   || []),
-        ...(pb?.games   || []),
-        ...(mame?.games || []),
-        ...(ps1?.games  || []),
-        ...(dc?.games   || []),
-        ...(m2?.games   || []),
-        ...(m3?.games   || []),
-        ...(ra?.games   || []),
-        ...(psp?.games  || []),
-        ...(wiiu?.games || []),
-        ...(steam?.games|| []),
-        ...(pc?.games   || []),
+        ...(tp?.games    || []),
+        ...(ps3?.games   || []),
+        ...(x360?.games  || []),
+        ...(gcwii?.games || []),
+        ...(ps2?.games   || []),
+        ...(sw?.games    || []),
+        ...(pb?.games    || []),
+        ...(mame?.games  || []),
+        ...(ps1?.games   || []),
+        ...(dc?.games    || []),
+        ...(m2?.games    || []),
+        ...(m3?.games    || []),
+        ...(ra?.games    || []),
+        ...(psp?.games   || []),
+        ...(wiiu?.games  || []),
+        ...(steam?.games || []),
+        ...(pc?.games    || []),
       ]
 
       setCounts({
@@ -164,7 +165,7 @@ export default function ScanScreen({ config, updateConfig, next, prev }) {
       if (allGames.length === 0) setEmptyState(true)
       setDone(true)
     } catch (e) {
-      console.error('Scan error:', e)
+      console.error('[ScanScreen] Fatal error:', e)
       setDone(true)
     }
   }
