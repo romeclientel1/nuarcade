@@ -318,7 +318,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     bootShown.current = true
     if (window.nuarcade?.platform === 'win32') {
       // Check if user has a custom intro video
-      const introPath = (config?.mediaPath || (cfg.mediaPath || 'C:\\Media\\') + 'intro.mp4'
+      const introPath = (config?.mediaPath || cfg.mediaPath || 'C:\\Media\\') + 'intro.mp4'
       if (window.nuarcade?.checkPath) {
         window.nuarcade.checkPath(introPath)
           .then(r => {
