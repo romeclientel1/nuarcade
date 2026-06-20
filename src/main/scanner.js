@@ -201,42 +201,50 @@ function resolveExePath(game, gamesFolderPath) {
 // process stays responsive and Windows doesn't show "Not Responding"
 const yieldToEventLoop = () => new Promise(r => setImmediate(r))
 
-function scanGames(teknoParrotPath, gamesFolderPath) {
+async function scanGames(teknoParrotPath, gamesFolderPath) {
+  const fsP  = require('fs').promises
+  const fsS  = require('fs')
+  const path = require('path')
+
   const games = []
   const stats = { total: 0, visible: 0, hidden: 0, reasons: {} }
 
-  if (!teknoParrotPath || !fs.existsSync(teknoParrotPath)) {
+  if (!teknoParrotPath || !fsS.existsSync(teknoParrotPath)) {
     return { games, stats, error: 'TeknoParrot path not found' }
   }
 
   const profilesDir = path.join(teknoParrotPath, 'GameProfiles')
-  if (!fs.existsSync(profilesDir)) {
+  if (!fsS.existsSync(profilesDir)) {
     return { games, stats, error: 'GameProfiles folder not found' }
   }
 
-  let xmlFiles
+  let allFiles
   try {
-    xmlFiles = fs.readdirSync(profilesDir).filter(f => f.toLowerCase().endsWith('.xml'))
+    allFiles = await fsP.readdir(profilesDir)
   } catch (e) {
     return { games, stats, error: e.message }
   }
 
+  const xmlFiles = allFiles.filter(f => f.toLowerCase().endsWith('.xml'))
   stats.total = xmlFiles.length
 
   for (const fileName of xmlFiles) {
     const xmlPath = path.join(profilesDir, fileName)
-    const game = parseProfile(xmlPath, fileName, gamesFolderPath)
+    let game
+    try {
+      game = parseProfile(xmlPath, fileName, gamesFolderPath)
+    } catch (e) {
+      stats.hidden++
+      continue
+    }
     if (!game) { stats.hidden++; continue }
-
     if (BROKEN_STATUS.includes(game.status)) { stats.hidden++; continue }
     if (game.isSubscription) { stats.hidden++; continue }
 
-    // TP launches via TeknoParrotUi.exe --profile -- XML existing is enough
-    // Try to resolve exe path but never hide game if not found
     const foundExePath = resolveExePath(game, gamesFolderPath)
-    game.exePath   = foundExePath || game.exePath || ''
-    game.exeFound  = !!(foundExePath && fs.existsSync(foundExePath))
-    game.visible   = true
+    game.exePath  = foundExePath || game.exePath || ''
+    game.exeFound = !!(foundExePath && fsS.existsSync(foundExePath))
+    game.visible  = true
     stats.visible++
     games.push(game)
   }
