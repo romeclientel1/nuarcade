@@ -202,37 +202,37 @@ async function scanGames(teknoParrotPath, gamesFolderPath) {
   const fsS  = require('fs')
   const path = require('path')
 
-  const games = []
   const stats = { total: 0, visible: 0, hidden: 0, reasons: {} }
 
   if (!teknoParrotPath || !fsS.existsSync(teknoParrotPath)) {
-    return { games, stats, error: 'TeknoParrot path not found' }
+    return { games: [], stats, error: 'TeknoParrot path not found' }
   }
 
   const profilesDir = path.join(teknoParrotPath, 'GameProfiles')
   if (!fsS.existsSync(profilesDir)) {
-    return { games, stats, error: 'GameProfiles folder not found' }
+    return { games: [], stats, error: 'GameProfiles folder not found' }
   }
 
   let allFiles
   try {
     allFiles = await fsP.readdir(profilesDir)
   } catch (e) {
-    return { games, stats, error: e.message }
+    return { games: [], stats, error: e.message }
   }
 
   const xmlFiles = allFiles.filter(f => f.toLowerCase().endsWith('.xml'))
   stats.total = xmlFiles.length
 
-  for (const fileName of xmlFiles) {
-    const xmlPath = path.join(profilesDir, fileName)
-    let game
-    try {
-      game = await parseProfile(xmlPath, fileName, gamesFolderPath)
-    } catch (e) {
-      stats.hidden++
-      continue
-    }
+  // Parse ALL profiles in parallel -- no sequential blocking
+  const results = await Promise.all(
+    xmlFiles.map(fileName => {
+      const xmlPath = path.join(profilesDir, fileName)
+      return parseProfile(xmlPath, fileName, gamesFolderPath).catch(() => null)
+    })
+  )
+
+  const games = []
+  for (const game of results) {
     if (!game) { stats.hidden++; continue }
     if (BROKEN_STATUS.includes(game.status)) { stats.hidden++; continue }
     if (game.isSubscription) { stats.hidden++; continue }
