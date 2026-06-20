@@ -61,6 +61,8 @@ export default function Wizard({ onComplete }) {
 useGamepad({
     confirm: next,
     back:    prev,
+    right:   next,
+    left:    prev,
   })
 
 
