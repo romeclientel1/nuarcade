@@ -96,7 +96,7 @@ export default function ScanScreen({ config, updateConfig, next, prev }) {
         tp, ps3, x360, gcwii, ps2, sw, pb,
         mame, ps1, dc, m2, m3, ra, psp, wiiu, steam, pc
       ] = await Promise.all([
-        withTimeout(window.nuarcade?.scanGames ? window.nuarcade.scanGames(config.teknoParrotPath, config.gamesFolderPath) : Promise.resolve({games:[]}), 'TeknoParrot'),
+        withTimeout(window.nuarcade?.scanGames ? window.nuarcade.scanGames({ teknoParrotPath: config.teknoParrotPath, gamesFolderPath: config.gamesFolderPath }) : Promise.resolve({games:[]}), 'TeknoParrot'),
         withTimeout(window.nuarcade?.scanPs3Games ? window.nuarcade.scanPs3Games(config.ps3GamesPath) : Promise.resolve({games:[]}), 'PS3'),
         withTimeout(window.nuarcade?.scanXbox360Games ? window.nuarcade.scanXbox360Games(config.xbox360GamesPath) : Promise.resolve({games:[]}), 'Xbox360'),
         withTimeout(window.nuarcade?.scanGCWiiGames ? window.nuarcade.scanGCWiiGames(config.gcWiiGamesPath) : Promise.resolve({games:[]}), 'Dolphin'),
