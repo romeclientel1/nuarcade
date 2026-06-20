@@ -107,16 +107,15 @@ const SUBSCRIPTION_PROFILES = new Set([
   'GundamExVs2XBoost.xml', 'Persona4UA.xml', 'MVC3.xml',
 ])
 
-function parseProfile(xmlPath) {
+async function parseProfile(xmlPath) {
   try {
-    const raw = fs.readFileSync(xmlPath, 'utf8')
+    const raw = await require('fs').promises.readFile(xmlPath, 'utf8')
     const data = parser.parse(raw)
     const profile = data?.GameProfile || data?.UserProfile
     if (!profile) return null
 
     const fileName = path.basename(xmlPath)
     const fileBase = fileName.replace('.xml', '')
-    // GameName can be an element OR an attribute depending on TP version
     const title = profile.GameName ||
                   profile['@_GameName'] ||
                   profile.Description ||
@@ -125,30 +124,27 @@ function parseProfile(xmlPath) {
                   profile['@_GameDescription'] ||
                   TP_TITLES[fileBase] ||
                   fileBase
-    const gamePath = profile.GamePath || profile['@_GamePath'] || profile.ExecutablePath || profile['@_ExecutablePath'] || ''
-    const exeName  = profile.ExecutableName || profile['@_ExecutableName'] || profile.Executable || profile['@_Executable'] || ''
-    const rawStatus = profile.GameStatus || profile['@_GameStatus'] || profile.Status || profile['@_Status'] || 'Unknown'
-    const genre    = normalizeGenre(profile.Genre || profile['@_Genre'] || profile.GameType || profile['@_GameType'] || '')
-    const system   = profile.EmulationProfile || profile['@_EmulationProfile'] || profile.System || profile['@_System'] || 'Unknown'
-    const year       = profile.Year || profile['@_Year'] || profile.ReleaseYear || ''
-    const manufacturer = profile.Manufacturer || profile['@_Manufacturer'] || profile.Developer || ''
-    const players    = profile.MaxPlayers || profile['@_MaxPlayers'] || profile.Players || 1
-    const description = profile.Description2 || profile.Notes || ''
+    const gamePath       = profile.GamePath || profile['@_GamePath'] || profile.ExecutablePath || profile['@_ExecutablePath'] || ''
+    const exeName        = profile.ExecutableName || profile['@_ExecutableName'] || profile.ExeName || profile['@_ExeName'] || ''
+    const rawStatus      = profile.GameStatus || profile['@_GameStatus'] || profile.Status || profile['@_Status'] || 'Unknown'
+    const genre          = normalizeGenre(profile.Genre || profile['@_Genre'] || profile.GameType || profile['@_GameType'] || '')
+    const system         = profile.EmulationProfile || profile['@_EmulationProfile'] || profile.System || profile['@_System'] || 'Unknown'
+    const year           = profile.Year || profile['@_Year'] || profile.ReleaseYear || ''
+    const manufacturer   = profile.Manufacturer || profile['@_Manufacturer'] || profile.Developer || ''
+    const players        = profile.MaxPlayers || profile['@_MaxPlayers'] || profile.Players || 1
+    const description    = profile.Description2 || profile.Notes || ''
     const isSubscription = profile.RequiresSubscription === true ||
                            profile['@_RequiresSubscription'] === true ||
                            profile.Patreon === true ||
-                           SUBSCRIPTION_PROFILES.has(fileName)
+                           profile['@_Patreon'] === true
+    const GameLocation   = profile.GameLocation || profile['@_GameLocation'] || ''
 
-    let status = rawStatus
-    if (BROKEN_STATUS.includes(status)) {
-      status = 'Broken'
-    } else if (!['Perfect', 'Great', 'Playable'].includes(status)) {
-      status = 'Unverified'
-    }
+    const VALID_STATUSES = ['Perfect', 'Great', 'Playable', 'Ingame', 'Intro']
+    const status = VALID_STATUSES.includes(rawStatus) ? rawStatus : 'Unverified'
 
     const exePath = gamePath ||
-      (profile.GameLocation ? path.join(profile.GameLocation, exeName) :
-       profile['@_GameLocation'] ? path.join(profile['@_GameLocation'], exeName) : '')
+      (GameLocation ? require('path').join(GameLocation, exeName) :
+       profile['@_GameLocation'] ? require('path').join(profile['@_GameLocation'], exeName) : '')
 
     return {
       id: fileBase,
@@ -160,7 +156,7 @@ function parseProfile(xmlPath) {
       isSubscription,
       visible: false,
     }
-  } catch (err) {
+  } catch (e) {
     return null
   }
 }
@@ -232,7 +228,7 @@ async function scanGames(teknoParrotPath, gamesFolderPath) {
     const xmlPath = path.join(profilesDir, fileName)
     let game
     try {
-      game = parseProfile(xmlPath, fileName, gamesFolderPath)
+      game = await parseProfile(xmlPath, fileName, gamesFolderPath)
     } catch (e) {
       stats.hidden++
       continue
