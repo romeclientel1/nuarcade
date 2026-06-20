@@ -174,7 +174,7 @@ export default function ScanScreen({ config, updateConfig, next, prev }) {
       </div>
       <div className={styles.sub}>
         {emptyState
-          ? "No games found yet -- totally fine. Add games to your F: drive folders and rescan from Settings anytime."
+          ? "No games found yet -- totally fine. Add games to your configured folders and rescan from Settings anytime."
           : 'Scanning all emulators and matching game files automatically.'}
       </div>
 
@@ -184,11 +184,21 @@ export default function ScanScreen({ config, updateConfig, next, prev }) {
         </div>
         <div className={styles.scanStats}>
           <div>TP <span>{counts.tp}</span></div>
+          <div>MAME <span>{counts.mame}</span></div>
           <div>PS3 <span>{counts.ps3}</span></div>
           <div>X360 <span>{counts.xbox360}</span></div>
           <div>GC/Wii <span>{counts.gcwii}</span></div>
           <div>PS2 <span>{counts.ps2}</span></div>
           <div>Switch <span>{counts.switch}</span></div>
+          <div>PS1 <span>{counts.ps1}</span></div>
+          <div>DC <span>{counts.dreamcast}</span></div>
+          <div>Model2 <span>{counts.model2}</span></div>
+          <div>Model3 <span>{counts.model3}</span></div>
+          <div>RetroArch <span>{counts.retroarch}</span></div>
+          <div>PSP <span>{counts.psp}</span></div>
+          <div>WiiU <span>{counts.wiiu}</span></div>
+          <div>Steam <span>{counts.steam}</span></div>
+          <div>PC <span>{counts.pc}</span></div>
           <div>Pinball <span>{counts.pinball}</span></div>
         </div>
       </div>
@@ -210,7 +220,7 @@ export default function ScanScreen({ config, updateConfig, next, prev }) {
       {emptyState && (
         <div className={styles.emptyHint}>
           <div className={styles.emptyIcon}>[ ]</div>
-          <div className={styles.emptyText}>Add games to your F: drive folders, then rescan from Settings anytime.</div>
+          <div className={styles.emptyText}>Add games to your configured folders, then rescan from Settings anytime.</div>
         </div>
       )}
 
