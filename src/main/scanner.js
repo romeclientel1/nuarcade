@@ -202,6 +202,26 @@ async function scanGames(teknoParrotPath, gamesFolderPath) {
   const fsS  = require('fs')
   const path = require('path')
 
+  // FFB plugin-only folder fingerprint -- these folders have no real game files
+  const FFB_ONLY = new Set([
+    'd3d9.dll', 'ffbplugingui.ini', 'ffbplugingui.exe', 'ffbpluginreadme.txt',
+    'metroframework.dll', 'sdl2.dll'
+  ])
+
+  const isFFBOnlyFolder = (folderPath) => {
+    try {
+      const files = fsS.readdirSync(folderPath).map(f => f.toLowerCase())
+      const hasGameFile = files.some(f => {
+        if (FFB_ONLY.has(f)) return false  // known FFB file -- ignore
+        if (['.exe', '.bat', '.cmd', '.lnk', '.iso', '.xex', '.bin', '.cue'].some(ext => f.endsWith(ext))) return true
+        return false
+      })
+      return !hasGameFile  // if no real game files found, it's FFB-only
+    } catch (e) {
+      return false  // if we can't read it, assume it has a game
+    }
+  }
+
   const stats = { total: 0, visible: 0, hidden: 0, reasons: {} }
 
   if (!teknoParrotPath || !fsS.existsSync(teknoParrotPath)) {
@@ -223,13 +243,11 @@ async function scanGames(teknoParrotPath, gamesFolderPath) {
   const xmlFiles = allFiles.filter(f => f.toLowerCase().endsWith('.xml'))
   stats.total = xmlFiles.length
 
-  // Per-file timeout -- 5s max per XML read
   const withFileTimeout = (promise) => Promise.race([
     promise,
     new Promise((_, reject) => setTimeout(() => reject(new Error('file timeout')), 5000))
   ])
 
-  // Parse all profiles in batches of 10
   const results = []
   for (let i = 0; i < xmlFiles.length; i += 10) {
     const batch = xmlFiles.slice(i, i + 10)
@@ -248,18 +266,28 @@ async function scanGames(teknoParrotPath, gamesFolderPath) {
     if (BROKEN_STATUS.includes(game.status)) { stats.hidden++; continue }
     if (game.isSubscription) { stats.hidden++; continue }
 
-    // Check if game folder actually exists -- TP ships profiles for ALL supported games,
-    // not just ones the user has installed. GameLocation tells us where the game should be.
+    // Check if game folder exists
     const gameFolder = game.exePath ? path.dirname(game.exePath) : ''
-    if (!gameFolder || !fsS.existsSync(gameFolder)) {
-      // Also try gamesFolderPath as fallback
+    let resolvedFolder = (gameFolder && fsS.existsSync(gameFolder)) ? gameFolder : ''
+
+    if (!resolvedFolder) {
       const altFolder = gamesFolderPath && game.id
         ? path.join(gamesFolderPath, game.id)
         : ''
-      if (!altFolder || !fsS.existsSync(altFolder)) {
-        stats.hidden++
-        continue
+      if (altFolder && fsS.existsSync(altFolder)) {
+        resolvedFolder = altFolder
       }
+    }
+
+    if (!resolvedFolder) {
+      stats.hidden++
+      continue
+    }
+
+    // Skip folders that only contain FFB plugin files -- no actual game installed
+    if (isFFBOnlyFolder(resolvedFolder)) {
+      stats.hidden++
+      continue
     }
 
     const foundExePath = resolveExePath(game, gamesFolderPath)
