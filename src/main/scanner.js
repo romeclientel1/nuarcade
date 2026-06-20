@@ -202,10 +202,6 @@ function resolveExePath(game, gamesFolderPath) {
 const yieldToEventLoop = () => new Promise(r => setImmediate(r))
 
 function scanGames(teknoParrotPath, gamesFolderPath) {
-  const fs   = require('fs')
-  const path = require('path')
-  const xml  = require('fast-xml-parser')
-
   const games = []
   const stats = { total: 0, visible: 0, hidden: 0, reasons: {} }
 
