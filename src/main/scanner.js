@@ -201,45 +201,49 @@ function resolveExePath(game, gamesFolderPath) {
 // process stays responsive and Windows doesn't show "Not Responding"
 const yieldToEventLoop = () => new Promise(r => setImmediate(r))
 
-async function scanGames(teknoParrotPath, gamesFolderPath) {
+function scanGames(teknoParrotPath, gamesFolderPath) {
+  const fs   = require('fs')
+  const path = require('path')
+  const xml  = require('fast-xml-parser')
+
+  const games = []
+  const stats = { total: 0, visible: 0, hidden: 0, reasons: {} }
+
+  if (!teknoParrotPath || !fs.existsSync(teknoParrotPath)) {
+    return { games, stats, error: 'TeknoParrot path not found' }
+  }
+
   const profilesDir = path.join(teknoParrotPath, 'GameProfiles')
-
   if (!fs.existsSync(profilesDir)) {
-    return {
-      games: [],
-      stats: { total: 0, visible: 0, hidden: 0, reasons: {} },
-      error: `GameProfiles folder not found at: ${profilesDir}`
-    }
+    return { games, stats, error: 'GameProfiles folder not found' }
   }
 
-  const xmlFiles = fs.readdirSync(profilesDir)
-    .filter(f => f.toLowerCase().endsWith('.xml'))
+  let xmlFiles
+  try {
+    xmlFiles = fs.readdirSync(profilesDir).filter(f => f.toLowerCase().endsWith('.xml'))
+  } catch (e) {
+    return { games, stats, error: e.message }
+  }
 
-  const stats = {
-    total: xmlFiles.length,
-    visible: 0,
-    hidden: 0,
+  stats.total = xmlFiles.length
+
+  for (const fileName of xmlFiles) {
+    const xmlPath = path.join(profilesDir, fileName)
+    const game = parseProfile(xmlPath, fileName, gamesFolderPath)
+    if (!game) { stats.hidden++; continue }
+
+    if (BROKEN_STATUS.includes(game.status)) { stats.hidden++; continue }
+    if (game.isSubscription) { stats.hidden++; continue }
+
     // TP launches via TeknoParrotUi.exe --profile -- XML existing is enough
-    // Resolve exe path if possible but never hide a game just because exe not found
-    let foundExePath = resolveExePath(game, gamesFolderPath)
-    game.exePath = foundExePath || game.exePath || ''
-    game.exeFound = !!(foundExePath && fs.existsSync(foundExePath))
-    game.visible = true
-    stats.visible++
-    games.push(game)
-    // Even without a resolved exe, TP can launch via --profile if folder is present
-    game.visible = true
+    // Try to resolve exe path but never hide game if not found
+    const foundExePath = resolveExePath(game, gamesFolderPath)
+    game.exePath   = foundExePath || game.exePath || ''
+    game.exeFound  = !!(foundExePath && fs.existsSync(foundExePath))
+    game.visible   = true
     stats.visible++
     games.push(game)
   }
-
-  stats.hidden = stats.total - stats.visible
-
-  const statusOrder = { Perfect: 0, Great: 1, Playable: 2, Unverified: 3 }
-  games.sort((a, b) => {
-    const diff = (statusOrder[a.status] ?? 4) - (statusOrder[b.status] ?? 4)
-    return diff !== 0 ? diff : a.title.localeCompare(b.title)
-  })
 
   return { games, stats }
 }
