@@ -209,20 +209,29 @@ async function scanGames(teknoParrotPath, gamesFolderPath) {
     return { games: [], stats, error: 'TeknoParrot path not found' }
   }
 
+  // TeknoParrot stores DEFAULT profiles in GameProfiles/
+  // but CONFIGURED profiles (with GamePath set) are in UserProfiles/
   const profilesDir = path.join(teknoParrotPath, 'GameProfiles')
-  if (!fsS.existsSync(profilesDir)) {
-    return { games: [], stats, error: 'GameProfiles folder not found' }
+  const userProfilesDir = path.join(teknoParrotPath, 'UserProfiles')
+  const useUserProfiles = fsS.existsSync(userProfilesDir)
+
+  const scanDir = useUserProfiles ? userProfilesDir : profilesDir
+  console.log('[scanGames] Using profiles dir:', scanDir)
+
+  if (!fsS.existsSync(scanDir)) {
+    return { games: [], stats, error: 'Profiles folder not found: ' + scanDir }
   }
 
   let allFiles
   try {
-    allFiles = await fsP.readdir(profilesDir)
+    allFiles = await fsP.readdir(scanDir)
   } catch (e) {
     return { games: [], stats, error: e.message }
   }
 
   const xmlFiles = allFiles.filter(f => f.toLowerCase().endsWith('.xml'))
   stats.total = xmlFiles.length
+  console.log('[scanGames] Found', xmlFiles.length, 'XML files in', scanDir)
 
   const withFileTimeout = (promise) => Promise.race([
     promise,
@@ -234,7 +243,7 @@ async function scanGames(teknoParrotPath, gamesFolderPath) {
     const batch = xmlFiles.slice(i, i + 10)
     const batchResults = await Promise.all(
       batch.map(fileName => {
-        const xmlPath = path.join(profilesDir, fileName)
+        const xmlPath = path.join(scanDir, fileName)
         return withFileTimeout(parseProfile(xmlPath, fileName, gamesFolderPath)).catch(() => null)
       })
     )
@@ -247,18 +256,18 @@ async function scanGames(teknoParrotPath, gamesFolderPath) {
     if (BROKEN_STATUS.includes(game.status)) { stats.hidden++; continue }
     if (game.isSubscription) { stats.hidden++; continue }
 
-    // GamePath in the XML is only populated when user manually configures the game in TP
-    // If exePath is empty, the game has never been set up -- skip it
-    // If exePath is set, check that the file or its directory actually exists
+    // Log first few games to see what exePath looks like
+    if (games.length < 3) {
+      console.log('[scanGames] game:', game.id, 'exePath:', game.exePath)
+    }
+
     if (!game.exePath) {
       stats.hidden++
       continue
     }
 
-    // exePath is the full path to the game exe as set by user in TP
-    // Check if either the exe itself exists, or at least its parent folder
     const exeDir = path.dirname(game.exePath)
-    const gameExists = fsS.existsSync(game.exePath) || fsS.existsSync(exeDir)
+    const gameExists = fsS.existsSync(game.exePath) || (exeDir !== '.' && fsS.existsSync(exeDir))
     if (!gameExists) {
       stats.hidden++
       continue
@@ -272,6 +281,7 @@ async function scanGames(teknoParrotPath, gamesFolderPath) {
     games.push(game)
   }
 
+  console.log('[scanGames] Result:', games.length, 'visible,', stats.hidden, 'hidden')
   return { games, stats }
 }
 
