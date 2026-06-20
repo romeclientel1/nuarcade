@@ -247,11 +247,19 @@ async function scanGames(teknoParrotPath, gamesFolderPath) {
     if (BROKEN_STATUS.includes(game.status)) { stats.hidden++; continue }
     if (game.isSubscription) { stats.hidden++; continue }
 
-    // Use GameLocation from XML directly -- this is what TP itself uses
-    // Only include game if GameLocation is set AND that folder exists on disk
-    const gameLocation = game.gameLocation || ''
-    if (!gameLocation || !fsS.existsSync(gameLocation)) {
-      // GameLocation not set = game not configured in TP yet
+    // GamePath in the XML is only populated when user manually configures the game in TP
+    // If exePath is empty, the game has never been set up -- skip it
+    // If exePath is set, check that the file or its directory actually exists
+    if (!game.exePath) {
+      stats.hidden++
+      continue
+    }
+
+    // exePath is the full path to the game exe as set by user in TP
+    // Check if either the exe itself exists, or at least its parent folder
+    const exeDir = path.dirname(game.exePath)
+    const gameExists = fsS.existsSync(game.exePath) || fsS.existsSync(exeDir)
+    if (!gameExists) {
       stats.hidden++
       continue
     }
