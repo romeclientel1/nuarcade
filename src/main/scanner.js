@@ -269,9 +269,9 @@ async function scanGames(teknoParrotPath, gamesFolderPath) {
     }
 
     // Game folder exists -- find the actual launch file (.exe/.bat/.cmd/.lnk)
-    let exePath = resolveExePath(game, gamesFolderPath)
-    game.exePath = exePath || game.exePath || ''
-    game.exeFound = !!(exePath && fs.existsSync(exePath))
+    let foundExePath = resolveExePath(game, gamesFolderPath)
+    game.foundExePath = foundExePath || game.foundExePath || ''
+    game.exeFound = !!(foundExePath && fs.existsSync(foundExePath))
     // Even without a resolved exe, TP can launch via --profile if folder is present
     game.visible = true
     stats.visible++
