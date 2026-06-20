@@ -223,13 +223,24 @@ async function scanGames(teknoParrotPath, gamesFolderPath) {
   const xmlFiles = allFiles.filter(f => f.toLowerCase().endsWith('.xml'))
   stats.total = xmlFiles.length
 
-  // Parse ALL profiles in parallel -- no sequential blocking
-  const results = await Promise.all(
-    xmlFiles.map(fileName => {
-      const xmlPath = path.join(profilesDir, fileName)
-      return parseProfile(xmlPath, fileName, gamesFolderPath).catch(() => null)
-    })
-  )
+  // Per-file timeout wrapper -- 5s per XML max
+  const withFileTimeout = (promise) => Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error('file timeout')), 5000))
+  ])
+
+  // Process in batches of 10 to avoid overwhelming external SSD
+  const results = []
+  for (let i = 0; i < xmlFiles.length; i += 10) {
+    const batch = xmlFiles.slice(i, i + 10)
+    const batchResults = await Promise.all(
+      batch.map(fileName => {
+        const xmlPath = path.join(profilesDir, fileName)
+        return withFileTimeout(parseProfile(xmlPath, fileName, gamesFolderPath)).catch(() => null)
+      })
+    )
+    results.push(...batchResults)
+  }
 
   const games = []
   for (const game of results) {
