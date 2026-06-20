@@ -209,18 +209,13 @@ async function scanGames(teknoParrotPath, gamesFolderPath) {
     return { games: [], stats, error: 'TeknoParrot path not found' }
   }
 
-  // TeknoParrot stores DEFAULT profiles in GameProfiles/
-  // but CONFIGURED profiles (with GamePath set) are in UserProfiles/
-  const profilesDir = path.join(teknoParrotPath, 'GameProfiles')
+  // UserProfiles has the configured games (GamePath set by user in TP UI)
+  // GameProfiles has templates only (GamePath always empty)
   const userProfilesDir = path.join(teknoParrotPath, 'UserProfiles')
-  const useUserProfiles = fsS.existsSync(userProfilesDir)
+  const profilesDir     = path.join(teknoParrotPath, 'GameProfiles')
+  const scanDir = fsS.existsSync(userProfilesDir) ? userProfilesDir : profilesDir
 
-  const scanDir = useUserProfiles ? userProfilesDir : profilesDir
-  console.log('[scanGames] Using profiles dir:', scanDir)
-
-  if (!fsS.existsSync(scanDir)) {
-    return { games: [], stats, error: 'Profiles folder not found: ' + scanDir }
-  }
+  console.log('[scanGames] Scanning:', scanDir)
 
   let allFiles
   try {
@@ -231,7 +226,7 @@ async function scanGames(teknoParrotPath, gamesFolderPath) {
 
   const xmlFiles = allFiles.filter(f => f.toLowerCase().endsWith('.xml'))
   stats.total = xmlFiles.length
-  console.log('[scanGames] Found', xmlFiles.length, 'XML files in', scanDir)
+  console.log('[scanGames] Found', xmlFiles.length, 'XMLs')
 
   const withFileTimeout = (promise) => Promise.race([
     promise,
@@ -256,32 +251,22 @@ async function scanGames(teknoParrotPath, gamesFolderPath) {
     if (BROKEN_STATUS.includes(game.status)) { stats.hidden++; continue }
     if (game.isSubscription) { stats.hidden++; continue }
 
-    // Log first few games to see what exePath looks like
-    if (games.length < 3) {
-      console.log('[scanGames] game:', game.id, 'exePath:', game.exePath)
-    }
-
-    if (!game.exePath) {
-      stats.hidden++
-      continue
-    }
-
-    const exeDir = path.dirname(game.exePath)
-    const gameExists = fsS.existsSync(game.exePath) || (exeDir !== '.' && fsS.existsSync(exeDir))
-    if (!gameExists) {
+    // If scanning UserProfiles, every XML is a game the user has added to TP
+    // Trust that GamePath is set -- only skip if truly empty
+    if (!game.exePath || game.exePath.trim() === '') {
       stats.hidden++
       continue
     }
 
     const foundExePath = resolveExePath(game, gamesFolderPath)
     game.exePath  = foundExePath || game.exePath || ''
-    game.exeFound = !!(foundExePath && fsS.existsSync(foundExePath))
+    game.exeFound = !!(game.exePath && fsS.existsSync(game.exePath))
     game.visible  = true
     stats.visible++
     games.push(game)
   }
 
-  console.log('[scanGames] Result:', games.length, 'visible,', stats.hidden, 'hidden')
+  console.log('[scanGames] Result:', games.length, 'games')
   return { games, stats }
 }
 
