@@ -113,7 +113,10 @@ ipcMain.handle('run-updater', async () => {
 // -- Scan TeknoParrot games --------------------------------------------------
 ipcMain.handle('scan-games', async (event, { teknoParrotPath, gamesFolderPath }) => {
   const { scanGames } = require('./scanner')
-  return await scanGames(teknoParrotPath, gamesFolderPath)
+  const timeout = new Promise(resolve =>
+    setTimeout(() => resolve({ games: [], stats: {}, error: 'scan timed out' }), 25000)
+  )
+  return await Promise.race([scanGames(teknoParrotPath, gamesFolderPath), timeout])
 })
 
 // -- Scan RPCS3 games --------------------------------------------------------
