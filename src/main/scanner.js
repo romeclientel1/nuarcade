@@ -151,6 +151,7 @@ async function parseProfile(xmlPath) {
       year, manufacturer, players, description,
       profile: fileName,
       profilePath: xmlPath,
+      gameLocation: GameLocation,
       title, exePath, exeName,
       status, genre, system,
       isSubscription,
@@ -246,10 +247,11 @@ async function scanGames(teknoParrotPath, gamesFolderPath) {
     if (BROKEN_STATUS.includes(game.status)) { stats.hidden++; continue }
     if (game.isSubscription) { stats.hidden++; continue }
 
-    // Only include games where GameLocation is set AND the folder exists on disk
-    // This matches what TeknoParrot itself shows as configured/runnable
-    const gameFolder = game.exePath ? path.dirname(game.exePath) : ''
-    if (!gameFolder || !fsS.existsSync(gameFolder)) {
+    // Use GameLocation from XML directly -- this is what TP itself uses
+    // Only include game if GameLocation is set AND that folder exists on disk
+    const gameLocation = game.gameLocation || ''
+    if (!gameLocation || !fsS.existsSync(gameLocation)) {
+      // GameLocation not set = game not configured in TP yet
       stats.hidden++
       continue
     }
