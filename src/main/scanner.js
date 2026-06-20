@@ -223,13 +223,13 @@ async function scanGames(teknoParrotPath, gamesFolderPath) {
   const xmlFiles = allFiles.filter(f => f.toLowerCase().endsWith('.xml'))
   stats.total = xmlFiles.length
 
-  // Per-file timeout wrapper -- 5s per XML max
+  // Per-file timeout -- 5s max per XML read
   const withFileTimeout = (promise) => Promise.race([
     promise,
     new Promise((_, reject) => setTimeout(() => reject(new Error('file timeout')), 5000))
   ])
 
-  // Process in batches of 10 to avoid overwhelming external SSD
+  // Parse all profiles in batches of 10
   const results = []
   for (let i = 0; i < xmlFiles.length; i += 10) {
     const batch = xmlFiles.slice(i, i + 10)
@@ -247,6 +247,20 @@ async function scanGames(teknoParrotPath, gamesFolderPath) {
     if (!game) { stats.hidden++; continue }
     if (BROKEN_STATUS.includes(game.status)) { stats.hidden++; continue }
     if (game.isSubscription) { stats.hidden++; continue }
+
+    // Check if game folder actually exists -- TP ships profiles for ALL supported games,
+    // not just ones the user has installed. GameLocation tells us where the game should be.
+    const gameFolder = game.exePath ? path.dirname(game.exePath) : ''
+    if (!gameFolder || !fsS.existsSync(gameFolder)) {
+      // Also try gamesFolderPath as fallback
+      const altFolder = gamesFolderPath && game.id
+        ? path.join(gamesFolderPath, game.id)
+        : ''
+      if (!altFolder || !fsS.existsSync(altFolder)) {
+        stats.hidden++
+        continue
+      }
+    }
 
     const foundExePath = resolveExePath(game, gamesFolderPath)
     game.exePath  = foundExePath || game.exePath || ''
