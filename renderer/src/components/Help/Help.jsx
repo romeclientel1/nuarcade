@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import { useGamepad } from '../../hooks/useGamepad'
 import { useOverlayGamepad } from '../../hooks/useOverlayGamepad'
 import styles from './Help.module.css'
 
@@ -48,6 +49,12 @@ const EMULATORS = [
 ]
 
 export default function Help({ onClose }) {
+  const scrollRef = useRef(null)
+  useGamepad({
+    back: onClose,
+    up:   () => scrollRef.current?.scrollBy({ top: -120, behavior: 'smooth' }),
+    down: () => scrollRef.current?.scrollBy({ top:  120, behavior: 'smooth' }),
+  })
   const bodyRef = useRef(null)
   useOverlayGamepad({
     onClose,
