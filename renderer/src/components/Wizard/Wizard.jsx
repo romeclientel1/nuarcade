@@ -63,6 +63,8 @@ useGamepad({
     back:    prev,
     right:   next,
     left:    prev,
+    up:      prev,
+    down:    next,
   })
 
 
