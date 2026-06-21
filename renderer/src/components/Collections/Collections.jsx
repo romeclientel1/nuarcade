@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from "react"
+import { useGamepad } from '../../hooks/useGamepad'
 import { useOverlayGamepad } from "../../hooks/useOverlayGamepad"
 import styles from "./Collections.module.css"
 
@@ -56,6 +57,12 @@ export function useCollections() {
 }
 
 export default function Collections({ games, currentGame, onClose }) {
+  const scrollRef = useRef(null)
+  useGamepad({
+    back: onClose,
+    up:   () => scrollRef.current?.scrollBy({ top: -120, behavior: 'smooth' }),
+    down: () => scrollRef.current?.scrollBy({ top:  120, behavior: 'smooth' }),
+  })
   const { getCollections, createCollection, deleteCollection, addToCollection, removeFromCollection, renameCollection } = useCollections()
   const sideRef = useRef(null)
   const mainRef = useRef(null)
@@ -109,7 +116,7 @@ export default function Collections({ games, currentGame, onClose }) {
     : []
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
+    <div className={styles.overlay} onClick={onClose} ref={scrollRef}>
       <div className={styles.panel} onClick={e => e.stopPropagation()}>
         <div className={styles.header}>
           <div className={styles.title}>Collections</div>
