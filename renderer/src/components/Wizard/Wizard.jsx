@@ -22,7 +22,9 @@ const SCREENS = [
 ]
 
 export default function Wizard({ onComplete }) {
-  const [step, setStep] = useState(0)
+  const [step,        setStep       ] = useState(0)
+  const [exitConfirm, setExitConfirm] = useState(false)
+  const exitTimer = useRef(null)
   // Xbox controller: A=Next, B=Back in wizard
 
   const [config, setConfig] = useState({
@@ -58,13 +60,24 @@ export default function Wizard({ onComplete }) {
     if (step > 0) setStep(s => s - 1)
   }
 
-useGamepad({
+const handleExit = () => {
+    if (exitConfirm) {
+      window.nuarcade?.closeApp?.()
+    } else {
+      setExitConfirm(true)
+      clearTimeout(exitTimer.current)
+      exitTimer.current = setTimeout(() => setExitConfirm(false), 3000)
+    }
+  }
+
+  useGamepad({
     confirm: next,
     back:    prev,
     right:   next,
     left:    prev,
     up:      prev,
     down:    next,
+    select:  handleExit,
   })
 
 
@@ -101,6 +114,13 @@ useGamepad({
       <div className={styles.grid} />
 
       <div className={styles.header}>
+          <button
+            className={styles.exitBtn + (exitConfirm ? ' ' + styles.exitConfirm : '')}
+            onClick={handleExit}
+            title="Exit NuArcade"
+          >
+            {exitConfirm ? 'CONFIRM' : 'EXIT'}
+          </button>
         <div className={styles.logo}>
           <span className={styles.logoNu}>Nu</span>
           <span className={styles.logoArcade}>Arcade</span>
