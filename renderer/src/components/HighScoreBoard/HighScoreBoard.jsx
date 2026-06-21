@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { useGamepad } from '../../hooks/useGamepad'
 import styles from './HighScoreBoard.module.css'
 
 const SCORES_KEY = (gameId) => 'nuarcade_scores_' + gameId
@@ -32,6 +33,12 @@ export function getAllScores(games) {
 }
 
 export default function HighScoreBoard({ games, onClose, activeProfile }) {
+  const scrollRef = useRef(null)
+  useGamepad({
+    back: onClose,
+    up:   () => scrollRef.current?.scrollBy({ top: -120, behavior: 'smooth' }),
+    down: () => scrollRef.current?.scrollBy({ top:  120, behavior: 'smooth' }),
+  })
   const [tab,      setTab     ] = useState('all')   // 'all' | 'game' | 'player'
   const [gameId,   setGameId  ] = useState(null)
   const [allScores, setAllScores] = useState([])
