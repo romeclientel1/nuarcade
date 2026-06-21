@@ -41,13 +41,12 @@ const ACHIEVEMENTS = [
 ]
 
 export default function Achievements({ games, onClose }) {
-  const scrollRef = useRef(null)
+  const bodyRef = useRef(null)
   useGamepad({
     back: onClose,
-    up:   () => scrollRef.current?.scrollBy({ top: -120, behavior: 'smooth' }),
-    down: () => scrollRef.current?.scrollBy({ top:  120, behavior: 'smooth' }),
+    up:   () => bodyRef.current?.scrollBy({ top: -120, behavior: 'smooth' }),
+    down: () => bodyRef.current?.scrollBy({ top:  120, behavior: 'smooth' }),
   })
-  const bodyRef = useRef(null)
   const [stats, setStats] = useState(() => computeStats(games))
 
   useEffect(() => {
