@@ -96,28 +96,47 @@ F:\
 
 NuArcade is fully playable with an Xbox controller. Plug it in before launching.
 
+### INSERT COIN Screen
+
+| Button | Action |
+|---|---|
+| D-pad Up | Move focus to EXIT button |
+| D-pad Down | Move focus down (wraps from EXIT back to profiles) |
+| D-pad Left / Right | Cycle between profiles, New Player, Play as Guest |
+| A | Select focused item (profile, New Player, Guest, or EXIT) |
+| B | Quick shortcut to Play as Guest |
+| A on EXIT (x2) | First press shows CONFIRM, second press exits app |
+
 ### Main Wheel
 
 | Button | Action |
 |---|---|
-| D-pad Up / Left Stick Up | Navigate up |
-| D-pad Down / Left Stick Down | Navigate down |
-| D-pad Left / LB | Previous category filter |
-| D-pad Right / RB | Next category filter |
-| A | Open game detail |
+| D-pad Left / Left Stick Left | Previous game |
+| D-pad Right / Left Stick Right | Next game |
+| D-pad Up | Previous system tab |
+| D-pad Down | Next system tab |
+| A | Open game detail screen |
 | B | Close overlay / go back |
-| X | Toggle favorite |
-| Y | Flip card (show game info on card back) |
-| RT | Launch game |
-| Select | Random game |
-| Start | Settings |
+| Start | Open Settings |
+| Select | Open Search |
+
+### Game Detail Screen
+
+| Button | Action |
+|---|---|
+| A | Launch the game |
+| B | Close detail, return to wheel |
 
 ### Setup Wizard
 
 | Button | Action |
 |---|---|
-| A | Next step |
-| B | Previous step |
+| D-pad Right / Down / A | Next step |
+| D-pad Left / Up / B | Previous step |
+| Select (x2) | First press shows CONFIRM EXIT, second press exits app |
+| Controllers Screen: D-pad Left/Right | Cycle between controller cards |
+| Controllers Screen: A | Toggle selected controller ON/OFF |
+| Controllers Screen: D-pad Down to Continue + A | Advance to next step |
 
 ---
 
