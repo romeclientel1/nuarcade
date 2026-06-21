@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
+import { useGamepad } from '../../hooks/useGamepad'
 import ControllerTest from "../ControllerTest/ControllerTest"
 import { usePlaytime } from "../../hooks/usePlaytime"
 import ArtworkManager from "../ArtworkManager/ArtworkManager"
@@ -7,6 +8,13 @@ import { useVersionCheck } from "../../hooks/useVersionCheck"
 import { THEMES } from "../../hooks/useTheme"
 
 export default function Settings({ games = [], onClose, onCRTChange, crtEnabled, themeId, onThemeChange, onSetupWizard }) {
+  const scrollRef = useRef(null)
+  useGamepad({
+    back: onClose,
+    up:   () => scrollRef.current?.scrollBy({ top: -200, behavior: 'smooth' }),
+    down: () => scrollRef.current?.scrollBy({ top:  200, behavior: 'smooth' }),
+  })
+
   const [config, setConfig] = useState(null)
   const [saved, setSaved] = useState(false)
   const [exporting, setExporting] = useState(false)
@@ -216,7 +224,7 @@ const handleSave = async () => {
   if (!config) return null
 
   return (
-    <div className={styles.overlay}>
+    <div className={styles.overlay} ref={scrollRef}>
       <div className={styles.panel}>
         <div className={styles.header}>
           <div className={styles.headerLeft}>
