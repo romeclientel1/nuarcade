@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react"
+import { useOverlayGamepad } from '../../hooks/useOverlayGamepad'
 import styles from "./MediaManager.module.css"
 import ArtworkManager from "../ArtworkManager/ArtworkManager"
 
@@ -13,11 +14,22 @@ const SAMPLE_GAMES = [
   { id: "BlazBlueCrossTagBattle", title: "BlazBlue Cross Tag Battle",  genre: "Fighting", system: "NESiCAxLive", hasVideo: false },
 ]
 
+const TABS = ['library', 'artwork', 'about']
+
 export default function MediaManager({ onClose, onVideosUpdated }) {
+  const scrollRef = useRef(null)
   const [games, setGames] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState("all")
   const [tab, setTab] = useState("library")
+
+  useOverlayGamepad({
+    onClose,
+    onUp:    () => scrollRef.current?.scrollBy({ top: -120, behavior: 'smooth' }),
+    onDown:  () => scrollRef.current?.scrollBy({ top:  120, behavior: 'smooth' }),
+    onLeft:  () => setTab(t => { const i = TABS.indexOf(t); return TABS[Math.max(0, i-1)] }),
+    onRight: () => setTab(t => { const i = TABS.indexOf(t); return TABS[Math.min(TABS.length-1, i+1)] }),
+  })
   const [showArtworkMgr, setShowArtworkMgr] = useState(false)
   const [mmConfig, setMmConfig] = useState({})
   const [downloading, setDownloading] = useState({})
@@ -365,7 +377,7 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
   }
 
   return (
-    <div className={styles.overlay}>
+    <div className={styles.overlay} ref={scrollRef}>
       <div className={styles.panel}>
         <div className={styles.header}>
           <div className={styles.headerLeft}>
