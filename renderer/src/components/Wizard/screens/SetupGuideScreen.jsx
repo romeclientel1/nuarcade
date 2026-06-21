@@ -325,7 +325,7 @@ export default function SetupGuideScreen({ config, next, prev }) {
 
   return (
     <div className={styles.screen}>
-      <div className={styles.eyebrow}>Step 4 -- Emulator Setup</div>
+      <div className={styles.eyebrow}>Step 2 -- Emulator Setup</div>
       <div className={styles.title}>Install your emulators</div>
       <div className={styles.sub}>
         NuArcade manages your library automatically -- but each emulator needs
