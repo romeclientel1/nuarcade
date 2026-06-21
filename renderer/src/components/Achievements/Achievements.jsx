@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react"
+import { useGamepad } from '../../hooks/useGamepad'
 import { useOverlayGamepad } from "../../hooks/useOverlayGamepad"
 import styles from "./Achievements.module.css"
 import { computeStats } from "./computeStats"
@@ -40,6 +41,12 @@ const ACHIEVEMENTS = [
 ]
 
 export default function Achievements({ games, onClose }) {
+  const scrollRef = useRef(null)
+  useGamepad({
+    back: onClose,
+    up:   () => scrollRef.current?.scrollBy({ top: -120, behavior: 'smooth' }),
+    down: () => scrollRef.current?.scrollBy({ top:  120, behavior: 'smooth' }),
+  })
   const bodyRef = useRef(null)
   const [stats, setStats] = useState(() => computeStats(games))
 
