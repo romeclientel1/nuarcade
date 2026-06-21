@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useGamepad } from '../../hooks/useGamepad'
+import { useOverlayGamepad } from '../../hooks/useOverlayGamepad'
 import styles from './GameCoach.module.css'
 
 export default function GameCoach({ game, onClose }) {
