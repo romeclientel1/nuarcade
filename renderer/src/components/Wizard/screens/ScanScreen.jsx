@@ -196,7 +196,7 @@ export default function ScanScreen({ config, updateConfig, next, prev }) {
 
   return (
     <div className={styles.screen}>
-      <div className={styles.eyebrow}>Step 6 -- Game Scan</div>
+      <div className={styles.eyebrow}>Step 5 -- Game Scan</div>
       <div className={styles.title}>
         {done ? emptyState ? 'Ready -- add games anytime.' : `Found ${totalFound} game${totalFound !== 1 ? 's' : ''}!` : 'Scanning your library...'}
       </div>
