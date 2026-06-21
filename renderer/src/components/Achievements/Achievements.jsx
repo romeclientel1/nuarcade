@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react"
-import { useGamepad } from '../../hooks/useGamepad'
-import { useGamepad } from '../../hooks/useGamepad'
+import { useOverlayGamepad } from '../../hooks/useOverlayGamepad'
 import styles from "./Achievements.module.css"
 import { computeStats } from "./computeStats"
 
@@ -42,10 +41,11 @@ const ACHIEVEMENTS = [
 
 export default function Achievements({ games, onClose }) {
   const bodyRef = useRef(null)
-  useGamepad({
-    back: onClose,
-    up:   () => bodyRef.current?.scrollBy({ top: -120, behavior: 'smooth' }),
-    down: () => bodyRef.current?.scrollBy({ top:  120, behavior: 'smooth' }),
+  useOverlayGamepad({
+    onClose,
+    onUp:   () => bodyRef.current?.scrollBy({ top: -120, behavior: 'smooth' }),
+    onDown: () => bodyRef.current?.scrollBy({ top:  120, behavior: 'smooth',
+  }),
   })
   const [stats, setStats] = useState(() => computeStats(games))
 
@@ -54,13 +54,6 @@ export default function Achievements({ games, onClose }) {
     const interval = setInterval(() => setStats(computeStats(games)), 10000)
     return () => clearInterval(interval)
   }, [games])
-
-  useGamepad({
-    back:  onClose,
-    up:    () => bodyRef.current?.scrollBy({ top: -80, behavior: "smooth" }),
-    down:  () => bodyRef.current?.scrollBy({ top:  80, behavior: "smooth",
-  }),
-  })
 
   const unlocked = ACHIEVEMENTS.filter(a => a.check(stats))
   const locked   = ACHIEVEMENTS.filter(a => !a.check(stats))
