@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react"
 import { usePlaytime } from "../../hooks/usePlaytime"
+import { useGamepad } from "../../hooks/useGamepad"
 import { useGameNotes } from "../../hooks/useGameNotes"
 import { useCollections } from "../Collections/Collections"
 import ControllerBadge from "../ControllerBadge/ControllerBadge"
@@ -110,6 +111,8 @@ export default function GameDetail({ game, onClose, onLaunch, launching, artwork
   const [savingController, setSavingController] = useState(false)
 
   const { getNote, saveNote, getRating, saveRating } = useGameNotes()
+  useGamepad({ confirm: onLaunch, back: onClose })
+
   const { getPlaytime, getLaunches, formatTime, formatLastPlayed } = usePlaytime()
   const { getCollections, addToCollection, removeFromCollection } = useCollections()
   const [note, setNote] = useState("")
