@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react"
-import { useGamepad } from '../../hooks/useGamepad'
+import { useOverlayGamepad } from '../../hooks/useOverlayGamepad'
 import ControllerTest from "../ControllerTest/ControllerTest"
 import { usePlaytime } from "../../hooks/usePlaytime"
 import ArtworkManager from "../ArtworkManager/ArtworkManager"
@@ -9,10 +9,10 @@ import { THEMES } from "../../hooks/useTheme"
 
 export default function Settings({ games = [], onClose, onCRTChange, crtEnabled, themeId, onThemeChange, onSetupWizard }) {
   const scrollRef = useRef(null)
-  useGamepad({
-    back: onClose,
-    up:   () => scrollRef.current?.scrollBy({ top: -200, behavior: 'smooth' }),
-    down: () => scrollRef.current?.scrollBy({ top:  200, behavior: 'smooth' }),
+  useOverlayGamepad({
+    onClose,
+    onUp:   () => scrollRef.current?.scrollBy({ top: -200, behavior: 'smooth' }),
+    onDown: () => scrollRef.current?.scrollBy({ top:  200, behavior: 'smooth' }),
   })
 
   const [config, setConfig] = useState(null)
