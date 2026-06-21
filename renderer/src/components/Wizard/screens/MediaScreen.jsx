@@ -69,7 +69,7 @@ export default function MediaScreen({ config, next, prev }) {
 
   return (
     <div className={styles.screen}>
-      <div className={styles.eyebrow}>Step 7 of 8</div>
+      <div className={styles.eyebrow}>Step 6 -- Media</div>
       <div className={styles.title}>Get Media</div>
       <div className={styles.sub}>
         Choose how to get artwork and video snaps for your games.
