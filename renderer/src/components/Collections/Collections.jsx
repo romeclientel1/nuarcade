@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from "react"
-import { useOverlayGamepad } from "../../hooks/useOverlayGamepad"
+import { useGamepad } from '../../hooks/useGamepad'
 import styles from "./Collections.module.css"
 
 const COLLECTIONS_KEY = "nuarcade_collections"
@@ -59,7 +59,7 @@ export default function Collections({ games, currentGame, onClose }) {
   const { getCollections, createCollection, deleteCollection, addToCollection, removeFromCollection, renameCollection } = useCollections()
   const sideRef = useRef(null)
   const mainRef = useRef(null)
-  useOverlayGamepad({
+  useGamepad({
     onClose,
     onUp:    () => sideRef.current?.scrollBy({ top: -60, behavior: 'smooth' }),
     onDown:  () => sideRef.current?.scrollBy({ top:  60, behavior: 'smooth' }),
@@ -109,7 +109,7 @@ export default function Collections({ games, currentGame, onClose }) {
     : []
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
+    <div className={styles.overlay} onClick={onClose} ref={scrollRef}>
       <div className={styles.panel} onClick={e => e.stopPropagation()}>
         <div className={styles.header}>
           <div className={styles.title}>Collections</div>
