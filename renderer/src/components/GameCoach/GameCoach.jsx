@@ -3,12 +3,6 @@ import { useOverlayGamepad } from '../../hooks/useOverlayGamepad'
 import styles from './GameCoach.module.css'
 
 export default function GameCoach({ game, onClose }) {
-  useGamepad({
-    back:    onClose,
-    up:      () => scrollRef.current?.scrollBy({ top: -120, behavior: 'smooth' }),
-    down:    () => scrollRef.current?.scrollBy({ top:  120, behavior: 'smooth' }),
-    confirm: () => scrollRef.current?.querySelector('input, textarea')?.focus(),
-  })
   const [text,    setText   ] = useState('')
   const [loading, setLoading] = useState(true)
   const [error,   setError  ] = useState(null)
