@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useGamepad } from '../../hooks/useGamepad'
 import styles from './Wizard.module.css'
 import WelcomeScreen from './screens/WelcomeScreen'
