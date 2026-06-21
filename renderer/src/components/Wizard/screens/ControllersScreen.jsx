@@ -83,7 +83,7 @@ export default function ControllersScreen({ config, updateConfig, next, prev }) 
 
   return (
     <div className={styles.screen}>
-      <div className={styles.eyebrow}>Step 5 -- Controllers</div>
+      <div className={styles.eyebrow}>Step 4 -- Controllers</div>
       <div className={styles.title}>Select your controllers.</div>
       <div className={styles.sub}>
         Choose which controllers you have connected. NuArcade will assign
@@ -117,7 +117,7 @@ export default function ControllersScreen({ config, updateConfig, next, prev }) 
         })}
       </div>
 
-      <div className={styles.btnRow}>
+      <div className={styles.btnRow} style={{ marginTop: 'auto', paddingTop: '2rem' }}>
         <button
           className={styles.btnBack + (focusIdx === BACK_IDX ? ' ' + styles.btnFocused : '')}
           onClick={prev}
