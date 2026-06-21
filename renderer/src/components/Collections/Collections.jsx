@@ -59,13 +59,6 @@ export default function Collections({ games, currentGame, onClose }) {
   const { getCollections, createCollection, deleteCollection, addToCollection, removeFromCollection, renameCollection } = useCollections()
   const sideRef = useRef(null)
   const mainRef = useRef(null)
-  useGamepad({
-    onClose,
-    onUp:    () => sideRef.current?.scrollBy({ top: -60, behavior: 'smooth' }),
-    onDown:  () => sideRef.current?.scrollBy({ top:  60, behavior: 'smooth' }),
-    onRight: () => mainRef.current?.scrollBy({ top:  60, behavior: 'smooth' }),
-    onLeft:  () => mainRef.current?.scrollBy({ top: -60, behavior: 'smooth' }),
-  })
   const [cols, setCols] = useState(() => getCollections())
   const [newName, setNewName] = useState("")
   const [activeCol, setActiveCol] = useState(null)
