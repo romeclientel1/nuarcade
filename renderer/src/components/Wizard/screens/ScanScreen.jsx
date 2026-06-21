@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useGamepad } from '../../../hooks/useGamepad'
 import styles from './Screen.module.css'
 
 const SAMPLE_FOUND = [
@@ -50,6 +51,7 @@ export default function ScanScreen({ config, updateConfig, next, prev }) {
   const [counts,       setCounts      ] = useState({ tp:0, ps3:0, xbox360:0, gcwii:0, ps2:0, switch:0, pinball:0, mame:0, ps1:0, dreamcast:0, model2:0, model3:0, retroarch:0, psp:0, wiiu:0, steam:0, pc:0 })
   const [completed,    setCompleted   ] = useState([])
   const [running,      setRunning     ] = useState(null)
+
   const [done,         setDone        ] = useState(false)
   const [visibleGames, setVisibleGames] = useState([])
   const [emptyState,   setEmptyState  ] = useState(false)
@@ -169,6 +171,14 @@ export default function ScanScreen({ config, updateConfig, next, prev }) {
       setDone(true)
     }
   }
+  // Gamepad: A = start scan or advance when done, B = go back
+  useGamepad({
+    confirm: () => {
+      if (done) next()
+      else if (!running) runScan()
+    },
+    back: () => { if (!running) prev() },
+  })
 
   const getStatus = (key) => {
     if (completed.includes(key)) return 'done'
