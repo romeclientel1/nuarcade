@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from "react"
-import { useGamepad } from '../../hooks/useGamepad'
+import { useOverlayGamepad } from '../../hooks/useOverlayGamepad'
 import styles from "./Collections.module.css"
 
 const COLLECTIONS_KEY = "nuarcade_collections"
