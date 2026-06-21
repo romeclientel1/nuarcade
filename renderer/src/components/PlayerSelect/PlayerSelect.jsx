@@ -5,46 +5,30 @@ import styles from './PlayerSelect.module.css'
 const MAX_NAME_LEN = 12
 
 export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDelete }) {
-  const [adding,      setAdding     ] = useState(false)
-  const [name,        setName       ] = useState('')
-  const [focusIdx,    setFocusIdx   ] = useState(1)  // start on first profile
+  const [adding,    setAdding   ] = useState(false)
+  const [name,      setName     ] = useState('')
+  const [selected,  setSelected ] = useState(null)
+  const [focusIdx,    setFocusIdx   ] = useState(1)
   const [exitConfirm, setExitConfirm] = useState(false)
   const exitTimer = useRef(null)
-  const inputRef  = useRef(null)
 
-  // Focus map:
-  // 0          = EXIT button
-  // 1..N       = profile slots (profiles[focusIdx - 1])
-  // N+1        = New Player button
-  // N+2        = Play as Guest button
-  const EXIT_IDX        = 0
-  const FIRST_IDX       = 1
-  const NEW_PLAYER_IDX  = profiles.length + 1
-  const GUEST_IDX       = profiles.length + 2
-  const TOTAL           = profiles.length + 3  // exit + profiles + newplayer + guest
+  const EXIT_IDX       = 0
+  const FIRST_IDX      = 1
+  const NEW_PLAYER_IDX = profiles.length + 1
+  const GUEST_IDX      = profiles.length + 2
+  const TOTAL          = profiles.length + 3
 
   const handleExit = () => {
-    if (exitConfirm) {
-      window.nuarcade?.closeApp?.()
-    } else {
-      setExitConfirm(true)
-      clearTimeout(exitTimer.current)
-      exitTimer.current = setTimeout(() => setExitConfirm(false), 3000)
-    }
+    if (exitConfirm) { window.nuarcade?.closeApp?.() }
+    else { setExitConfirm(true); clearTimeout(exitTimer.current); exitTimer.current = setTimeout(() => setExitConfirm(false), 3000) }
   }
 
   const confirmFocused = () => {
     if (adding) return
-    if (focusIdx === EXIT_IDX) {
-      handleExit()
-    } else if (focusIdx >= FIRST_IDX && focusIdx <= profiles.length) {
-      onSelect(profiles[focusIdx - 1])
-    } else if (focusIdx === NEW_PLAYER_IDX) {
-      setAdding(true)
-      setTimeout(() => inputRef.current?.focus(), 50)
-    } else if (focusIdx === GUEST_IDX) {
-      onGuest()
-    }
+    if (focusIdx === EXIT_IDX) handleExit()
+    else if (focusIdx >= FIRST_IDX && focusIdx <= profiles.length) onSelect(profiles[focusIdx - 1])
+    else if (focusIdx === NEW_PLAYER_IDX) { setAdding(true); setTimeout(() => inputRef.current?.focus(), 50) }
+    else if (focusIdx === GUEST_IDX) onGuest()
   }
 
   useGamepad({
@@ -55,94 +39,143 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDel
     left:    () => !adding && setFocusIdx(i => i <= FIRST_IDX ? GUEST_IDX : i - 1),
     right:   () => !adding && setFocusIdx(i => i >= GUEST_IDX ? FIRST_IDX : i + 1),
   })
+  const inputRef = useRef(null)
 
+  // Auto-focus input when adding
   useEffect(() => {
-    const onKey = e => {
-      if (adding) {
-        if (e.key === 'Enter')  handleAdd()
-        if (e.key === 'Escape') { setAdding(false); setName('') }
-        return
+    if (adding && inputRef.current) inputRef.current.focus()
+  }, [adding])
+
+  // Keyboard: Enter to confirm, Escape to cancel
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        if (adding) { setAdding(false); setName('') }
       }
-      if (e.key === 'ArrowUp')    setFocusIdx(i => (i - 1 + TOTAL) % TOTAL)
-      if (e.key === 'ArrowDown')  setFocusIdx(i => (i + 1) % TOTAL)
-      if (e.key === 'ArrowLeft')  setFocusIdx(i => i <= FIRST_IDX ? GUEST_IDX : i - 1)
-      if (e.key === 'ArrowRight') setFocusIdx(i => i >= GUEST_IDX ? FIRST_IDX : i + 1)
-      if (e.key === 'Enter' || e.key === ' ') confirmFocused()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [adding, focusIdx, profiles, exitConfirm])
+  }, [adding])
 
   const handleAdd = () => {
     const trimmed = name.trim().toUpperCase().slice(0, MAX_NAME_LEN)
     if (!trimmed) return
-    onAdd(trimmed)
-    setName('')
+    onAdd(trimmed)  // parent handles create + select + phase change
     setAdding(false)
+    setName('')
+  }
+
+  const formatTime = (ms) => {
+    if (!ms) return '0h'
+    const h = Math.floor(ms / 3600000)
+    const m = Math.floor((ms % 3600000) / 60000)
+    if (h > 0) return h + 'h ' + m + 'm'
+    return m + 'm'
+  }
+
+  const timeAgo = (ts) => {
+    if (!ts) return 'Never'
+    const diff = Date.now() - ts
+    const d = Math.floor(diff / 86400000)
+    const h = Math.floor(diff / 3600000)
+    const m = Math.floor(diff / 60000)
+    if (d > 0) return d + 'd ago'
+    if (h > 0) return h + 'h ago'
+    if (m > 0) return m + 'm ago'
+    return 'Just now'
   }
 
   return (
     <div className={styles.overlay}>
-      <div className={styles.box}>
+      <button
+        className={styles.exitBtn + (focusIdx === EXIT_IDX ? ' ' + styles.exitFocused : '') + (exitConfirm ? ' ' + styles.exitConfirm : '')}
+        onClick={handleExit}
+        onMouseEnter={() => setFocusIdx(EXIT_IDX)}
+      >{exitConfirm ? 'CONFIRM EXIT' : 'EXIT'}</button>
+      <div className={styles.scanlines} />
 
-        <button
-          className={styles.exitBtn + (focusIdx === EXIT_IDX ? ' ' + styles.focused : '') + (exitConfirm ? ' ' + styles.exitConfirm : '')}
-          onClick={handleExit}
-          onMouseEnter={() => setFocusIdx(EXIT_IDX)}
-        >
-          {exitConfirm ? 'CONFIRM EXIT' : 'EXIT'}
-        </button>
-
-        <div className={styles.title}>INSERT COIN</div>
+      <div className={styles.content}>
+        <div className={styles.brand}>NuArcade</div>
+        <div className={styles.headline}>INSERT COIN</div>
+        <div className={styles.sub}>Select your player</div>
 
         <div className={styles.profiles}>
-          {profiles.map((p, i) => (
-            <button
+          {profiles.map(p => (
+            <div
               key={p.id}
-              className={styles.profile + (focusIdx === i + FIRST_IDX ? ' ' + styles.focused : '')}
-              onClick={() => onSelect(p)}
-              onMouseEnter={() => setFocusIdx(i + FIRST_IDX)}
+              className={styles.profileCard + (selected === p.id ? ' ' + styles.profileSelected : '')}
+              style={{ '--profile-color': p.color }}
+              onClick={() => setSelected(selected === p.id ? null : p.id)}
+              onDoubleClick={() => onSelect(p.id)}
             >
-              <span className={styles.avatar}>{p.name[0]}</span>
-              <span className={styles.pname}>{p.name}</span>
-            </button>
+              {onDelete && (
+                <button
+                  className={styles.deleteBtn}
+                  onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete ' + p.name + '?')) onDelete(p.id) }}
+                  title="Delete profile"
+                >
+                  x
+                </button>
+              )}
+              <div className={styles.avatar} style={{ background: p.color + '22', borderColor: p.color + '66' }}>
+                <span style={{ color: p.color }}>{p.name[0]}</span>
+              </div>
+              <div className={styles.profileInfo}>
+                <div className={styles.profileName} style={{ color: p.color }}>{p.name}</div>
+                <div className={styles.profileStats}>
+                  {p.gamesPlayed || 0} games played
+                </div>
+                <div className={styles.profileStats}>
+                  {formatTime(p.totalPlaytime)} total
+                </div>
+                <div className={styles.profileLast}>
+                  Last seen: {timeAgo(p.lastSeen)}
+                </div>
+              </div>
+              {selected === p.id && (
+                <button
+                  className={styles.selectBtn}
+                  style={{ background: p.color, color: '#000' }}
+                  onClick={(e) => { e.stopPropagation(); onSelect(p.id) }}
+                >
+                  PLAY
+                </button>
+              )}
+            </div>
           ))}
+
+          {adding ? (
+            <div className={styles.addCard}>
+              <div className={styles.addTitle}>Enter your name</div>
+              <input
+                ref={inputRef}
+                className={styles.nameInput}
+                value={name}
+                onChange={e => setName(e.target.value.toUpperCase().slice(0, MAX_NAME_LEN))}
+                onKeyDown={e => { if (e.key === 'Enter') handleAdd() }}
+                placeholder="AAA"
+                maxLength={MAX_NAME_LEN}
+              />
+              <div className={styles.addActions}>
+                <button className={styles.confirmBtn} onClick={handleAdd} disabled={!name.trim()}>
+                  CREATE
+                </button>
+                <button className={styles.cancelBtn} onClick={() => { setAdding(false); setName('') }}>
+                  CANCEL
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className={styles.addCard} onClick={() => setAdding(true)}>
+              <div className={styles.addIcon}>+</div>
+              <div className={styles.addLabel}>New Player</div>
+            </div>
+          )}
         </div>
 
-        {adding ? (
-          <div className={styles.addRow}>
-            <input
-              ref={inputRef}
-              className={styles.nameInput}
-              value={name}
-              maxLength={MAX_NAME_LEN}
-              placeholder="ENTER NAME"
-              onChange={e => setName(e.target.value.toUpperCase())}
-              onKeyDown={e => {
-                if (e.key === 'Enter')  handleAdd()
-                if (e.key === 'Escape') { setAdding(false); setName('') }
-              }}
-            />
-            <button className={styles.addBtn} onClick={handleAdd}>OK</button>
-          </div>
-        ) : (
-          <div className={styles.actions}>
-            <button
-              className={styles.newPlayer + (focusIdx === NEW_PLAYER_IDX ? ' ' + styles.focused : '')}
-              onClick={() => { setAdding(true); setTimeout(() => inputRef.current?.focus(), 50) }}
-              onMouseEnter={() => setFocusIdx(NEW_PLAYER_IDX)}
-            >
-              NEW PLAYER
-            </button>
-            <button
-              className={styles.guest + (focusIdx === GUEST_IDX ? ' ' + styles.focused : '')}
-              onClick={onGuest}
-              onMouseEnter={() => setFocusIdx(GUEST_IDX)}
-            >
-              PLAY AS GUEST
-            </button>
-          </div>
-        )}
+        <button className={styles.guestBtn} onClick={onGuest}>
+          Play as Guest
+        </button>
       </div>
     </div>
   )
