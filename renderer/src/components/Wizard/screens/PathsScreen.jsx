@@ -6,6 +6,21 @@ import wizStyles from '../Wizard.module.css'
 
 
 
+const PATH_FIELDS = [
+  { key: 'teknoparrot', label: 'TeknoParrot',     default: 'F:\\TeknoParrot\\' },
+  { key: 'arcadeGames', label: 'Arcade Games',    default: 'F:\\ArcadeGames\\' },
+  { key: 'rpcs3',       label: 'RPCS3 (PS3)',     default: 'F:\\RPCS3\\' },
+  { key: 'ps3Games',    label: 'PS3 Games',       default: 'F:\\PS3Games\\' },
+  { key: 'xenia',       label: 'Xenia (Xbox 360)',default: 'F:\\Xenia\\' },
+  { key: 'xbox360Games',label: 'Xbox 360 Games',  default: 'F:\\Xbox360Games\\' },
+  { key: 'dolphin',     label: 'Dolphin (GC/Wii)',default: 'F:\\Dolphin\\' },
+  { key: 'gcGames',     label: 'GC/Wii Games',   default: 'F:\\GCGames\\' },
+  { key: 'pcsx2',       label: 'PCSX2 (PS2)',     default: 'F:\\PCSX2\\' },
+  { key: 'ps2Games',    label: 'PS2 Games',       default: 'F:\\PS2Games\\' },
+  { key: 'ryujinx',     label: 'Ryujinx (Switch)',default: 'F:\\Ryujinx\\' },
+  { key: 'switchGames', label: 'Switch Games',    default: 'F:\\SwitchGames\\' },
+]
+
 // Focus zones: 'exit' | 'scroll' | 'back' | 'continue'
 // rowIdx = which path row Browse button is focused
 
