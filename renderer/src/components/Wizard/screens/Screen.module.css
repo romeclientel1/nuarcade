@@ -755,7 +755,7 @@
   flex-shrink: 0; width: 20px; text-align: center;
 }
 
-/* ── MediaScreen ─────────────────────────────────────────────────────────── */
+/*  MediaScreen  */
 .mediaPanel {
   display: flex;
   flex-direction: column;
@@ -889,7 +889,7 @@
 .btnSkip:hover { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.3); }
 
 
-/* ── Focus indicator (controller D-pad cursor) ── */
+/*  Focus indicator (controller D-pad cursor)  */
 .btnFocused {
   border-color: rgba(0,200,255,0.7) !important;
   color: rgba(0,200,255,0.9) !important;
