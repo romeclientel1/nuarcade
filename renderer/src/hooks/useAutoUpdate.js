@@ -4,6 +4,16 @@ const REPO = "romeclientel1/nuarcade"
 const CHECK_KEY = "nuarcade_last_update_check"
 const CHECK_INTERVAL = 1000 * 60 * 60 * 6 // 6 hours
 
+// Strict semver comparison -- returns true only if remote is STRICTLY newer
+function isNewer(remote, local) {
+  const parse = v => v.replace(/^v/, '').split('.').map(Number)
+  const [rMaj, rMin, rPat] = parse(remote)
+  const [lMaj, lMin, lPat] = parse(local)
+  if (rMaj !== lMaj) return rMaj > lMaj
+  if (rMin !== lMin) return rMin > lMin
+  return rPat > lPat
+}
+
 export function useAutoUpdate(currentVersion) {
   const [newVersion,   setNewVersion  ] = useState(null)
   const [releaseUrl,   setReleaseUrl  ] = useState(null)
