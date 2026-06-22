@@ -5,27 +5,12 @@ import styles from './Screen.module.css'
 import wizStyles from '../Wizard.module.css'
 
 const MODES = [
-  {
-    key:  'arc+pin',
-    icon: 'ARC+PIN',
-    name: 'Arcade + Pinball',
-    sub:  'TeknoParrot & RPCS3 arcade games plus Visual Pinball X tables',
-  },
-  {
-    key:  'arcade',
-    icon: 'ARCADE',
-    name: 'Arcade only',
-    sub:  'TeknoParrot & RPCS3 arcade games -- no pinball models',
-  },
-  {
-    key:  'pinball',
-    icon: 'PINBALL',
-    name: 'Pinball only',
-    sub:  'Visual Pinball X tables only',
-  },
+  { key: 'arc+pin',  icon: 'ARC+PIN',  name: 'Arcade + Pinball', sub: 'TeknoParrot & RPCS3 arcade games plus Visual Pinball X tables' },
+  { key: 'arcade',   icon: 'ARCADE',   name: 'Arcade only',       sub: 'TeknoParrot & RPCS3 arcade games -- no pinball models' },
+  { key: 'pinball',  icon: 'PINBALL',  name: 'Pinball only',      sub: 'Visual Pinball X tables only' },
 ]
 
-// Focus: 0=EXIT, 1=ARC+PIN, 2=ARCADE, 3=PINBALL, 4=Continue
+// 0=EXIT  1=ARC+PIN  2=ARCADE  3=PINBALL  4=Continue
 const EXIT_IDX     = 0
 const FIRST_CARD   = 1
 const LAST_CARD    = 3
@@ -33,9 +18,6 @@ const CONTINUE_IDX = 4
 
 export default function WelcomeScreen({ config, updateConfig, next }) {
   const { exitConfirm, handleExit } = useWizardNav()
-
-  // selectedKey = which mode is chosen (blue persistent highlight)
-  // focusIdx    = where the D-pad cursor is right now
   const [selectedKey, setSelectedKey] = useState(config.mode || 'arc+pin')
   const [focusIdx,    setFocusIdx   ] = useState(FIRST_CARD)
 
@@ -45,28 +27,27 @@ export default function WelcomeScreen({ config, updateConfig, next }) {
   }
 
   const confirmFocused = () => {
-    if (focusIdx === EXIT_IDX)     handleExit()
-    else if (focusIdx === CONTINUE_IDX) handleContinue()
-    else setSelectedKey(MODES[focusIdx - FIRST_CARD].key)
+    if (focusIdx === EXIT_IDX)     { handleExit(); return }
+    if (focusIdx === CONTINUE_IDX) { handleContinue(); return }
+    // Cards -- A selects (highlights blue), does NOT advance
+    setSelectedKey(MODES[focusIdx - FIRST_CARD].key)
   }
 
   useGamepad({
-    left:       () => {
+    left:  () => {
       if (focusIdx >= FIRST_CARD && focusIdx <= LAST_CARD)
         setFocusIdx(i => i > FIRST_CARD ? i - 1 : LAST_CARD)
-      else if (focusIdx === CONTINUE_IDX)
-        setFocusIdx(EXIT_IDX)
     },
-    right:      () => {
+    right: () => {
       if (focusIdx >= FIRST_CARD && focusIdx <= LAST_CARD)
         setFocusIdx(i => i < LAST_CARD ? i + 1 : FIRST_CARD)
     },
-    up:         () => setFocusIdx(EXIT_IDX),
-    down:       () => {
+    up:          () => setFocusIdx(EXIT_IDX),
+    down:        () => {
       if (focusIdx === EXIT_IDX) setFocusIdx(FIRST_CARD)
       else setFocusIdx(CONTINUE_IDX)
     },
-    confirm:    confirmFocused,
+    confirm:     confirmFocused,
     filterRight: handleContinue,
   })
 
@@ -85,7 +66,7 @@ export default function WelcomeScreen({ config, updateConfig, next }) {
         {exitConfirm ? 'CONFIRM' : 'EXIT'}
       </button>
 
-      <div className={styles.eyebrow}>Welcome</div>
+      <div className={styles.eyebrow} style={{ paddingTop: '32px' }}>Welcome</div>
       <div className={styles.title}>Let's get your cabinet ready.</div>
       <div className={styles.sub}>
         NuArcade will configure everything automatically -- security exclusions,
@@ -95,7 +76,7 @@ export default function WelcomeScreen({ config, updateConfig, next }) {
 
       <div className={styles.modeGrid}>
         {MODES.map((m, i) => {
-          const cardIdx  = FIRST_CARD + i
+          const cardIdx    = FIRST_CARD + i
           const isSelected = selectedKey === m.key
           const isFocused  = focusIdx === cardIdx
           return (
