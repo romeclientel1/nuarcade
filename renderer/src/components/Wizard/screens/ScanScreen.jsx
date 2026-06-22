@@ -4,7 +4,6 @@ import { useWizardNav } from '../../../hooks/useWizardNav'
 import styles from './Screen.module.css'
 import wizStyles from '../Wizard.module.css'
 
-import styles from './Screen.module.css'
 
 const SAMPLE_FOUND = [
   { title: 'WMMT 5DX+',        genre: 'Racing'   },
