@@ -1,8 +1,5 @@
 import { useState, useRef } from 'react'
-import { useGamepad } from '../../../hooks/useGamepad'
-import { useWizardNav } from '../../../hooks/useWizardNav'
 import styles from './Screen.module.css'
-import wizStyles from '../Wizard.module.css'
 
 const EMULATORS = [
   {
@@ -314,11 +311,7 @@ const EMULATORS = [
 // colIdx = 0:Download 1:Collapse
 
 export default function SetupGuideScreen({ config, updateConfig, next, prev }) {
-  const { exitConfirm, handleExit } = useWizardNav()
   const [collapsed, setCollapsed] = useState({})
-  const [zone,      setZone     ] = useState('continue')
-  const [rowIdx,    setRowIdx   ] = useState(EMULATORS.length - 1)
-  const [colIdx,    setColIdx   ] = useState(0)
   const scrollRef = useRef(null)
 
   const toggleCollapse = (id) => setCollapsed(c => ({ ...c, [id]: !c[id] }))
@@ -339,46 +332,10 @@ export default function SetupGuideScreen({ config, updateConfig, next, prev }) {
     else toggleCollapse(emu.id)
   }
 
-  useGamepad({
-    up: () => {
-      if (zone === 'continue' || zone === 'back') {
-        setZone('scroll')
-        const last = EMULATORS.length - 1
-        setRowIdx(last); setColIdx(0); scrollToRow(last)
-      } else if (zone === 'scroll') {
-        if (rowIdx > 0) { const n = rowIdx - 1; setRowIdx(n); scrollToRow(n) }
-        else setZone('exit')
-      }
-    },
-    down: () => {
-      if (zone === 'exit') { setZone('scroll'); setRowIdx(0); setColIdx(0) }
-      else if (zone === 'scroll') {
-        if (rowIdx < EMULATORS.length - 1) { const n = rowIdx + 1; setRowIdx(n); scrollToRow(n) }
-        else setZone('continue')
-      }
-    },
-    left:  () => {
-      if (zone === 'scroll' && colIdx === 1) setColIdx(0)
-      else if (zone === 'continue') setZone('back')
-    },
-    right: () => {
-      if (zone === 'scroll' && colIdx === 0) setColIdx(1)
-      else if (zone === 'back') setZone('continue')
-    },
-    confirm:     confirmFocused,
-    back:        prev,
-    filterRight: next,
-  })
-
   return (
     <div className={styles.screen} style={{ position: 'relative' }}>
 
-      <button
-        className={[wizStyles.exitBtn, zone==='exit'?wizStyles.exitFocused:'', exitConfirm?wizStyles.exitConfirm:''].join(' ')}
-        onClick={handleExit}
-        onMouseEnter={() => setZone('exit')}
-      >{exitConfirm ? 'CONFIRM' : 'EXIT'}</button>
-
+      
       <div className={styles.eyebrow}>Step 2 -- Emulator Setup</div>
       <div className={styles.title}>Install your emulators.</div>
       <div className={styles.sub}>
