@@ -8,14 +8,14 @@ const EXIT_IDX   = 0
 const BACK_IDX   = 1
 const LAUNCH_IDX = 2
 
-export default function ReadyScreen({ config, games, onDone, prev }) {
+export default function ReadyScreen({ config, games, finish, prev }) {
   const { exitConfirm, handleExit } = useWizardNav()
   const [focusIdx, setFocusIdx] = useState(LAUNCH_IDX)
 
   const confirmFocused = () => {
     if (focusIdx === EXIT_IDX)   { handleExit(); return }
     if (focusIdx === BACK_IDX)   { prev(); return }
-    if (focusIdx === LAUNCH_IDX) { onDone(); return }
+    if (focusIdx === LAUNCH_IDX) { finish(); return }
   }
 
   useGamepad({
@@ -25,7 +25,7 @@ export default function ReadyScreen({ config, games, onDone, prev }) {
     right:       () => { if (focusIdx === BACK_IDX)   setFocusIdx(LAUNCH_IDX) },
     confirm:     confirmFocused,
     back:        prev,
-    filterRight: onDone,
+    filterRight: finish,
   })
 
   const gamesReady  = games?.length || 0
@@ -84,7 +84,7 @@ export default function ReadyScreen({ config, games, onDone, prev }) {
         >Back</button>
         <button
           className={[styles.btn, styles.btnLaunch, focusIdx===LAUNCH_IDX?styles.btnFocused:''].join(' ')}
-          onClick={onDone}
+          onClick={finish}
           onMouseEnter={() => setFocusIdx(LAUNCH_IDX)}
         >Launch NuArcade</button>
       </div>
