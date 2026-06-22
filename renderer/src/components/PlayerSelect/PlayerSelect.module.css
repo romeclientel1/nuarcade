@@ -307,3 +307,48 @@
   border-color: rgba(255,50,50,0.5);
   color: #ff5555;
 }
+
+
+/* ── EXIT button (red/dark two-tap style) ── */
+.exitBtn {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  padding: 4px 12px;
+  border: 1px solid rgba(255,80,80,0.25);
+  background: transparent;
+  color: rgba(255,80,80,0.4);
+  font-size: 10px;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all 0.15s;
+  font-family: 'Share Tech Mono', monospace;
+  letter-spacing: 0.08em;
+  z-index: 10;
+}
+.exitBtn:hover { border-color: rgba(255,80,80,0.5); color: rgba(255,80,80,0.8); }
+.exitFocused { border-color: rgba(255,80,80,0.7) !important; color: rgba(255,80,80,0.9) !important; background: rgba(255,80,80,0.08) !important; }
+.exitConfirm { border-color: rgba(255,80,80,0.8) !important; color: #ff5050 !important; background: rgba(255,80,80,0.1) !important; animation: exitPulse 0.4s ease-in-out infinite alternate; }
+@keyframes exitPulse { from { border-color: rgba(255,80,80,0.6); } to { border-color: rgba(255,80,80,1); } }
+
+/* ── Focus states for controller D-pad ── */
+.profileFocused { box-shadow: 0 0 0 2px rgba(0,200,255,0.7) !important; }
+.newPlayerFocused { box-shadow: 0 0 0 2px rgba(0,200,255,0.7) !important; border-color: rgba(0,200,255,0.7) !important; }
+.guestFocused { box-shadow: 0 0 0 2px rgba(0,200,255,0.7) !important; border-color: rgba(0,200,255,0.7) !important; }
+.restartFocused { box-shadow: 0 0 0 2px rgba(0,200,255,0.7) !important; border-color: rgba(0,200,255,0.7) !important; }
+
+/* ── Restart Wizard button ── */
+.restartWizard {
+  margin-top: 12px;
+  padding: 6px 16px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: transparent;
+  color: rgba(255,255,255,0.4);
+  font-size: 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: 'Share Tech Mono', monospace;
+  letter-spacing: 0.06em;
+  transition: all 0.15s;
+}
+.restartWizard:hover { border-color: rgba(255,255,255,0.3); color: rgba(255,255,255,0.7); }
