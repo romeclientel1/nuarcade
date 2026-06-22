@@ -7,7 +7,7 @@ const BTN = {
   DPAD_UP: 12, DPAD_DOWN: 13, DPAD_LEFT: 14, DPAD_RIGHT: 15, HOME: 16,
 }
 
-const STICK_DEADZONE = 0.4
+const STICK_DEADZONE = 0.6
 
 export function useGamepad(handlers) {
   const handlersRef = useRef(handlers)
