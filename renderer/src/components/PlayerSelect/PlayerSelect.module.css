@@ -309,7 +309,7 @@
 }
 
 
-/* ── EXIT button (red/dark two-tap style) ── */
+/*  EXIT button (red/dark two-tap style)  */
 .exitBtn {
   position: absolute;
   top: 16px;
@@ -331,13 +331,13 @@
 .exitConfirm { border-color: rgba(255,80,80,0.8) !important; color: #ff5050 !important; background: rgba(255,80,80,0.1) !important; animation: exitPulse 0.4s ease-in-out infinite alternate; }
 @keyframes exitPulse { from { border-color: rgba(255,80,80,0.6); } to { border-color: rgba(255,80,80,1); } }
 
-/* ── Focus states for controller D-pad ── */
+/*  Focus states for controller D-pad  */
 .profileFocused { box-shadow: 0 0 0 2px rgba(0,200,255,0.7) !important; }
 .newPlayerFocused { box-shadow: 0 0 0 2px rgba(0,200,255,0.7) !important; border-color: rgba(0,200,255,0.7) !important; }
 .guestFocused { box-shadow: 0 0 0 2px rgba(0,200,255,0.7) !important; border-color: rgba(0,200,255,0.7) !important; }
 .restartFocused { box-shadow: 0 0 0 2px rgba(0,200,255,0.7) !important; border-color: rgba(0,200,255,0.7) !important; }
 
-/* ── Restart Wizard button ── */
+/*  Restart Wizard button  */
 .restartWizard {
   margin-top: 12px;
   padding: 6px 16px;
