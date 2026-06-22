@@ -411,6 +411,7 @@
 }
 
 .btnBack {
+  margin-right: auto;
   padding: 8px 20px;
   border: 1px solid rgba(255,255,255,0.15);
   background: transparent;
@@ -990,3 +991,48 @@
 .readyStatVal   { font-size: 22px; color: #00c8ff; font-family: 'Share Tech Mono', monospace; margin-bottom: 4px; }
 .readyStatLabel { font-size: 9px; color: rgba(255,255,255,0.35); letter-spacing: 0.08em; text-transform: uppercase; }
 .btnLaunch      { background: #00c8ff !important; color: #000 !important; font-weight: 600; }
+
+
+/* == Button row -- always at the bottom, Continue on the right == */
+.btnRow {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 24px;
+  gap: 12px;
+}
+
+/* == Primary action button (Continue / Launch) == */
+.btn {
+  padding: 9px 24px;
+  background: #00c8ff;
+  color: #000;
+  border: none;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Share Tech Mono', monospace;
+  letter-spacing: 0.06em;
+  transition: all 0.15s;
+}
+.btn:hover { background: #33d4ff; }
+
+/* == Back button -- margin-right auto pushes Continue to the right == */
+.btnBack {
+  margin-right: auto;
+  padding: 8px 20px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: transparent;
+  color: rgba(255,255,255,0.5);
+  font-size: 11px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: 'Share Tech Mono', monospace;
+  letter-spacing: 0.06em;
+  transition: all 0.15s;
+}
+.btnBack:hover { border-color: rgba(255,255,255,0.3); color: rgba(255,255,255,0.8); }
+.btnFocused { border-color: rgba(0,200,255,0.7) !important; color: rgba(0,200,255,0.9) !important; box-shadow: 0 0 8px rgba(0,200,255,0.2); }
+.btnDisabled { opacity: 0.4; cursor: default; }
