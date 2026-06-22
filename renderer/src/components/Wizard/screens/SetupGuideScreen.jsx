@@ -1,5 +1,8 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
+import { useGamepad } from '../../../hooks/useGamepad'
+import { useWizardNav } from '../../../hooks/useWizardNav'
 import styles from './Screen.module.css'
+import wizStyles from '../Wizard.module.css'
 
 const EMULATORS = [
   {
@@ -306,136 +309,131 @@ const EMULATORS = [
   },
 ]
 
-export default function SetupGuideScreen({ config, next, prev }) {
-  const [collapsed, setCollapsed] = useState(new Set())
-  const [biosStatus, setBiosStatus] = useState({})
-  const toggle = (id) => setCollapsed(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n })
+// Focus zones: 'exit' | 'scroll' | 'back' | 'continue'
+// rowIdx = which emulator row is focused in scroll zone
+// colIdx = 0:Download 1:Collapse
 
-  // Run BIOS check on mount (Windows only)
-  useState(() => {
-    if (window.nuarcade?.checkBios) {
-      window.nuarcade.checkBios().then(r => setBiosStatus(r || {})).catch(() => {})
-    }
-  })
+export default function SetupGuideScreen({ config, updateConfig, next, prev }) {
+  const { exitConfirm, handleExit } = useWizardNav()
+  const [collapsed, setCollapsed] = useState({})
+  const [zone,      setZone     ] = useState('continue')
+  const [rowIdx,    setRowIdx   ] = useState(EMULATORS.length - 1)
+  const [colIdx,    setColIdx   ] = useState(0)
+  const scrollRef = useRef(null)
 
-  const getBiosStatus = (emuId) => {
-    if (!biosStatus[emuId]) return null
-    return biosStatus[emuId].found ? 'ok' : 'missing'
+  const toggleCollapse = (id) => setCollapsed(c => ({ ...c, [id]: !c[id] }))
+  const openDownload   = (url) => window.nuarcade?.openExternal?.(url)
+
+  const scrollToRow = (idx) => {
+    if (!scrollRef.current) return
+    const rows = scrollRef.current.querySelectorAll('[data-emurow]')
+    rows[idx]?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
   }
 
+  const confirmFocused = () => {
+    if (zone === 'exit')     { handleExit(); return }
+    if (zone === 'back')     { prev(); return }
+    if (zone === 'continue') { next(); return }
+    const emu = EMULATORS[rowIdx]
+    if (colIdx === 0) openDownload(emu.url)
+    else toggleCollapse(emu.id)
+  }
+
+  useGamepad({
+    up: () => {
+      if (zone === 'continue' || zone === 'back') {
+        setZone('scroll')
+        const last = EMULATORS.length - 1
+        setRowIdx(last); setColIdx(0); scrollToRow(last)
+      } else if (zone === 'scroll') {
+        if (rowIdx > 0) { const n = rowIdx - 1; setRowIdx(n); scrollToRow(n) }
+        else setZone('exit')
+      }
+    },
+    down: () => {
+      if (zone === 'exit') { setZone('scroll'); setRowIdx(0); setColIdx(0) }
+      else if (zone === 'scroll') {
+        if (rowIdx < EMULATORS.length - 1) { const n = rowIdx + 1; setRowIdx(n); scrollToRow(n) }
+        else setZone('continue')
+      }
+    },
+    left:  () => {
+      if (zone === 'scroll' && colIdx === 1) setColIdx(0)
+      else if (zone === 'continue') setZone('back')
+    },
+    right: () => {
+      if (zone === 'scroll' && colIdx === 0) setColIdx(1)
+      else if (zone === 'back') setZone('continue')
+    },
+    confirm:     confirmFocused,
+    back:        prev,
+    filterRight: next,
+  })
+
   return (
-    <div className={styles.screen}>
+    <div className={styles.screen} style={{ position: 'relative' }}>
+
+      <button
+        className={[wizStyles.exitBtn, zone==='exit'?wizStyles.exitFocused:'', exitConfirm?wizStyles.exitConfirm:''].join(' ')}
+        onClick={handleExit}
+        onMouseEnter={() => setZone('exit')}
+      >{exitConfirm ? 'CONFIRM' : 'EXIT'}</button>
+
       <div className={styles.eyebrow}>Step 2 -- Emulator Setup</div>
-      <div className={styles.title}>Install your emulators</div>
+      <div className={styles.title}>Install your emulators.</div>
       <div className={styles.sub}>
         NuArcade manages your library automatically -- but each emulator needs
-        to be installed separately. Tap any emulator below for setup instructions.
-        You can skip this and come back via Settings anytime.
+        to be installed separately. You can skip this and come back via Settings anytime.
       </div>
 
-      <div className={styles.guideList}>
-        {EMULATORS.map(emu => (
-          <div key={emu.id} className={styles.guideCard}>
-            <div className={styles.guideHeader} onClick={() => toggle(emu.id)}>
-              <div className={styles.guideLeft}>
-                <div className={styles.guideIconBox} style={{ borderColor: emu.color + "44", background: emu.color + "11" }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: emu.color, letterSpacing: "0.05em" }}>
-                    {emu.system.slice(0, 3).toUpperCase()}
-                  </span>
+      <div className={styles.emuList} ref={scrollRef}>
+        {EMULATORS.map((emu, i) => {
+          const isRowFocused = zone === 'scroll' && rowIdx === i
+          const isCollapsed  = collapsed[emu.id]
+          return (
+            <div key={emu.id} data-emurow={i}
+              className={[styles.emuRow, isRowFocused ? styles.emuRowFocused : ''].join(' ')}
+              onMouseEnter={() => { setZone('scroll'); setRowIdx(i) }}
+            >
+              <div className={styles.emuHeader}>
+                <span className={styles.emuBadge} style={{ background: emu.color }}>{emu.icon}</span>
+                <div className={styles.emuMeta}>
+                  <div className={styles.emuName}>{emu.name}</div>
+                  <div className={styles.emuUrl}>{emu.system} -- {emu.url}</div>
                 </div>
-                <div>
-                  <div className={styles.guideName} style={{ color: emu.color }}>
-                    {emu.name}
-                  </div>
-                  <div className={styles.guideSystem}>{emu.system} -- {emu.url.replace('https://', '')}</div>
-                </div>
-              </div>
-              <div className={styles.guideRight}>
-                {emu.bios && <span className={styles.biosTag}>BIOS req.</span>}
-                {emu.bios && getBiosStatus(emu.id) === 'ok' && (
-                  <span className={styles.biosOk}>BIOS OK</span>
-                )}
-                {emu.bios && getBiosStatus(emu.id) === 'missing' && (
-                  <span className={styles.biosMissing}>BIOS missing</span>
-                )}
                 <button
-                  className={styles.guideDownloadBtn}
-                  onClick={(e) => { e.stopPropagation(); window.open(emu.url, '_blank') }}
-                >
-                  Download
-                </button>
-                <span className={styles.guideChevron}>{collapsed.has(emu.id) ? '>' : 'v'}</span>
+                  className={[styles.emuDownload, isRowFocused&&colIdx===0?styles.btnFocused:''].join(' ')}
+                  onClick={() => openDownload(emu.url)}
+                  onMouseEnter={() => { setZone('scroll'); setRowIdx(i); setColIdx(0) }}
+                >Download</button>
+                <button
+                  className={[styles.emuCollapse, isRowFocused&&colIdx===1?styles.btnFocused:''].join(' ')}
+                  onClick={() => toggleCollapse(emu.id)}
+                  onMouseEnter={() => { setZone('scroll'); setRowIdx(i); setColIdx(1) }}
+                >{isCollapsed ? '>' : 'v'}</button>
               </div>
+              {!isCollapsed && (
+                <div className={styles.emuBody}>
+                  <ol className={styles.emuSteps}>{emu.steps.map((s,j)=><li key={j}>{s}</li>)}</ol>
+                  {emu.note && <div className={styles.emuNote}>{emu.note}</div>}
+                  <div className={styles.emuPaths}>
+                    <span>EMULATOR {emu.folder}</span>
+                    {emu.gamesFolder && <span>GAMES {emu.gamesFolder}</span>}
+                  </div>
+                </div>
+              )}
             </div>
-
-            {!collapsed.has(emu.id) && (
-              <div className={styles.guideBody}>
-                {emu.bios && getBiosStatus(emu.id) === 'missing' && (
-                  <div className={styles.biosWarning}>
-                    BIOS files not detected. This emulator will not launch games without them.
-                    See step {emu.steps.findIndex(s => s.toLowerCase().includes('bios')) + 1} below.
-                  </div>
-                )}
-                {emu.bios && getBiosStatus(emu.id) === 'ok' && (
-                  <div className={styles.biosFound}>
-                    BIOS files detected -- you are good to go!
-                  </div>
-                )}
-                <div className={styles.guideSteps}>
-                  {emu.steps.map((step, i) => (
-                    <div key={i} className={styles.guideStep}>
-                      <span className={styles.stepNum}>{i + 1}</span>
-                      <span>{step}</span>
-                    </div>
-                  ))}
-                </div>
-
-                {emu.note && (
-                  <div className={styles.guideNote}>{emu.note}</div>
-                )}
-
-                <div className={styles.guideFolders}>
-                  <div className={styles.folderRow}>
-                    <span className={styles.folderLabel}>Emulator</span>
-                    <code className={styles.folderPath}>{emu.folder}</code>
-                  </div>
-                  <div className={styles.folderRow}>
-                    <span className={styles.folderLabel}>Games</span>
-                    <code className={styles.folderPath}>{emu.gamesFolder}</code>
-                  </div>
-                  {emu.bios && emu.biosFolder && (
-                    <div className={styles.folderRow}>
-                      <span className={styles.folderLabel}>BIOS</span>
-                      <code className={styles.folderPath}>{emu.biosFolder}</code>
-                    </div>
-                  )}
-                </div>
-
-                {emu.bios && emu.biosFiles && (
-                  <div className={styles.biosDropZone}>
-                    <div className={styles.biosDropTitle}>Drop BIOS files here:</div>
-                    {emu.biosFiles.map((f, i) => (
-                      <div key={i} className={styles.biosFileName}>{f}</div>
-                    ))}
-                  </div>
-                )}
-
-                <button
-                  className={styles.guideLink}
-                  onClick={() => window.open(emu.url, '_blank')}
-                >
-                  Download {emu.name} -- {emu.url.replace('https://', '')}
-                </button>
-              </div>
-            )}
-          </div>
-        ))}
+          )
+        })}
       </div>
 
-      <div className={styles.footer}>
-        <button className={styles.btnBack} onClick={prev}>Back</button>
-        <button className={styles.btnNext} onClick={next}>Continue</button>
+      <div className={styles.btnRow}>
+        <button className={[styles.btnBack, zone==='back'?styles.btnFocused:''].join(' ')}
+          onClick={prev} onMouseEnter={() => setZone('back')}>Back</button>
+        <button className={[styles.btn, zone==='continue'?styles.btnFocused:''].join(' ')}
+          onClick={next} onMouseEnter={() => setZone('continue')}>Continue</button>
       </div>
+
     </div>
   )
 }
