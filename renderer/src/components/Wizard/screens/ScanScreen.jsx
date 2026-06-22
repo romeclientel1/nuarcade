@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
-import { useGamepad } from '../../../hooks/useGamepad'
-import { useWizardNav } from '../../../hooks/useWizardNav'
 import styles from './Screen.module.css'
-import wizStyles from '../Wizard.module.css'
+
 
 
 const SAMPLE_FOUND = [
@@ -53,19 +51,13 @@ const STATUS_STEPS = [
 // Focus zones: 'exit' | 'scroll' | 'back' | 'continue'
 // Starts in 'scroll' -- read-only screen, nothing to select
 
+
 export default function ScanScreen({ config, next, prev }) {
-  const { exitConfirm, handleExit } = useWizardNav()
-  const [running,  setRunning ] = useState(null)
+  const [running,  setRunning ] = useState(false)
   const [results,  setResults ] = useState([])
   const [done,     setDone    ] = useState(false)
-  const [zone,     setZone    ] = useState('scroll')
   const scrollRef = useRef(null)
 
-  const scroll = (dir) => {
-    scrollRef.current?.scrollBy({ top: dir * 120, behavior: 'smooth' })
-  }
-
-  // Auto-run scan on mount
   useEffect(() => {
     const timer = setTimeout(() => runScan(), 300)
     return () => clearTimeout(timer)
@@ -78,34 +70,13 @@ export default function ScanScreen({ config, next, prev }) {
       const r = await window.nuarcade.scanGames(config)
       setResults(Array.isArray(r) ? r : [])
     } catch (e) {
-      console.error('[ScanScreen] Fatal error:', e)
+      console.error('[ScanScreen]', e)
     } finally {
       setRunning(false)
       setDone(true)
     }
   }
 
-  useGamepad({
-    up: () => {
-      if (zone === 'continue' || zone === 'back') setZone('scroll')
-      else if (zone === 'scroll') { scroll(-1) }
-    },
-    down: () => {
-      if (zone === 'exit') setZone('scroll')
-      else if (zone === 'scroll') scroll(1)
-    },
-    left:  () => { if (zone === 'continue') setZone('back') },
-    right: () => { if (zone === 'back') setZone('continue') },
-    confirm: () => {
-      if (zone === 'exit')     { handleExit(); return }
-      if (zone === 'back')     { prev(); return }
-      if (zone === 'continue' || done) next()
-    },
-    back:        prev,
-    filterRight: next,
-  })
-
-  // Group results by system for display
   const bySystem = results.reduce((acc, g) => {
     const sys = g.system || 'Other'
     if (!acc[sys]) acc[sys] = []
@@ -114,14 +85,7 @@ export default function ScanScreen({ config, next, prev }) {
   }, {})
 
   return (
-    <div className={styles.screen} style={{ position: 'relative' }}>
-
-      <button
-        className={[wizStyles.exitBtn, zone==='exit'?wizStyles.exitFocused:'', exitConfirm?wizStyles.exitConfirm:''].join(' ')}
-        onClick={handleExit}
-        onMouseEnter={() => setZone('exit')}
-      >{exitConfirm ? 'CONFIRM' : 'EXIT'}</button>
-
+    <div className={styles.screen}>
       <div className={styles.eyebrow}>Step 5 -- Game Scan</div>
       <div className={styles.title}>
         {running ? 'Scanning your library...' : done ? 'Ready -- add games anytime.' : 'Preparing scan...'}
@@ -131,12 +95,7 @@ export default function ScanScreen({ config, next, prev }) {
         folders and rescan from Settings anytime.
       </div>
 
-      <div
-        className={[styles.scanScroll, zone==='scroll'?styles.scanScrollFocused:''].join(' ')}
-        ref={scrollRef}
-        onMouseEnter={() => setZone('scroll')}
-        style={{ cursor: 'default' }}
-      >
+      <div className={styles.scanScroll} ref={scrollRef}>
         {Object.entries(bySystem).map(([sys, games]) => (
           <div key={sys} className={styles.scanGroup}>
             <div className={styles.scanGroupTitle}>{sys} -- {games.length} game{games.length !== 1 ? 's' : ''}</div>
@@ -149,20 +108,14 @@ export default function ScanScreen({ config, next, prev }) {
           </div>
         ))}
         {results.length === 0 && done && (
-          <div className={styles.scanEmpty}>[ ] Add games to your configured folders, then rescan from Settings anytime.</div>
+          <div className={styles.scanEmpty}>Add games to your configured folders, then rescan from Settings anytime.</div>
         )}
       </div>
 
       <div className={styles.btnRow}>
-        <button className={[styles.btnBack, zone==='back'?styles.btnFocused:''].join(' ')}
-          onClick={prev} onMouseEnter={() => setZone('back')}>Back</button>
-        <button
-          className={[styles.btn, zone==='continue'?styles.btnFocused:'', !done?styles.btnDisabled:''].join(' ')}
-          onClick={done ? next : undefined}
-          onMouseEnter={() => setZone('continue')}
-        >Continue</button>
+        <button className={styles.btnBack} onClick={prev}>Back</button>
+        <button className={styles.btn} onClick={next} disabled={!done}>Continue</button>
       </div>
-
     </div>
   )
 }
