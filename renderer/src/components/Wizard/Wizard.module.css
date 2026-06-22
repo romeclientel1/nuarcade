@@ -110,9 +110,6 @@
 
 /*  EXIT button (matches Wheel.module.css exactly)  */
 .exitBtn {
-  position: absolute;
-  top: 16px;
-  left: 16px;
   padding: 4px 12px;
   border: 1px solid rgba(255,80,80,0.25);
   background: transparent;
@@ -123,7 +120,7 @@
   transition: all 0.15s;
   font-family: 'Share Tech Mono', monospace;
   letter-spacing: 0.08em;
-  z-index: 10;
+  flex-shrink: 0;
 }
 .exitBtn:hover {
   border-color: rgba(255,80,80,0.5);
