@@ -539,7 +539,7 @@
   font-family: Share Tech Mono, monospace;
 }
 
-/* ── Diagnostic Log ──────────────────────────────────────────────────────── */
+/*  Diagnostic Log  */
 .diagPanel {
   margin-top: 12px;
   border: 1px solid rgba(0,200,255,0.2);
