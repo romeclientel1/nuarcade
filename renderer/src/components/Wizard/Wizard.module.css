@@ -108,7 +108,7 @@
   flex-direction: column;
 }
 
-/* ── EXIT button (matches Wheel.module.css exactly) ── */
+/*  EXIT button (matches Wheel.module.css exactly)  */
 .exitBtn {
   position: absolute;
   top: 16px;
