@@ -1,8 +1,5 @@
 import { useState, useRef } from 'react'
-import { useGamepad } from '../../../hooks/useGamepad'
-import { useWizardNav } from '../../../hooks/useWizardNav'
 import styles from './Screen.module.css'
-import wizStyles from '../Wizard.module.css'
 
 
 
@@ -25,13 +22,10 @@ const PATH_FIELDS = [
 // rowIdx = which path row Browse button is focused
 
 export default function PathsScreen({ config, updateConfig, next, prev }) {
-  const { exitConfirm, handleExit } = useWizardNav()
   const [paths,    setPaths  ] = useState(() => {
     const saved = config.paths || {}
     return PATH_FIELDS.map(f => ({ ...f, value: saved[f.key] || f.default }))
   })
-  const [zone,    setZone   ] = useState('continue')
-  const [rowIdx,  setRowIdx ] = useState(PATH_FIELDS.length - 1)
   const scrollRef = useRef(null)
 
   const handleBrowse = async (idx) => {
@@ -62,40 +56,10 @@ export default function PathsScreen({ config, updateConfig, next, prev }) {
     handleBrowse(rowIdx)
   }
 
-  useGamepad({
-    up: () => {
-      if (zone === 'continue' || zone === 'back') {
-        setZone('scroll')
-        const last = paths.length - 1
-        setRowIdx(last); scrollToRow(last)
-      } else if (zone === 'scroll') {
-        if (rowIdx > 0) { const n = rowIdx - 1; setRowIdx(n); scrollToRow(n) }
-        else setZone('exit')
-      }
-    },
-    down: () => {
-      if (zone === 'exit') { setZone('scroll'); setRowIdx(0) }
-      else if (zone === 'scroll') {
-        if (rowIdx < paths.length - 1) { const n = rowIdx + 1; setRowIdx(n); scrollToRow(n) }
-        else setZone('continue')
-      }
-    },
-    left:  () => { if (zone === 'continue') setZone('back') },
-    right: () => { if (zone === 'back') setZone('continue') },
-    confirm:     confirmFocused,
-    back:        prev,
-    filterRight: next,
-  })
-
   return (
     <div className={styles.screen} style={{ position: 'relative' }}>
 
-      <button
-        className={[wizStyles.exitBtn, zone==='exit'?wizStyles.exitFocused:'', exitConfirm?wizStyles.exitConfirm:''].join(' ')}
-        onClick={handleExit}
-        onMouseEnter={() => setZone('exit')}
-      >{exitConfirm ? 'CONFIRM' : 'EXIT'}</button>
-
+      
       <div className={styles.eyebrow}>Step 3 -- Paths</div>
       <div className={styles.title}>Where are your files?</div>
       <div className={styles.sub}>
