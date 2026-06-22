@@ -900,3 +900,92 @@
   border-color: rgba(255,255,255,0.3);
   color: rgba(255,255,255,0.8);
 }
+
+
+/* ========================================================
+   NEW SCREEN CLASSES -- added for v4.4.53 clean rewrite
+   ======================================================== */
+
+/* WelcomeScreen -- mode cards */
+.modeGrid { display: flex; gap: 12px; margin-top: 20px; }
+.modeCard { flex: 1; padding: 16px; border: 1px solid rgba(0,200,255,0.15); border-radius: 4px; cursor: pointer; transition: all 0.15s; background: rgba(0,200,255,0.02); }
+.modeCard:hover { background: rgba(0,200,255,0.06); }
+.modeSelected { border-color: rgba(0,200,255,0.7) !important; background: rgba(0,200,255,0.1) !important; }
+.modeFocused { box-shadow: 0 0 0 2px rgba(0,200,255,0.5); }
+.modeIcon { font-size: 11px; color: #00c8ff; font-family: 'Share Tech Mono', monospace; letter-spacing: 0.1em; margin-bottom: 6px; }
+.modeName { font-size: 13px; color: rgba(255,255,255,0.9); margin-bottom: 4px; }
+.modeSub  { font-size: 10px; color: rgba(255,255,255,0.4); line-height: 1.4; }
+
+/* SecurityScreen -- status rows */
+.statusList { margin-top: 16px; display: flex; flex-direction: column; gap: 6px; }
+.statusRow  { display: flex; align-items: center; gap: 12px; padding: 8px 12px; border: 1px solid rgba(0,255,136,0.1); border-radius: 3px; background: rgba(0,255,136,0.03); }
+.statusOk   { font-size: 10px; color: #00ff88; font-family: 'Share Tech Mono', monospace; min-width: 20px; }
+.statusLabel{ font-size: 11px; color: rgba(255,255,255,0.7); flex: 1; }
+.statusVal  { font-size: 10px; color: rgba(255,255,255,0.4); font-family: 'Share Tech Mono', monospace; }
+.pathsBar   { margin-top: 10px; padding: 8px 12px; border: 1px solid rgba(0,200,255,0.1); border-radius: 3px; font-size: 10px; color: rgba(255,255,255,0.4); font-family: 'Share Tech Mono', monospace; }
+
+/* SetupGuideScreen -- emulator list */
+.emuList { margin-top: 16px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 8px; max-height: 420px; }
+.emuRow  { border: 1px solid rgba(0,200,255,0.1); border-radius: 4px; background: rgba(0,200,255,0.02); transition: all 0.15s; }
+.emuRowFocused { border-color: rgba(0,200,255,0.5) !important; background: rgba(0,200,255,0.06) !important; }
+.emuHeader { display: flex; align-items: center; gap: 10px; padding: 10px 12px; }
+.emuBadge  { padding: 3px 7px; border-radius: 3px; font-size: 10px; font-family: 'Share Tech Mono', monospace; color: #000; min-width: 32px; text-align: center; }
+.emuMeta   { flex: 1; }
+.emuName   { font-size: 13px; color: rgba(255,255,255,0.9); }
+.emuUrl    { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+.emuDownload { padding: 4px 10px; border: 1px solid rgba(0,200,255,0.3); background: transparent; color: rgba(0,200,255,0.7); font-size: 10px; border-radius: 3px; cursor: pointer; font-family: 'Share Tech Mono', monospace; transition: all 0.15s; }
+.emuDownload:hover { background: rgba(0,200,255,0.1); }
+.emuCollapse { padding: 4px 8px; border: 1px solid rgba(255,255,255,0.1); background: transparent; color: rgba(255,255,255,0.4); font-size: 10px; border-radius: 3px; cursor: pointer; margin-left: 6px; transition: all 0.15s; }
+.emuBody   { padding: 0 12px 12px 12px; border-top: 1px solid rgba(255,255,255,0.05); }
+.emuSteps  { margin: 8px 0; padding-left: 20px; }
+.emuSteps li { font-size: 11px; color: rgba(255,255,255,0.6); margin-bottom: 3px; line-height: 1.4; }
+.emuNote   { padding: 6px 10px; background: rgba(255,170,0,0.08); border: 1px solid rgba(255,170,0,0.2); border-radius: 3px; font-size: 10px; color: rgba(255,170,0,0.8); margin-bottom: 8px; }
+.emuPaths  { display: flex; gap: 16px; font-size: 10px; color: rgba(255,255,255,0.35); font-family: 'Share Tech Mono', monospace; }
+
+/* PathsScreen -- path rows */
+.pathList     { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; flex: 1; max-height: 420px; }
+.pathRow      { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border: 1px solid rgba(0,200,255,0.1); border-radius: 3px; background: rgba(0,200,255,0.02); transition: all 0.15s; }
+.pathRowFocused { border-color: rgba(0,200,255,0.5) !important; background: rgba(0,200,255,0.06) !important; }
+.pathLabel    { font-size: 11px; color: rgba(255,255,255,0.6); min-width: 120px; }
+.pathInput    { flex: 1; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 3px; padding: 5px 8px; font-size: 11px; color: rgba(255,255,255,0.8); font-family: 'Share Tech Mono', monospace; }
+
+/* ScanScreen -- scroll zone */
+.scanScroll        { margin-top: 16px; overflow-y: auto; flex: 1; max-height: 420px; border: 1px solid rgba(0,200,255,0.1); border-radius: 4px; padding: 12px; transition: border-color 0.15s; }
+.scanScrollFocused { border-color: rgba(0,200,255,0.4) !important; }
+.scanGroup         { margin-bottom: 12px; }
+.scanGroupTitle    { font-size: 10px; color: rgba(0,200,255,0.6); font-family: 'Share Tech Mono', monospace; letter-spacing: 0.08em; margin-bottom: 4px; }
+.scanItem          { display: flex; align-items: center; gap: 8px; padding: 3px 0; font-size: 11px; color: rgba(255,255,255,0.6); }
+.scanDot           { width: 4px; height: 4px; border-radius: 50%; background: rgba(0,200,255,0.4); flex-shrink: 0; }
+.scanEmpty         { text-align: center; padding: 40px 20px; color: rgba(255,255,255,0.3); font-size: 13px; }
+.btnDisabled       { opacity: 0.4; cursor: default; }
+
+/* ControllersScreen -- controller cards */
+.ctrlTopRow    { display: flex; gap: 12px; margin-top: 20px; }
+.ctrlCard      { flex: 1; padding: 16px; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; cursor: pointer; transition: all 0.15s; background: rgba(255,255,255,0.02); }
+.ctrlSelected  { border-color: rgba(0,200,255,0.7) !important; background: rgba(0,200,255,0.1) !important; }
+.ctrlOff       { border-color: rgba(255,255,255,0.1); opacity: 0.6; }
+.ctrlFocused   { box-shadow: 0 0 0 2px rgba(0,200,255,0.5) !important; }
+.ctrlIcon      { font-size: 11px; color: #00c8ff; font-family: 'Share Tech Mono', monospace; letter-spacing: 0.1em; margin-bottom: 4px; }
+.ctrlStatus    { font-size: 10px; color: rgba(255,255,255,0.5); margin-bottom: 6px; }
+.ctrlName      { font-size: 13px; color: rgba(255,255,255,0.9); margin-bottom: 3px; }
+.ctrlSub       { font-size: 10px; color: rgba(255,255,255,0.4); }
+
+/* MediaScreen -- media cards */
+.mediaGrid        { display: flex; gap: 12px; margin-top: 20px; }
+.mediaCard        { flex: 1; padding: 16px; border: 1px solid rgba(0,200,255,0.15); border-radius: 4px; cursor: pointer; transition: all 0.15s; background: rgba(0,200,255,0.02); }
+.mediaCard:hover  { background: rgba(0,200,255,0.06); }
+.mediaCardFocused { border-color: rgba(0,200,255,0.6) !important; background: rgba(0,200,255,0.08) !important; box-shadow: 0 0 0 1px rgba(0,200,255,0.3); }
+.mediaCardIcon    { width: 28px; height: 28px; border-radius: 50%; background: rgba(0,200,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 12px; color: #00c8ff; margin-bottom: 10px; }
+.mediaCardTitle   { font-size: 13px; color: rgba(255,255,255,0.9); margin-bottom: 6px; }
+.mediaCardSub     { font-size: 10px; color: rgba(255,255,255,0.45); line-height: 1.5; }
+.mediaCardStatus  { margin-top: 8px; font-size: 10px; color: #00ff88; font-family: 'Share Tech Mono', monospace; }
+.mediaShowSteps   { margin-top: 12px; padding: 5px 12px; border: 1px solid rgba(0,200,255,0.3); background: transparent; color: rgba(0,200,255,0.7); font-size: 10px; border-radius: 3px; cursor: pointer; font-family: 'Share Tech Mono', monospace; }
+
+/* ReadyScreen */
+.readyOk        { width: 80px; height: 80px; border-radius: 50%; border: 2px solid rgba(0,200,255,0.4); display: flex; align-items: center; justify-content: center; font-size: 20px; color: rgba(0,200,255,0.7); font-family: 'Share Tech Mono', monospace; margin: 20px auto; }
+.readyStats     { display: flex; gap: 0; border: 1px solid rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; margin-bottom: 16px; }
+.readyStat      { flex: 1; padding: 14px 10px; text-align: center; border-right: 1px solid rgba(255,255,255,0.08); }
+.readyStat:last-child { border-right: none; }
+.readyStatVal   { font-size: 22px; color: #00c8ff; font-family: 'Share Tech Mono', monospace; margin-bottom: 4px; }
+.readyStatLabel { font-size: 9px; color: rgba(255,255,255,0.35); letter-spacing: 0.08em; text-transform: uppercase; }
+.btnLaunch      { background: #00c8ff !important; color: #000 !important; font-weight: 600; }
