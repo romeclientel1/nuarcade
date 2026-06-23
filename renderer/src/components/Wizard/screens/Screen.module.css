@@ -1136,3 +1136,72 @@
   from { opacity: 0; }
   to   { opacity: 1; }
 }
+
+
+/* == MediaScreen informational cards == */
+.mediaGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 20px;
+  flex: 1;
+}
+.mediaCard {
+  padding: 20px;
+  border: 1px solid rgba(0,200,255,0.12);
+  border-radius: 4px;
+  background: rgba(0,200,255,0.02);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.mediaCardLabel {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid rgba(0,200,255,0.4);
+  color: #00c8ff;
+  font-size: 11px;
+  font-family: 'Share Tech Mono', monospace;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-bottom: 4px;
+}
+.mediaCardTitle {
+  font-size: 13px;
+  color: rgba(255,255,255,0.9);
+  font-weight: 600;
+  font-family: 'Share Tech Mono', monospace;
+  letter-spacing: 0.05em;
+}
+.mediaCardSource {
+  font-size: 10px;
+  color: rgba(0,200,255,0.6);
+  font-family: 'Share Tech Mono', monospace;
+  margin-bottom: 4px;
+}
+.mediaCardList {
+  margin: 0;
+  padding-left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+.mediaCardList li {
+  font-size: 11px;
+  color: rgba(255,255,255,0.5);
+  line-height: 1.4;
+}
+.mediaCardNote {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255,200,0,0.2);
+  border-radius: 3px;
+  font-size: 10px;
+  color: rgba(255,200,0,0.7);
+  font-family: 'Share Tech Mono', monospace;
+  line-height: 1.4;
+}
