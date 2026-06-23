@@ -9,7 +9,8 @@ contextBridge.exposeInMainWorld('nuarcade', {
   setConfig:  (updates) => ipcRenderer.invoke('set-config', updates),
 
   // Browse
-  browseFolder: () => ipcRenderer.invoke('browse-folder'),
+  browseFolder:    () => ipcRenderer.invoke('browse-folder'),
+  openExternal:   (url) => ipcRenderer.invoke('open-url', url),
 
   // Game launch
   launchGame:          (profilePath)  => ipcRenderer.invoke('launch-game', profilePath),
