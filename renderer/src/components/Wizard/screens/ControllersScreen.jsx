@@ -2,27 +2,39 @@ import { useState, useEffect } from 'react'
 import styles from './Screen.module.css'
 
 const CARDS = [
-  { key: 'wheel',    icon: 'WHL', name: 'Racing wheel',    sub: 'DirectInput / Force feedback'  },
-  { key: 'lightgun', icon: 'GUN', name: 'Light gun',        sub: 'RawInput / Sinden / GUN4IR'   },
-  { key: 'gamepad',  icon: 'PAD', name: 'Xbox controller', sub: 'XInput / controller 1'          },
+  { key: 'wheel',    icon: 'WHL', name: 'Racing Wheel',    sub: 'DirectInput / Force feedback' },
+  { key: 'lightgun', icon: 'GUN', name: 'Light Gun',       sub: 'RawInput / Sinden / GUN4IR'  },
+  { key: 'gamepad',  icon: 'PAD', name: 'Xbox Controller', sub: 'XInput / controller 1'        },
 ]
 
 export default function ControllersScreen({ config, updateConfig, next, prev }) {
-  const [selected, setSelected] = useState(() => {
+  const [selected,  setSelected ] = useState(() => {
     const saved = config.controllers || {}
     return new Set(Object.keys(saved).filter(k => saved[k]))
   })
+  const [detected, setDetected] = useState(false)
 
-  // Auto-detect connected gamepad on mount
+  // Listen for gamepadconnected -- fires when user presses a button
   useEffect(() => {
-    const detect = () => {
-      const pads = [...(navigator.getGamepads?.() || [])].filter(Boolean)
-      if (pads.length > 0) setSelected(prev => new Set([...prev, 'gamepad']))
+    const onConnect = (e) => {
+      console.log('[Controllers] gamepad connected:', e.gamepad.id)
+      setSelected(prev => new Set([...prev, 'gamepad']))
+      setDetected(true)
     }
-    detect()
-    window.addEventListener('gamepadconnected', detect)
-    return () => window.removeEventListener('gamepadconnected', detect)
+    window.addEventListener('gamepadconnected', onConnect)
+    return () => window.removeEventListener('gamepadconnected', onConnect)
   }, [])
+
+  // Manual re-detect -- polls navigator.getGamepads() after user clicks
+  const handleReDetect = () => {
+    const pads = [...(navigator.getGamepads?.() || [])].filter(Boolean)
+    if (pads.length > 0) {
+      setSelected(prev => new Set([...prev, 'gamepad']))
+      setDetected(true)
+    } else {
+      setDetected(false)
+    }
+  }
 
   const toggle = (key) => {
     setSelected(prev => {
@@ -45,34 +57,42 @@ export default function ControllersScreen({ config, updateConfig, next, prev }) 
       <div className={styles.eyebrow}>Step 4 -- Controllers</div>
       <div className={styles.title}>Select your controllers.</div>
       <div className={styles.sub}>
-        Choose which controllers you have connected. NuArcade will assign
-        each genre to the right controller. You can override per-game later.
+        Click each controller you have connected. Press any button on your
+        Xbox controller first, then click Re-detect if it wasn't found automatically.
       </div>
 
-      <div className={styles.ctrlTopRow}>
-        {CARDS.filter(c => c.key !== 'gamepad').map(c => (
+      <div className={styles.ctrlGrid}>
+        {CARDS.map(c => (
           <div
             key={c.key}
-            className={[styles.ctrlCard, selected.has(c.key) ? styles.ctrlSelected : styles.ctrlOff].join(' ')}
+            className={[
+              styles.ctrlCard,
+              selected.has(c.key) ? styles.ctrlSelected : styles.ctrlOff,
+            ].join(' ')}
             onClick={() => toggle(c.key)}
           >
             <div className={styles.ctrlIcon}>{c.icon}</div>
-            <div className={styles.ctrlStatus}>{selected.has(c.key) ? 'ON' : 'OFF'}</div>
             <div className={styles.ctrlName}>{c.name}</div>
             <div className={styles.ctrlSub}>{c.sub}</div>
+            <div className={styles.ctrlStatus}>
+              {selected.has(c.key) ? 'ON' : 'OFF'}
+            </div>
           </div>
         ))}
       </div>
 
-      <div
-        className={[styles.ctrlCard, selected.has('gamepad') ? styles.ctrlSelected : styles.ctrlOff].join(' ')}
-        style={{ marginTop: '12px', cursor: 'pointer' }}
-        onClick={() => toggle('gamepad')}
-      >
-        <div className={styles.ctrlIcon}>PAD</div>
-        <div className={styles.ctrlStatus}>{selected.has('gamepad') ? 'ON' : 'OFF'}</div>
-        <div className={styles.ctrlName}>Xbox controller</div>
-        <div className={styles.ctrlSub}>XInput / controller 1</div>
+      <div className={styles.ctrlDetectRow}>
+        <button className={styles.ctrlDetectBtn} onClick={handleReDetect}>
+          Re-detect Controller
+        </button>
+        {detected && (
+          <span className={styles.ctrlDetectOk}>Xbox controller detected</span>
+        )}
+        {!detected && (
+          <span className={styles.ctrlDetectHint}>
+            Press a button on your controller, then click Re-detect
+          </span>
+        )}
       </div>
 
       <div className={styles.btnRow}>
