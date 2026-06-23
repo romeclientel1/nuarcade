@@ -16,7 +16,11 @@ export default function ScanScreen({ config, next, prev }) {
     setRunning(true)
     try {
       if (window.nuarcade?.scanGames) {
-        const r = await window.nuarcade.scanGames(config)
+        const paths = config?.paths || {}
+      const r = await window.nuarcade.scanGames({
+        teknoParrotPath: paths.teknoparrot || '',
+        gamesFolderPath: paths.arcadeGames || '',
+      })
         setResults(Array.isArray(r) ? r : [])
       }
     } catch (e) {
