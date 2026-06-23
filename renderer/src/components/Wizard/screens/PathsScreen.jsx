@@ -24,7 +24,7 @@ export default function PathsScreen({ config, updateConfig, next, prev }) {
 
   const handleBrowse = async (idx) => {
     try {
-      const result = await window.nuarcade?.browsePath?.()
+      const result = await window.nuarcade?.browseFolder?.()
       if (result) setPaths(p => p.map((x, i) => i === idx ? { ...x, value: result } : x))
     } catch (e) { console.error('[PathsScreen]', e) }
   }
