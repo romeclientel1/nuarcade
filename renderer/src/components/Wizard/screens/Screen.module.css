@@ -1109,3 +1109,30 @@
   transition: all 0.15s;
 }
 .pathBtn:hover { background: rgba(0,200,255,0.1); }
+
+
+/* == SecurityScreen step animation == */
+.statusRowHidden {
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: none;
+}
+.statusRowVisible {
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.securityNote {
+  margin-top: 12px;
+  padding: 8px 12px;
+  border: 1px solid rgba(0,255,136,0.15);
+  border-radius: 3px;
+  font-size: 10px;
+  color: rgba(0,255,136,0.6);
+  font-family: 'Share Tech Mono', monospace;
+  animation: fadeIn 0.4s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
