@@ -137,7 +137,7 @@ const handleExit = () => {
             </div>
           ))}
         </div>
-        <div className={styles.stepLabel}>step === 0 ? 'Welcome' : 'Step ' + step + ' of ' + (SCREENS.length - 1)</div>
+        <div className={styles.stepLabel}>{step === 0 ? 'Welcome' : 'Step ' + step + ' of ' + (SCREENS.length - 1)}</div>
       </div>
 
       <div className={styles.body}>
