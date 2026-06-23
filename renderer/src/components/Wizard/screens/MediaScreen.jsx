@@ -1,58 +1,56 @@
-import { useState } from 'react'
 import styles from './Screen.module.css'
 
-export default function MediaScreen({ config, games, next, prev }) {
-  const [fetching,  setFetching ] = useState(false)
-  const [fetchDone, setFetchDone] = useState(false)
+const OPTIONS = [
+  {
+    key: 'steamgriddb',
+    label: 'A',
+    title: 'NuArcade Built-In',
+    source: 'SteamGridDB',
+    lines: [
+      'Downloads hero artwork for your games automatically.',
+      'No account needed -- works right now, no setup required.',
+      'Art appears on your game cards immediately after fetching.',
+      'Run anytime from Settings > Media > Fetch Art.',
+    ],
+    note: null,
+  },
+  {
+    key: 'emumovies',
+    label: 'B',
+    title: 'EmuMovies Sync',
+    source: 'emumovies.com',
+    lines: [
+      'Full media packs -- box art, video snaps, marquees, wheel art.',
+      'Requires a free EmuMovies account and their Sync desktop app.',
+    ],
+    note: 'Free account: 250MB/day limit, artwork only -- no videos. Paid account: unlimited downloads including video snaps.',
+  },
+]
 
-  const handleFetchArt = async () => {
-    if (fetching) return
-    setFetching(true)
-    try {
-      if (window.nuarcade?.fetchArt) await window.nuarcade.fetchArt()
-      setFetchDone(true)
-    } catch (e) {
-      console.error('[MediaScreen]', e)
-    } finally {
-      setFetching(false)
-    }
-  }
-
+export default function MediaScreen({ next, prev }) {
   return (
     <div className={styles.screen}>
       <div className={styles.eyebrow}>Step 6 -- Media</div>
-      <div className={styles.title}>Get Media</div>
+      <div className={styles.title}>Get artwork for your games.</div>
       <div className={styles.sub}>
-        Choose how to get artwork and video snaps for your games.
-        You can always add more later.
+        You don't need to do this now. Both options are available
+        anytime from Settings -- come back once your games are added.
       </div>
 
       <div className={styles.mediaGrid}>
-        <div className={styles.mediaCard} onClick={handleFetchArt} style={{ cursor: 'pointer' }}>
-          <div className={styles.mediaCardIcon}>A</div>
-          <div className={styles.mediaCardTitle}>Fetch Art Now</div>
-          <div className={styles.mediaCardSub}>
-            Downloads hero artwork from SteamGridDB. Works immediately,
-            no account needed. Art shows on game cards right away.
+        {OPTIONS.map(o => (
+          <div key={o.key} className={styles.mediaCard}>
+            <div className={styles.mediaCardLabel}>{o.label}</div>
+            <div className={styles.mediaCardTitle}>{o.title}</div>
+            <div className={styles.mediaCardSource}>{o.source}</div>
+            <ul className={styles.mediaCardList}>
+              {o.lines.map((l, i) => <li key={i}>{l}</li>)}
+            </ul>
+            {o.note && (
+              <div className={styles.mediaCardNote}>{o.note}</div>
+            )}
           </div>
-          {fetchDone && <div className={styles.mediaCardStatus}>Done -- {games?.length || 0} games have art</div>}
-          {fetching  && <div className={styles.mediaCardStatus}>Fetching...</div>}
-        </div>
-
-        <div className={styles.mediaCard}>
-          <div className={styles.mediaCardIcon}>B</div>
-          <div className={styles.mediaCardTitle}>Full Media Pack</div>
-          <div className={styles.mediaCardSub}>
-            Video snaps, box art, marquees via EmuMovies Sync.
-            Requires a free account and the EmuMovies Sync app.
-          </div>
-          <button
-            className={styles.mediaShowSteps}
-            onClick={() => window.nuarcade?.openExternal?.('https://emumovies.com')}
-          >
-            Show Steps
-          </button>
-        </div>
+        ))}
       </div>
 
       <div className={styles.btnRow}>
