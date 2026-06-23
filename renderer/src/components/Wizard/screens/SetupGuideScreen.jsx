@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import styles from './Screen.module.css'
 
 const EMULATORS = [
@@ -306,72 +306,45 @@ const EMULATORS = [
   },
 ]
 
-// Focus zones: 'exit' | 'scroll' | 'back' | 'continue'
-// rowIdx = which emulator row is focused in scroll zone
-// colIdx = 0:Download 1:Collapse
-
 export default function SetupGuideScreen({ config, updateConfig, next, prev }) {
   const [collapsed, setCollapsed] = useState({})
-  const scrollRef = useRef(null)
 
   const toggleCollapse = (id) => setCollapsed(c => ({ ...c, [id]: !c[id] }))
-  const openDownload   = (url) => window.nuarcade?.openExternal?.(url)
-
-  const scrollToRow = (idx) => {
-    if (!scrollRef.current) return
-    const rows = scrollRef.current.querySelectorAll('[data-emurow]')
-    rows[idx]?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-  }
-
-  const confirmFocused = () => {
-    if (zone === 'exit')     { handleExit(); return }
-    if (zone === 'back')     { prev(); return }
-    if (zone === 'continue') { next(); return }
-    const emu = EMULATORS[rowIdx]
-    if (colIdx === 0) openDownload(emu.url)
-    else toggleCollapse(emu.id)
-  }
+  const openDownload = (url) => window.nuarcade?.openExternal?.(url)
 
   return (
-    <div className={styles.screen} style={{ position: 'relative' }}>
-
-      
+    <div className={styles.screen}>
       <div className={styles.eyebrow}>Step 2 -- Emulator Setup</div>
       <div className={styles.title}>Install your emulators.</div>
       <div className={styles.sub}>
-        NuArcade manages your library automatically -- but each emulator needs
-        to be installed separately. You can skip this and come back via Settings anytime.
+        NuArcade manages your library automatically -- but each emulator
+        needs to be installed separately. You can skip this and come back
+        via Settings anytime.
       </div>
 
-      <div className={styles.emuList} ref={scrollRef}>
-        {EMULATORS.map((emu, i) => {
-          const isRowFocused = zone === 'scroll' && rowIdx === i
-          const isCollapsed  = collapsed[emu.id]
+      <div className={styles.emuList}>
+        {EMULATORS.map(emu => {
+          const isCollapsed = collapsed[emu.id]
           return (
-            <div key={emu.id} data-emurow={i}
-              className={[styles.emuRow, isRowFocused ? styles.emuRowFocused : ''].join(' ')}
-              onMouseEnter={() => { setZone('scroll'); setRowIdx(i) }}
-            >
+            <div key={emu.id} className={styles.emuRow}>
               <div className={styles.emuHeader}>
                 <span className={styles.emuBadge} style={{ background: emu.color }}>{emu.icon}</span>
                 <div className={styles.emuMeta}>
                   <div className={styles.emuName}>{emu.name}</div>
                   <div className={styles.emuUrl}>{emu.system} -- {emu.url}</div>
                 </div>
-                <button
-                  className={[styles.emuDownload, isRowFocused&&colIdx===0?styles.btnFocused:''].join(' ')}
-                  onClick={() => openDownload(emu.url)}
-                  onMouseEnter={() => { setZone('scroll'); setRowIdx(i); setColIdx(0) }}
-                >Download</button>
-                <button
-                  className={[styles.emuCollapse, isRowFocused&&colIdx===1?styles.btnFocused:''].join(' ')}
-                  onClick={() => toggleCollapse(emu.id)}
-                  onMouseEnter={() => { setZone('scroll'); setRowIdx(i); setColIdx(1) }}
-                >{isCollapsed ? '>' : 'v'}</button>
+                <button className={styles.emuDownload} onClick={() => openDownload(emu.url)}>
+                  Download
+                </button>
+                <button className={styles.emuCollapse} onClick={() => toggleCollapse(emu.id)}>
+                  {isCollapsed ? '>' : 'v'}
+                </button>
               </div>
               {!isCollapsed && (
                 <div className={styles.emuBody}>
-                  <ol className={styles.emuSteps}>{emu.steps.map((s,j)=><li key={j}>{s}</li>)}</ol>
+                  <ol className={styles.emuSteps}>
+                    {emu.steps.map((s, i) => <li key={i}>{s}</li>)}
+                  </ol>
                   {emu.note && <div className={styles.emuNote}>{emu.note}</div>}
                   <div className={styles.emuPaths}>
                     <span>EMULATOR {emu.folder}</span>
@@ -385,12 +358,9 @@ export default function SetupGuideScreen({ config, updateConfig, next, prev }) {
       </div>
 
       <div className={styles.btnRow}>
-        <button className={[styles.btnBack, zone==='back'?styles.btnFocused:''].join(' ')}
-          onClick={prev} onMouseEnter={() => setZone('back')}>Back</button>
-        <button className={[styles.btn, zone==='continue'?styles.btnFocused:''].join(' ')}
-          onClick={next} onMouseEnter={() => setZone('continue')}>Continue</button>
+        <button className={styles.btnBack} onClick={prev}>Back</button>
+        <button className={styles.btn} onClick={next}>Continue</button>
       </div>
-
     </div>
   )
 }
