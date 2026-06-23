@@ -310,7 +310,7 @@ export default function SetupGuideScreen({ config, updateConfig, next, prev }) {
   const [collapsed, setCollapsed] = useState({})
 
   const toggleCollapse = (id) => setCollapsed(c => ({ ...c, [id]: !c[id] }))
-  const openDownload = (url) => window.nuarcade?.openExternal?.(url)
+  const openDownload = (url) => window.open(url, '_blank')
 
   return (
     <div className={styles.screen}>
