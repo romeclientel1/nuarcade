@@ -1205,3 +1205,100 @@
   font-family: 'Share Tech Mono', monospace;
   line-height: 1.4;
 }
+
+
+/* == ControllersScreen -- equal 3-column grid == */
+.ctrlGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  margin-top: 20px;
+}
+.ctrlCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 20px 12px;
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.08);
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+}
+.ctrlCard:hover {
+  border-color: rgba(0,200,255,0.3);
+}
+.ctrlSelected {
+  border-color: rgba(0,200,255,0.6);
+  background: rgba(0,200,255,0.06);
+}
+.ctrlOff {
+  border-color: rgba(255,255,255,0.06);
+  background: transparent;
+  opacity: 0.6;
+}
+.ctrlIcon {
+  font-size: 11px;
+  font-family: 'Share Tech Mono', monospace;
+  color: #00c8ff;
+  letter-spacing: 0.1em;
+  margin-bottom: 4px;
+}
+.ctrlName {
+  font-size: 12px;
+  color: rgba(255,255,255,0.85);
+  font-family: 'Share Tech Mono', monospace;
+  font-weight: 600;
+}
+.ctrlSub {
+  font-size: 10px;
+  color: rgba(255,255,255,0.35);
+  font-family: 'Share Tech Mono', monospace;
+  line-height: 1.3;
+}
+.ctrlStatus {
+  margin-top: 6px;
+  font-size: 10px;
+  font-family: 'Share Tech Mono', monospace;
+  color: rgba(0,200,255,0.7);
+  letter-spacing: 0.1em;
+}
+.ctrlOff .ctrlStatus {
+  color: rgba(255,255,255,0.25);
+}
+
+/* Re-detect row */
+.ctrlDetectRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 16px;
+}
+.ctrlDetectBtn {
+  padding: 6px 16px;
+  border: 1px solid rgba(0,200,255,0.3);
+  background: transparent;
+  color: rgba(0,200,255,0.7);
+  font-size: 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: 'Share Tech Mono', monospace;
+  letter-spacing: 0.06em;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.ctrlDetectBtn:hover {
+  background: rgba(0,200,255,0.08);
+  border-color: rgba(0,200,255,0.5);
+}
+.ctrlDetectOk {
+  font-size: 10px;
+  color: rgba(0,255,136,0.7);
+  font-family: 'Share Tech Mono', monospace;
+}
+.ctrlDetectHint {
+  font-size: 10px;
+  color: rgba(255,255,255,0.3);
+  font-family: 'Share Tech Mono', monospace;
+}
