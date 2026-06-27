@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import styles from './Screen.module.css'
 
-// Maps config.paths keys to scanner function + system label
-// opts() receives (folderPath, allPaths) so TP can pass the games folder too
 const SCANNERS = [
   { pathKey: 'teknoparrot',  fn: 'scanGames',        system: 'TeknoParrot',  opts: (p, all) => ({ teknoParrotPath: p, gamesFolderPath: all.arcadeGames || '' }) },
   { pathKey: 'ps3Games',     fn: 'scanPs3Games',     system: 'PS3',          opts: (p) => p },
@@ -14,11 +12,12 @@ const SCANNERS = [
 ]
 
 export default function ScanScreen({ config, next, prev }) {
-  const [running,  setRunning ] = useState(false)
-  const [results,  setResults ] = useState([])
-  const [errors,   setErrors  ] = useState([])
-  const [done,     setDone    ] = useState(false)
-  const [progress, setProgress] = useState('')
+  const [running,   setRunning  ] = useState(false)
+  const [systems,   setSystems  ] = useState([])  // { system, ready, found, unmatched }
+  const [errors,    setErrors   ] = useState([])
+  const [done,      setDone     ] = useState(false)
+  const [progress,  setProgress ] = useState('')
+  const [expanded,  setExpanded ] = useState({})
   const scrollRef = useRef(null)
 
   useEffect(() => {
@@ -29,16 +28,14 @@ export default function ScanScreen({ config, next, prev }) {
   const runScan = async () => {
     setRunning(true)
     setErrors([])
-    setResults([])
+    setSystems([])
 
     const paths = config?.paths || {}
-    const allGames = []
     const allErrors = []
+    const allSystems = []
 
     for (const scanner of SCANNERS) {
       const folderPath = paths[scanner.pathKey]
-
-      // Skip silently if path is blank -- user didn't configure this system
       if (!folderPath || folderPath.trim() === '') continue
 
       setProgress('Scanning ' + scanner.system + '...')
@@ -50,21 +47,25 @@ export default function ScanScreen({ config, next, prev }) {
         const opts = scanner.opts(folderPath, paths)
         const r = await fn(opts)
 
-        // Handle both { games: [] } shape and plain array
         const games = Array.isArray(r) ? r
           : Array.isArray(r?.games) ? r.games
           : []
 
-        // Tag each game with its system
         games.forEach(g => { if (!g.system) g.system = scanner.system })
-        allGames.push(...games)
 
-        // Only warn on real errors, not just "folder not found" for blank paths
+        const ready     = games.filter(g => g.status === 'ready' || g.status === 'configured')
+        const found     = games.filter(g => g.status === 'discovered')
+        const missing   = games.filter(g => g.status === 'path-missing')
+        const unmatched = r?.unmatched || []
+
+        if (games.length > 0 || unmatched.length > 0) {
+          allSystems.push({ system: scanner.system, ready, found, missing, unmatched })
+        }
+
         if (r?.error && r.error !== 'Folder not found') {
           allErrors.push(scanner.system + ': ' + r.error)
         }
       } catch (e) {
-        // Only surface unexpected errors, not missing-path errors
         const msg = e.message || ''
         if (!msg.includes('not found') && !msg.includes('no such file')) {
           allErrors.push(scanner.system + ': ' + msg)
@@ -72,23 +73,19 @@ export default function ScanScreen({ config, next, prev }) {
       }
     }
 
-    setResults(allGames)
+    setSystems(allSystems)
     setErrors(allErrors)
     setRunning(false)
     setDone(true)
     setProgress('')
   }
 
-  // Group results by system
-  const bySystem = results.reduce((acc, g) => {
-    const sys = g.system || 'Other'
-    if (!acc[sys]) acc[sys] = []
-    acc[sys].push(g)
-    return acc
-  }, {})
+  const totalReady = systems.reduce((n, s) => n + s.ready.length, 0)
+  const totalFound = systems.reduce((n, s) => n + s.found.length, 0)
+  const totalUnmatched = systems.reduce((n, s) => n + s.unmatched.length, 0)
+  const totalGames = totalReady + totalFound
 
-  const totalGames = results.length
-  const systemCount = Object.keys(bySystem).length
+  const toggle = (key) => setExpanded(e => ({ ...e, [key]: !e[key] }))
 
   return (
     <div className={styles.screen}>
@@ -98,7 +95,7 @@ export default function ScanScreen({ config, next, prev }) {
       </div>
       <div className={styles.sub}>
         {done && totalGames > 0
-          ? totalGames + ' game' + (totalGames !== 1 ? 's' : '') + ' found across ' + systemCount + ' system' + (systemCount !== 1 ? 's' : '') + '.'
+          ? totalReady + ' ready, ' + totalFound + ' found on disk, ' + totalUnmatched + ' unrecognized folders.'
           : done
           ? 'No games found. Configure your paths in Step 3 and rescan from Settings.'
           : 'Scanning configured game folders...'}
@@ -108,36 +105,129 @@ export default function ScanScreen({ config, next, prev }) {
         <div className={styles.scanError}>
           <div className={styles.scanErrorLabel}>SCAN WARNINGS</div>
           {errors.map((e, i) => <div key={i}>{e}</div>)}
-          <div className={styles.scanErrorHint}>
-            Check your configured paths in Step 3, then rescan from Settings.
-          </div>
         </div>
       )}
 
       <div className={styles.scanScroll} ref={scrollRef}>
-        {Object.entries(bySystem).map(([sys, games]) => (
-          <div key={sys} className={styles.scanGroup}>
+        {systems.map(sys => (
+          <div key={sys.system} className={styles.scanGroup}>
             <div className={styles.scanGroupTitle}>
-              {sys} -- {games.length} game{games.length !== 1 ? 's' : ''}
+              {sys.system} -- {sys.ready.length + sys.found.length} game{sys.ready.length + sys.found.length !== 1 ? 's' : ''}
+              {sys.unmatched.length > 0 && (
+                <span className={styles.scanGroupUnmatched}> + {sys.unmatched.length} unrecognized</span>
+              )}
             </div>
-            {games.map((g, i) => (
-              <div key={i} className={[styles.scanItem, g.status === 'discovered' ? styles.scanItemDiscovered : ''].join(' ')}>
-                <span className={styles.scanDot} />
-                <span className={styles.scanItemTitle}>{g.title || g.name || g.file}</span>
-                {g.status === 'discovered' && (
-                  <span className={styles.scanItemBadge}>FOUND</span>
-                )}
-                {g.status === 'path-missing' && (
-                  <span className={styles.scanItemBadgeWarn}>PATH MISSING</span>
+
+            {/* READY games */}
+            {sys.ready.length > 0 && (
+              <div className={styles.scanSubGroup}>
+                <div
+                  className={styles.scanSubHeader}
+                  onClick={() => toggle(sys.system + '_ready')}
+                >
+                  <span className={styles.scanStatusDot} style={{ background: 'rgba(0,255,136,0.7)' }} />
+                  READY ({sys.ready.length})
+                  <span className={styles.scanChevron}>{expanded[sys.system + '_ready'] ? 'v' : '>'}</span>
+                </div>
+                {expanded[sys.system + '_ready'] && sys.ready.map((g, i) => (
+                  <div key={i} className={styles.scanItem}>
+                    <span className={styles.scanDot} />
+                    <span className={styles.scanItemTitle}>{g.title || g.name || g.file}</span>
+                    <span className={styles.scanItemBadge}>READY</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* FOUND -- needs TP setup */}
+            {sys.found.length > 0 && (
+              <div className={styles.scanSubGroup}>
+                <div
+                  className={styles.scanSubHeader}
+                  onClick={() => toggle(sys.system + '_found')}
+                >
+                  <span className={styles.scanStatusDot} style={{ background: 'rgba(0,200,255,0.7)' }} />
+                  FOUND ON DISK -- NEEDS SETUP ({sys.found.length})
+                  <span className={styles.scanChevron}>{expanded[sys.system + '_found'] ? 'v' : '>'}</span>
+                </div>
+                {expanded[sys.system + '_found'] && sys.found.map((g, i) => (
+                  <div key={i} className={styles.scanItemExpanded}>
+                    <div className={styles.scanItemRow}>
+                      <span className={styles.scanDot} />
+                      <span className={styles.scanItemTitle}>{g.title || g.name || g.file}</span>
+                      <span className={styles.scanItemBadge}>{g.executableName || 'FOUND'}</span>
+                    </div>
+                    {g.gamePath && (
+                      <div className={styles.scanItemPath}>{g.gamePath}</div>
+                    )}
+                    <div className={styles.scanItemHint}>
+                      Open TeknoParrot, click Add Game, select this title, point to the exe above.
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* PATH MISSING */}
+            {sys.missing && sys.missing.length > 0 && (
+              <div className={styles.scanSubGroup}>
+                <div
+                  className={styles.scanSubHeader}
+                  onClick={() => toggle(sys.system + '_missing')}
+                >
+                  <span className={styles.scanStatusDot} style={{ background: 'rgba(255,200,0,0.7)' }} />
+                  PATH MISSING ({sys.missing.length})
+                  <span className={styles.scanChevron}>{expanded[sys.system + '_missing'] ? 'v' : '>'}</span>
+                </div>
+                {expanded[sys.system + '_missing'] && sys.missing.map((g, i) => (
+                  <div key={i} className={styles.scanItemExpanded}>
+                    <div className={styles.scanItemRow}>
+                      <span className={styles.scanDot} />
+                      <span className={styles.scanItemTitle}>{g.title || g.name}</span>
+                      <span className={styles.scanItemBadgeWarn}>PATH MISSING</span>
+                    </div>
+                    {g.gamePath && (
+                      <div className={styles.scanItemPath}>{g.gamePath}</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* UNMATCHED folders */}
+            {sys.unmatched.length > 0 && (
+              <div className={styles.scanSubGroup}>
+                <div
+                  className={styles.scanSubHeader}
+                  onClick={() => toggle(sys.system + '_unmatched')}
+                >
+                  <span className={styles.scanStatusDot} style={{ background: 'rgba(255,255,255,0.2)' }} />
+                  NOT RECOGNIZED ({sys.unmatched.length})
+                  <span className={styles.scanChevron}>{expanded[sys.system + '_unmatched'] ? 'v' : '>'}</span>
+                </div>
+                {expanded[sys.system + '_unmatched'] && (
+                  <>
+                    <div className={styles.scanUnmatchedNote}>
+                      These folders exist on disk but don't match any TeknoParrot game profile.
+                      They may be unsupported versions, renamed folders, or require a TeknoParrot update.
+                      Check teknoparrot.com/compatibility for your game.
+                    </div>
+                    {sys.unmatched.map((name, i) => (
+                      <div key={i} className={styles.scanItem}>
+                        <span className={styles.scanDot} style={{ background: 'rgba(255,255,255,0.2)' }} />
+                        <span className={styles.scanItemTitle} style={{ color: 'rgba(255,255,255,0.35)' }}>{name}</span>
+                      </div>
+                    ))}
+                  </>
                 )}
               </div>
-            ))}
+            )}
           </div>
         ))}
+
         {done && totalGames === 0 && errors.length === 0 && (
           <div className={styles.scanEmpty}>
-            No games found. Add games to your configured folders
-            and rescan from Settings anytime.
+            No games found. Check your configured paths in Step 3 and rescan from Settings.
           </div>
         )}
         {running && (
