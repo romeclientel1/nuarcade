@@ -5,6 +5,7 @@ export default function ScanScreen({ config, next, prev }) {
   const [running,  setRunning ] = useState(false)
   const [results,  setResults ] = useState([])
   const [done,     setDone    ] = useState(false)
+  const [error,    setError   ] = useState(null)
   const scrollRef = useRef(null)
 
   useEffect(() => {
@@ -14,26 +15,34 @@ export default function ScanScreen({ config, next, prev }) {
 
   const runScan = async () => {
     setRunning(true)
+    setError(null)
     try {
       if (window.nuarcade?.scanGames) {
         const paths = config?.paths || {}
-      const r = await window.nuarcade.scanGames({
-        teknoParrotPath: paths.teknoparrot || '',
-        gamesFolderPath: paths.arcadeGames || '',
-      })
-        setResults(Array.isArray(r) ? r : [])
+        const r = await window.nuarcade.scanGames({
+          teknoParrotPath: paths.teknoparrot || '',
+          gamesFolderPath: paths.arcadeGames || '',
+        })
+        // Surface any error the scanner returned
+        if (r?.error) {
+          setError(r.error)
+        }
+        setResults(Array.isArray(r?.games) ? r.games : [])
+      } else {
+        setError('Scanner not available -- is the app running correctly?')
       }
     } catch (e) {
       console.error('[ScanScreen]', e)
+      setError(e.message || 'Unknown scan error')
     } finally {
       setRunning(false)
       setDone(true)
     }
   }
 
-  // Group results by system for display
+  // Group results by system
   const bySystem = results.reduce((acc, g) => {
-    const sys = g.system || 'Other'
+    const sys = g.system || 'TeknoParrot'
     if (!acc[sys]) acc[sys] = []
     acc[sys].push(g)
     return acc
@@ -48,12 +57,23 @@ export default function ScanScreen({ config, next, prev }) {
         {running ? 'Scanning your library...' : done ? 'Scan complete.' : 'Preparing scan...'}
       </div>
       <div className={styles.sub}>
-        {done && totalGames === 0
-          ? 'No games found yet -- totally fine. Add games to your configured folders and rescan from Settings anytime.'
-          : done
-          ? totalGames + ' game' + (totalGames !== 1 ? 's' : '') + ' found across your configured folders.'
-          : 'NuArcade is scanning your configured game folders...'}
+        {done && totalGames > 0
+          ? totalGames + ' game' + (totalGames !== 1 ? 's' : '') + ' found.'
+          : 'NuArcade scans your TeknoParrot UserProfiles folder for configured games.'}
       </div>
+
+      {error && (
+        <div className={styles.scanError}>
+          <span className={styles.scanErrorLabel}>SCAN ERROR</span>
+          {error}
+          {error.includes('TeknoParrot path not found') && (
+            <div className={styles.scanErrorHint}>
+              Make sure TeknoParrot is installed and the path in Step 3 points
+              to the folder containing TeknoParrot.exe -- e.g. C:\TeknoParrot\
+            </div>
+          )}
+        </div>
+      )}
 
       <div className={styles.scanScroll} ref={scrollRef}>
         {Object.entries(bySystem).map(([sys, games]) => (
@@ -69,9 +89,10 @@ export default function ScanScreen({ config, next, prev }) {
             ))}
           </div>
         ))}
-        {done && totalGames === 0 && (
+        {done && totalGames === 0 && !error && (
           <div className={styles.scanEmpty}>
-            [ ] Add games to your configured folders, then rescan from Settings anytime.
+            No games found. Check that TeknoParrot is installed and
+            your path in Step 3 is correct, then rescan from Settings.
           </div>
         )}
         {running && (
