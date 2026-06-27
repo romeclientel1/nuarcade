@@ -1302,3 +1302,76 @@
   color: rgba(255,255,255,0.3);
   font-family: 'Share Tech Mono', monospace;
 }
+
+
+/* == ScanScreen error display == */
+.scanError {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255,80,80,0.35);
+  border-radius: 4px;
+  background: rgba(255,80,80,0.04);
+  font-size: 11px;
+  color: rgba(255,120,120,0.85);
+  font-family: 'Share Tech Mono', monospace;
+  line-height: 1.4;
+}
+.scanErrorLabel {
+  font-size: 9px;
+  color: rgba(255,80,80,0.6);
+  letter-spacing: 0.1em;
+  margin-bottom: 2px;
+}
+.scanErrorHint {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255,80,80,0.15);
+  color: rgba(255,200,100,0.7);
+  font-size: 10px;
+}
+
+/* == ScanScreen results == */
+.scanScroll {
+  flex: 1;
+  overflow-y: auto;
+  margin-top: 12px;
+  padding-right: 4px;
+}
+.scanGroup {
+  margin-bottom: 12px;
+}
+.scanGroupTitle {
+  font-size: 10px;
+  color: rgba(0,200,255,0.6);
+  font-family: 'Share Tech Mono', monospace;
+  letter-spacing: 0.08em;
+  margin-bottom: 4px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(0,200,255,0.1);
+}
+.scanItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+  font-size: 11px;
+  color: rgba(255,255,255,0.55);
+  font-family: 'Share Tech Mono', monospace;
+}
+.scanDot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(0,200,255,0.4);
+  flex-shrink: 0;
+}
+.scanEmpty {
+  font-size: 11px;
+  color: rgba(255,255,255,0.3);
+  font-family: 'Share Tech Mono', monospace;
+  font-style: italic;
+  padding: 8px 0;
+}
