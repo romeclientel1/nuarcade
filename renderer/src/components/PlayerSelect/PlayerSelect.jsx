@@ -170,4 +170,5 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDel
         &#9881; Setup Wizard
       </button>
     </div>
+  )
 }
