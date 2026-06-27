@@ -86,6 +86,22 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDel
       <div className={styles.grid} />
       <div className={styles.scanlines} />
 
+      {/* Spinning coin animation */}
+      <div className={styles.coin} aria-hidden="true">
+        <div className={styles.coinFace}>Nu</div>
+      </div>
+
+      {/* Running pixel character */}
+      <div className={styles.runner} aria-hidden="true">
+        <div className={styles.runnerHead} />
+        <div className={styles.runnerVisor} />
+        <div className={styles.runnerBody} />
+        <div className={styles.runnerLegL} />
+        <div className={styles.runnerLegR} />
+        <div className={styles.runnerArmL} />
+        <div className={styles.runnerArmR} />
+      </div>
+
       {/* EXIT button top-left */}
       <button
         className={styles.exitBtn + (exitConfirm ? ' ' + styles.exitConfirm : '')}
