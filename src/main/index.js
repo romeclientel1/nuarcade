@@ -1900,3 +1900,62 @@ ipcMain.handle('ensure-media-folders', async (event, customPath) => {
     return { success: false, error: e.message }
   }
 })
+
+
+// -- TP Folder Renamer --------------------------------------------------
+ipcMain.handle('analyze-folders', async (event, { gamesFolder, tpFolder }) => {
+  const fs   = require('fs')
+  const path = require('path')
+
+  if (!fs.existsSync(gamesFolder)) return { unmatched: [], profileKeys: [] }
+  if (!fs.existsSync(tpFolder))    return { unmatched: [], profileKeys: [] }
+
+  const gameProfilesDir = path.join(tpFolder, 'GameProfiles')
+  const userProfilesDir = path.join(tpFolder, 'UserProfiles')
+
+  // Get all GameProfile XML filenames as profile keys
+  let profileKeys = []
+  if (fs.existsSync(gameProfilesDir)) {
+    profileKeys = fs.readdirSync(gameProfilesDir)
+      .filter(f => f.toLowerCase().endsWith('.xml'))
+      .map(f => path.basename(f, '.xml'))
+  }
+
+  // Get configured UserProfile keys to exclude
+  const configured = new Set()
+  if (fs.existsSync(userProfilesDir)) {
+    fs.readdirSync(userProfilesDir)
+      .filter(f => f.toLowerCase().endsWith('.xml'))
+      .forEach(f => configured.add(path.basename(f, '.xml')))
+  }
+
+  // Get unmatched game subfolders
+  const norm = (s) => String(s).toLowerCase().replace(/[^a-z0-9]/g, '')
+  const profileNorms = new Set(profileKeys.map(k => norm(k)))
+
+  const folders = fs.readdirSync(gamesFolder, { withFileTypes: true })
+    .filter(e => e.isDirectory())
+    .map(e => e.name)
+    .filter(name => {
+      if (configured.has(name)) return false
+      return !profileNorms.has(norm(name)) // only unmatched
+    })
+
+  return { unmatched: folders, profileKeys }
+})
+
+ipcMain.handle('rename-folder', async (event, { gamesFolder, from, to }) => {
+  const fs   = require('fs')
+  const path = require('path')
+  const fromPath = path.join(gamesFolder, from)
+  const toPath   = path.join(gamesFolder, to)
+  if (!fs.existsSync(fromPath)) return false
+  if (fs.existsSync(toPath))   return false  // don't overwrite
+  try {
+    fs.renameSync(fromPath, toPath)
+    return true
+  } catch (e) {
+    console.error('[rename-folder]', e)
+    return false
+  }
+})
