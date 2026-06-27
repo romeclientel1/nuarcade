@@ -1375,3 +1375,41 @@
   font-style: italic;
   padding: 8px 0;
 }
+
+
+/* == ScanScreen game item badges == */
+.scanItemTitle { flex: 1; }
+.scanItemDiscovered { opacity: 0.8; }
+.scanItemBadge {
+  font-size: 9px;
+  font-family: 'Share Tech Mono', monospace;
+  letter-spacing: 0.1em;
+  color: rgba(0,200,255,0.8);
+  border: 1px solid rgba(0,200,255,0.3);
+  border-radius: 2px;
+  padding: 1px 5px;
+  flex-shrink: 0;
+}
+.scanItemBadgeWarn {
+  font-size: 9px;
+  font-family: 'Share Tech Mono', monospace;
+  letter-spacing: 0.1em;
+  color: rgba(255,200,0,0.8);
+  border: 1px solid rgba(255,200,0,0.3);
+  border-radius: 2px;
+  padding: 1px 5px;
+  flex-shrink: 0;
+}
+
+/* == PathsScreen hint text == */
+.pathLabelName {
+  font-size: 11px;
+  color: rgba(255,255,255,0.8);
+  font-family: 'Share Tech Mono', monospace;
+}
+.pathLabelHint {
+  font-size: 9px;
+  color: rgba(255,255,255,0.3);
+  font-family: 'Share Tech Mono', monospace;
+  margin-top: 1px;
+}
