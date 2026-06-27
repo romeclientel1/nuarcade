@@ -1,129 +1,66 @@
 import { useState, useEffect, useRef } from 'react'
-import { useGamepad } from '../../hooks/useGamepad'
+import { useOverlayGamepad } from '../../hooks/useOverlayGamepad'
 import { useArcadeSounds } from '../../hooks/useArcadeSounds'
 import { useWizardNav } from '../../hooks/useWizardNav'
 import styles from './PlayerSelect.module.css'
 
 const MAX_NAME_LEN = 12
 
+// Focus indices
+const EXIT_IDX    = 0
+const NEW_P_IDX   = 1
+const GUEST_IDX   = 2
+const WIZARD_IDX  = 3
+
 export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDelete, onRestartWizard }) {
   const { exitConfirm, handleExit } = useWizardNav()
   const snd = useArcadeSounds()
-  const [adding,   setAdding  ] = useState(false)
-  const [name,     setName    ] = useState('')
-  const [selected, setSelected] = useState(null)
-  const [focus,    setFocus   ] = useState('newPlayer')
-  const focusRef = useRef('newPlayer')
-  // Keep focusRef in sync so navSelect can read current value
-  useEffect(() => { focusRef.current = focus }, [focus])
+
+  const [adding,    setAdding   ] = useState(false)
+  const [name,      setName     ] = useState('')
+  const [selected,  setSelected ] = useState(null)
+  const [focusIdx,  setFocusIdx ] = useState(NEW_P_IDX)
+  const focusRef = useRef(NEW_P_IDX)
   const inputRef = useRef(null)
 
-  // Play coin sound on screen load
+  // Keep focusRef in sync
+  useEffect(() => { focusRef.current = focusIdx }, [focusIdx])
+
+  // Play coin sound on mount
   useEffect(() => { snd.coin() }, [])
 
-  // Focus nav graph
-  const NAV = {
-    exit:      { right: 'newPlayer', down: 'newPlayer' },
-    newPlayer: { right: 'guest', up: 'exit' },
-    guest:     { left: 'newPlayer', down: 'wizard', up: 'exit' },
-    wizard:    { up: 'guest', left: 'newPlayer' },
-  }
-
-  const navMove = (dir) => {
-    if (adding) return
-    setFocus(f => {
-      const next = NAV[f]?.[dir]
-      if (next && next !== f) { snd.navigate(); return next }
-      return f
-    })
-  }
-
-  const navSelect = () => {
-    if (adding) return
-    const cur = focusRef.current
-    snd.select()
-    if (cur === 'exit')      { handleExit(); return }
-    if (cur === 'newPlayer') { setAdding(true); return }
-    if (cur === 'guest')     { onGuest(); return }
-    if (cur === 'wizard')    { onRestartWizard(); return }
-  }
-
-  useGamepad({
-    onDpadUp:    () => navMove('up'),
-    onDpadDown:  () => navMove('down'),
-    onDpadLeft:  () => navMove('left'),
-    onDpadRight: () => navMove('right'),
-    onA:         () => navSelect(),
-  })
-
-  // Focus index:
-  // 0           = EXIT
-  // 1..N        = existing profiles
-  // N+1         = New Player
-  // N+2         = Play as Guest
-  // N+3         = Restart Wizard
-  const EXIT_IDX     = 0
-  const FIRST_IDX    = 1
-  const lastIdx      = () => profiles.length + 3
-  const newPlayerIdx = profiles.length + 1
-  const guestIdx     = profiles.length + 2
-  const wizardIdx    = profiles.length + 3
-
-  const [focusIdx, setFocusIdx] = useState(newPlayerIdx)
-
-  // Keep focusIdx on New Player if profiles change
-  useEffect(() => {
-    setFocusIdx(profiles.length + 1)
-  }, [profiles.length])
-
-  // Keyboard handler for name input
-  useEffect(() => {
-    const onKey = (e) => {
-      if (!adding) return
-      if (e.key === 'Enter') { handleAdd(); return }
-      if (e.key === 'Escape') { setAdding(false); setName(''); return }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [adding, name])
-
-  const handleAdd = () => {
-    const trimmed = name.trim().toUpperCase().slice(0, MAX_NAME_LEN)
-    if (!trimmed) return
-    onAdd(trimmed)
-    setAdding(false)
-    setName('')
-  }
-
-  const formatTime = (ms) => {
-    if (!ms) return ''
-    const h = Math.floor(ms / 3600000)
-    const m = Math.floor((ms % 3600000) / 60000)
-    return h > 0 ? h + 'h ' + m + 'm' : m + 'm'
-  }
+  // Profile focus slots: EXIT(0), profiles(1..N), NewPlayer(N+1), Guest(N+2), Wizard(N+3)
+  const profileStart = 1
+  const profileEnd   = profiles.length
+  const newPIdx      = profileEnd + 1
+  const guestIdx     = profileEnd + 2
+  const wizardIdx    = profileEnd + 3
 
   const confirmFocused = () => {
     if (adding) return
-    if (focusIdx === EXIT_IDX)   { handleExit(); return }
-    if (focusIdx >= FIRST_IDX && focusIdx <= profiles.length) {
-      const p = profiles[focusIdx - 1]
-      setSelected(p.id)
-      onSelect(p)
-      return
+    snd.select()
+    const cur = focusRef.current
+    if (cur === 0)         { handleExit(); return }
+    if (cur >= profileStart && cur <= profileEnd) {
+      const p = profiles[cur - profileStart]
+      setSelected(cur); onSelect(p); return
     }
-    if (focusIdx === newPlayerIdx) { setAdding(true); setTimeout(() => inputRef.current?.focus(), 50); return }
-    if (focusIdx === guestIdx)    { onGuest(); return }
-    if (focusIdx === wizardIdx)   { onRestartWizard?.(); return }
+    if (cur === newPIdx)   { setAdding(true); return }
+    if (cur === guestIdx)  { onGuest(); return }
+    if (cur === wizardIdx) { onRestartWizard(); return }
   }
 
-  const total = profiles.length + 4 // EXIT + profiles + NewPlayer + Guest + Wizard
-
-  useGamepad({
-    up:      () => { if (!adding) setFocusIdx(i => Math.max(EXIT_IDX, i - 1)) },
-    down:    () => { if (!adding) setFocusIdx(i => Math.min(wizardIdx, i + 1)) },
-    confirm: confirmFocused,
-    back:    () => { if (!adding) onGuest() },
+  useOverlayGamepad({
+    onUp:      () => { if (!adding) { snd.navigate(); setFocusIdx(i => Math.max(0, i - 1)) } },
+    onDown:    () => { if (!adding) { snd.navigate(); setFocusIdx(i => Math.min(wizardIdx, i + 1)) } },
+    onLeft:    () => { if (!adding) { snd.navigate(); setFocusIdx(i => Math.max(0, i - 1)) } },
+    onRight:   () => { if (!adding) { snd.navigate(); setFocusIdx(i => Math.min(wizardIdx, i + 1)) } },
+    onConfirm: () => confirmFocused(),
+    onClose:   () => { if (adding) { setAdding(false); setName('') } },
+    enabled:   true,
   })
+
+  const isFocused = (idx) => focusIdx === idx
 
   return (
     <div className={styles.overlay}>
@@ -148,8 +85,9 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDel
 
       {/* EXIT button top-left */}
       <button
-        className={[styles.exitBtn, exitConfirm ? styles.exitConfirm : '', focus === 'exit' ? styles.focused : ''].join(' ')}
+        className={[styles.exitBtn, exitConfirm ? styles.exitConfirm : '', isFocused(0) ? styles.focused : ''].join(' ')}
         onClick={() => { snd.back(); handleExit() }}
+        onMouseEnter={() => { if (focusIdx !== 0) snd.navigate(); setFocusIdx(0) }}
       >
         {exitConfirm ? 'CONFIRM EXIT' : 'EXIT'}
       </button>
@@ -167,8 +105,9 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDel
             {profiles.map((p, i) => (
               <button
                 key={p.id}
-                className={styles.profileBtn + (selected === i ? ' ' + styles.profileBtnActive : '')}
-                onClick={() => { setSelected(i); onSelect(p) }}
+                className={[styles.profileBtn, isFocused(profileStart + i) ? styles.profileBtnActive : ''].join(' ')}
+                onClick={() => { setSelected(profileStart + i); onSelect(p) }}
+                onMouseEnter={() => { if (focusIdx !== profileStart + i) snd.navigate(); setFocusIdx(profileStart + i) }}
               >
                 <span className={styles.profileIcon}>{p.name[0].toUpperCase()}</span>
                 <span className={styles.profileName}>{p.name}</span>
@@ -193,24 +132,38 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDel
               }}
               autoFocus
             />
-            <button className={styles.confirmBtn} onClick={() => { if (name.trim()) { onAdd(name.trim()); setAdding(false); setName('') } }}>OK</button>
+            <button className={styles.confirmBtn} onClick={() => {
+              if (name.trim()) { snd.select(); onAdd(name.trim()); setAdding(false); setName('') }
+            }}>OK</button>
             <button className={styles.cancelBtn} onClick={() => { setAdding(false); setName('') }}>Cancel</button>
           </div>
         ) : (
           <div className={styles.actionRow}>
-            <button className={[styles.btnNewPlayer, focus === 'newPlayer' ? styles.focused : ''].join(' ')} onClick={() => setAdding(true)} onMouseEnter={() => { if (focus !== 'newPlayer') snd.navigate(); setFocus('newPlayer') }}>
+            <button
+              className={[styles.btnNewPlayer, isFocused(newPIdx) ? styles.focused : ''].join(' ')}
+              onClick={() => setAdding(true)}
+              onMouseEnter={() => { if (focusIdx !== newPIdx) snd.navigate(); setFocusIdx(newPIdx) }}
+            >
               <span className={styles.btnIcon}>+</span>
               New Player
             </button>
-            <button className={[styles.btnGuest, focus === 'guest' ? styles.focused : ''].join(' ')} onClick={onGuest} onMouseEnter={() => { if (focus !== 'guest') snd.navigate(); setFocus('guest') }}>
+            <button
+              className={[styles.btnGuest, isFocused(guestIdx) ? styles.focused : ''].join(' ')}
+              onClick={onGuest}
+              onMouseEnter={() => { if (focusIdx !== guestIdx) snd.navigate(); setFocusIdx(guestIdx) }}
+            >
               Play as Guest
             </button>
           </div>
         )}
       </div>
 
-      {/* Restart Wizard -- bottom right, subtle */}
-      <button className={[styles.wizardLink, focus === 'wizard' ? styles.wizardFocused : ''].join(' ')} onClick={onRestartWizard} onMouseEnter={() => setFocus('wizard')}>
+      {/* Setup Wizard -- bottom right */}
+      <button
+        className={[styles.wizardLink, isFocused(wizardIdx) ? styles.wizardFocused : ''].join(' ')}
+        onClick={onRestartWizard}
+        onMouseEnter={() => { if (focusIdx !== wizardIdx) snd.navigate(); setFocusIdx(wizardIdx) }}
+      >
         &#9881; Setup Wizard
       </button>
     </div>
