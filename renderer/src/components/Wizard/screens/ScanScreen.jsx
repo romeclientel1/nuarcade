@@ -167,11 +167,11 @@ export default function ScanScreen({ config, next, prev }) {
                         ? 'Open Xenia, load the game from the folder above.'
                         : sys.system === 'PS3'
                         ? 'Open RPCS3, add the game folder above.'
-                        : sys.system === 'GameCube/Wii'
+                        : (sys.system === 'GameCube/Wii' || sys.system === 'GameCube' || sys.system === 'Nintendo Wii')
                         ? 'Open Dolphin, load the game from the folder above.'
-                        : sys.system === 'PS2'
+                        : (sys.system === 'PS2' || sys.system === 'PlayStation 2')
                         ? 'Open PCSX2, add the ISO or folder above.'
-                        : sys.system === 'Switch'
+                        : (sys.system === 'Switch' || sys.system === 'Nintendo Switch')
                         ? 'Open Ryujinx, add the game file above.'
                         : sys.system === 'Pinball'
                         ? 'Open Visual Pinball X and load the table above.'
