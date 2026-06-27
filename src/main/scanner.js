@@ -477,13 +477,17 @@ async function scanXbox360Games(xbox360GamesPath) {
   }
 
   const EXTS = ['.iso', '.xex', '.zar', '.god', '.jtag']
+  // Skip known emulator/utility folders
+  const SKIP_XBOX = new Set(['xenia', 'xenia_master', 'xenia_canary', 'xbla', 'plugins', 'cache', 'content'])
   let entries
   try { entries = fs.readdirSync(xbox360GamesPath, { withFileTypes: true }) }
   catch (e) { return { games, count: 0, error: e.message } }
 
   for (const entry of entries) {
     if (entry.isDirectory()) {
-      // Folder-based game -- check for default.xex but accept folder even without it
+      // Skip known emulator/utility folders
+      if (SKIP_XBOX.has(entry.name.toLowerCase())) continue
+      // Folder-based game -- any subfolder is a game, check for default.xex for path
       const xexPath = path.join(xbox360GamesPath, entry.name, 'default.xex')
       const hasXex  = fs.existsSync(xexPath)
       games.push({
@@ -493,7 +497,7 @@ async function scanXbox360Games(xbox360GamesPath) {
         emulator: 'xenia',
         genre:  'Xbox360',
         system: 'Xbox 360',
-        status: hasXex ? 'ready' : 'discovered',
+        status: 'ready',
         icon:   'GP',
         artwork: null,
       })
