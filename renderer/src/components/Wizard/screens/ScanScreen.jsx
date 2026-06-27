@@ -2,13 +2,34 @@ import { useState, useEffect, useRef } from 'react'
 import styles from './Screen.module.css'
 
 const SCANNERS = [
-  { pathKey: 'teknoparrot',  fn: 'scanGames',        system: 'TeknoParrot',  opts: (p, all) => ({ teknoParrotPath: p, gamesFolderPath: all.arcadeGames || '' }) },
-  { pathKey: 'ps3Games',     fn: 'scanPs3Games',     system: 'PS3',          opts: (p) => p },
-  { pathKey: 'xbox360Games', fn: 'scanXbox360Games', system: 'Xbox 360',     opts: (p) => p },
-  { pathKey: 'gcGames',      fn: 'scanGCWiiGames',   system: 'GameCube/Wii', opts: (p) => p },
-  { pathKey: 'ps2Games',     fn: 'scanPs2Games',     system: 'PS2',          opts: (p) => p },
-  { pathKey: 'switchGames',  fn: 'scanSwitchGames',  system: 'Switch',       opts: (p) => p },
-  { pathKey: 'pinball',      fn: 'scanPinball',      system: 'Pinball',      opts: (p) => p },
+  // TeknoParrot
+  { pathKey: 'teknoparrot',    fn: 'scanGames',           system: 'TeknoParrot',   opts: (p, all) => ({ teknoParrotPath: p, gamesFolderPath: all.arcadeGames || '' }) },
+  // PS3
+  { pathKey: 'ps3Games',       fn: 'scanPs3Games',        system: 'PS3',           opts: (p) => p },
+  // Xbox 360
+  { pathKey: 'xbox360Games',   fn: 'scanXbox360Games',    system: 'Xbox 360',      opts: (p) => p },
+  // GameCube / Wii
+  { pathKey: 'gcGames',        fn: 'scanGCWiiGames',      system: 'GameCube/Wii',  opts: (p) => p },
+  // PS2
+  { pathKey: 'ps2Games',       fn: 'scanPs2Games',        system: 'PS2',           opts: (p) => p },
+  // Switch
+  { pathKey: 'switchGames',    fn: 'scanSwitchGames',     system: 'Switch',        opts: (p) => p },
+  // Dreamcast
+  { pathKey: 'dreamcastGames', fn: 'scanDreamcastGames',  system: 'Dreamcast',     opts: (p) => p },
+  // PSP
+  { pathKey: 'pspGames',       fn: 'scanPspGames',        system: 'PSP',           opts: (p) => p },
+  // Wii U
+  { pathKey: 'wiiuGames',      fn: 'scanWiiUGames',       system: 'Wii U',         opts: (p) => p },
+  // MAME
+  { pathKey: 'mame',           fn: 'scanMameGames',       system: 'MAME',          opts: (p) => p },
+  // Sega Model 2
+  { pathKey: 'model2',         fn: 'scanModel2Games',     system: 'Sega Model 2',  opts: (p) => p },
+  // Sega Model 3
+  { pathKey: 'model3',         fn: 'scanModel3Games',     system: 'Sega Model 3',  opts: (p) => p },
+  // Pinball
+  { pathKey: 'pinball',        fn: 'scanPinball',         system: 'Pinball',       opts: (p) => p },
+  // Steam
+  { pathKey: 'steam',          fn: 'scanSteamGames',      system: 'Steam',         opts: (p) => p },
 ]
 
 export default function ScanScreen({ config, next, prev }) {
@@ -175,6 +196,20 @@ export default function ScanScreen({ config, next, prev }) {
                         ? 'Open Ryujinx, add the game file above.'
                         : sys.system === 'Pinball'
                         ? 'Open Visual Pinball X and load the table above.'
+                        : sys.system === 'Dreamcast'
+                        ? 'Open Redream or Demul and load the game from the folder above.'
+                        : sys.system === 'PSP'
+                        ? 'Open PPSSPP and load the ISO/CSO above.'
+                        : sys.system === 'Wii U'
+                        ? 'Open Cemu and load the game from the folder above.'
+                        : sys.system === 'MAME'
+                        ? 'MAME games launch directly -- configure inputs in MAME.'
+                        : sys.system === 'Sega Model 2'
+                        ? 'Open M2Emulator and load the ROM above.'
+                        : sys.system === 'Sega Model 3'
+                        ? 'Open Supermodel and load the ROM above.'
+                        : sys.system === 'Steam'
+                        ? 'Launch via Steam -- game will open in your Steam library.'
                         : 'Open the emulator and load the game from the path above.'}
                     </div>
                   </div>
