@@ -95,7 +95,7 @@ export default function ScanScreen({ config, next, prev }) {
       </div>
       <div className={styles.sub}>
         {done && totalGames > 0
-          ? totalReady + ' ready, ' + totalFound + ' found on disk, ' + totalUnmatched + ' unrecognized folders.'
+          ? totalReady + ' ready, ' + totalFound + ' found on disk, ' + totalUnmatched + ' unrecognized folders.' + (totalUnmatched > 0 ? ' Use the Folder Renamer in Settings to fix these.' : '')
           : done
           ? 'No games found. Configure your paths in Step 3 and rescan from Settings.'
           : 'Scanning configured game folders...'}
@@ -209,8 +209,10 @@ export default function ScanScreen({ config, next, prev }) {
                   <>
                     <div className={styles.scanUnmatchedNote}>
                       These folders exist on disk but don't match any TeknoParrot game profile.
-                      They may be unsupported versions, renamed folders, or require a TeknoParrot update.
-                      Check teknoparrot.com/compatibility for your game.
+                      NuArcade can rename them automatically to match what TP expects.
+                    </div>
+                    <div className={styles.scanUnmatchedAction}>
+                      Go to Settings -- Game Library -- TeknoParrot Folder Renamer to fix these automatically.
                     </div>
                     {sys.unmatched.map((name, i) => (
                       <div key={i} className={styles.scanItem}>
