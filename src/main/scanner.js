@@ -315,58 +315,84 @@ async function scanGames(teknoParrotPath, gamesFolderPath) {
   }
 
   // -----------------------------------------------------------------------
-  // DISCOVERY: Scan gamesFolderPath for unconfigured games
-  // Match against GameProfiles ExecutableName by recursively finding exe files
+  // DISCOVERY: Match game subfolders against GameProfile XML filenames
+  // Community standard: folder "LuigisMansion" -> "LuigisMansion.xml" in GameProfiles
+  // Also tries fuzzy match by stripping spaces/punctuation for near-matches
   // -----------------------------------------------------------------------
   if (gamesFolderPath && fsS.existsSync(gamesFolderPath)) {
-    // Build a reverse lookup: executableName -> profileKey
-    const exeLookup = {}
-    for (const [key, p] of Object.entries(profileMap)) {
-      if (configuredKeys.has(key)) continue // already in UserProfiles
-      if (p.executableName && typeof p.executableName === 'string') {
-        exeLookup[p.executableName.toLowerCase()] = key
-      }
-      if (p.executableName2 && typeof p.executableName2 === 'string') {
-        exeLookup[p.executableName2.toLowerCase()] = key
-      }
+    let gameFolders
+    try {
+      gameFolders = fsS.readdirSync(gamesFolderPath, { withFileTypes: true })
+        .filter(e => e.isDirectory())
+    } catch (e) {
+      gameFolders = []
     }
 
-    // Walk gamesFolderPath up to 3 levels deep looking for matching exes
-    const walkDir = (dir, depth) => {
-      if (depth > 3) return
-      let entries
-      try { entries = fsS.readdirSync(dir, { withFileTypes: true }) } catch (e) { return }
-      for (const entry of entries) {
-        const fullPath = path.join(dir, entry.name)
-        if (entry.isDirectory()) {
-          walkDir(fullPath, depth + 1)
-        } else if (entry.name.toLowerCase().endsWith('.exe')) {
-          const exeName = entry.name.toLowerCase()
-          const matchedKey = exeLookup[exeName]
-          if (matchedKey && !configuredKeys.has(matchedKey)) {
-            const p    = profileMap[matchedKey] || {}
-            const meta = metaMap[matchedKey]    || {}
-            const genre = GENRE_MAP[meta.Genre || ''] || meta.Genre || 'Arcade'
-            games.push({
-              id:          matchedKey,
-              title:       p.gameName || matchedKey,
-              system:      'TeknoParrot',
-              genre,
-              gamePath:    fullPath,
-              configured:  false,
-              exeFound:    true,
-              status:      'discovered',
-              warning:     'Found on disk but not yet configured in TeknoParrot. Open TeknoParrot and add this game to set it up.',
-            })
-            configuredKeys.add(matchedKey) // don't add duplicates
-            stats.discovered++
+    // Build lookup: normalized profile key -> original key
+    // e.g. "luigismansion" -> "LuigisMansion"
+    const normalize = (s) => String(s).toLowerCase().replace(/[^a-z0-9]/g, '')
+    const profileLookup = {}
+    for (const key of Object.keys(profileMap)) {
+      profileLookup[normalize(key)] = key
+    }
+
+    for (const folder of gameFolders) {
+      const folderName = folder.name
+      const folderNorm = normalize(folderName)
+
+      // Skip if already configured in UserProfiles
+      if (configuredKeys.has(folderName)) continue
+
+      // Try exact key match first, then normalized fuzzy match
+      const matchedKey = profileMap[folderName]
+        ? folderName
+        : profileLookup[folderNorm]
+        || null
+
+      if (!matchedKey) continue
+      if (configuredKeys.has(matchedKey)) continue
+
+      const p    = profileMap[matchedKey] || {}
+      const meta = metaMap[matchedKey]    || {}
+      const genre = GENRE_MAP[meta.Genre || ''] || meta.Genre || 'Arcade'
+
+      // Find the game exe inside the folder (first .exe found, 2 levels deep)
+      let gamePath = ''
+      const findExe = (dir, depth) => {
+        if (depth > 2 || gamePath) return
+        let entries
+        try { entries = fsS.readdirSync(dir, { withFileTypes: true }) } catch (e) { return }
+        for (const e of entries) {
+          if (gamePath) return
+          const full = path.join(dir, e.name)
+          if (e.isDirectory()) findExe(full, depth + 1)
+          else if (e.name.toLowerCase().endsWith('.exe')
+                   && !e.name.toLowerCase().includes('unins')
+                   && !e.name.toLowerCase().includes('setup')
+                   && !e.name.toLowerCase().includes('update')) {
+            gamePath = full
           }
         }
       }
-    }
-    walkDir(gamesFolderPath, 0)
-  }
+      findExe(path.join(gamesFolderPath, folderName), 0)
 
+      games.push({
+        id:          matchedKey,
+        title:       p.gameName || matchedKey,
+        system:      'TeknoParrot',
+        genre,
+        gamePath,
+        folderPath:  path.join(gamesFolderPath, folderName),
+        configured:  false,
+        exeFound:    !!gamePath,
+        status:      'discovered',
+        executableName: p.executableName || '',
+        warning:     'Found on disk but not yet configured in TeknoParrot. Open TeknoParrot and set the game path to: ' + path.join(gamesFolderPath, folderName),
+      })
+      configuredKeys.add(matchedKey)
+      stats.discovered++
+    }
+  }
   stats.total = games.length
   console.log('[scanGames] configured:', stats.configured, 'discovered:', stats.discovered, 'path-missing:', stats.hidden)
   return { games, stats }
