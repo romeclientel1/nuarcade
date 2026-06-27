@@ -203,115 +203,175 @@ async function scanGames(teknoParrotPath, gamesFolderPath) {
   const fsS  = require('fs')
   const path = require('path')
 
-  const stats = { total: 0, visible: 0, hidden: 0, reasons: {} }
+  const stats  = { total: 0, configured: 0, discovered: 0, hidden: 0 }
+  const games  = []
 
+  // --- Bail early if TP folder missing ---
   if (!teknoParrotPath || !fsS.existsSync(teknoParrotPath)) {
-    return { games: [], stats, error: 'TeknoParrot path not found' }
+    return { games, stats, error: 'TeknoParrot path not found: ' + teknoParrotPath }
   }
 
-  // UserProfiles has the configured games (GamePath set by user in TP UI)
-  // GameProfiles has templates only (GamePath always empty)
   const userProfilesDir = path.join(teknoParrotPath, 'UserProfiles')
-  const profilesDir     = path.join(teknoParrotPath, 'GameProfiles')
-  const scanDir = fsS.existsSync(userProfilesDir) ? userProfilesDir : profilesDir
+  const gameProfilesDir = path.join(teknoParrotPath, 'GameProfiles')
+  const metadataDir     = path.join(teknoParrotPath, 'Metadata')
 
-  console.log('[scanGames] Scanning:', scanDir)
-
-  let allFiles
-  try {
-    allFiles = await fsP.readdir(scanDir)
-  } catch (e) {
-    return { games: [], stats, error: e.message }
+  // -----------------------------------------------------------------------
+  // TIER 1: Read Metadata JSON files for rich game info (title, genre, desc)
+  // -----------------------------------------------------------------------
+  const metaMap = {}  // key = profile name (e.g. "WMMT6") -> metadata object
+  if (fsS.existsSync(metadataDir)) {
+    try {
+      const metaFiles = fsS.readdirSync(metadataDir).filter(f => f.endsWith('.json'))
+      for (const mf of metaFiles) {
+        try {
+          const raw  = fsS.readFileSync(path.join(metadataDir, mf), 'utf8')
+          const data = JSON.parse(raw)
+          const key  = path.basename(mf, '.json')
+          metaMap[key] = data
+        } catch (e) { /* skip bad JSON */ }
+      }
+    } catch (e) { /* skip if unreadable */ }
   }
 
-  const xmlFiles = allFiles.filter(f => f.toLowerCase().endsWith('.xml'))
-  stats.total = xmlFiles.length
-  console.log('[scanGames] Found', xmlFiles.length, 'XMLs')
-
-  const withFileTimeout = (promise) => Promise.race([
-    promise,
-    new Promise((_, reject) => setTimeout(() => reject(new Error('file timeout')), 5000))
-  ])
-
-  const results = []
-  for (let i = 0; i < xmlFiles.length; i += 10) {
-    const batch = xmlFiles.slice(i, i + 10)
-    const batchResults = await Promise.all(
-      batch.map(fileName => {
-        const xmlPath = path.join(scanDir, fileName)
-        return withFileTimeout(parseProfile(xmlPath, fileName, gamesFolderPath)).catch(() => null)
-      })
-    )
-    results.push(...batchResults)
+  // -----------------------------------------------------------------------
+  // TIER 2: Read GameProfiles XMLs for ExecutableName + GameName templates
+  // -----------------------------------------------------------------------
+  const profileMap = {}  // key = profile name -> { gameName, executableName, executableName2 }
+  if (fsS.existsSync(gameProfilesDir)) {
+    try {
+      const profileFiles = fsS.readdirSync(gameProfilesDir).filter(f => f.toLowerCase().endsWith('.xml'))
+      for (const pf of profileFiles) {
+        try {
+          const raw     = fsS.readFileSync(path.join(gameProfilesDir, pf), 'utf8')
+          const parsed  = parser.parse(raw)
+          const profile = parsed?.GameProfile || {}
+          const key     = path.basename(pf, '.xml')
+          profileMap[key] = {
+            gameName:         profile.GameName         || key,
+            executableName:   profile.ExecutableName   || '',
+            executableName2:  profile.ExecutableName2  || '',
+            emulatorType:     profile.EmulatorType     || 'TeknoParrot',
+          }
+        } catch (e) { /* skip bad XML */ }
+      }
+    } catch (e) { /* skip if unreadable */ }
   }
 
-  const games = []
-  for (const game of results) {
-    if (!game) { stats.hidden++; continue }
-    if (BROKEN_STATUS.includes(game.status)) { stats.hidden++; continue }
-    if (game.isSubscription) { stats.hidden++; continue }
+  // -----------------------------------------------------------------------
+  // TIER 3: Read UserProfiles XMLs -- these have GamePath set by the user
+  // -----------------------------------------------------------------------
+  const configuredKeys = new Set()
+  if (fsS.existsSync(userProfilesDir)) {
+    try {
+      const userFiles = fsS.readdirSync(userProfilesDir).filter(f => f.toLowerCase().endsWith('.xml'))
+      stats.total = userFiles.length
 
-    // If scanning UserProfiles, every XML is a game the user has added to TP
-    // Trust that GamePath is set -- only skip if truly empty
-    if (!game.exePath || game.exePath.trim() === '') {
-      stats.hidden++
-      continue
+      for (const uf of userFiles) {
+        try {
+          const raw      = fsS.readFileSync(path.join(userProfilesDir, uf), 'utf8')
+          const parsed   = parser.parse(raw)
+          const profile  = parsed?.GameProfile || {}
+          const key      = path.basename(uf, '.xml')
+          const gamePath = profile.GamePath || ''
+          const gameName = profile.GameName || profileMap[key]?.gameName || key
+
+          // Get metadata enrichment
+          const meta  = metaMap[key] || {}
+          const genre = GENRE_MAP[meta.Genre || ''] || meta.Genre || 'Arcade'
+
+          configuredKeys.add(key)
+
+          // Game is "configured" if GamePath is set and the exe exists
+          const exeExists = gamePath && fsS.existsSync(gamePath)
+
+          const game = {
+            id:          key,
+            title:       gameName,
+            system:      'TeknoParrot',
+            genre,
+            gamePath,
+            configured:  !!gamePath,
+            exeFound:    exeExists,
+            status:      exeExists ? 'ready' : (gamePath ? 'path-missing' : 'not-configured'),
+            profilePath: path.join(userProfilesDir, uf),
+            iconPath:    profile.IconName ? path.join(teknoParrotPath, profile.IconName) : null,
+          }
+
+          if (exeExists) {
+            stats.configured++
+            games.push(game)
+          } else if (gamePath) {
+            // Has path set but exe not found -- still show, user may have moved files
+            stats.hidden++
+            game.warning = 'Exe not found at: ' + gamePath
+            games.push(game)
+          }
+          // If no GamePath at all -- skip (not yet configured in TP)
+        } catch (e) { /* skip bad XML */ }
+      }
+    } catch (e) {
+      return { games, stats, error: 'Error reading UserProfiles: ' + e.message }
+    }
+  }
+
+  // -----------------------------------------------------------------------
+  // DISCOVERY: Scan gamesFolderPath for unconfigured games
+  // Match against GameProfiles ExecutableName by recursively finding exe files
+  // -----------------------------------------------------------------------
+  if (gamesFolderPath && fsS.existsSync(gamesFolderPath)) {
+    // Build a reverse lookup: executableName -> profileKey
+    const exeLookup = {}
+    for (const [key, p] of Object.entries(profileMap)) {
+      if (configuredKeys.has(key)) continue // already in UserProfiles
+      if (p.executableName) {
+        exeLookup[p.executableName.toLowerCase()] = key
+      }
+      if (p.executableName2) {
+        exeLookup[p.executableName2.toLowerCase()] = key
+      }
     }
 
-    const foundExePath = resolveExePath(game, gamesFolderPath)
-    game.exePath  = foundExePath || game.exePath || ''
-    game.exeFound = !!(game.exePath && fsS.existsSync(game.exePath))
-    game.visible  = true
-    stats.visible++
-    games.push(game)
+    // Walk gamesFolderPath up to 3 levels deep looking for matching exes
+    const walkDir = (dir, depth) => {
+      if (depth > 3) return
+      let entries
+      try { entries = fsS.readdirSync(dir, { withFileTypes: true }) } catch (e) { return }
+      for (const entry of entries) {
+        const fullPath = path.join(dir, entry.name)
+        if (entry.isDirectory()) {
+          walkDir(fullPath, depth + 1)
+        } else if (entry.name.toLowerCase().endsWith('.exe')) {
+          const exeName = entry.name.toLowerCase()
+          const matchedKey = exeLookup[exeName]
+          if (matchedKey && !configuredKeys.has(matchedKey)) {
+            const p    = profileMap[matchedKey] || {}
+            const meta = metaMap[matchedKey]    || {}
+            const genre = GENRE_MAP[meta.Genre || ''] || meta.Genre || 'Arcade'
+            games.push({
+              id:          matchedKey,
+              title:       p.gameName || matchedKey,
+              system:      'TeknoParrot',
+              genre,
+              gamePath:    fullPath,
+              configured:  false,
+              exeFound:    true,
+              status:      'discovered',
+              warning:     'Found on disk but not yet configured in TeknoParrot. Open TeknoParrot and add this game to set it up.',
+            })
+            configuredKeys.add(matchedKey) // don't add duplicates
+            stats.discovered++
+          }
+        }
+      }
+    }
+    walkDir(gamesFolderPath, 0)
   }
 
-  console.log('[scanGames] Result:', games.length, 'games')
+  stats.total = games.length
+  console.log('[scanGames] configured:', stats.configured, 'discovered:', stats.discovered, 'path-missing:', stats.hidden)
   return { games, stats }
 }
 
-function scanPinballTables(tablesPath) {
-  if (!fs.existsSync(tablesPath)) {
-    return {
-      games: [],
-      stats: { total: 0, visible: 0 },
-      error: `Pinball tables folder not found at: ${tablesPath}`
-    }
-  }
-
-  const vpxFiles = fs.readdirSync(tablesPath)
-    .filter(f => f.toLowerCase().endsWith('.vpx'))
-
-  const games = vpxFiles.map(file => {
-    const title = file
-      .replace('.vpx', '')
-      .replace(/[_-]/g, ' ')
-      .replace(/\b\w/g, c => c.toUpperCase())
-      .trim()
-
-    return {
-      id: file.replace('.vpx', ''),
-      profile: file,
-      profilePath: path.join(tablesPath, file),
-      title,
-      exePath: path.join(tablesPath, file),
-      genre: 'Pinball',
-      system: 'Visual Pinball X',
-      status: 'Perfect',
-      isSubscription: false,
-      visible: true,
-      icon: 'VPX',
-      isPinball: true,
-    }
-  })
-
-  games.sort((a, b) => a.title.localeCompare(b.title))
-
-  return {
-    games,
-    stats: { total: games.length, visible: games.length }
-  }
-}
 
 module.exports = { scanGames, parseProfile, scanPinballTables }
 
