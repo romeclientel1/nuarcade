@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react"
+import { useVersionCheck } from "../../hooks/useVersionCheck"
 import styles from "./AttractMode.module.css"
 
 const CYCLE_INTERVAL = 6000
@@ -25,6 +26,7 @@ function shuffle(arr) {
 }
 
 export default function AttractMode({ games, isActive, onWake, onSelect, artwork, attractConfig = {} }) {
+  const { currentVersion } = useVersionCheck()
   const [currentIdx,  setCurrentIdx ] = useState(0)
   const [visible,     setVisible    ] = useState(false)
   const [phase,       setPhase      ] = useState("in") // "in" | "out"
@@ -196,7 +198,7 @@ export default function AttractMode({ games, isActive, onWake, onSelect, artwork
       </div>
 
       {/* Version */}
-      <div className={styles.version}>v4.2.0</div>
+      <div className={styles.version}>v{currentVersion}</div>
     </div>
   )
 }
