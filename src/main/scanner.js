@@ -476,39 +476,38 @@ async function scanXbox360Games(xbox360GamesPath) {
     return { games, count: 0, path: xbox360GamesPath, error: 'Folder not found' }
   }
 
-  const EXTS = ['.iso', '.xex', '.zar']
+  const EXTS = ['.iso', '.xex', '.zar', '.god', '.jtag']
   let entries
   try { entries = fs.readdirSync(xbox360GamesPath, { withFileTypes: true }) }
   catch (e) { return { games, count: 0, error: e.message } }
 
   for (const entry of entries) {
     if (entry.isDirectory()) {
-      // Folder-based game - look for default.xex inside
-      const xex = path.join(xbox360GamesPath, entry.name, 'default.xex')
-      if (fs.existsSync(xex)) {
-        games.push({
-          id: 'xbox360_' + entry.name.replace(/\s+/g, '_'),
-          title: entry.name,
-          path: xex,
-          emulator: 'xenia',
-          genre: 'Xbox360',
-          system: 'Xbox 360',
-          status: 'Playable',
-          icon: 'GP',
-          artwork: null,
-        })
-      }
+      // Folder-based game -- check for default.xex but accept folder even without it
+      const xexPath = path.join(xbox360GamesPath, entry.name, 'default.xex')
+      const hasXex  = fs.existsSync(xexPath)
+      games.push({
+        id:     'xbox360_' + entry.name.replace(/\s+/g, '_'),
+        title:  entry.name,
+        path:   hasXex ? xexPath : path.join(xbox360GamesPath, entry.name),
+        emulator: 'xenia',
+        genre:  'Xbox360',
+        system: 'Xbox 360',
+        status: hasXex ? 'ready' : 'discovered',
+        icon:   'GP',
+        artwork: null,
+      })
     } else if (EXTS.includes(path.extname(entry.name).toLowerCase())) {
       const title = entry.name.replace(/\.[^.]+$/, '').replace(/_/g, ' ')
       games.push({
-        id: 'xbox360_' + title.replace(/\s+/g, '_'),
+        id:     'xbox360_' + title.replace(/\s+/g, '_'),
         title,
-        path: path.join(xbox360GamesPath, entry.name),
+        path:   path.join(xbox360GamesPath, entry.name),
         emulator: 'xenia',
-        genre: 'Xbox360',
+        genre:  'Xbox360',
         system: 'Xbox 360',
-        status: 'Playable',
-        icon: 'GP',
+        status: 'ready',
+        icon:   'GP',
         artwork: null,
       })
     }
