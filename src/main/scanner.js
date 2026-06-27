@@ -349,7 +349,13 @@ async function scanGames(teknoParrotPath, gamesFolderPath) {
         : profileLookup[folderNorm]
         || null
 
-      if (!matchedKey) continue
+      if (!matchedKey) {
+        if (!stats.unmatchedFolders) stats.unmatchedFolders = []
+        stats.unmatchedFolders.push(folderName)
+        if (!stats.unmatched) stats.unmatched = 0
+        stats.unmatched++
+        continue
+      }
       if (configuredKeys.has(matchedKey)) continue
 
       const p    = profileMap[matchedKey] || {}
@@ -398,8 +404,8 @@ async function scanGames(teknoParrotPath, gamesFolderPath) {
     }
   }
   stats.total = games.length
-  console.log('[scanGames] configured:', stats.configured, 'discovered:', stats.discovered, 'path-missing:', stats.hidden)
-  return { games, stats }
+  console.log('[scanGames] configured:', stats.configured, 'discovered:', stats.discovered, 'path-missing:', stats.hidden, 'unmatched:', stats.unmatched || 0)
+  return { games, stats, unmatched: stats.unmatchedFolders || [] }
 }
 
 
