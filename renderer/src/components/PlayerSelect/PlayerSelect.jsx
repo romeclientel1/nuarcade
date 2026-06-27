@@ -13,6 +13,9 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDel
   const [name,     setName    ] = useState('')
   const [selected, setSelected] = useState(null)
   const [focus,    setFocus   ] = useState('newPlayer')
+  const focusRef = useRef('newPlayer')
+  // Keep focusRef in sync so navSelect can read current value
+  useEffect(() => { focusRef.current = focus }, [focus])
   const inputRef = useRef(null)
 
   // Play coin sound on screen load
@@ -28,17 +31,21 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDel
 
   const navMove = (dir) => {
     if (adding) return
-    const next = NAV[focus]?.[dir]
-    if (next && next !== focus) { snd.navigate(); setFocus(next) }
+    setFocus(f => {
+      const next = NAV[f]?.[dir]
+      if (next && next !== f) { snd.navigate(); return next }
+      return f
+    })
   }
 
   const navSelect = () => {
     if (adding) return
+    const cur = focusRef.current
     snd.select()
-    if (focus === 'exit')      { handleExit(); return }
-    if (focus === 'newPlayer') { setAdding(true); return }
-    if (focus === 'guest')     { onGuest(); return }
-    if (focus === 'wizard')    { onRestartWizard(); return }
+    if (cur === 'exit')      { handleExit(); return }
+    if (cur === 'newPlayer') { setAdding(true); return }
+    if (cur === 'guest')     { onGuest(); return }
+    if (cur === 'wizard')    { onRestartWizard(); return }
   }
 
   useGamepad({
