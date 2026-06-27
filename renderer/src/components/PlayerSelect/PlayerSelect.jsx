@@ -86,84 +86,72 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDel
       <div className={styles.grid} />
       <div className={styles.scanlines} />
 
+      {/* EXIT button top-left */}
       <button
-        className={[
-          styles.exitBtn,
-          focusIdx === EXIT_IDX ? styles.exitFocused : '',
-          exitConfirm           ? styles.exitConfirm : '',
-        ].join(' ')}
+        className={styles.exitBtn + (exitConfirm ? ' ' + styles.exitConfirm : '')}
         onClick={handleExit}
-        onMouseEnter={() => setFocusIdx(EXIT_IDX)}
-      >{exitConfirm ? 'CONFIRM EXIT' : 'EXIT'}</button>
+      >
+        {exitConfirm ? 'CONFIRM EXIT' : 'EXIT'}
+      </button>
 
       <div className={styles.content}>
+
+        {/* Brand + Headline */}
         <div className={styles.brand}>NuArcade</div>
         <div className={styles.headline}>INSERT COIN</div>
         <div className={styles.sub}>Select your player</div>
 
-        <div className={styles.profiles}>
-          {profiles.map((p, i) => {
-            const idx = FIRST_IDX + i
-            return (
-              <div
+        {/* Existing profiles */}
+        {profiles.length > 0 && (
+          <div className={styles.profileRow}>
+            {profiles.map((p, i) => (
+              <button
                 key={p.id}
-                className={[
-                  styles.profileCard,
-                  selected === p.id ? styles.profileSelected : '',
-                  focusIdx === idx  ? styles.profileFocused  : '',
-                ].join(' ')}
-                style={{ '--profile-color': p.color }}
-                onClick={() => { setSelected(p.id); setFocusIdx(idx); onSelect(p) }}
-                onMouseEnter={() => setFocusIdx(idx)}
+                className={styles.profileBtn + (selected === i ? ' ' + styles.profileBtnActive : '')}
+                onClick={() => { setSelected(i); onSelect(p) }}
               >
-                <div className={styles.profileInitial}>{p.name[0]}</div>
-                <div className={styles.profileName}>{p.name}</div>
-                {p.playTime && <div className={styles.profileTime}>{formatTime(p.playTime)}</div>}
-                <button
-                  className={styles.profileDelete}
-                  onClick={e => { e.stopPropagation(); onDelete(p.id) }}
-                >x</button>
-              </div>
-            )
-          })}
+                <span className={styles.profileIcon}>{p.name[0].toUpperCase()}</span>
+                <span className={styles.profileName}>{p.name}</span>
+              </button>
+            ))}
+          </div>
+        )}
 
-          {!adding ? (
-            <div
-              className={[styles.newPlayer, focusIdx===newPlayerIdx?styles.newPlayerFocused:''].join(' ')}
-              onClick={() => { setFocusIdx(newPlayerIdx); setAdding(true); setTimeout(()=>inputRef.current?.focus(),50) }}
-              onMouseEnter={() => setFocusIdx(newPlayerIdx)}
-            >
-              <span className={styles.plus}>+</span>
-              <span>New Player</span>
-            </div>
-          ) : (
-            <div className={styles.addForm}>
-              <input
-                ref={inputRef}
-                className={styles.nameInput}
-                value={name}
-                onChange={e => setName(e.target.value)}
-                placeholder="Enter name..."
-                maxLength={MAX_NAME_LEN}
-                autoFocus
-              />
-              <button className={styles.addBtn} onClick={handleAdd}>ADD</button>
-            </div>
-          )}
-        </div>
-
-        <button
-          className={[styles.guest, focusIdx===guestIdx?styles.guestFocused:''].join(' ')}
-          onClick={onGuest}
-          onMouseEnter={() => setFocusIdx(guestIdx)}
-        >Play as Guest</button>
-
-        <button
-          className={[styles.restartWizard, focusIdx===wizardIdx?styles.restartFocused:''].join(' ')}
-          onClick={() => onRestartWizard?.()}
-          onMouseEnter={() => setFocusIdx(wizardIdx)}
-        >Restart Setup Wizard</button>
+        {/* Add new player */}
+        {adding ? (
+          <div className={styles.addRow}>
+            <input
+              ref={inputRef}
+              className={styles.nameInput}
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="Enter name..."
+              maxLength={MAX_NAME_LEN}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && name.trim()) { onAdd(name.trim()); setAdding(false); setName('') }
+                if (e.key === 'Escape') { setAdding(false); setName('') }
+              }}
+              autoFocus
+            />
+            <button className={styles.confirmBtn} onClick={() => { if (name.trim()) { onAdd(name.trim()); setAdding(false); setName('') } }}>OK</button>
+            <button className={styles.cancelBtn} onClick={() => { setAdding(false); setName('') }}>Cancel</button>
+          </div>
+        ) : (
+          <div className={styles.actionRow}>
+            <button className={styles.btnNewPlayer} onClick={() => setAdding(true)}>
+              <span className={styles.btnIcon}>+</span>
+              New Player
+            </button>
+            <button className={styles.btnGuest} onClick={onGuest}>
+              Play as Guest
+            </button>
+          </div>
+        )}
       </div>
+
+      {/* Restart Wizard -- bottom right, subtle */}
+      <button className={styles.wizardLink} onClick={onRestartWizard}>
+        &#9881; Setup Wizard
+      </button>
     </div>
-  )
 }
