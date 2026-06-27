@@ -83,6 +83,7 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDel
 
   return (
     <div className={styles.overlay}>
+      <div className={styles.grid} />
       <div className={styles.scanlines} />
 
       <button
