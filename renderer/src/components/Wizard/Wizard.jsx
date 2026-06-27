@@ -126,10 +126,10 @@ const handleExit = () => {
           <span className={styles.logoArcade}>Arcade</span>
         </div>
         <div className={styles.stepTrack}>
-          {SCREENS.map((s, i) => (
+          {SCREENS.map((s, i) => i === 0 ? null : (
             <div key={s} className={styles.stepItem}>
               <div className={`${styles.stepDot} ${i < step ? styles.dotDone : i === step ? styles.dotActive : styles.dotWait}`}>
-                {i < step ? 'v' : i + 1}
+                {i < step ? 'v' : i}
               </div>
               {i < SCREENS.length - 1 && (
                 <div className={`${styles.stepLine} ${i < step ? styles.lineDone : ''}`} />
