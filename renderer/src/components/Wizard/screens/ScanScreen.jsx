@@ -1,11 +1,23 @@
 import { useState, useEffect, useRef } from 'react'
 import styles from './Screen.module.css'
 
+// Maps config.paths keys to their scanner function and system label
+const SCANNERS = [
+  { pathKey: 'teknoparrot',  fn: 'scanGames',        system: 'TeknoParrot',  opts: (p) => ({ teknoParrotPath: p, gamesFolderPath: '' }) },
+  { pathKey: 'rpcs3',        fn: 'scanPs3Games',     system: 'PS3',          opts: (p) => p },
+  { pathKey: 'xbox360Games', fn: 'scanXbox360Games', system: 'Xbox 360',     opts: (p) => p },
+  { pathKey: 'gcGames',      fn: 'scanGCWiiGames',   system: 'GameCube/Wii', opts: (p) => p },
+  { pathKey: 'ps2Games',     fn: 'scanPs2Games',     system: 'PS2',          opts: (p) => p },
+  { pathKey: 'switchGames',  fn: 'scanSwitchGames',  system: 'Switch',       opts: (p) => p },
+  { pathKey: 'pinball',      fn: 'scanPinball',      system: 'Pinball',      opts: (p) => p },
+]
+
 export default function ScanScreen({ config, next, prev }) {
-  const [running,  setRunning ] = useState(false)
-  const [results,  setResults ] = useState([])
-  const [done,     setDone    ] = useState(false)
-  const [error,    setError   ] = useState(null)
+  const [running,   setRunning  ] = useState(false)
+  const [results,   setResults  ] = useState([])
+  const [errors,    setErrors   ] = useState([])
+  const [done,      setDone     ] = useState(false)
+  const [progress,  setProgress ] = useState('')
   const scrollRef = useRef(null)
 
   useEffect(() => {
@@ -15,34 +27,51 @@ export default function ScanScreen({ config, next, prev }) {
 
   const runScan = async () => {
     setRunning(true)
-    setError(null)
-    try {
-      if (window.nuarcade?.scanGames) {
-        const paths = config?.paths || {}
-        const r = await window.nuarcade.scanGames({
-          teknoParrotPath: paths.teknoparrot || '',
-          gamesFolderPath: paths.arcadeGames || '',
-        })
-        // Surface any error the scanner returned
-        if (r?.error) {
-          setError(r.error)
-        }
-        setResults(Array.isArray(r?.games) ? r.games : [])
-      } else {
-        setError('Scanner not available -- is the app running correctly?')
+    setErrors([])
+    setResults([])
+
+    const paths = config?.paths || {}
+    const allGames = []
+    const allErrors = []
+
+    for (const scanner of SCANNERS) {
+      const folderPath = paths[scanner.pathKey]
+      if (!folderPath) continue // skip unconfigured systems
+
+      setProgress('Scanning ' + scanner.system + '...')
+
+      try {
+        const fn = window.nuarcade?.[scanner.fn]
+        if (!fn) continue
+
+        const opts = scanner.opts(folderPath)
+        const r = await fn(opts)
+
+        // Handle both { games: [] } shape and plain array
+        const games = Array.isArray(r) ? r
+          : Array.isArray(r?.games) ? r.games
+          : []
+
+        // Tag each game with its system
+        games.forEach(g => { if (!g.system) g.system = scanner.system })
+        allGames.push(...games)
+
+        if (r?.error) allErrors.push(scanner.system + ': ' + r.error)
+      } catch (e) {
+        allErrors.push(scanner.system + ': ' + (e.message || 'scan failed'))
       }
-    } catch (e) {
-      console.error('[ScanScreen]', e)
-      setError(e.message || 'Unknown scan error')
-    } finally {
-      setRunning(false)
-      setDone(true)
     }
+
+    setResults(allGames)
+    setErrors(allErrors)
+    setRunning(false)
+    setDone(true)
+    setProgress('')
   }
 
   // Group results by system
   const bySystem = results.reduce((acc, g) => {
-    const sys = g.system || 'TeknoParrot'
+    const sys = g.system || 'Other'
     if (!acc[sys]) acc[sys] = []
     acc[sys].push(g)
     return acc
@@ -54,24 +83,22 @@ export default function ScanScreen({ config, next, prev }) {
     <div className={styles.screen}>
       <div className={styles.eyebrow}>Step 5 -- Game Scan</div>
       <div className={styles.title}>
-        {running ? 'Scanning your library...' : done ? 'Scan complete.' : 'Preparing scan...'}
+        {running ? progress || 'Scanning...' : done ? 'Scan complete.' : 'Preparing scan...'}
       </div>
       <div className={styles.sub}>
         {done && totalGames > 0
-          ? totalGames + ' game' + (totalGames !== 1 ? 's' : '') + ' found.'
-          : 'NuArcade scans your TeknoParrot UserProfiles folder for configured games.'}
+          ? totalGames + ' game' + (totalGames !== 1 ? 's' : '') + ' found across ' + Object.keys(bySystem).length + ' system' + (Object.keys(bySystem).length !== 1 ? 's' : '') + '.'
+          : 'Scanning all configured game folders...'}
       </div>
 
-      {error && (
+      {errors.length > 0 && (
         <div className={styles.scanError}>
-          <span className={styles.scanErrorLabel}>SCAN ERROR</span>
-          {error}
-          {error.includes('TeknoParrot path not found') && (
-            <div className={styles.scanErrorHint}>
-              Make sure TeknoParrot is installed and the path in Step 3 points
-              to the folder containing TeknoParrot.exe -- e.g. C:\TeknoParrot\
-            </div>
-          )}
+          <div className={styles.scanErrorLabel}>SCAN WARNINGS</div>
+          {errors.map((e, i) => <div key={i}>{e}</div>)}
+          <div className={styles.scanErrorHint}>
+            Check that each emulator path in Step 3 points to the correct
+            installation folder, then rescan from Settings.
+          </div>
         </div>
       )}
 
@@ -89,14 +116,14 @@ export default function ScanScreen({ config, next, prev }) {
             ))}
           </div>
         ))}
-        {done && totalGames === 0 && !error && (
+        {done && totalGames === 0 && errors.length === 0 && (
           <div className={styles.scanEmpty}>
-            No games found. Check that TeknoParrot is installed and
-            your path in Step 3 is correct, then rescan from Settings.
+            No games found. Add games to your configured folders and
+            rescan from Settings anytime.
           </div>
         )}
         {running && (
-          <div className={styles.scanEmpty}>Scanning...</div>
+          <div className={styles.scanEmpty}>{progress || 'Scanning...'}</div>
         )}
       </div>
 
