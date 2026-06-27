@@ -12,6 +12,10 @@ contextBridge.exposeInMainWorld('nuarcade', {
   browseFolder:    () => ipcRenderer.invoke('browse-folder'),
   openExternal:   (url) => ipcRenderer.invoke('open-url', url),
 
+  // TP Folder Renamer
+  analyzeFolders: (opts) => ipcRenderer.invoke('analyze-folders', opts),
+  renameFolder:   (opts) => ipcRenderer.invoke('rename-folder', opts),
+
   // Game launch
   launchGame:          (profilePath)  => ipcRenderer.invoke('launch-game', profilePath),
   launchPs3Game:       (gamePath)     => ipcRenderer.invoke('launch-ps3-game', gamePath),
