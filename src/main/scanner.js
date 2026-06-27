@@ -248,8 +248,8 @@ async function scanGames(teknoParrotPath, gamesFolderPath) {
           const key     = path.basename(pf, '.xml')
           profileMap[key] = {
             gameName:         profile.GameName         || key,
-            executableName:   profile.ExecutableName   || '',
-            executableName2:  profile.ExecutableName2  || '',
+            executableName:   String(profile.ExecutableName  || ''),
+            executableName2:  String(profile.ExecutableName2 || ''),
             emulatorType:     profile.EmulatorType     || 'TeknoParrot',
           }
         } catch (e) { /* skip bad XML */ }
@@ -323,10 +323,10 @@ async function scanGames(teknoParrotPath, gamesFolderPath) {
     const exeLookup = {}
     for (const [key, p] of Object.entries(profileMap)) {
       if (configuredKeys.has(key)) continue // already in UserProfiles
-      if (p.executableName) {
+      if (p.executableName && typeof p.executableName === 'string') {
         exeLookup[p.executableName.toLowerCase()] = key
       }
-      if (p.executableName2) {
+      if (p.executableName2 && typeof p.executableName2 === 'string') {
         exeLookup[p.executableName2.toLowerCase()] = key
       }
     }
