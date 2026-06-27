@@ -82,11 +82,40 @@ const handleExit = () => {
 
 
   const finish = async () => {
-    const finalConfig = { ...config, setupComplete: true }
+    const p = config.paths || {}
+    // Save config with both new paths structure AND old flat keys for backwards compat
+    const finalConfig = {
+      ...config,
+      setupComplete: true,
+      // Legacy flat keys for useGameLibrary backwards compatibility
+      teknoParrotPath: p.teknoparrot  || '',
+      gamesFolderPath: p.arcadeGames  || '',
+      rpcs3Path:       p.rpcs3        || '',
+      ps3GamesPath:    p.ps3Games     || '',
+      xeniaPath:       p.xenia        || '',
+      xbox360Path:     p.xbox360Games || '',
+      dolphinPath:     p.dolphin      || '',
+      gcWiiPath:       p.gcGames      || '',
+      pcsx2Path:       p.pcsx2        || '',
+      ps2GamesPath:    p.ps2Games     || '',
+      ryujinxPath:     p.ryujinx      || '',
+      switchGamesPath: p.switchGames  || '',
+      mamePath:        p.mame         || '',
+      pinballPath:     p.pinball      || '',
+      dreamcastPath:   p.dreamcastGames || '',
+      pspPath:         p.pspGames     || '',
+      wiiuPath:        p.wiiuGames    || '',
+      model2Path:      p.model2       || '',
+      model3Path:      p.model3       || '',
+      steamPath:       p.steam        || '',
+    }
     try {
       if (window.nuarcade?.setConfig) {
         await window.nuarcade.setConfig(finalConfig)
       }
+      // Clear game cache so library rescans with new paths
+      localStorage.removeItem('nuarcade_game_cache')
+      localStorage.removeItem('nuarcade_game_cache_ts')
     } catch (e) {
       console.warn('setConfig failed:', e)
     }
