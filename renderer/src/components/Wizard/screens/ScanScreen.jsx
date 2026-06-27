@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import styles from './Screen.module.css'
 
-// Maps config.paths keys to their scanner function and system label
+// Maps config.paths keys to scanner function + system label
+// opts() receives (folderPath, allPaths) so TP can pass the games folder too
 const SCANNERS = [
-  { pathKey: 'teknoparrot',  fn: 'scanGames',        system: 'TeknoParrot',  opts: (p) => ({ teknoParrotPath: p, gamesFolderPath: '' }) },
-  { pathKey: 'rpcs3',        fn: 'scanPs3Games',     system: 'PS3',          opts: (p) => p },
+  { pathKey: 'teknoparrot',  fn: 'scanGames',        system: 'TeknoParrot',  opts: (p, all) => ({ teknoParrotPath: p, gamesFolderPath: all.arcadeGames || '' }) },
+  { pathKey: 'ps3Games',     fn: 'scanPs3Games',     system: 'PS3',          opts: (p) => p },
   { pathKey: 'xbox360Games', fn: 'scanXbox360Games', system: 'Xbox 360',     opts: (p) => p },
   { pathKey: 'gcGames',      fn: 'scanGCWiiGames',   system: 'GameCube/Wii', opts: (p) => p },
   { pathKey: 'ps2Games',     fn: 'scanPs2Games',     system: 'PS2',          opts: (p) => p },
@@ -13,11 +14,11 @@ const SCANNERS = [
 ]
 
 export default function ScanScreen({ config, next, prev }) {
-  const [running,   setRunning  ] = useState(false)
-  const [results,   setResults  ] = useState([])
-  const [errors,    setErrors   ] = useState([])
-  const [done,      setDone     ] = useState(false)
-  const [progress,  setProgress ] = useState('')
+  const [running,  setRunning ] = useState(false)
+  const [results,  setResults ] = useState([])
+  const [errors,   setErrors  ] = useState([])
+  const [done,     setDone    ] = useState(false)
+  const [progress, setProgress] = useState('')
   const scrollRef = useRef(null)
 
   useEffect(() => {
@@ -36,7 +37,9 @@ export default function ScanScreen({ config, next, prev }) {
 
     for (const scanner of SCANNERS) {
       const folderPath = paths[scanner.pathKey]
-      if (!folderPath) continue // skip unconfigured systems
+
+      // Skip silently if path is blank -- user didn't configure this system
+      if (!folderPath || folderPath.trim() === '') continue
 
       setProgress('Scanning ' + scanner.system + '...')
 
@@ -44,7 +47,7 @@ export default function ScanScreen({ config, next, prev }) {
         const fn = window.nuarcade?.[scanner.fn]
         if (!fn) continue
 
-        const opts = scanner.opts(folderPath)
+        const opts = scanner.opts(folderPath, paths)
         const r = await fn(opts)
 
         // Handle both { games: [] } shape and plain array
@@ -56,9 +59,16 @@ export default function ScanScreen({ config, next, prev }) {
         games.forEach(g => { if (!g.system) g.system = scanner.system })
         allGames.push(...games)
 
-        if (r?.error) allErrors.push(scanner.system + ': ' + r.error)
+        // Only warn on real errors, not just "folder not found" for blank paths
+        if (r?.error && r.error !== 'Folder not found') {
+          allErrors.push(scanner.system + ': ' + r.error)
+        }
       } catch (e) {
-        allErrors.push(scanner.system + ': ' + (e.message || 'scan failed'))
+        // Only surface unexpected errors, not missing-path errors
+        const msg = e.message || ''
+        if (!msg.includes('not found') && !msg.includes('no such file')) {
+          allErrors.push(scanner.system + ': ' + msg)
+        }
       }
     }
 
@@ -78,6 +88,7 @@ export default function ScanScreen({ config, next, prev }) {
   }, {})
 
   const totalGames = results.length
+  const systemCount = Object.keys(bySystem).length
 
   return (
     <div className={styles.screen}>
@@ -87,8 +98,10 @@ export default function ScanScreen({ config, next, prev }) {
       </div>
       <div className={styles.sub}>
         {done && totalGames > 0
-          ? totalGames + ' game' + (totalGames !== 1 ? 's' : '') + ' found across ' + Object.keys(bySystem).length + ' system' + (Object.keys(bySystem).length !== 1 ? 's' : '') + '.'
-          : 'Scanning all configured game folders...'}
+          ? totalGames + ' game' + (totalGames !== 1 ? 's' : '') + ' found across ' + systemCount + ' system' + (systemCount !== 1 ? 's' : '') + '.'
+          : done
+          ? 'No games found. Configure your paths in Step 3 and rescan from Settings.'
+          : 'Scanning configured game folders...'}
       </div>
 
       {errors.length > 0 && (
@@ -96,8 +109,7 @@ export default function ScanScreen({ config, next, prev }) {
           <div className={styles.scanErrorLabel}>SCAN WARNINGS</div>
           {errors.map((e, i) => <div key={i}>{e}</div>)}
           <div className={styles.scanErrorHint}>
-            Check that each emulator path in Step 3 points to the correct
-            installation folder, then rescan from Settings.
+            Check your configured paths in Step 3, then rescan from Settings.
           </div>
         </div>
       )}
@@ -109,17 +121,23 @@ export default function ScanScreen({ config, next, prev }) {
               {sys} -- {games.length} game{games.length !== 1 ? 's' : ''}
             </div>
             {games.map((g, i) => (
-              <div key={i} className={styles.scanItem}>
+              <div key={i} className={[styles.scanItem, g.status === 'discovered' ? styles.scanItemDiscovered : ''].join(' ')}>
                 <span className={styles.scanDot} />
-                {g.title || g.name || g.file}
+                <span className={styles.scanItemTitle}>{g.title || g.name || g.file}</span>
+                {g.status === 'discovered' && (
+                  <span className={styles.scanItemBadge}>FOUND</span>
+                )}
+                {g.status === 'path-missing' && (
+                  <span className={styles.scanItemBadgeWarn}>PATH MISSING</span>
+                )}
               </div>
             ))}
           </div>
         ))}
         {done && totalGames === 0 && errors.length === 0 && (
           <div className={styles.scanEmpty}>
-            No games found. Add games to your configured folders and
-            rescan from Settings anytime.
+            No games found. Add games to your configured folders
+            and rescan from Settings anytime.
           </div>
         )}
         {running && (
@@ -129,9 +147,7 @@ export default function ScanScreen({ config, next, prev }) {
 
       <div className={styles.btnRow}>
         <button className={styles.btnBack} onClick={prev}>Back</button>
-        <button className={styles.btn} onClick={next} disabled={running}>
-          Continue
-        </button>
+        <button className={styles.btn} onClick={next} disabled={running}>Continue</button>
       </div>
     </div>
   )
