@@ -58,7 +58,7 @@ export default function ScanScreen({ config, next, prev }) {
         const missing   = games.filter(g => g.status === 'path-missing')
         const unmatched = r?.unmatched || []
 
-        if (games.length > 0 || unmatched.length > 0) {
+        if (games.length > 0 || unmatched.length > 0 || (Array.isArray(r) && r.length > 0)) {
           allSystems.push({ system: scanner.system, ready, found, missing, unmatched })
         }
 
