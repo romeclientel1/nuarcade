@@ -245,6 +245,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
 
   const [selectedIndex, setSelectedIndex] = useState(0)
   const velocityRef = useRef(0)
+  const filteredGamesRef = useRef([])
   const velocityTimerRef = useRef(null)
   const lastNavTime = useRef(0)
   // Velocity-based navigation with elastic overshoot
@@ -261,12 +262,12 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     }
 
     const steps = velocityRef.current
-    const n = filteredGames.length
+    const n = filteredGamesRef.current.length
     if (n === 0) return
 
     // Elastic overshoot: jump one extra then snap back
     setIsSnapping(true)
-    setSelectedIndex(i => ((i + dir * (steps + 1)) % n + n) % n)
+    setSelectedIndex(i => ((i + dir * (steps + 1)) % filteredGamesRef.current.length + filteredGamesRef.current.length) % filteredGamesRef.current.length)
     setTimeout(() => {
       setSelectedIndex(i => ((i - dir + n) % n))
       setTimeout(() => setIsSnapping(false), 120)
@@ -409,6 +410,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   }
 
   const filteredGames = getFilteredGames()
+  filteredGamesRef.current = filteredGames
   const current = filteredGames[selectedIndex] || filteredGames[0]
 
   useEffect(() => { setSelectedIndex(0); setAiResults(null); setAiSearching(false) }, [activeCategory, debouncedSearch, sortBy])
