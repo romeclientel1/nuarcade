@@ -10,7 +10,37 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDel
   const [adding,   setAdding  ] = useState(false)
   const [name,     setName    ] = useState('')
   const [selected, setSelected] = useState(null)
+  const [focus,    setFocus   ] = useState('newPlayer')
   const inputRef = useRef(null)
+
+  // Focus nav graph
+  const NAV = {
+    exit:      { right: 'newPlayer', down: 'newPlayer' },
+    newPlayer: { right: 'guest', up: 'exit' },
+    guest:     { left: 'newPlayer', down: 'wizard', up: 'exit' },
+    wizard:    { up: 'guest', left: 'newPlayer' },
+  }
+
+  const navMove = (dir) => {
+    if (adding) return
+    setFocus(f => NAV[f]?.[dir] || f)
+  }
+
+  const navSelect = () => {
+    if (adding) return
+    if (focus === 'exit')      { handleExit(); return }
+    if (focus === 'newPlayer') { setAdding(true); return }
+    if (focus === 'guest')     { onGuest(); return }
+    if (focus === 'wizard')    { onRestartWizard(); return }
+  }
+
+  useGamepad({
+    onDpadUp:    () => navMove('up'),
+    onDpadDown:  () => navMove('down'),
+    onDpadLeft:  () => navMove('left'),
+    onDpadRight: () => navMove('right'),
+    onA:         () => navSelect(),
+  })
 
   // Focus index:
   // 0           = EXIT
@@ -104,7 +134,7 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDel
 
       {/* EXIT button top-left */}
       <button
-        className={styles.exitBtn + (exitConfirm ? ' ' + styles.exitConfirm : '')}
+        className={[styles.exitBtn, exitConfirm ? styles.exitConfirm : '', focus === 'exit' ? styles.focused : ''].join(' ')}
         onClick={handleExit}
       >
         {exitConfirm ? 'CONFIRM EXIT' : 'EXIT'}
@@ -154,11 +184,11 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDel
           </div>
         ) : (
           <div className={styles.actionRow}>
-            <button className={styles.btnNewPlayer} onClick={() => setAdding(true)}>
+            <button className={[styles.btnNewPlayer, focus === 'newPlayer' ? styles.focused : ''].join(' ')} onClick={() => setAdding(true)} onMouseEnter={() => setFocus('newPlayer')}>
               <span className={styles.btnIcon}>+</span>
               New Player
             </button>
-            <button className={styles.btnGuest} onClick={onGuest}>
+            <button className={[styles.btnGuest, focus === 'guest' ? styles.focused : ''].join(' ')} onClick={onGuest} onMouseEnter={() => setFocus('guest')}>
               Play as Guest
             </button>
           </div>
@@ -166,7 +196,7 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDel
       </div>
 
       {/* Restart Wizard -- bottom right, subtle */}
-      <button className={styles.wizardLink} onClick={onRestartWizard}>
+      <button className={[styles.wizardLink, focus === 'wizard' ? styles.wizardFocused : ''].join(' ')} onClick={onRestartWizard} onMouseEnter={() => setFocus('wizard')}>
         &#9881; Setup Wizard
       </button>
     </div>
