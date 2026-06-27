@@ -147,7 +147,7 @@ export default function ScanScreen({ config, next, prev }) {
                   onClick={() => toggle(sys.system + '_found')}
                 >
                   <span className={styles.scanStatusDot} style={{ background: 'rgba(0,200,255,0.7)' }} />
-                  FOUND ON DISK -- NEEDS SETUP ({sys.found.length})
+                  {sys.system === 'TeknoParrot' ? 'FOUND ON DISK -- NEEDS SETUP' : 'FOUND ON DISK'} ({sys.found.length})
                   <span className={styles.scanChevron}>{expanded[sys.system + '_found'] ? 'v' : '>'}</span>
                 </div>
                 {expanded[sys.system + '_found'] && sys.found.map((g, i) => (
@@ -161,7 +161,13 @@ export default function ScanScreen({ config, next, prev }) {
                       <div className={styles.scanItemPath}>{g.gamePath}</div>
                     )}
                     <div className={styles.scanItemHint}>
-                      Open TeknoParrot, click Add Game, select this title, point to the exe above.
+                      {sys.system === 'TeknoParrot'
+                        ? 'Open TeknoParrot, click Add Game, select this title, point to the exe above.'
+                        : sys.system === 'Xbox 360'
+                        ? 'Open Xenia, load the game from the folder above.'
+                        : sys.system === 'PS3'
+                        ? 'Open RPCS3, add the game folder above.'
+                        : 'Open the emulator and add this game folder.'}
                     </div>
                   </div>
                 ))}
