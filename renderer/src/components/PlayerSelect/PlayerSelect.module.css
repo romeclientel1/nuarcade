@@ -2,7 +2,10 @@
   position: fixed;
   inset: 0;
   z-index: 7000;
-  background: #000;
+  background:
+    radial-gradient(ellipse at 60% 20%, rgba(255,140,40,0.18) 0%, transparent 55%),
+    radial-gradient(ellipse at 30% 70%, rgba(0,80,180,0.12) 0%, transparent 50%),
+    linear-gradient(160deg, #0a0a0f 0%, #0d0d18 40%, #080810 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -14,6 +17,17 @@
   to   { opacity: 1; }
 }
 
+
+.grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,180,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,180,255,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 1;
+}
 .scanlines {
   position: absolute;
   inset: 0;
@@ -51,12 +65,28 @@
   font-weight: 900;
   color: #fff;
   letter-spacing: 0.15em;
+  text-shadow:
+    0 0 40px rgba(0,180,255,0.9),
+    0 0 80px rgba(0,140,255,0.6),
+    0 0 120px rgba(0,100,255,0.3),
+    0 2px 4px rgba(0,0,0,0.8);
   animation: coinPulse 1.2s ease-in-out infinite alternate;
 }
 
 @keyframes coinPulse {
-  from { text-shadow: 0 0 20px rgba(0,200,255,0.4); }
-  to   { text-shadow: 0 0 60px rgba(0,200,255,0.9), 0 0 120px rgba(0,200,255,0.3); }
+  from {
+    text-shadow:
+      0 0 30px rgba(0,180,255,0.6),
+      0 0 60px rgba(0,140,255,0.3),
+      0 2px 4px rgba(0,0,0,0.8);
+  }
+  to {
+    text-shadow:
+      0 0 60px rgba(0,220,255,1),
+      0 0 120px rgba(0,180,255,0.7),
+      0 0 200px rgba(0,120,255,0.3),
+      0 2px 4px rgba(0,0,0,0.8);
+  }
 }
 
 .sub {
