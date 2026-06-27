@@ -373,7 +373,7 @@ async function scanGames(teknoParrotPath, gamesFolderPath) {
 }
 
 
-module.exports = { scanGames, parseProfile, scanPinballTables }
+module.exports = { scanGames, parseProfile }
 
 // -- RPCS3 Game Scanner ------------------------------------------------------
 // RPCS3 stores games in folders named by their serial (e.g. BLES01807)
