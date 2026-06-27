@@ -53,7 +53,7 @@ export default function ScanScreen({ config, next, prev }) {
 
         games.forEach(g => { if (!g.system) g.system = scanner.system })
 
-        const ready     = games.filter(g => g.status === 'ready' || g.status === 'configured')
+        const ready     = games.filter(g => ['ready','configured','Playable','Perfect','Unverified'].includes(g.status))
         const found     = games.filter(g => g.status === 'discovered')
         const missing   = games.filter(g => g.status === 'path-missing')
         const unmatched = r?.unmatched || []
@@ -167,7 +167,15 @@ export default function ScanScreen({ config, next, prev }) {
                         ? 'Open Xenia, load the game from the folder above.'
                         : sys.system === 'PS3'
                         ? 'Open RPCS3, add the game folder above.'
-                        : 'Open the emulator and add this game folder.'}
+                        : sys.system === 'GameCube/Wii'
+                        ? 'Open Dolphin, load the game from the folder above.'
+                        : sys.system === 'PS2'
+                        ? 'Open PCSX2, add the ISO or folder above.'
+                        : sys.system === 'Switch'
+                        ? 'Open Ryujinx, add the game file above.'
+                        : sys.system === 'Pinball'
+                        ? 'Open Visual Pinball X and load the table above.'
+                        : 'Open the emulator and load the game from the path above.'}
                     </div>
                   </div>
                 ))}
