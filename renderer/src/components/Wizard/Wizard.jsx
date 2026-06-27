@@ -71,7 +71,7 @@ const handleExit = () => {
   }
 
   useGamepad({
-    confirm: next,
+    confirm: step !== 4 ? next : undefined,
     back:    prev,
     right:   next,
     left:    prev,
