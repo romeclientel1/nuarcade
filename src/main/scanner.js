@@ -358,6 +358,13 @@ async function scanGames(teknoParrotPath, gamesFolderPath) {
 
       // Find the game exe inside the folder (first .exe found, 2 levels deep)
       let gamePath = ''
+      const SKIP_NAMES = ['unins', 'setup', 'update', 'redist', 'dxsetup', 'vcredist', 'vc_redist', 'directx']
+      const isGameFile = (name) => {
+        const lower = name.toLowerCase()
+        if (SKIP_NAMES.some(s => lower.includes(s))) return false
+        return lower.endsWith('.exe') || lower.endsWith('.elf')
+      }
+
       const findExe = (dir, depth) => {
         if (depth > 4 || gamePath) return
         let entries
@@ -366,10 +373,7 @@ async function scanGames(teknoParrotPath, gamesFolderPath) {
           if (gamePath) return
           const full = path.join(dir, e.name)
           if (e.isDirectory()) findExe(full, depth + 1)
-          else if (e.name.toLowerCase().endsWith('.exe')
-                   && !e.name.toLowerCase().includes('unins')
-                   && !e.name.toLowerCase().includes('setup')
-                   && !e.name.toLowerCase().includes('update')) {
+          else if (isGameFile(e.name)) {
             gamePath = full
           }
         }
