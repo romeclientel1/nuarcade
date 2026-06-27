@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useGamepad } from '../../hooks/useGamepad'
-import { useArcadeSound } from '../../hooks/useArcadeSound'
+import { useArcadeSounds } from '../../hooks/useArcadeSounds'
 import { useWizardNav } from '../../hooks/useWizardNav'
 import styles from './PlayerSelect.module.css'
 
@@ -8,7 +8,7 @@ const MAX_NAME_LEN = 12
 
 export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDelete, onRestartWizard }) {
   const { exitConfirm, handleExit } = useWizardNav()
-  const snd = useArcadeSound()
+  const snd = useArcadeSounds()
   const [adding,   setAdding  ] = useState(false)
   const [name,     setName    ] = useState('')
   const [selected, setSelected] = useState(null)
@@ -29,7 +29,7 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDel
   const navMove = (dir) => {
     if (adding) return
     const next = NAV[focus]?.[dir]
-    if (next && next !== focus) { snd.nav(); setFocus(next) }
+    if (next && next !== focus) { snd.navigate(); setFocus(next) }
   }
 
   const navSelect = () => {
@@ -142,7 +142,7 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDel
       {/* EXIT button top-left */}
       <button
         className={[styles.exitBtn, exitConfirm ? styles.exitConfirm : '', focus === 'exit' ? styles.focused : ''].join(' ')}
-        onClick={() => { snd.exit(); handleExit() }}
+        onClick={() => { snd.back(); handleExit() }}
       >
         {exitConfirm ? 'CONFIRM EXIT' : 'EXIT'}
       </button>
@@ -181,7 +181,7 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDel
               placeholder="Enter name..."
               maxLength={MAX_NAME_LEN}
               onKeyDown={e => {
-                if (e.key === 'Enter' && name.trim()) { snd.ready(); onAdd(name.trim()); setAdding(false); setName('') }
+                if (e.key === 'Enter' && name.trim()) { snd.select(); onAdd(name.trim()); setAdding(false); setName('') }
                 if (e.key === 'Escape') { setAdding(false); setName('') }
               }}
               autoFocus
@@ -191,11 +191,11 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDel
           </div>
         ) : (
           <div className={styles.actionRow}>
-            <button className={[styles.btnNewPlayer, focus === 'newPlayer' ? styles.focused : ''].join(' ')} onClick={() => setAdding(true)} onMouseEnter={() => { if (focus !== 'newPlayer') snd.nav(); setFocus('newPlayer') }}>
+            <button className={[styles.btnNewPlayer, focus === 'newPlayer' ? styles.focused : ''].join(' ')} onClick={() => setAdding(true)} onMouseEnter={() => { if (focus !== 'newPlayer') snd.navigate(); setFocus('newPlayer') }}>
               <span className={styles.btnIcon}>+</span>
               New Player
             </button>
-            <button className={[styles.btnGuest, focus === 'guest' ? styles.focused : ''].join(' ')} onClick={onGuest} onMouseEnter={() => { if (focus !== 'guest') snd.nav(); setFocus('guest') }}>
+            <button className={[styles.btnGuest, focus === 'guest' ? styles.focused : ''].join(' ')} onClick={onGuest} onMouseEnter={() => { if (focus !== 'guest') snd.navigate(); setFocus('guest') }}>
               Play as Guest
             </button>
           </div>
