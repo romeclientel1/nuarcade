@@ -359,7 +359,7 @@ async function scanGames(teknoParrotPath, gamesFolderPath) {
       // Find the game exe inside the folder (first .exe found, 2 levels deep)
       let gamePath = ''
       const findExe = (dir, depth) => {
-        if (depth > 2 || gamePath) return
+        if (depth > 4 || gamePath) return
         let entries
         try { entries = fsS.readdirSync(dir, { withFileTypes: true }) } catch (e) { return }
         for (const e of entries) {
