@@ -4,12 +4,12 @@ const BTN = {
   A: 0, B: 1, X: 2, Y: 3,
   LB: 4, RB: 5, LT: 6, RT: 7,
   SELECT: 8, START: 9, L3: 10, R3: 11,
-  DPAD_UP: 12, DPAD_DOWN: 13, DPAD_LEFT: 14, DPAD_RIGHT: 15, HOME: 16,
+  DPAD_UP: 12, DPAD_DOWN: 13, DPAD_LEFT: 14, DPAD_RIGHT: 15,
 }
 
-const STICK_DEADZONE = 0.6
+const REPEAT_DELAY = 400  // ms before repeat starts
+const REPEAT_RATE  = 120  // ms between repeats
 
-// Get the first active gamepad across all slots (not just index 0)
 function getActiveGamepad() {
   const pads = navigator.getGamepads ? navigator.getGamepads() : []
   for (let i = 0; i < pads.length; i++) {
@@ -19,70 +19,62 @@ function getActiveGamepad() {
 }
 
 export function useGamepad(handlers) {
-  // Extract enabled flag from handlers object (defaults to true)
-  const enabled = handlers.enabled !== false
-  const handlersRef  = useRef(handlers)
-  const prevBtns     = useRef({})
-  const rafId        = useRef(null)
-  const repeatTimers = useRef({})
-  const repeatDelay  = 400
-  const repeatRate   = 120
+  const handlersRef = useRef(handlers)
+  const stateRef    = useRef({})  // { [btnIdx]: { pressed, firstAt, lastRepeatAt } }
+  const rafRef      = useRef(null)
 
+  // Always keep handlers current without restarting the RAF
   useEffect(() => { handlersRef.current = handlers }, [handlers])
 
   useEffect(() => {
     const poll = () => {
-      if (!handlersRef.current?.enabled === false) {} // enabled check via ref
+      const h  = handlersRef.current || {}
+      const now = Date.now()
+
+      // Check enabled flag
+      if (h.enabled === false) {
+        rafRef.current = requestAnimationFrame(poll)
+        return
+      }
+
       const gp = getActiveGamepad()
-      if (gp && handlersRef.current?.enabled !== false) {
-        const h = handlersRef.current
-        if (!h) { rafId.current = requestAnimationFrame(poll); return }
+      if (gp) {
+        const fire = (key) => { if (h[key]) h[key]() }
 
-        const check = (btnIdx, handlerKey, repeatable = false) => {
+        const check = (btnIdx, key, repeatable = false) => {
           const pressed = gp.buttons[btnIdx]?.pressed ?? false
-          const wasPressed = prevBtns.current[btnIdx] ?? false
+          const prev    = stateRef.current[btnIdx] || { pressed: false, firstAt: 0, lastRepeatAt: 0 }
 
-          if (pressed && !wasPressed) {
-            h[handlerKey]?.()
-            if (repeatable) {
-              repeatTimers.current[btnIdx] = setTimeout(() => {
-                repeatTimers.current[btnIdx + '_i'] = setInterval(() => {
-                  h[handlerKey]?.()
-                }, repeatRate)
-              }, repeatDelay)
+          if (pressed && !prev.pressed) {
+            // Fresh press
+            fire(key)
+            stateRef.current[btnIdx] = { pressed: true, firstAt: now, lastRepeatAt: now }
+          } else if (pressed && prev.pressed && repeatable) {
+            // Hold repeat
+            if (now - prev.firstAt > REPEAT_DELAY && now - prev.lastRepeatAt > REPEAT_RATE) {
+              fire(key)
+              stateRef.current[btnIdx] = { ...prev, lastRepeatAt: now }
             }
+          } else if (!pressed && prev.pressed) {
+            // Release
+            stateRef.current[btnIdx] = { pressed: false, firstAt: 0, lastRepeatAt: 0 }
           }
-          if (!pressed && wasPressed) {
-            clearTimeout(repeatTimers.current[btnIdx])
-            clearInterval(repeatTimers.current[btnIdx + '_i'])
-          }
-          prevBtns.current[btnIdx] = pressed
         }
 
-        // Check left analog stick as well as dpad
-        const ax = gp.axes[0] ?? 0
-        const ay = gp.axes[1] ?? 0
-
-        // D-pad buttons
-        check(BTN.DPAD_UP,    'up',    true)
-        check(BTN.DPAD_DOWN,  'down',  true)
+        // D-pad
         check(BTN.DPAD_LEFT,  'left',  true)
         check(BTN.DPAD_RIGHT, 'right', true)
+        check(BTN.DPAD_UP,    'up',    true)
+        check(BTN.DPAD_DOWN,  'down',  true)
 
-        // Also check left stick (fire once per threshold cross using prevBtns slots 20-23)
-        const stickUp    = ay < -STICK_DEADZONE
-        const stickDown  = ay >  STICK_DEADZONE
-        const stickLeft  = ax < -STICK_DEADZONE
-        const stickRight = ax >  STICK_DEADZONE
-
-        if (stickUp    && !prevBtns.current[20]) { h['up']?.();    prevBtns.current[20] = true  }
-        if (!stickUp)                             { prevBtns.current[20] = false }
-        if (stickDown  && !prevBtns.current[21]) { h['down']?.();  prevBtns.current[21] = true  }
-        if (!stickDown)                           { prevBtns.current[21] = false }
-        if (stickLeft  && !prevBtns.current[22]) { h['left']?.();  prevBtns.current[22] = true  }
-        if (!stickLeft)                           { prevBtns.current[22] = false }
-        if (stickRight && !prevBtns.current[23]) { h['right']?.(); prevBtns.current[23] = true  }
-        if (!stickRight)                          { prevBtns.current[23] = false }
+        // Left analog stick (also fires nav)
+        const ax = gp.axes[0] ?? 0
+        const ay = gp.axes[1] ?? 0
+        const DEAD = 0.5
+        check({ pressed: ax < -DEAD, value: Math.abs(ax) }, 'left',  true)
+        check({ pressed: ax >  DEAD, value: ax },           'right', true)
+        check({ pressed: ay < -DEAD, value: Math.abs(ay) }, 'up',    true)
+        check({ pressed: ay >  DEAD, value: ay },           'down',  true)
 
         // Buttons
         check(BTN.A,      'confirm')
@@ -96,24 +88,22 @@ export function useGamepad(handlers) {
         check(BTN.START,  'settings')
       }
 
-      rafId.current = requestAnimationFrame(poll)
+      rafRef.current = requestAnimationFrame(poll)
     }
 
-    // Start polling immediately
-    rafId.current = requestAnimationFrame(poll)
+    rafRef.current = requestAnimationFrame(poll)
 
-    // Also restart poll on gamepadconnected in case pad wasn't visible at mount
+    // Restart on new gamepad connection
     const onConnect = () => {
-      cancelAnimationFrame(rafId.current)
-      prevBtns.current = {}
-      rafId.current = requestAnimationFrame(poll)
+      stateRef.current = {}
+      cancelAnimationFrame(rafRef.current)
+      rafRef.current = requestAnimationFrame(poll)
     }
     window.addEventListener('gamepadconnected', onConnect)
 
     return () => {
-      cancelAnimationFrame(rafId.current)
+      cancelAnimationFrame(rafRef.current)
       window.removeEventListener('gamepadconnected', onConnect)
-      Object.values(repeatTimers.current).forEach(t => { clearTimeout(t); clearInterval(t) })
     }
   }, [])
 }
