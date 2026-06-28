@@ -659,26 +659,26 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
 
   useGamepad({
     enabled: !showDetail && !showMediaManager && !showSettings && !showSearch && !showHelp && !showVirtualKeyboard,
-    onLeft:          () => navigate(-1),
-    onRight:         () => navigate(1),
-    onConfirm:       () => setShowDetail(true),
-    onUp:            () => setActiveTab(i => Math.max(0, i - 1)),
-    onDown:          () => setActiveTab(i => i + 1),
-    onStart:         () => setShowSettings(true),
-    onSelect:        () => setShowSearch(true),
-    onBack:          () => { sounds.back(); setShowDetail(false); setSearch(""); setDebouncedSearch(""); setShowSearch(false) },
-    onFavorite:      () => { if (current) toggleFavorite(current.id || current.profile) },
-    onCategoryLeft:  () => {
+    left:          () => navigate(-1),
+    right:         () => navigate(1),
+    confirm:       () => setShowDetail(true),
+    up:            () => setActiveTab(i => Math.max(0, i - 1)),
+    down:          () => setActiveTab(i => i + 1),
+    settings:         () => setShowSettings(true),
+    random:        () => setShowSearch(true),
+    back:          () => { sounds.back(); setShowDetail(false); setSearch(""); setDebouncedSearch(""); setShowSearch(false) },
+    favorite:      () => { if (current) toggleFavorite(current.id || current.profile) },
+    filterLeft:  () => {
       const allCats = [...CATEGORIES, ...Object.keys(collections)]
       const idx = allCats.indexOf(activeCategory)
       setActiveCategory(allCats[(idx - 1 + allCats.length) % allCats.length])
     },
-    onCategoryRight: () => {
+    filterRight: () => {
       const allCats = [...CATEGORIES, ...Object.keys(collections)]
       const idx = allCats.indexOf(activeCategory)
       setActiveCategory(allCats[(idx + 1) % allCats.length])
     },
-    onRandom:        () => {
+    random:        () => {
       if (filteredGames.length > 0) {
         setSelectedIndex(Math.floor(Math.random() * filteredGames.length))
         sounds.navigate()
