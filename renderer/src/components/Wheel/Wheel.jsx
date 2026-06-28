@@ -664,7 +664,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     confirm:       () => setShowDetail(true),
     // up/down tab switching removed -- was breaking gamepad loop on re-render
     settings:         () => setShowSettings(true),
-    random:        () => setShowSearch(true),
+    // search via keyboard only -- Select button handles random game
     back:          () => { sounds.back(); setShowDetail(false); setSearch(""); setDebouncedSearch(""); setShowSearch(false) },
     favorite:      () => { if (current) toggleFavorite(current.id || current.profile) },
     filterLeft:  () => {
@@ -683,7 +683,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
         sounds.navigate()
       }
     },
-    onSettings:      () => setShowSettings(true),
+    // settings handled above
   })
 
 
