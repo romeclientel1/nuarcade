@@ -12,6 +12,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Sync README version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          sed -i "s/Current version: v[0-9.]*/Current version: v$VERSION/g" README.md
+          echo "Synced README to v$VERSION"
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
