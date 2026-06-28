@@ -606,6 +606,8 @@ ipcMain.handle('add-exclusions', async (event, paths) => {
 })
 
 ipcMain.handle('get-config', () => config.load())
+ipcMain.handle('quit-app', () => { app.quit() })
+
 ipcMain.handle('reset-setup', () => {
   config.update({ setupComplete: false })
   return { ok: true }
