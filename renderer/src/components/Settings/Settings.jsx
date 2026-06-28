@@ -112,7 +112,10 @@ const handleRescan = async () => {
     await scan("Steam",       () => window.nuarcade.scanSteamGames(cfg.steamPath))
     await scan("PC Games",    () => window.nuarcade.scanPcGames(cfg.pcGamesPath))
     const total = results.reduce((s, r) => s + r.count, 0)
-    setRescanResult({ total, results })
+    // Clear game cache so library rescans on next launch
+      localStorage.removeItem('nuarcade_game_cache')
+      localStorage.removeItem('nuarcade_game_cache_ts')
+      setRescanResult({ total, results })
   } catch (e) { setRescanResult({ total: 0, results: [], error: e.message }) }
   setRescanning(false)
 }
