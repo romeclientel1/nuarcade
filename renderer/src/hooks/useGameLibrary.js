@@ -34,7 +34,7 @@ export function useGameLibrary() {
         const cfg = await window.nuarcade.getConfig()
         setConfig(cfg)
 
-        if (cfg.setupComplete) {
+        if (true) { // wizard removed -- always scan on launch
           // Check cache first (skip if forceRescan or cache expired)
           if (!forceRescan) {
             try {
