@@ -138,12 +138,7 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork,
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85, zIndex: 1 }}
           />
         )}
-          <video
-            muted
-            loop
-            style={{ zIndex: 3 }}
-          />
-        )}
+
 
         {/* SteamGridDB capsule art -- z-index 2 */}
         {showCapsule && (
