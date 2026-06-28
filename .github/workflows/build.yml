@@ -13,10 +13,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Sync README version
-        run: |
-          VERSION=$(node -p "require('./package.json').version")
-          sed -i "s/Current version: v[0-9.]*/Current version: v$VERSION/g" README.md
-          echo "Synced README to v$VERSION"
+        run: node -e "const fs=require('fs');const v=require('./package.json').version;const r=fs.readFileSync('README.md','utf8');fs.writeFileSync('README.md',r.replace(/Current version: v[\\d.]+/g,'Current version: v'+v));console.log('Synced README to v'+v);"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
