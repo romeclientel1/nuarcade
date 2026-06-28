@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useOverlayGamepad } from '../../hooks/useOverlayGamepad'
 import { useArcadeSounds } from '../../hooks/useArcadeSounds'
-import { useWizardNav } from '../../hooks/useWizardNav'
 import styles from './PlayerSelect.module.css'
 
 const MAX_NAME_LEN = 12
@@ -10,10 +9,13 @@ const MAX_NAME_LEN = 12
 const EXIT_IDX    = 0
 const NEW_P_IDX   = 1
 const GUEST_IDX   = 2
-const WIZARD_IDX  = 3
 
-export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDelete, onRestartWizard }) {
-  const { exitConfirm, handleExit } = useWizardNav()
+export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDelete }) {
+  const [exitConfirm, setExitConfirm] = useState(false)
+  const handleExit = () => {
+    if (exitConfirm) { window.nuarcade?.quit?.() }
+    else { setExitConfirm(true); setTimeout(() => setExitConfirm(false), 3000) }
+  }
   const snd = useArcadeSounds()
 
   const [adding,    setAdding   ] = useState(false)
@@ -34,7 +36,6 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDel
   const profileEnd   = profiles.length
   const newPIdx      = profileEnd + 1
   const guestIdx     = profileEnd + 2
-  const wizardIdx    = profileEnd + 3
 
   const confirmFocused = () => {
     if (adding) return
@@ -47,12 +48,12 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDel
     }
     if (cur === newPIdx)   { setAdding(true); return }
     if (cur === guestIdx)  { onGuest(); return }
-    if (cur === wizardIdx) { onRestartWizard(); return }
+    if (cur === wizardIdx) { /* wizard removed */null(); return }
   }
 
   useOverlayGamepad({
     onUp:      () => { if (!adding) { snd.navigate(); setFocusIdx(i => Math.max(0, i - 1)) } },
-    onDown:    () => { if (!adding) { snd.navigate(); setFocusIdx(i => Math.min(wizardIdx, i + 1)) } },
+    onDown:    () => { if (!adding) { snd.navigate(); setFocusIdx(i => Math.min(guestIdx, i + 1)) } },
     onLeft:    () => { if (!adding) { snd.navigate(); setFocusIdx(i => Math.max(0, i - 1)) } },
     onRight:   () => { if (!adding) { snd.navigate(); setFocusIdx(i => Math.min(wizardIdx, i + 1)) } },
     onConfirm: () => confirmFocused(),
@@ -158,14 +159,7 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDel
         )}
       </div>
 
-      {/* Setup Wizard -- bottom right */}
-      <button
-        className={[styles.wizardLink, isFocused(wizardIdx) ? styles.wizardFocused : ''].join(' ')}
-        onClick={onRestartWizard}
-        onMouseEnter={() => { if (focusIdx !== wizardIdx) snd.navigate(); setFocusIdx(wizardIdx) }}
-      >
-        &#9881; Setup Wizard
-      </button>
+
     </div>
   )
 }
