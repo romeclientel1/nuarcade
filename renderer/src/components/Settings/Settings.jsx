@@ -4,6 +4,7 @@ import ControllerTest from "../ControllerTest/ControllerTest"
 import { usePlaytime } from "../../hooks/usePlaytime"
 import ArtworkManager from "../ArtworkManager/ArtworkManager"
 import styles from "./Settings.module.css"
+import TPRenamer from "./TPRenamer"
 import { useVersionCheck } from "../../hooks/useVersionCheck"
 import { THEMES } from "../../hooks/useTheme"
 
@@ -344,7 +345,13 @@ const handleSave = async () => {
           </div>
 
           <div className={styles.section}>
-            <div className={styles.sectionTitle}>Display</div>
+            <div className={styles.sectionTitle}>Folder Renamer</div>
+        <div className={styles.pathsNote}>
+          Rename unrecognized TeknoParrot game folders to match game profiles for better detection.
+        </div>
+        <TPRenamer />
+
+        <div className={styles.sectionTitle}>Display</div>
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>Mode</label>
               <div className={styles.toggleGroup}>
