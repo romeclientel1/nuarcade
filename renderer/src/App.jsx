@@ -8,7 +8,6 @@ import CoinCounter from "./components/CoinCounter/CoinCounter"
 import { useTheme } from "./hooks/useTheme"
 import "./index.css"
 
-// Error boundary catches render crashes
 class ErrorBoundary extends Component {
   constructor(props) {
     super(props)
@@ -72,7 +71,8 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <CRT>
+      <div style={{ position: 'relative', width: '100vw', height: '100vh', background: '#000', overflow: 'hidden' }}>
+
         {phase === "intro" && (
           <Intro onComplete={handleIntroComplete} />
         )}
@@ -94,8 +94,9 @@ export default function App() {
           />
         )}
 
+        <CRT enabled={true} />
         <CoinCounter />
-      </CRT>
+      </div>
     </ErrorBoundary>
   )
 }
