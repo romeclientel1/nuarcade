@@ -5,25 +5,20 @@ import styles from './PlayerSelect.module.css'
 
 const MAX_NAME_LEN = 12
 
-// Focus indices
-const EXIT_IDX    = 0
-const NEW_P_IDX   = 1
-const GUEST_IDX   = 2
+// Focus indices -- no wizard button
+const EXIT_IDX   = 0
+const NEW_P_IDX  = 1
+const GUEST_IDX  = 2
 
 export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDelete }) {
-  const [exitConfirm, setExitConfirm] = useState(false)
-  const handleExit = () => {
-    if (exitConfirm) { window.nuarcade?.quit?.() }
-    else { setExitConfirm(true); setTimeout(() => setExitConfirm(false), 3000) }
-  }
   const snd = useArcadeSounds()
 
   const [adding,    setAdding   ] = useState(false)
   const [name,      setName     ] = useState('')
-  const [selected,  setSelected ] = useState(null)
   const [focusIdx,  setFocusIdx ] = useState(NEW_P_IDX)
   const focusRef = useRef(NEW_P_IDX)
   const inputRef = useRef(null)
+  const [exitConfirm, setExitConfirm] = useState(false)
 
   // Keep focusRef in sync
   useEffect(() => { focusRef.current = focusIdx }, [focusIdx])
@@ -31,31 +26,39 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDel
   // Play coin sound on mount
   useEffect(() => { snd.coin() }, [])
 
-  // Profile focus slots: EXIT(0), profiles(1..N), NewPlayer(N+1), Guest(N+2), Wizard(N+3)
-  const profileStart = 1
-  const profileEnd   = profiles.length
-  const newPIdx      = profileEnd + 1
-  const guestIdx     = profileEnd + 2
+  // Profile slots: EXIT(0), profiles(1..N), NewPlayer(N+1), Guest(N+2)
+  const profileEnd = profiles.length
+  const newPIdx    = profileEnd + 1
+  const guestIdx   = profileEnd + 2
+  const maxIdx     = guestIdx
+
+  const handleExit = () => {
+    if (exitConfirm) {
+      window.nuarcade?.quit?.()
+    } else {
+      setExitConfirm(true)
+      setTimeout(() => setExitConfirm(false), 3000)
+    }
+  }
 
   const confirmFocused = () => {
     if (adding) return
     snd.select()
     const cur = focusRef.current
-    if (cur === 0)         { handleExit(); return }
-    if (cur >= profileStart && cur <= profileEnd) {
-      const p = profiles[cur - profileStart]
-      setSelected(cur); onSelect(p); return
+    if (cur === EXIT_IDX)  { handleExit(); return }
+    if (cur >= 1 && cur <= profileEnd) {
+      const p = profiles[cur - 1]
+      onSelect(p); return
     }
     if (cur === newPIdx)   { setAdding(true); return }
     if (cur === guestIdx)  { onGuest(); return }
-    if (cur === wizardIdx) { /* wizard removed */null(); return }
   }
 
   useOverlayGamepad({
-    onUp:      () => { if (!adding) { snd.navigate(); setFocusIdx(i => Math.max(0, i - 1)) } },
-    onDown:    () => { if (!adding) { snd.navigate(); setFocusIdx(i => Math.min(guestIdx, i + 1)) } },
-    onLeft:    () => { if (!adding) { snd.navigate(); setFocusIdx(i => Math.max(0, i - 1)) } },
-    onRight:   () => { if (!adding) { snd.navigate(); setFocusIdx(i => Math.min(wizardIdx, i + 1)) } },
+    onUp:      () => { if (!adding) { snd.navigate(); setFocusIdx(i => Math.max(EXIT_IDX, i - 1)) } },
+    onDown:    () => { if (!adding) { snd.navigate(); setFocusIdx(i => Math.min(maxIdx, i + 1)) } },
+    onLeft:    () => { if (!adding) { snd.navigate(); setFocusIdx(i => Math.max(EXIT_IDX, i - 1)) } },
+    onRight:   () => { if (!adding) { snd.navigate(); setFocusIdx(i => Math.min(maxIdx, i + 1)) } },
     onConfirm: () => confirmFocused(),
     onClose:   () => { if (adding) { setAdding(false); setName('') } },
     enabled:   true,
@@ -86,9 +89,9 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDel
 
       {/* EXIT button top-left */}
       <button
-        className={[styles.exitBtn, exitConfirm ? styles.exitConfirm : '', isFocused(0) ? styles.focused : ''].join(' ')}
+        className={[styles.exitBtn, exitConfirm ? styles.exitConfirm : '', isFocused(EXIT_IDX) ? styles.focused : ''].join(' ')}
         onClick={() => { snd.back(); handleExit() }}
-        onMouseEnter={() => { if (focusIdx !== 0) snd.navigate(); setFocusIdx(0) }}
+        onMouseEnter={() => { if (focusIdx !== EXIT_IDX) snd.navigate(); setFocusIdx(EXIT_IDX) }}
       >
         {exitConfirm ? 'CONFIRM EXIT' : 'EXIT'}
       </button>
@@ -106,9 +109,9 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDel
             {profiles.map((p, i) => (
               <button
                 key={p.id}
-                className={[styles.profileBtn, isFocused(profileStart + i) ? styles.profileBtnActive : ''].join(' ')}
-                onClick={() => { setSelected(profileStart + i); onSelect(p) }}
-                onMouseEnter={() => { if (focusIdx !== profileStart + i) snd.navigate(); setFocusIdx(profileStart + i) }}
+                className={[styles.profileBtn, isFocused(1 + i) ? styles.profileBtnActive : ''].join(' ')}
+                onClick={() => { snd.select(); onSelect(p) }}
+                onMouseEnter={() => { if (focusIdx !== 1 + i) snd.navigate(); setFocusIdx(1 + i) }}
               >
                 <span className={styles.profileIcon}>{p.name[0].toUpperCase()}</span>
                 <span className={styles.profileName}>{p.name}</span>
@@ -158,8 +161,6 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDel
           </div>
         )}
       </div>
-
-
     </div>
   )
 }
