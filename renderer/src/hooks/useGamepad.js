@@ -7,8 +7,9 @@ const BTN = {
   DPAD_UP: 12, DPAD_DOWN: 13, DPAD_LEFT: 14, DPAD_RIGHT: 15,
 }
 
-const REPEAT_DELAY = 400  // ms before repeat starts
-const REPEAT_RATE  = 120  // ms between repeats
+const REPEAT_DELAY = 400
+const REPEAT_RATE  = 120
+const STICK_DEAD   = 0.5
 
 function getActiveGamepad() {
   const pads = navigator.getGamepads ? navigator.getGamepads() : []
@@ -20,18 +21,16 @@ function getActiveGamepad() {
 
 export function useGamepad(handlers) {
   const handlersRef = useRef(handlers)
-  const stateRef    = useRef({})  // { [btnIdx]: { pressed, firstAt, lastRepeatAt } }
+  const btnState    = useRef({})  // { [key]: { pressed, firstAt, lastRepeatAt } }
   const rafRef      = useRef(null)
 
-  // Always keep handlers current without restarting the RAF
   useEffect(() => { handlersRef.current = handlers }, [handlers])
 
   useEffect(() => {
     const poll = () => {
-      const h  = handlersRef.current || {}
+      const h   = handlersRef.current || {}
       const now = Date.now()
 
-      // Check enabled flag
       if (h.enabled === false) {
         rafRef.current = requestAnimationFrame(poll)
         return
@@ -39,53 +38,51 @@ export function useGamepad(handlers) {
 
       const gp = getActiveGamepad()
       if (gp) {
-        const fire = (key) => { if (h[key]) h[key]() }
-
-        const check = (btnIdx, key, repeatable = false) => {
-          const pressed = gp.buttons[btnIdx]?.pressed ?? false
-          const prev    = stateRef.current[btnIdx] || { pressed: false, firstAt: 0, lastRepeatAt: 0 }
+        // Timestamp-based press/repeat -- no timers, no leak
+        const fire = (key, pressed, stateKey) => {
+          const prev = btnState.current[stateKey] || { pressed: false, firstAt: 0, lastRepeatAt: 0 }
+          const handler = h[key]
 
           if (pressed && !prev.pressed) {
             // Fresh press
-            fire(key)
-            stateRef.current[btnIdx] = { pressed: true, firstAt: now, lastRepeatAt: now }
-          } else if (pressed && prev.pressed && repeatable) {
-            // Hold repeat
+            if (handler) handler()
+            btnState.current[stateKey] = { pressed: true, firstAt: now, lastRepeatAt: now }
+          } else if (pressed && prev.pressed) {
+            // Hold -- repeat after delay
             if (now - prev.firstAt > REPEAT_DELAY && now - prev.lastRepeatAt > REPEAT_RATE) {
-              fire(key)
-              stateRef.current[btnIdx] = { ...prev, lastRepeatAt: now }
+              if (handler) handler()
+              btnState.current[stateKey] = { ...prev, lastRepeatAt: now }
             }
           } else if (!pressed && prev.pressed) {
             // Release
-            stateRef.current[btnIdx] = { pressed: false, firstAt: 0, lastRepeatAt: 0 }
+            btnState.current[stateKey] = { pressed: false, firstAt: 0, lastRepeatAt: 0 }
           }
         }
 
-        // D-pad
-        check(BTN.DPAD_LEFT,  'left',  true)
-        check(BTN.DPAD_RIGHT, 'right', true)
-        check(BTN.DPAD_UP,    'up',    true)
-        check(BTN.DPAD_DOWN,  'down',  true)
+        // D-pad buttons
+        fire('left',  gp.buttons[BTN.DPAD_LEFT ]?.pressed ?? false, 'dpad_left')
+        fire('right', gp.buttons[BTN.DPAD_RIGHT]?.pressed ?? false, 'dpad_right')
+        fire('up',    gp.buttons[BTN.DPAD_UP   ]?.pressed ?? false, 'dpad_up')
+        fire('down',  gp.buttons[BTN.DPAD_DOWN ]?.pressed ?? false, 'dpad_down')
 
-        // Left analog stick (also fires nav)
+        // Left analog stick -- separate state keys so dpad and stick don't conflict
         const ax = gp.axes[0] ?? 0
         const ay = gp.axes[1] ?? 0
-        const DEAD = 0.5
-        check({ pressed: ax < -DEAD, value: Math.abs(ax) }, 'left',  true)
-        check({ pressed: ax >  DEAD, value: ax },           'right', true)
-        check({ pressed: ay < -DEAD, value: Math.abs(ay) }, 'up',    true)
-        check({ pressed: ay >  DEAD, value: ay },           'down',  true)
+        fire('left',  ax < -STICK_DEAD, 'stick_left')
+        fire('right', ax >  STICK_DEAD, 'stick_right')
+        fire('up',    ay < -STICK_DEAD, 'stick_up')
+        fire('down',  ay >  STICK_DEAD, 'stick_down')
 
-        // Buttons
-        check(BTN.A,      'confirm')
-        check(BTN.B,      'back')
-        check(BTN.X,      'favorite')
-        check(BTN.Y,      'detail')
-        check(BTN.LB,     'filterLeft',  true)
-        check(BTN.RB,     'filterRight', true)
-        check(BTN.RT,     'launch')
-        check(BTN.SELECT, 'random')
-        check(BTN.START,  'settings')
+        // Face buttons -- no repeat
+        fire('confirm',     gp.buttons[BTN.A     ]?.pressed ?? false, 'btn_a')
+        fire('back',        gp.buttons[BTN.B     ]?.pressed ?? false, 'btn_b')
+        fire('favorite',    gp.buttons[BTN.X     ]?.pressed ?? false, 'btn_x')
+        fire('detail',      gp.buttons[BTN.Y     ]?.pressed ?? false, 'btn_y')
+        fire('filterLeft',  gp.buttons[BTN.LB    ]?.pressed ?? false, 'btn_lb')
+        fire('filterRight', gp.buttons[BTN.RB    ]?.pressed ?? false, 'btn_rb')
+        fire('launch',      gp.buttons[BTN.RT    ]?.pressed ?? false, 'btn_rt')
+        fire('random',      gp.buttons[BTN.SELECT]?.pressed ?? false, 'btn_sel')
+        fire('settings',    gp.buttons[BTN.START ]?.pressed ?? false, 'btn_sta')
       }
 
       rafRef.current = requestAnimationFrame(poll)
@@ -93,9 +90,8 @@ export function useGamepad(handlers) {
 
     rafRef.current = requestAnimationFrame(poll)
 
-    // Restart on new gamepad connection
     const onConnect = () => {
-      stateRef.current = {}
+      btnState.current = {}
       cancelAnimationFrame(rafRef.current)
       rafRef.current = requestAnimationFrame(poll)
     }
