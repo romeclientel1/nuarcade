@@ -244,7 +244,43 @@ const handleSave = async () => {
           )}
 
           <div className={styles.section}>
-            <div className={styles.sectionTitle}>Paths</div>
+            <div className={styles.section}>
+        <div className={styles.sectionTitle}>Emulators</div>
+        <div className={styles.pathsNote}>
+          Download and install emulators, then set their paths in the Paths section below.
+        </div>
+        <div className={styles.emulatorGrid}>
+          {[
+            { name: 'TeknoParrot',          url: 'https://teknoparrot.com/' },
+            { name: 'RPCS3',                url: 'https://rpcs3.net' },
+            { name: 'Xenia',                url: 'https://xenia.jp' },
+            { name: 'Dolphin',              url: 'https://dolphin-emu.org' },
+            { name: 'PCSX2',               url: 'https://pcsx2.net' },
+            { name: 'Ryubing',              url: 'https://ryujinx.app/download' },
+            { name: 'MAME',                url: 'https://www.mamedev.org' },
+            { name: 'RetroArch',           url: 'https://www.retroarch.com' },
+            { name: 'Project64',           url: 'https://www.pj64-emu.com' },
+            { name: 'DuckStation',         url: 'https://www.duckstation.org' },
+            { name: 'Flycast',             url: 'https://github.com/flyinghead/flycast/releases' },
+            { name: 'Model 2 Emulator',    url: 'https://emulation.gametechwiki.com/index.php/Model_2_Emulator' },
+            { name: 'Supermodel (M3)',      url: 'https://github.com/trzy/Supermodel/releases' },
+            { name: 'PPSSPP',              url: 'https://www.ppsspp.org' },
+            { name: 'Cemu',                url: 'https://cemu.info' },
+            { name: 'Visual Pinball X',     url: 'https://github.com/vpinball/vpinball/releases' },
+          ].map(e => (
+            <button
+              key={e.name}
+              className={styles.emulatorBtn}
+              onClick={() => window.open(e.url, '_blank')}
+            >
+              {e.name}
+              <span className={styles.emulatorArrow}>&#8599;</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className={styles.sectionTitle}>Paths</div>
             <div className={styles.pathsNote}>
               All paths default to F: drive. Browse or type to update, then Save Settings.
             </div>
