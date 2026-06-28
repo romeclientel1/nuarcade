@@ -1,19 +1,16 @@
 name: Build NuArcade
 
 on:
+  push:
+    branches: [ main ]
   workflow_dispatch:
-
-permissions:
-  contents: write
 
 jobs:
   build-windows:
     runs-on: windows-latest
+
     steps:
       - uses: actions/checkout@v4
-
-      - name: Sync README version
-        run: node -e "const fs=require('fs');const v=require('./package.json').version;const r=fs.readFileSync('README.md','utf8');fs.writeFileSync('README.md',r.replace(/Current version: v[\\d.]+/g,'Current version: v'+v));console.log('Synced README to v'+v);"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -32,27 +29,12 @@ jobs:
         run: npm run build
 
       - name: Build Windows installer
-        run: npx electron-builder --win --publish never
-
-      - name: Get version
-        id: version
-        run: |
-          $version = (Get-Content package.json | ConvertFrom-Json).version
-          echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+        run: npm run build:win
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload installer artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NuArcade-Windows-Installer
+          name: NuArcade-Setup
           path: dist/*.exe
-          retention-days: 90
-
-      - name: Publish GitHub Release
-        run: |
-          $version = "${{ steps.version.outputs.VERSION }}"
-          $tag = "v$version"
-          $exe = Get-ChildItem dist\*.exe | Select-Object -First 1 -ExpandProperty FullName
-          gh release delete $tag --yes 2>$null
-          gh release create $tag $exe --title "NuArcade v$version" --notes "## NuArcade v$version`n`n### Installation`n1. Download NuArcade-Setup.exe below`n2. Run the installer over the existing install`n3. Launch NuArcade"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
