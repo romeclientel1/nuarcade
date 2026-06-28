@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import styles from './Intro.module.css'
+import { useVersionCheck } from '../../hooks/useVersionCheck'
 
 // Procedural sound engine -- no files needed
 function createAudio() {
@@ -80,7 +81,8 @@ const PARTICLES = Array.from({ length: 40 }, (_, i) => ({
   opacity: 0.2 + Math.random() * 0.6,
 }))
 
-export default function Intro({ onComplete }) {
+export default function Intro({
+  const { currentVersion } = useVersionCheck() onComplete }) {
   const [phase, setPhase] = useState('dark')  // dark -> flicker -> logo -> tagline -> fadeout
   const ctxRef   = useRef(null)
   const ambRef   = useRef(null)
@@ -193,7 +195,7 @@ export default function Intro({ onComplete }) {
       )}
 
       {/* Version */}
-      <div className={styles.version}>v4.2.0</div>
+      <div className={styles.version}>v{currentVersion}</div>
 
       {/* Skip hint */}
       {phase !== 'dark' && phase !== 'fadeout' && (
