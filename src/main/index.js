@@ -645,6 +645,17 @@ app.whenReady().then(() => {
     app.dock.setIcon(path.join(__dirname, '../../assets/icons/icon.png'))
   }
   createWindow()
+
+  // Grant gamepad permission -- required in Electron 31+ for getGamepads() to work
+  const { session } = require('electron')
+  session.defaultSession.setPermissionCheckHandler((webContents, permission) => {
+    if (permission === 'gamepad') return true
+    return true
+  })
+  session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
+    if (permission === 'gamepad') { callback(true); return }
+    callback(true)
+  })
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
