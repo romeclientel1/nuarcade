@@ -81,8 +81,8 @@ const PARTICLES = Array.from({ length: 40 }, (_, i) => ({
   opacity: 0.2 + Math.random() * 0.6,
 }))
 
-export default function Intro({
-  const { currentVersion } = useVersionCheck() onComplete }) {
+export default function Intro({ onComplete }) {
+  const { currentVersion } = useVersionCheck()
   const [phase, setPhase] = useState('dark')  // dark -> flicker -> logo -> tagline -> fadeout
   const ctxRef   = useRef(null)
   const ambRef   = useRef(null)
