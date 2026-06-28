@@ -56,7 +56,7 @@ export default function Help({ onClose }) {
   })
   return (
     <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.panel} onClick={e => e.stopPropagation()} ref={scrollRef}>
+      <div className={styles.panel} onClick={e => e.stopPropagation()} ref={bodyRef}>
         <div className={styles.header}>
           <div className={styles.title}>NuArcade Help</div>
           <button className={styles.closeBtn} onClick={onClose}>X</button>
