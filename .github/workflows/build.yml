@@ -21,7 +21,12 @@ jobs:
 
       - name: Get version
         id: version
-        run: echo "VERSION=$(node -p \"require('./package.json').version\")" >> $env:GITHUB_OUTPUT
+        shell: pwsh
+        run: |
+          $pkg = Get-Content package.json | ConvertFrom-Json
+          $ver = $pkg.version
+          echo "VERSION=$ver" >> $env:GITHUB_OUTPUT
+          echo "Version is $ver"
 
       - name: Install root dependencies
         run: npm install
