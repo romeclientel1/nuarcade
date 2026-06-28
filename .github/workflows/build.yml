@@ -8,6 +8,8 @@ on:
 jobs:
   build-windows:
     runs-on: windows-latest
+    permissions:
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
@@ -17,6 +19,10 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Get version
+        id: version
+        run: echo "VERSION=$(node -p \"require('./package.json').version\")" >> $env:GITHUB_OUTPUT
+
       - name: Install root dependencies
         run: npm install
 
@@ -25,15 +31,27 @@ jobs:
         run: npm install
 
       - name: Build renderer
-        working-directory: renderer
-        run: npm run build
+        run: npm run build:renderer
 
       - name: Build Windows installer
         run: npm run build:win
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload installer artifact
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.VERSION }}
+          name: NuArcade v${{ steps.version.outputs.VERSION }}
+          body: |
+            NuArcade v${{ steps.version.outputs.VERSION }}
+            Built automatically from main branch.
+          files: dist/*.exe
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: NuArcade-Setup
