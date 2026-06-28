@@ -19,6 +19,8 @@ function getActiveGamepad() {
 }
 
 export function useGamepad(handlers) {
+  // Extract enabled flag from handlers object (defaults to true)
+  const enabled = handlers.enabled !== false
   const handlersRef  = useRef(handlers)
   const prevBtns     = useRef({})
   const rafId        = useRef(null)
@@ -30,8 +32,9 @@ export function useGamepad(handlers) {
 
   useEffect(() => {
     const poll = () => {
+      if (!handlersRef.current?.enabled === false) {} // enabled check via ref
       const gp = getActiveGamepad()
-      if (gp) {
+      if (gp && handlersRef.current?.enabled !== false) {
         const h = handlersRef.current
         if (!h) { rafId.current = requestAnimationFrame(poll); return }
 
