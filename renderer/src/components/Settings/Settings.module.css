@@ -463,3 +463,45 @@
 .biosLabel { font-size: 11px; color: rgba(255,255,255,0.6); }
 .biosFiles { font-size: 9px; color: rgba(255,255,255,0.3); font-family: monospace; }
 .biosNote  { font-size: 9px; color: rgba(255,255,255,0.2); font-style: italic; }
+
+
+/* ============================================================
+   EMULATOR DOWNLOADS SECTION
+   ============================================================ */
+
+.emulatorGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.emulatorBtn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(0, 180, 255, 0.08);
+  border: 1px solid rgba(0, 180, 255, 0.2);
+  border-radius: 6px;
+  color: rgba(0, 200, 255, 0.9);
+  font-family: 'Orbitron', monospace;
+  font-size: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.emulatorBtn:hover {
+  background: rgba(0, 180, 255, 0.18);
+  border-color: rgba(0, 180, 255, 0.5);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.emulatorArrow {
+  font-size: 12px;
+  opacity: 0.6;
+  margin-left: 6px;
+  flex-shrink: 0;
+}
