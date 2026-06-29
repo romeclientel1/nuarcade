@@ -247,7 +247,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   // 5-tier zone navigation: 0=topMenu, 1=tabs, 2=wheel, 3=launch, 4=hintBar
   const [focusZone,    setFocusZone   ] = useState(2)
   const [showExitPopup, setShowExitPopup] = useState(false)
-  const [exitChoice,    setExitChoice   ] = useState(0)  // 0=Yes, 1=No
+  const [exitChoice,    setExitChoice   ] = useState(1)  // 0=Yes, 1=No -- default NO
   const [topMenuIdx,   setTopMenuIdx  ] = useState(0)   // index within zone 0
   const [tabFocusIdx,  setTabFocusIdx ] = useState(0)   // index within zone 1
   const [barFocusIdx,  setBarFocusIdx ] = useState(0)   // index within zone 4
@@ -705,8 +705,14 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
 
   
   // Top menu actions indexed 0-10
+  // Named search opener -- ensures both states set for controller
+  const openSearchWithKeyboard = () => {
+    setShowSearch(true)
+    setShowVirtualKeyboard(true)
+  }
+
   const topMenuActions = [
-    () => { setShowSearch(true); setShowVirtualKeyboard(true) }, // 0 Search -- shows full keyboard overlay
+    openSearchWithKeyboard,                                          // 0 Search
     () => setShowSort(s => !s),                                  // 1 Sort
     () => { if (filteredGamesRef.current.length > 0) { setSelectedIndex(Math.floor(Math.random() * filteredGamesRef.current.length)); sounds.navigate() } }, // 2 RND
     () => setShowCollections(true),                              // 3 []
