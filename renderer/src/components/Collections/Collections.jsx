@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from "react"
+import { useGamepad } from "../../hooks/useGamepad"
 import { useOverlayGamepad } from '../../hooks/useOverlayGamepad'
 import styles from "./Collections.module.css"
 
@@ -58,6 +59,9 @@ export function useCollections() {
 export default function Collections({ games, currentGame, onClose }) {
   const { getCollections, createCollection, deleteCollection, addToCollection, removeFromCollection, renameCollection } = useCollections()
   const sideRef = useRef(null)
+
+  // B button closes collections
+  useGamepad({ back: () => onClose?.(), enabled: true })
   const mainRef = useRef(null)
   const [cols, setCols] = useState(() => getCollections())
   const [newName, setNewName] = useState("")
