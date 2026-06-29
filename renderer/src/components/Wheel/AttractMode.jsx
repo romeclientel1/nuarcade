@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useVersionCheck } from "../../hooks/useVersionCheck"
 import styles from "./AttractMode.module.css"
+import { useGamepad } from "../../hooks/useGamepad"
 
 const CYCLE_INTERVAL = 6000
 const FADE_DURATION  = 600
@@ -27,6 +28,24 @@ function shuffle(arr) {
 
 export default function AttractMode({ games, isActive, onWake, onSelect, artwork, attractConfig = {} }) {
   const { currentVersion } = useVersionCheck()
+
+  // Any gamepad button press wakes attract mode
+  useGamepad({
+    confirm:     onWake,
+    back:        onWake,
+    left:        onWake,
+    right:       onWake,
+    up:          onWake,
+    down:        onWake,
+    settings:    onWake,
+    filterLeft:  onWake,
+    filterRight: onWake,
+    random:      onWake,
+    launch:      onWake,
+    favorite:    onWake,
+    detail:      onWake,
+    enabled:     true,
+  })
   const [currentIdx,  setCurrentIdx ] = useState(0)
   const [visible,     setVisible    ] = useState(false)
   const [phase,       setPhase      ] = useState("in") // "in" | "out"
@@ -93,9 +112,11 @@ export default function AttractMode({ games, isActive, onWake, onSelect, artwork
       onWake()
     }
     window.addEventListener("keydown", wake)
+    window.addEventListener("gamepadconnected", onWake)
     window.addEventListener("click",   wake)
     return () => {
       window.removeEventListener("keydown", wake)
+      window.removeEventListener("gamepadconnected", onWake)
       window.removeEventListener("click",   wake)
     }
   }, [isActive, onWake, onSelect, shuffled, games])
