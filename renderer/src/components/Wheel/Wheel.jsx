@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo } from "react"
 import { useGamepad } from "../../hooks/useGamepad"
 import { useGameLibrary } from "../../hooks/useGameLibrary"
 import GameCard from "./GameCard"
@@ -445,7 +445,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     return sortGames(list, sortBy)
   }
 
-  const filteredGames = getFilteredGames()
+  const filteredGames = useMemo(() => getFilteredGames(), [games, activeCategory, debouncedSearch, collections])
   filteredGamesRef.current = filteredGames
   // Build visible tabs list -- only categories that have games
   const _visibleTabs = CATEGORIES.filter(cat => {
