@@ -246,6 +246,16 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const [selectedIndex, setSelectedIndex] = useState(0)
   const velocityRef = useRef(0)
   const filteredGamesRef = useRef([])
+  // Stable refs for gamepad handlers -- avoids stale closure issues
+  const activeCategoryRef  = useRef(activeCategory)
+  const collectionsRef     = useRef(collections)
+  const currentRef         = useRef(null)
+  const showDetailRef      = useRef(false)
+  const showSettingsRef    = useRef(false)
+  const showSearchRef      = useRef(false)
+  const showHelpRef        = useRef(false)
+  const showMediaManagerRef = useRef(false)
+  const showVirtualKeyboardRef = useRef(false)
   const velocityTimerRef = useRef(null)
   const lastNavTime = useRef(0)
   // Velocity-based navigation with elastic overshoot
@@ -411,6 +421,15 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
 
   const filteredGames = getFilteredGames()
   filteredGamesRef.current = filteredGames
+  activeCategoryRef.current    = activeCategory
+  collectionsRef.current       = collections
+  currentRef.current           = current
+  showDetailRef.current        = showDetail
+  showSettingsRef.current      = showSettings
+  showSearchRef.current        = showSearch
+  showHelpRef.current          = showHelp
+  showMediaManagerRef.current  = showMediaManager
+  showVirtualKeyboardRef.current = showVirtualKeyboard
   const current = filteredGames[selectedIndex] || filteredGames[0]
 
   useEffect(() => { setSelectedIndex(0); setAiResults(null); setAiSearching(false) }, [activeCategory, debouncedSearch, sortBy])
@@ -658,28 +677,36 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   }, [showSearch])
 
   useGamepad({
-    enabled: !showDetail && !showMediaManager && !showSettings && !showSearch && !showHelp && !showVirtualKeyboard,
-    left:          () => navigate(-1),
-    right:         () => navigate(1),
-    confirm:       () => setShowDetail(true),
-    // up/down tab switching removed -- was breaking gamepad loop on re-render
-    settings:         () => setShowSettings(true),
-    // search via keyboard only -- Select button handles random game
+    enabled: !showDetailRef.current && !showMediaManagerRef.current && !showSettingsRef.current && !showSearchRef.current && !showHelpRef.current && !showVirtualKeyboardRef.current,
+    left:     () => navigate(-1),
+    right:    () => navigate(1),
+    up:       () => setActiveTab(i => Math.max(0, i - 1)),
+    down:     () => setActiveTab(i => i + 1),
+    confirm:  () => { if (!showDetailRef.current) setShowDetail(true) },
+    settings: () => { if (!showSettingsRef.current) setShowSettings(true) },
+    back:     () => {
+      if (showDetailRef.current)      { setShowDetail(false); return }
+      if (showSettingsRef.current)    { setShowSettings(false); return }
+      if (showSearchRef.current)      { setShowSearch(false); return }
+      if (showHelpRef.current)        { setShowHelp(false); return }
+      if (showMediaManagerRef.current){ setShowMediaManager(false); return }
+    },
+    // search via keyboard only
     back:          () => { sounds.back(); setShowDetail(false); setSearch(""); setDebouncedSearch(""); setShowSearch(false) },
-    favorite:      () => { if (current) toggleFavorite(current.id || current.profile) },
+    favorite:      () => { if (currentRef.current) toggleFavorite(currentRef.current.id || currentRef.current.profile) },
     filterLeft:  () => {
-      const allCats = [...CATEGORIES, ...Object.keys(collections)]
-      const idx = allCats.indexOf(activeCategory)
+      const allCats = [...CATEGORIES, ...Object.keys(collectionsRef.current)]
+      const idx = allCats.indexOf(activeCategoryRef.current)
       setActiveCategory(allCats[(idx - 1 + allCats.length) % allCats.length])
     },
     filterRight: () => {
-      const allCats = [...CATEGORIES, ...Object.keys(collections)]
-      const idx = allCats.indexOf(activeCategory)
+      const allCats = [...CATEGORIES, ...Object.keys(collectionsRef.current)]
+      const idx = allCats.indexOf(activeCategoryRef.current)
       setActiveCategory(allCats[(idx + 1) % allCats.length])
     },
     random:        () => {
-      if (filteredGames.length > 0) {
-        setSelectedIndex(Math.floor(Math.random() * filteredGames.length))
+      if (filteredGamesRef.current.length > 0) {
+        setSelectedIndex(Math.floor(Math.random() * filteredGamesRef.current.length))
         sounds.navigate()
       }
     },
