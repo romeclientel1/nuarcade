@@ -113,7 +113,7 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork,
 
   return (
     <div className={`${styles.flipContainer} ${flipped ? styles.flipped : ''}`}>
-      <div className={styles.flipFront} onClick={isCenter ? () => setFlipped(f => !f) : onClick}>
+      <div className={styles.flipFront} onClick={onClick}>
         <div
           className={`${styles.card} ${isCenter ? styles.center : ""}`}
           style={{ background: colors.bg }}
