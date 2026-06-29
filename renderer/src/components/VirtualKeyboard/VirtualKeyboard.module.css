@@ -144,3 +144,12 @@
   border-color: rgba(255,255,255,0.25);
   color: rgba(255,255,255,0.6);
 }
+
+
+.closeBtnFocused {
+  outline: 2px solid #0ff !important;
+  outline-offset: 2px;
+  box-shadow: 0 0 12px rgba(0,255,255,0.7) !important;
+  color: #0ff !important;
+  background: rgba(0,255,255,0.15) !important;
+}
