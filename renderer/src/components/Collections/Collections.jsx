@@ -102,7 +102,7 @@ export default function Collections({ games, currentGame, onClose }) {
     : []
 
   return (
-    <div className={styles.overlay} onClick={onClose} ref={scrollRef}>
+    <div className={styles.overlay} onClick={onClose} ref={sideRef}>
       <div className={styles.panel} onClick={e => e.stopPropagation()}>
         <div className={styles.header}>
           <div className={styles.title}>Collections</div>
