@@ -663,7 +663,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   useEffect(() => {
     const handler = (e) => {
       // Never intercept when any text input or overlay is active
-      if (showSearch || showVirtualKeyboard) return
+      // search removed
       if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return
 
       if (e.key === "ArrowLeft")  { sounds.navigate(); navigate(-1) }
@@ -674,10 +674,10 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       if ((e.key === "o" || e.key === "O") && !showDetail && !showHelp && !showStats && !showCoach && !showSettings && !showMediaManager && !showHighScores) { sounds.select?.(); setShowOperator(true) }
       if (e.key === "Escape") {
         sounds.back()
-        setShowDetail(false); setShowSearch(false); setSearch(""); setDebouncedSearch("")
+        setShowDetail(false)
         setShowHelp(false); setShowSort(false); setShowStats(false)
         setShowAchievements(false); setShowCollections(false)
-        setShowVirtualKeyboard(false)
+        // search removed
       }
 
       // Single-key shortcuts only fire when no overlay is open
@@ -710,9 +710,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     return () => window.removeEventListener("keydown", handler)
   }, [filteredGames, selectedIndex, showSearch, showVirtualKeyboard, showDetail, showHelp, showStats, showAchievements, showCollections, showSettings, showMediaManager, showCoach, showHighScores, showOperator, current, handleLaunch])
 
-  useEffect(() => {
-    if (showSearch && searchRef.current) searchRef.current.focus()
-  }, [showSearch])
+  // search focus effect removed
 
   
   // Top menu actions indexed 0-10
@@ -720,8 +718,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   // Search removed -- use LB/RB and tabs to filter games
 
   const topMenuActions = [
-    // search removed
-    () => setShowSort(s => !s),                                  // 1 Sort
+    () => setShowSort(s => !s),                                  // 0 Sort
     () => { if (filteredGamesRef.current.length > 0) { setSelectedIndex(Math.floor(Math.random() * filteredGamesRef.current.length)); sounds.navigate() } }, // 2 RND
     () => setShowCollections(true),                              // 3 []
     () => setShowStats(true),                                    // 4 #
