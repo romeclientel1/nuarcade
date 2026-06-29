@@ -921,3 +921,22 @@
   box-shadow: 0 0 12px rgba(0, 255, 255, 0.7), 0 0 24px rgba(0, 255, 255, 0.4) !important;
   transform: scale(1.05) !important;
 }
+
+
+/* Favorite button heart -- using CSS content to avoid esbuild Unicode issues */
+.favBtn {
+  font-size: 0 !important;  /* hide the text */
+  min-width: 28px;
+  min-height: 28px;
+}
+.favBtn::before {
+  content: '\2661'; /* open heart */
+  font-size: 16px;
+  color: rgba(255,255,255,0.5);
+}
+.favActive::before {
+  content: '\2665'; /* filled heart */
+  font-size: 16px;
+  color: #ff4466 !important;
+  text-shadow: 0 0 8px rgba(255, 68, 102, 0.8);
+}
