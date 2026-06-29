@@ -266,6 +266,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const showHelpRef        = useRef(false)
   const showMediaManagerRef = useRef(false)
   const showVirtualKeyboardRef = useRef(false)
+  const exitConfirmRef         = useRef(false)
   const velocityTimerRef = useRef(null)
   const lastNavTime = useRef(0)
   // Velocity-based navigation with elastic overshoot
@@ -754,6 +755,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     showHelpRef.current            = showHelp
     showMediaManagerRef.current    = showMediaManager
     showVirtualKeyboardRef.current = showVirtualKeyboard
+    exitConfirmRef.current         = exitConfirm
     focusZoneRef.current           = focusZone
     activeCategoryRef.current      = activeCategory
     collectionsRef.current         = collections
@@ -807,9 +809,10 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     },
     settings: () => { if (!showSettingsRef.current) setShowSettings(true) },
     back: () => {
+      if (exitConfirmRef.current)     { setExitConfirm(false); return }
       if (showDetailRef.current)      { setShowDetail(false); return }
       if (showSettingsRef.current)    { setShowSettings(false); return }
-      if (showSearchRef.current)      { setShowSearch(false); return }
+      if (showSearchRef.current)      { setShowSearch(false); setShowVirtualKeyboard(false); return }
       if (showHelpRef.current)        { setShowHelp(false); return }
       if (showMediaManagerRef.current){ setShowMediaManager(false); return }
       // If in any zone other than wheel, return to wheel
@@ -1015,7 +1018,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
                 </button>
               )}
               {!activeProfile && onSwitchPlayer && (
-                <button className={styles.settingsBtn} onClick={onSwitchPlayer} title="Select player">
+                <button className={styles.settingsBtn + (focusZone === 0 && topMenuIdx === 6 ? " " + styles.barFocused : "")} onClick={onSwitchPlayer} title="Select player">
                   GUEST
                 </button>
               )}
