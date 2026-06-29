@@ -244,10 +244,16 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   }
 
   const [selectedIndex, setSelectedIndex] = useState(0)
-  const [focusZone, setFocusZone] = useState('wheel')  // 'tabs' | 'wheel' | 'bar'
-  const [barFocusIdx, setBarFocusIdx] = useState(0)    // 0=launch, 1=favorite, 2=system, 3=genre, 4=status
-  const focusZoneRef = useRef('wheel')
-  const barFocusIdxRef = useRef(0)
+  // 5-tier zone navigation: 0=topMenu, 1=tabs, 2=wheel, 3=launch, 4=hintBar
+  const [focusZone,    setFocusZone   ] = useState(2)
+  const [topMenuIdx,   setTopMenuIdx  ] = useState(0)   // index within zone 0
+  const [tabFocusIdx,  setTabFocusIdx ] = useState(0)   // index within zone 1
+  const [barFocusIdx,  setBarFocusIdx ] = useState(0)   // index within zone 4
+  const focusZoneRef    = useRef(2)
+  const topMenuIdxRef   = useRef(0)
+  const tabFocusIdxRef  = useRef(0)
+  const barFocusIdxRef  = useRef(0)
+  const visibleTabsRef  = useRef([])  // tabs actually visible on screen
   const velocityRef = useRef(0)
   const filteredGamesRef = useRef([])
   // Stable refs for gamepad handlers -- avoids stale closure issues
@@ -425,7 +431,17 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
 
   const filteredGames = getFilteredGames()
   filteredGamesRef.current = filteredGames
-  focusZoneRef.current = focusZone
+  // Build visible tabs list -- only categories that have games
+  const _visibleTabs = CATEGORIES.filter(cat => {
+    if (cat === 'All') return true
+    if (cat === 'Favorites') return games.some(g => isFavorite(g.id || g.profile))
+    if (cat === 'Recent') return recentlyPlayed.length > 0
+    return games.some(g => g.genre === cat || g.system === cat || g.emulator === cat.toLowerCase())
+  }).concat(Object.keys(collections))
+  visibleTabsRef.current = _visibleTabs
+  focusZoneRef.current   = focusZone
+  topMenuIdxRef.current  = topMenuIdx
+  tabFocusIdxRef.current = tabFocusIdx
   barFocusIdxRef.current = barFocusIdx
   activeCategoryRef.current    = activeCategory
   collectionsRef.current       = collections
@@ -682,56 +698,109 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     if (showSearch && searchRef.current) searchRef.current.focus()
   }, [showSearch])
 
+  
+  // Top menu actions indexed 0-10
+  const topMenuActions = [
+    () => { setShowSearch(true); setShowVirtualKeyboard(true) }, // 0 Search
+    () => setShowSort(s => !s),                                  // 1 Sort
+    () => { if (filteredGamesRef.current.length > 0) { setSelectedIndex(Math.floor(Math.random() * filteredGamesRef.current.length)); sounds.navigate() } }, // 2 RND
+    () => setShowCollections(true),                              // 3 []
+    () => setShowStats(true),                                    // 4 #
+    () => setShowAchievements(true),                             // 5 *
+    () => { if (onSwitchPlayer) onSwitchPlayer() },              // 6 Player
+    () => setShowMediaManager(true),                             // 7 Media
+    () => setShowSettings(true),                                 // 8 Settings
+    () => setShowHelp(true),                                     // 9 ?
+    () => window.nuarcade?.quit?.(),                             // 10 Exit
+  ]
+  const TOP_MENU_MAX = 10
+
+  // Hint bar actions indexed 0-12
+  const hintBarActions = [
+    () => setShowDetail(true),                                   // 0 Detail
+    () => launchGame(),                                          // 1 Launch
+    () => { if (currentRef.current) toggleFavorite(currentRef.current.id || currentRef.current.profile) }, // 2 Favorite
+    () => { if (filteredGamesRef.current.length > 0) { setSelectedIndex(Math.floor(Math.random() * filteredGamesRef.current.length)); sounds.navigate() } }, // 3 Random
+    () => setShowCollections(true),                              // 4 Collections
+    () => setShowStats(true),                                    // 5 Stats
+    () => setShowAchievements(true),                             // 6 Achievements
+    () => { setShowSearch(true); setShowVirtualKeyboard(true) }, // 7 Keyboard
+    () => setShowCoach(true),                                    // 8 Coach
+    () => setShowHighScores(true),                               // 9 Scores
+    () => setShowOperator(true),                                 // 10 Operator
+    () => setShowHelp(true),                                     // 11 Help
+  ]
+  const HINT_BAR_MAX = 11
+  
   const filterLeft = () => {
-    const allCats = [...CATEGORIES, ...Object.keys(collectionsRef.current)]
-    const idx = allCats.indexOf(activeCategoryRef.current)
-    setActiveCategory(allCats[(idx - 1 + allCats.length) % allCats.length])
+    const tabs = visibleTabsRef.current
+    const idx = tabs.indexOf(activeCategoryRef.current)
+    const newIdx = Math.max(0, idx - 1)
+    setTabFocusIdx(newIdx)
+    setActiveCategory(tabs[newIdx])
   }
   const filterRight = () => {
-    const allCats = [...CATEGORIES, ...Object.keys(collectionsRef.current)]
-    const idx = allCats.indexOf(activeCategoryRef.current)
-    setActiveCategory(allCats[(idx + 1) % allCats.length])
+    const tabs = visibleTabsRef.current
+    const idx = tabs.indexOf(activeCategoryRef.current)
+    const newIdx = Math.min(tabs.length - 1, idx + 1)
+    setTabFocusIdx(newIdx)
+    setActiveCategory(tabs[newIdx])
   }
   useGamepad({
-    enabled: !showDetailRef.current && !showMediaManagerRef.current && !showSettingsRef.current && !showSearchRef.current && !showHelpRef.current && !showVirtualKeyboardRef.current,
-    left:     () => {
-      if (focusZoneRef.current === 'bar') { setBarFocusIdx(i => Math.max(0, i - 1)); return }
-      if (focusZoneRef.current === 'tabs') { filterLeft(); return }
-      navigate(-1)
+    enabled: !showDetailRef.current && !showMediaManagerRef.current && !showSettingsRef.current && !showSearchRef.current && !showHelpRef.current && !showVirtualKeyboardRef.current && !attractMode,
+    left: () => {
+      const z = focusZoneRef.current
+      if (z === 0) { setTopMenuIdx(i => Math.max(0, i - 1)); return }
+      if (z === 1) { setTabFocusIdx(i => Math.max(0, i - 1)); return }
+      if (z === 2) { navigate(-1); return }
+      if (z === 3) { return }
+      if (z === 4) { setBarFocusIdx(i => Math.max(0, i - 1)); return }
     },
-    right:    () => {
-      if (focusZoneRef.current === 'bar') { setBarFocusIdx(i => Math.min(4, i + 1)); return }
-      if (focusZoneRef.current === 'tabs') { filterRight(); return }
-      navigate(1)
+    right: () => {
+      const z = focusZoneRef.current
+      if (z === 0) { setTopMenuIdx(i => Math.min(TOP_MENU_MAX, i + 1)); return }
+      if (z === 1) { setTabFocusIdx(i => Math.min(visibleTabsRef.current.length - 1, i + 1)); return }
+      if (z === 2) { navigate(1); return }
+      if (z === 3) { return }
+      if (z === 4) { setBarFocusIdx(i => Math.min(HINT_BAR_MAX, i + 1)); return }
     },
     up: () => {
-      if (focusZoneRef.current === 'bar')   { setFocusZone('wheel'); return }
-      if (focusZoneRef.current === 'wheel') { setFocusZone('tabs');  return }
+      const z = focusZoneRef.current
+      if (z === 4) { setFocusZone(3); return }  // hintBar -> launch
+      if (z === 3) { setFocusZone(2); return }  // launch -> wheel
+      if (z === 2) { setFocusZone(1); return }  // wheel -> tabs
+      if (z === 1) { setFocusZone(0); return }  // tabs -> topMenu
     },
     down: () => {
-      if (focusZoneRef.current === 'tabs')  { setFocusZone('wheel'); return }
-      if (focusZoneRef.current === 'wheel') { setFocusZone('bar');   return }
+      const z = focusZoneRef.current
+      if (z === 0) { setFocusZone(1); return }  // topMenu -> tabs
+      if (z === 1) { setFocusZone(2); return }  // tabs -> wheel
+      if (z === 2) { setFocusZone(3); return }  // wheel -> launch
+      if (z === 3) { setFocusZone(4); return }  // launch -> hintBar
     },
-    confirm:  () => {
-      if (focusZoneRef.current === 'bar') {
-        const idx = barFocusIdxRef.current
-        if (idx === 0) { launchGame(); return }
-        if (idx === 1) { if (currentRef.current) toggleFavorite(currentRef.current.id || currentRef.current.profile); return }
-        return
+    confirm: () => {
+      const z = focusZoneRef.current
+      if (z === 0) { topMenuActions[topMenuIdxRef.current]?.(); return }
+      if (z === 1) {
+        // Apply the highlighted tab
+        const tabs = visibleTabsRef.current
+        const tab = tabs[tabFocusIdxRef.current]
+        if (tab) setActiveCategory(tab)
+        setFocusZone(2); return
       }
-      if (focusZoneRef.current === 'tabs') {
-        // Tab is already highlighted via activeCategoryRef -- A confirms current tab (already selected)
-        setFocusZone('wheel'); return
-      }
-      if (!showDetailRef.current) setShowDetail(true)
+      if (z === 2) { if (!showDetailRef.current) setShowDetail(true); return }
+      if (z === 3) { launchGame(); return }
+      if (z === 4) { hintBarActions[barFocusIdxRef.current]?.(); return }
     },
     settings: () => { if (!showSettingsRef.current) setShowSettings(true) },
-    back:     () => {
+    back: () => {
       if (showDetailRef.current)      { setShowDetail(false); return }
       if (showSettingsRef.current)    { setShowSettings(false); return }
       if (showSearchRef.current)      { setShowSearch(false); return }
       if (showHelpRef.current)        { setShowHelp(false); return }
       if (showMediaManagerRef.current){ setShowMediaManager(false); return }
+      // If in any zone other than wheel, return to wheel
+      if (focusZoneRef.current !== 2) { setFocusZone(2); return }
     },
     // search via keyboard only
     back:          () => { sounds.back(); setShowDetail(false); setSearch(""); setDebouncedSearch(""); setShowSearch(false) },
@@ -908,17 +977,17 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
               {newGameCount > 0 && (
                 <span className={styles.newBadge}>+{newGameCount} new</span>
               )}
-              <button className={styles.searchBtn} onClick={() => {
+              <button className={styles.searchBtn + (focusZone === 0 && topMenuIdx === 0 ? " " + styles.barFocused : "")} onClick={() => {
                 setShowSearch(true)
                 setShowVirtualKeyboard(true)
               }}>Search</button>
-              <button className={sortBy !== "default" ? styles.sortActive : styles.sortBtn} onClick={() => setShowSort(s => !s)}>Sort</button>
-              <button className={styles.randBtn} onClick={() => {
+              <button className={(sortBy !== "default" ? styles.sortActive : styles.sortBtn) + (focusZone === 0 && topMenuIdx === 1 ? " " + styles.barFocused : "")} onClick={() => setShowSort(s => !s)}>Sort</button>
+              <button className={styles.randBtn + (focusZone === 0 && topMenuIdx === 2 ? " " + styles.barFocused : "")} onClick={() => {
                 if (filteredGames.length > 0) {
                   setSelectedIndex(Math.floor(Math.random() * filteredGames.length))
                   sounds.navigate()
                 }
-              }} title="Random game (R)">RND</button>
+              }} title="Random game (R)" className={styles.randBtn + (focusZone === 0 && topMenuIdx === 2 ? " " + styles.barFocused : "")}>RND</button>
               <button className={styles.colBtn} onClick={() => setShowCollections(true)} title="Collections (N)">[]</button>
               <button className={styles.statsBtn} onClick={() => setShowStats(true)} title="My Stats (T)">#</button>
               <button className={styles.achieveBtn} onClick={() => setShowAchievements(true)} title="Achievements (A)">*</button>
@@ -937,9 +1006,9 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
                   GUEST
                 </button>
               )}
-              <button className={styles.mediaBtn} onClick={() => setShowMediaManager(true)}>Media</button>
-              <button className={styles.settingsBtn} onClick={() => setShowSettings(true)}>Settings</button>
-              <button className={styles.helpBtn} onClick={() => setShowHelp(true)}>?</button>
+              <button className={styles.mediaBtn + (focusZone === 0 && topMenuIdx === 7 ? " " + styles.barFocused : "")} onClick={() => setShowMediaManager(true)}>Media</button>
+              <button className={styles.settingsBtn + (focusZone === 0 && topMenuIdx === 8 ? " " + styles.barFocused : "")} onClick={() => setShowSettings(true)}>Settings</button>
+              <button className={styles.helpBtn + (focusZone === 0 && topMenuIdx === 9 ? " " + styles.barFocused : "")} onClick={() => setShowHelp(true)}>?</button>
               <button
                 className={styles.exitBtn + (exitConfirm ? ' ' + styles.exitConfirm : '')}
                 onClick={() => {
@@ -969,7 +1038,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
         }).map(cat => (
           <button
             key={cat}
-            className={styles.catPill + (activeCategory === cat ? " " + styles.catActive : "") + (focusZone === 'tabs' && activeCategory === cat ? " " + styles.catFocused : "")}
+            className={styles.catPill + (activeCategory === cat ? " " + styles.catActive : "") + (focusZone === 1 && visibleTabsRef.current[tabFocusIdx] === cat ? " " + styles.catFocused : "")}
             onClick={() => setActiveCategory(cat)}
           >
             {cat === "Favorites" ? "Favorites" : cat === "Recent" ? "Recent" : cat}
@@ -986,7 +1055,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
         {Object.values(collections).map(col => (
           <button
             key={col.id}
-            className={styles.catPill + " " + styles.catCollection + (activeCategory === col.id ? " " + styles.catActive : "") + (focusZone === 'tabs' && activeCategory === col.id ? " " + styles.catFocused : "")}
+            className={styles.catPill + " " + styles.catCollection + (activeCategory === col.id ? " " + styles.catActive : "") + (focusZone === 1 && visibleTabsRef.current[tabFocusIdx] === col.id ? " " + styles.catFocused : "")}
             onClick={() => setActiveCategory(col.id)}
           >
             {col.name}
@@ -1141,7 +1210,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
                 {current.status}
               </span>
               <button
-                className={styles.favBtn + (isFavorite(current.id || current.profile) ? " " + styles.favActive : "") + (focusZone === 'bar' && barFocusIdx === 1 ? " " + styles.barFocused : "")}
+                className={styles.favBtn + (isFavorite(current.id || current.profile) ? " " + styles.favActive : "") + (focusZone === 4 && barFocusIdx === 2 ? " " + styles.barFocused : "")}
                 onClick={() => toggleFavorite(current.id || current.profile)}
                 title="Toggle favorite (F)"
               >
@@ -1162,7 +1231,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
             </div>
           </div>
           <div className={styles.infoRight}>
-            <button className={styles.launchBtn + (focusZone === 'bar' && barFocusIdx === 0 ? " " + styles.barFocused : "")} onClick={launchGame} disabled={launching}>
+            <button className={styles.launchBtn + (focusZone === 3 ? " " + styles.barFocused : "")} onClick={launchGame} disabled={launching}>
               {launching ? "Launching..." : current.isPinball ? "Launch Table" : "Launch Game"}
             </button>
           </div>
