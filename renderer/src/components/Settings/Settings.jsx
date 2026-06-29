@@ -4,7 +4,6 @@ import ControllerTest from "../ControllerTest/ControllerTest"
 import { usePlaytime } from "../../hooks/usePlaytime"
 import ArtworkManager from "../ArtworkManager/ArtworkManager"
 import styles from "./Settings.module.css"
-import TPRenamer from "./TPRenamer"
 import { useVersionCheck } from "../../hooks/useVersionCheck"
 import { THEMES } from "../../hooks/useTheme"
 
@@ -349,7 +348,9 @@ const handleSave = async () => {
         <div className={styles.pathsNote}>
           Rename unrecognized TeknoParrot game folders to match game profiles for better detection.
         </div>
-        <TPRenamer />
+        <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, padding: '8px 0' }}>
+          Folder Renamer coming soon -- use Settings paths to point to your game folders.
+        </div>
 
         <div className={styles.sectionTitle}>Display</div>
             <div className={styles.inputRow}>
