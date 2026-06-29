@@ -750,33 +750,33 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     enabled: !showDetailRef.current && !showMediaManagerRef.current && !showSettingsRef.current && !showSearchRef.current && !showHelpRef.current && !showVirtualKeyboardRef.current && !attractMode,
     left: () => {
       const z = focusZoneRef.current
-      if (z === 0) { setTopMenuIdx(i => Math.max(0, i - 1)); return }
-      if (z === 1) { setTabFocusIdx(i => Math.max(0, i - 1)); return }
+      if (z === 0) { setTopMenuIdx(i => Math.max(0, i - 1)); sounds.navigate(); return }
+      if (z === 1) { setTabFocusIdx(i => Math.max(0, i - 1)); sounds.navigate(); return }
       if (z === 2) { navigate(-1); return }
       if (z === 3) { return }
-      if (z === 4) { setBarFocusIdx(i => Math.max(0, i - 1)); return }
+      if (z === 4) { setBarFocusIdx(i => Math.max(0, i - 1)); sounds.navigate(); return }
     },
     right: () => {
       const z = focusZoneRef.current
-      if (z === 0) { setTopMenuIdx(i => Math.min(TOP_MENU_MAX, i + 1)); return }
-      if (z === 1) { setTabFocusIdx(i => Math.min(visibleTabsRef.current.length - 1, i + 1)); return }
+      if (z === 0) { setTopMenuIdx(i => Math.min(TOP_MENU_MAX, i + 1)); sounds.navigate(); return }
+      if (z === 1) { setTabFocusIdx(i => Math.min(visibleTabsRef.current.length - 1, i + 1)); sounds.navigate(); return }
       if (z === 2) { navigate(1); return }
       if (z === 3) { return }
-      if (z === 4) { setBarFocusIdx(i => Math.min(HINT_BAR_MAX, i + 1)); return }
+      if (z === 4) { setBarFocusIdx(i => Math.min(HINT_BAR_MAX, i + 1)); sounds.navigate(); return }
     },
     up: () => {
       const z = focusZoneRef.current
-      if (z === 4) { setFocusZone(3); return }  // hintBar -> launch
-      if (z === 3) { setFocusZone(2); return }  // launch -> wheel
-      if (z === 2) { setFocusZone(1); return }  // wheel -> tabs
-      if (z === 1) { setFocusZone(0); return }  // tabs -> topMenu
+      if (z === 4) { setFocusZone(3); sounds.navigate(); return }  // hintBar -> launch
+      if (z === 3) { setFocusZone(2); sounds.navigate(); return }  // launch -> wheel
+      if (z === 2) { setFocusZone(1); sounds.navigate(); return }  // wheel -> tabs
+      if (z === 1) { setFocusZone(0); sounds.navigate(); return }  // tabs -> topMenu
     },
     down: () => {
       const z = focusZoneRef.current
-      if (z === 0) { setFocusZone(1); return }  // topMenu -> tabs
-      if (z === 1) { setFocusZone(2); return }  // tabs -> wheel
-      if (z === 2) { setFocusZone(3); return }  // wheel -> launch
-      if (z === 3) { setFocusZone(4); return }  // launch -> hintBar
+      if (z === 0) { setFocusZone(1); sounds.navigate(); return }  // topMenu -> tabs
+      if (z === 1) { setFocusZone(2); sounds.navigate(); return }  // tabs -> wheel
+      if (z === 2) { setFocusZone(3); sounds.navigate(); return }  // wheel -> launch
+      if (z === 3) { setFocusZone(4); sounds.navigate(); return }  // launch -> hintBar
     },
     confirm: () => {
       const z = focusZoneRef.current
@@ -988,9 +988,9 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
                   sounds.navigate()
                 }
               }} title="Random game (R)" className={styles.randBtn + (focusZone === 0 && topMenuIdx === 2 ? " " + styles.barFocused : "")}>RND</button>
-              <button className={styles.colBtn} onClick={() => setShowCollections(true)} title="Collections (N)">[]</button>
-              <button className={styles.statsBtn} onClick={() => setShowStats(true)} title="My Stats (T)">#</button>
-              <button className={styles.achieveBtn} onClick={() => setShowAchievements(true)} title="Achievements (A)">*</button>
+              <button className={styles.colBtn + (focusZone === 0 && topMenuIdx === 3 ? " " + styles.barFocused : "")} onClick={() => setShowCollections(true)} title="Collections (N)">[]</button>
+              <button className={styles.statsBtn + (focusZone === 0 && topMenuIdx === 4 ? " " + styles.barFocused : "")} onClick={() => setShowStats(true)} title="My Stats (T)">#</button>
+              <button className={styles.achieveBtn + (focusZone === 0 && topMenuIdx === 5 ? " " + styles.barFocused : "")} onClick={() => setShowAchievements(true)} title="Achievements (A)">*</button>
               {activeProfile && (
                 <button
                   className={styles.settingsBtn}
@@ -1010,7 +1010,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
               <button className={styles.settingsBtn + (focusZone === 0 && topMenuIdx === 8 ? " " + styles.barFocused : "")} onClick={() => setShowSettings(true)}>Settings</button>
               <button className={styles.helpBtn + (focusZone === 0 && topMenuIdx === 9 ? " " + styles.barFocused : "")} onClick={() => setShowHelp(true)}>?</button>
               <button
-                className={styles.exitBtn + (exitConfirm ? ' ' + styles.exitConfirm : '')}
+                className={styles.exitBtn + (exitConfirm ? ' ' + styles.exitConfirm : '') + (focusZone === 0 && topMenuIdx === 10 ? ' ' + styles.barFocused : '')}
                 onClick={() => {
                   if (exitConfirm) {
                     window.nuarcade?.closeApp?.()
