@@ -758,6 +758,16 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     setActiveCategory(tabs[newIdx])
   }
 
+
+  // Search navigation gamepad -- active when search open but keyboard closed
+  useGamepad({
+    left:    () => navigate(-1),
+    right:   () => navigate(1),
+    confirm: () => { if (!showDetailRef.current) setShowDetail(true) },
+    back:    () => { setShowSearch(false); setShowVirtualKeyboard(false); setSearch('') },
+    enabled: showSearch && !showVirtualKeyboard && !showDetail,
+  })
+
   // Exit popup gamepad -- only active when popup is showing
   useGamepad({
     left:    () => setExitChoice(0),
@@ -784,7 +794,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   })
 
   useGamepad({
-    enabled: !showDetailRef.current && !showMediaManagerRef.current && !showSettingsRef.current && !showSearchRef.current && !showHelpRef.current && !showVirtualKeyboardRef.current && !attractMode && !showExitPopupRef.current,
+    enabled: !showDetailRef.current && !showMediaManagerRef.current && !showSettingsRef.current && !showHelpRef.current && !attractMode && !showExitPopupRef.current && !showVirtualKeyboardRef.current,
     left: () => {
       const z = focusZoneRef.current
       if (z === 0) { setTopMenuIdx(i => Math.max(0, i - 1)); sounds.navigate(); return }
@@ -1324,7 +1334,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
         <VirtualKeyboard
           value={search}
           onChange={val => handleSearchChange(val)}
-          onDone={() => { setShowVirtualKeyboard(false); setShowSearch(false) }}
+          onDone={() => setShowVirtualKeyboard(false)}
           onClose={() => { setShowSearch(false); setSearch(""); setDebouncedSearch(""); setAiResults(null); setAiSearching(false); setShowVirtualKeyboard(false) }}
           resultCount={filteredGames.length}
         />
