@@ -345,6 +345,15 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     if (window.nuarcade?.platform === 'win32') {
       // Check if user has a custom intro video
       const introPath = (config?.mediaPath || 'C:\\Media\\') + 'intro.mp4'
+  // Reset to clean state when games first load -- prevents stale detail/position from previous session
+  useEffect(() => {
+    if (games.length > 0) {
+      setShowDetail(false)
+      setSelectedIndex(0)
+      setFocusZone(2)
+    }
+  }, [games.length > 0])
+
       if (window.nuarcade?.checkPath) {
         window.nuarcade.checkPath(introPath)
           .then(r => {
@@ -706,14 +715,10 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   
   // Top menu actions indexed 0-10
   // Named search opener -- ensures both states set for controller
-  const openSearchWithKeyboard = () => {
-    setFocusZone(2)  // reset to wheel zone so layout stays correct
-    setShowSearch(true)
-    setShowVirtualKeyboard(true)
-  }
+  // Search removed -- use LB/RB and tabs to filter games
 
   const topMenuActions = [
-    openSearchWithKeyboard,                                          // 0 Search
+    // search removed
     () => setShowSort(s => !s),                                  // 1 Sort
     () => { if (filteredGamesRef.current.length > 0) { setSelectedIndex(Math.floor(Math.random() * filteredGamesRef.current.length)); sounds.navigate() } }, // 2 RND
     () => setShowCollections(true),                              // 3 []
@@ -725,7 +730,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     () => setShowHelp(true),                                     // 9 ?
     () => setShowExitPopup(true), // 10 Exit -- show Yes/No popup
   ]
-  const TOP_MENU_MAX = 10
+  const TOP_MENU_MAX = 9
 
   // Hint bar actions indexed 0-12
   const hintBarActions = [
@@ -760,14 +765,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   }
 
 
-  // Search navigation gamepad -- active when search open but keyboard closed
-  useGamepad({
-    left:    () => navigate(-1),
-    right:   () => navigate(1),
-    confirm: () => { if (!showDetailRef.current) setShowDetail(true) },
-    back:    () => { setShowSearch(false); setShowVirtualKeyboard(false); setSearch('') },
-    enabled: showSearch && !showVirtualKeyboard && !showDetail,
-  })
+
 
   // Exit popup gamepad -- only active when popup is showing
   useGamepad({
@@ -795,7 +793,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   })
 
   useGamepad({
-    enabled: !showDetailRef.current && !showMediaManagerRef.current && !showSettingsRef.current && !showSearchRef.current && !showHelpRef.current && !attractMode && !showExitPopupRef.current && !showVirtualKeyboardRef.current,
+    enabled: !showDetailRef.current && !showMediaManagerRef.current && !showSettingsRef.current && !showHelpRef.current && !attractMode && !showExitPopupRef.current && !showVirtualKeyboardRef.current,
     left: () => {
       const z = focusZoneRef.current
       if (z === 0) { setTopMenuIdx(i => Math.max(0, i - 1)); sounds.navigate(); return }
@@ -1030,16 +1028,16 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
                 setShowSearch(true)
                 setShowVirtualKeyboard(true)
               }}>Search</button>
-              <button className={(sortBy !== "default" ? styles.sortActive : styles.sortBtn) + (focusZone === 0 && topMenuIdx === 1 ? " " + styles.barFocused : "")} onClick={() => setShowSort(s => !s)}>Sort</button>
-              <button className={styles.randBtn + (focusZone === 0 && topMenuIdx === 2 ? " " + styles.barFocused : "")} onClick={() => {
+              <button className={(sortBy !== "default" ? styles.sortActive : styles.sortBtn) + (focusZone === 0 && topMenuIdx === 0 ? " " + styles.barFocused : "")} onClick={() => setShowSort(s => !s)}>Sort</button>
+              <button className={styles.randBtn + (focusZone === 0 && topMenuIdx === 1 ? " " + styles.barFocused : "")} onClick={() => {
                 if (filteredGames.length > 0) {
                   setSelectedIndex(Math.floor(Math.random() * filteredGames.length))
                   sounds.navigate()
                 }
-              }} title="Random game (R)" className={styles.randBtn + (focusZone === 0 && topMenuIdx === 2 ? " " + styles.barFocused : "")}>RND</button>
-              <button className={styles.colBtn + (focusZone === 0 && topMenuIdx === 3 ? " " + styles.barFocused : "")} onClick={() => setShowCollections(true)} title="Collections (N)">[]</button>
-              <button className={styles.statsBtn + (focusZone === 0 && topMenuIdx === 4 ? " " + styles.barFocused : "")} onClick={() => setShowStats(true)} title="My Stats (T)">#</button>
-              <button className={styles.achieveBtn + (focusZone === 0 && topMenuIdx === 5 ? " " + styles.barFocused : "")} onClick={() => setShowAchievements(true)} title="Achievements (A)">*</button>
+              }} title="Random game (R)" className={styles.randBtn + (focusZone === 0 && topMenuIdx === 1 ? " " + styles.barFocused : "")}>RND</button>
+              <button className={styles.colBtn + (focusZone === 0 && topMenuIdx === 2 ? " " + styles.barFocused : "")} onClick={() => setShowCollections(true)} title="Collections (N)">[]</button>
+              <button className={styles.statsBtn + (focusZone === 0 && topMenuIdx === 3 ? " " + styles.barFocused : "")} onClick={() => setShowStats(true)} title="My Stats (T)">#</button>
+              <button className={styles.achieveBtn + (focusZone === 0 && topMenuIdx === 4 ? " " + styles.barFocused : "")} onClick={() => setShowAchievements(true)} title="Achievements (A)">*</button>
               {activeProfile && (
                 <button
                   className={styles.settingsBtn}
@@ -1051,13 +1049,13 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
                 </button>
               )}
               {!activeProfile && onSwitchPlayer && (
-                <button className={styles.settingsBtn + (focusZone === 0 && topMenuIdx === 6 ? " " + styles.barFocused : "")} onClick={onSwitchPlayer} title="Select player">
+                <button className={styles.settingsBtn + (focusZone === 0 && topMenuIdx === 5 ? " " + styles.barFocused : "")} onClick={onSwitchPlayer} title="Select player">
                   GUEST
                 </button>
               )}
-              <button className={styles.mediaBtn + (focusZone === 0 && topMenuIdx === 7 ? " " + styles.barFocused : "")} onClick={() => setShowMediaManager(true)}>Media</button>
-              <button className={styles.settingsBtn + (focusZone === 0 && topMenuIdx === 8 ? " " + styles.barFocused : "")} onClick={() => setShowSettings(true)}>Settings</button>
-              <button className={styles.helpBtn + (focusZone === 0 && topMenuIdx === 9 ? " " + styles.barFocused : "")} onClick={() => setShowHelp(true)}>?</button>
+              <button className={styles.mediaBtn + (focusZone === 0 && topMenuIdx === 6 ? " " + styles.barFocused : "")} onClick={() => setShowMediaManager(true)}>Media</button>
+              <button className={styles.settingsBtn + (focusZone === 0 && topMenuIdx === 7 ? " " + styles.barFocused : "")} onClick={() => setShowSettings(true)}>Settings</button>
+              <button className={styles.helpBtn + (focusZone === 0 && topMenuIdx === 8 ? " " + styles.barFocused : "")} onClick={() => setShowHelp(true)}>?</button>
               <button
                 className={styles.exitBtn + (exitConfirm ? ' ' + styles.exitConfirm : '') + (focusZone === 0 && topMenuIdx === 10 ? ' ' + styles.barFocused : '')}
                 onClick={() => {
@@ -1331,7 +1329,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       {showAchievements && (
         <Achievements games={games} onClose={() => setShowAchievements(false)} />
       )}
-      {showVirtualKeyboard && showSearch && (
+      {false && (
         <VirtualKeyboard
           value={search}
           onChange={val => handleSearchChange(val)}
