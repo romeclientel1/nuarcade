@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useLayoutEffect, useCallback, useRef } from "react"
 import { useGamepad } from "../../hooks/useGamepad"
 import { useGameLibrary } from "../../hooks/useGameLibrary"
 import GameCard from "./GameCard"
@@ -711,7 +711,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     () => setShowMediaManager(true),                             // 7 Media
     () => setShowSettings(true),                                 // 8 Settings
     () => setShowHelp(true),                                     // 9 ?
-    () => window.nuarcade?.quit?.(),                             // 10 Exit
+    () => { setExitConfirm(c => { if (c) { window.nuarcade?.quit?.(); return false } return true }) }, // 10 Exit (confirm)
   ]
   const TOP_MENU_MAX = 10
 
@@ -746,6 +746,19 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     setTabFocusIdx(newIdx)
     setActiveCategory(tabs[newIdx])
   }
+  // Sync overlay refs synchronously before every paint -- fixes GameDetail controller conflict
+  useLayoutEffect(() => {
+    showDetailRef.current          = showDetail
+    showSettingsRef.current        = showSettings
+    showSearchRef.current          = showSearch
+    showHelpRef.current            = showHelp
+    showMediaManagerRef.current    = showMediaManager
+    showVirtualKeyboardRef.current = showVirtualKeyboard
+    focusZoneRef.current           = focusZone
+    activeCategoryRef.current      = activeCategory
+    collectionsRef.current         = collections
+  })
+
   useGamepad({
     enabled: !showDetailRef.current && !showMediaManagerRef.current && !showSettingsRef.current && !showSearchRef.current && !showHelpRef.current && !showVirtualKeyboardRef.current && !attractMode,
     left: () => {
