@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 
 const BTN = {
   A: 0, B: 1, X: 2, Y: 3,
@@ -24,7 +24,8 @@ export function useGamepad(handlers) {
   const btnState    = useRef({})  // { [key]: { pressed, firstAt, lastRepeatAt } }
   const rafRef      = useRef(null)
 
-  useEffect(() => { handlersRef.current = handlers }, [handlers])
+  // Sync handlers ref on every render -- no dependency array so RAF loop never restarts
+  useLayoutEffect(() => { handlersRef.current = handlers })
 
   useEffect(() => {
     const poll = () => {
