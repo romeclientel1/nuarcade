@@ -706,7 +706,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   
   // Top menu actions indexed 0-10
   const topMenuActions = [
-    () => { setShowSearch(true); setShowVirtualKeyboard(true) }, // 0 Search
+    () => { setShowSearch(true); setShowVirtualKeyboard(true) }, // 0 Search -- shows full keyboard overlay
     () => setShowSort(s => !s),                                  // 1 Sort
     () => { if (filteredGamesRef.current.length > 0) { setSelectedIndex(Math.floor(Math.random() * filteredGamesRef.current.length)); sounds.navigate() } }, // 2 RND
     () => setShowCollections(true),                              // 3 []
