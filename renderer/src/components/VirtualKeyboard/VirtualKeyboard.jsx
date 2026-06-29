@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import styles from "./VirtualKeyboard.module.css"
+import { useGamepad } from "../../hooks/useGamepad"
 
 const ROWS = [
   ["1","2","3","4","5","6","7","8","9","0"],
@@ -39,6 +40,9 @@ export default function VirtualKeyboard({ value, onChange, onDone, onClose, resu
     window.addEventListener("keydown", handler)
     return () => window.removeEventListener("keydown", handler)
   }, [value, onChange, onDone, onClose])
+
+  // B button closes virtual keyboard
+  useGamepad({ back: () => onClose?.(), enabled: true })
 
   // Gamepad polling
   useEffect(() => {
