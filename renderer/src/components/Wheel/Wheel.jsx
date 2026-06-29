@@ -423,7 +423,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   filteredGamesRef.current = filteredGames
   activeCategoryRef.current    = activeCategory
   collectionsRef.current       = collections
-  currentRef.current           = current
   showDetailRef.current        = showDetail
   showSettingsRef.current      = showSettings
   showSearchRef.current        = showSearch
@@ -431,6 +430,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   showMediaManagerRef.current  = showMediaManager
   showVirtualKeyboardRef.current = showVirtualKeyboard
   const current = filteredGames[selectedIndex] || filteredGames[0]
+  currentRef.current = current
 
   useEffect(() => { setSelectedIndex(0); setAiResults(null); setAiSearching(false) }, [activeCategory, debouncedSearch, sortBy])
 
