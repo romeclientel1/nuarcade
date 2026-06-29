@@ -905,3 +905,19 @@
 .isSnapping .cardSlot {
   transition: transform 0.12s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.12s ease;
 }
+
+
+/* Zone focus rings -- controller navigation */
+.catFocused {
+  outline: 2px solid #00ffff !important;
+  outline-offset: 2px;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.6), 0 0 20px rgba(0, 255, 255, 0.3) !important;
+  transform: scale(1.08) !important;
+}
+
+.barFocused {
+  outline: 2px solid #00ffff !important;
+  outline-offset: 3px;
+  box-shadow: 0 0 12px rgba(0, 255, 255, 0.7), 0 0 24px rgba(0, 255, 255, 0.4) !important;
+  transform: scale(1.05) !important;
+}
