@@ -244,6 +244,10 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   }
 
   const [selectedIndex, setSelectedIndex] = useState(0)
+  const [focusZone, setFocusZone] = useState('wheel')  // 'tabs' | 'wheel' | 'bar'
+  const [barFocusIdx, setBarFocusIdx] = useState(0)    // 0=launch, 1=favorite, 2=system, 3=genre, 4=status
+  const focusZoneRef = useRef('wheel')
+  const barFocusIdxRef = useRef(0)
   const velocityRef = useRef(0)
   const filteredGamesRef = useRef([])
   // Stable refs for gamepad handlers -- avoids stale closure issues
@@ -421,6 +425,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
 
   const filteredGames = getFilteredGames()
   filteredGamesRef.current = filteredGames
+  focusZoneRef.current = focusZone
+  barFocusIdxRef.current = barFocusIdx
   activeCategoryRef.current    = activeCategory
   collectionsRef.current       = collections
   showDetailRef.current        = showDetail
@@ -676,12 +682,49 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     if (showSearch && searchRef.current) searchRef.current.focus()
   }, [showSearch])
 
+  const filterLeft = () => {
+    const allCats = [...CATEGORIES, ...Object.keys(collectionsRef.current)]
+    const idx = allCats.indexOf(activeCategoryRef.current)
+    setActiveCategory(allCats[(idx - 1 + allCats.length) % allCats.length])
+  }
+  const filterRight = () => {
+    const allCats = [...CATEGORIES, ...Object.keys(collectionsRef.current)]
+    const idx = allCats.indexOf(activeCategoryRef.current)
+    setActiveCategory(allCats[(idx + 1) % allCats.length])
+  }
   useGamepad({
     enabled: !showDetailRef.current && !showMediaManagerRef.current && !showSettingsRef.current && !showSearchRef.current && !showHelpRef.current && !showVirtualKeyboardRef.current,
-    left:     () => navigate(-1),
-    right:    () => navigate(1),
-    // up/down removed -- freezes controller; use LB/RB to filter instead
-    confirm:  () => { if (!showDetailRef.current) setShowDetail(true) },
+    left:     () => {
+      if (focusZoneRef.current === 'bar') { setBarFocusIdx(i => Math.max(0, i - 1)); return }
+      if (focusZoneRef.current === 'tabs') { filterLeft(); return }
+      navigate(-1)
+    },
+    right:    () => {
+      if (focusZoneRef.current === 'bar') { setBarFocusIdx(i => Math.min(4, i + 1)); return }
+      if (focusZoneRef.current === 'tabs') { filterRight(); return }
+      navigate(1)
+    },
+    up: () => {
+      if (focusZoneRef.current === 'bar')   { setFocusZone('wheel'); return }
+      if (focusZoneRef.current === 'wheel') { setFocusZone('tabs');  return }
+    },
+    down: () => {
+      if (focusZoneRef.current === 'tabs')  { setFocusZone('wheel'); return }
+      if (focusZoneRef.current === 'wheel') { setFocusZone('bar');   return }
+    },
+    confirm:  () => {
+      if (focusZoneRef.current === 'bar') {
+        const idx = barFocusIdxRef.current
+        if (idx === 0) { launchGame(); return }
+        if (idx === 1) { if (currentRef.current) toggleFavorite(currentRef.current.id || currentRef.current.profile); return }
+        return
+      }
+      if (focusZoneRef.current === 'tabs') {
+        // Tab is already highlighted via activeCategoryRef -- A confirms current tab (already selected)
+        setFocusZone('wheel'); return
+      }
+      if (!showDetailRef.current) setShowDetail(true)
+    },
     settings: () => { if (!showSettingsRef.current) setShowSettings(true) },
     back:     () => {
       if (showDetailRef.current)      { setShowDetail(false); return }
@@ -926,7 +969,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
         }).map(cat => (
           <button
             key={cat}
-            className={styles.catPill + (activeCategory === cat ? " " + styles.catActive : "")}
+            className={styles.catPill + (activeCategory === cat ? " " + styles.catActive : "") + (focusZone === 'tabs' && activeCategory === cat ? " " + styles.catFocused : "")}
             onClick={() => setActiveCategory(cat)}
           >
             {cat === "Favorites" ? "Favorites" : cat === "Recent" ? "Recent" : cat}
@@ -943,7 +986,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
         {Object.values(collections).map(col => (
           <button
             key={col.id}
-            className={styles.catPill + " " + styles.catCollection + (activeCategory === col.id ? " " + styles.catActive : "")}
+            className={styles.catPill + " " + styles.catCollection + (activeCategory === col.id ? " " + styles.catActive : "") + (focusZone === 'tabs' && activeCategory === col.id ? " " + styles.catFocused : "")}
             onClick={() => setActiveCategory(col.id)}
           >
             {col.name}
@@ -1098,7 +1141,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
                 {current.status}
               </span>
               <button
-                className={styles.favBtn + (isFavorite(current.id || current.profile) ? " " + styles.favActive : "")}
+                className={styles.favBtn + (isFavorite(current.id || current.profile) ? " " + styles.favActive : "") + (focusZone === 'bar' && barFocusIdx === 1 ? " " + styles.barFocused : "")}
                 onClick={() => toggleFavorite(current.id || current.profile)}
                 title="Toggle favorite (F)"
               >
@@ -1119,7 +1162,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
             </div>
           </div>
           <div className={styles.infoRight}>
-            <button className={styles.launchBtn} onClick={launchGame} disabled={launching}>
+            <button className={styles.launchBtn + (focusZone === 'bar' && barFocusIdx === 0 ? " " + styles.barFocused : "")} onClick={launchGame} disabled={launching}>
               {launching ? "Launching..." : current.isPinball ? "Launch Table" : "Launch Game"}
             </button>
           </div>
