@@ -15,6 +15,7 @@ const KEY_W = { SPACE: 3, BACKSPACE: 2, CLEAR: 2, DONE: 2 }
 export default function VirtualKeyboard({ value, onChange, onDone, onClose, resultCount }) {
   const [row, setRow] = useState(1)
   const [col, setCol] = useState(0)
+  const [xFocused, setXFocused] = useState(false)  // true when X/Cancel button is focused
   const lastInput = useRef(0)
   const REPEAT = 160
 
@@ -42,7 +43,23 @@ export default function VirtualKeyboard({ value, onChange, onDone, onClose, resu
   }, [value, onChange, onDone, onClose])
 
   // B button closes virtual keyboard
-  useGamepad({ back: () => onClose?.(), enabled: true })
+  useGamepad({
+    back:    () => { setXFocused(false); onClose?.() },
+    confirm: () => { if (xFocused) { setXFocused(false); onClose?.() } else { press(currentKey) } },
+    right:   () => {
+      // When at rightmost key of bottom row, focus X button
+      const isLastCol = col >= currentRow.length - 1
+      const isBottomRow = row === ROWS.length - 1
+      if (isLastCol && isBottomRow) { setXFocused(true); return }
+      if (xFocused) return  // already on X, can't go further right
+      setCol(c => Math.min(currentRow.length - 1, c + 1))
+    },
+    left:    () => {
+      if (xFocused) { setXFocused(false); return }  // X -> back to keyboard
+      setCol(c => Math.max(0, c - 1))
+    },
+    enabled: true,
+  })
 
   // Gamepad polling
   useEffect(() => {
@@ -157,7 +174,10 @@ export default function VirtualKeyboard({ value, onChange, onDone, onClose, resu
           ))}
         </div>
 
-        <button className={styles.closeBtn} onClick={onClose}>Cancel</button>
+        <button
+        className={styles.closeBtn + (xFocused ? ' ' + styles.closeBtnFocused : '')}
+        onClick={onClose}
+      >X</button>
       </div>
     </div>
   )
