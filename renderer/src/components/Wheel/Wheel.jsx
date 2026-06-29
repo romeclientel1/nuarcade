@@ -345,14 +345,16 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     if (window.nuarcade?.platform === 'win32') {
       // Check if user has a custom intro video
       const introPath = (config?.mediaPath || 'C:\\Media\\') + 'intro.mp4'
-  // Reset to clean state when games first load -- prevents stale detail/position from previous session
+  // Reset to clean state on first load -- fires once when games array goes from 0 to populated
+  const hasResetOnLoad = useRef(false)
   useEffect(() => {
-    if (games.length > 0) {
+    if (games.length > 0 && !hasResetOnLoad.current) {
+      hasResetOnLoad.current = true
       setShowDetail(false)
       setSelectedIndex(0)
       setFocusZone(2)
     }
-  }, [games.length > 0])
+  }, [games.length])
 
       if (window.nuarcade?.checkPath) {
         window.nuarcade.checkPath(introPath)
