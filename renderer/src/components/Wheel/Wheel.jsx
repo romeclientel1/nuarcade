@@ -246,6 +246,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const [selectedIndex, setSelectedIndex] = useState(0)
   // 5-tier zone navigation: 0=topMenu, 1=tabs, 2=wheel, 3=launch, 4=hintBar
   const [focusZone,    setFocusZone   ] = useState(2)
+  const [showExitPopup, setShowExitPopup] = useState(false)
+  const [exitChoice,    setExitChoice   ] = useState(0)  // 0=Yes, 1=No
   const [topMenuIdx,   setTopMenuIdx  ] = useState(0)   // index within zone 0
   const [tabFocusIdx,  setTabFocusIdx ] = useState(0)   // index within zone 1
   const [barFocusIdx,  setBarFocusIdx ] = useState(0)   // index within zone 4
@@ -267,6 +269,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const showMediaManagerRef = useRef(false)
   const showVirtualKeyboardRef = useRef(false)
   const exitConfirmRef         = useRef(false)
+  const showExitPopupRef       = useRef(false)
+  const exitChoiceRef          = useRef(0)
   const velocityTimerRef = useRef(null)
   const lastNavTime = useRef(0)
   // Velocity-based navigation with elastic overshoot
@@ -712,7 +716,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     () => setShowMediaManager(true),                             // 7 Media
     () => setShowSettings(true),                                 // 8 Settings
     () => setShowHelp(true),                                     // 9 ?
-    () => { setExitConfirm(c => { if (c) { window.nuarcade?.quit?.(); return false } return true }) }, // 10 Exit (confirm)
+    () => setShowExitPopup(true), // 10 Exit -- show Yes/No popup
   ]
   const TOP_MENU_MAX = 10
 
@@ -725,13 +729,13 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     () => setShowCollections(true),                              // 4 Collections
     () => setShowStats(true),                                    // 5 Stats
     () => setShowAchievements(true),                             // 6 Achievements
-    () => { setShowSearch(true); setShowVirtualKeyboard(true) }, // 7 Keyboard
-    () => setShowCoach(true),                                    // 8 Coach
-    () => setShowHighScores(true),                               // 9 Scores
-    () => setShowOperator(true),                                 // 10 Operator
-    () => setShowHelp(true),                                     // 11 Help
+    // 7 removed -- Search is in top menu
+    () => setShowCoach(true),                                    // 7 Coach
+    () => setShowHighScores(true),                               // 8 Scores
+    () => setShowOperator(true),                                 // 9 Operator
+    () => setShowHelp(true),                                     // 10 Help
   ]
-  const HINT_BAR_MAX = 11
+  const HINT_BAR_MAX = 10
   
   const filterLeft = () => {
     const tabs = visibleTabsRef.current
@@ -747,6 +751,16 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     setTabFocusIdx(newIdx)
     setActiveCategory(tabs[newIdx])
   }
+
+  // Exit popup gamepad -- only active when popup is showing
+  useGamepad({
+    left:    () => setExitChoice(0),
+    right:   () => setExitChoice(1),
+    confirm: () => { if (exitChoiceRef.current === 0) { window.nuarcade?.quit?.() } else { setShowExitPopup(false); setExitChoice(0) } },
+    back:    () => { setShowExitPopup(false); setExitChoice(0) },
+    enabled: showExitPopup,
+  })
+
   // Sync overlay refs synchronously before every paint -- fixes GameDetail controller conflict
   useLayoutEffect(() => {
     showDetailRef.current          = showDetail
@@ -756,13 +770,15 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     showMediaManagerRef.current    = showMediaManager
     showVirtualKeyboardRef.current = showVirtualKeyboard
     exitConfirmRef.current         = exitConfirm
+    showExitPopupRef.current       = showExitPopup
+    exitChoiceRef.current          = exitChoice
     focusZoneRef.current           = focusZone
     activeCategoryRef.current      = activeCategory
     collectionsRef.current         = collections
   })
 
   useGamepad({
-    enabled: !showDetailRef.current && !showMediaManagerRef.current && !showSettingsRef.current && !showSearchRef.current && !showHelpRef.current && !showVirtualKeyboardRef.current && !attractMode,
+    enabled: !showDetailRef.current && !showMediaManagerRef.current && !showSettingsRef.current && !showSearchRef.current && !showHelpRef.current && !showVirtualKeyboardRef.current && !attractMode && !showExitPopupRef.current,
     left: () => {
       const z = focusZoneRef.current
       if (z === 0) { setTopMenuIdx(i => Math.max(0, i - 1)); sounds.navigate(); return }
@@ -809,7 +825,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     },
     settings: () => { if (!showSettingsRef.current) setShowSettings(true) },
     back: () => {
-      if (exitConfirmRef.current)     { setExitConfirm(false); return }
+      if (showExitPopupRef.current)   { setShowExitPopup(false); setExitChoice(0); return }
       if (showDetailRef.current)      { setShowDetail(false); return }
       if (showSettingsRef.current)    { setShowSettings(false); return }
       if (showSearchRef.current)      { setShowSearch(false); setShowVirtualKeyboard(false); return }
@@ -1336,14 +1352,52 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
           <span className={styles.hint + (focusZone === 4 && barFocusIdx === 4 ? " " + styles.barFocused : "")}><kbd>N</kbd> Collections</span>
           <span className={styles.hint + (focusZone === 4 && barFocusIdx === 5 ? " " + styles.barFocused : "")}><kbd>T</kbd> Stats</span>
           <span className={styles.hint + (focusZone === 4 && barFocusIdx === 6 ? " " + styles.barFocused : "")}><kbd>A</kbd> Achievements</span>
-          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 7 ? " " + styles.barFocused : "")}><kbd>Search</kbd> Keyboard</span>
-          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 8 ? " " + styles.barFocused : "")}><kbd>C</kbd> Coach</span>
-          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 9 ? " " + styles.barFocused : "")}><kbd>H</kbd> Scores</span>
-          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 10 ? " " + styles.barFocused : "")}><kbd>O</kbd> Operator</span>
-          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 11 ? " " + styles.barFocused : "")}><kbd>?</kbd> Help</span>
+          {/* Search removed from hint bar -- already in top menu zone 0 */}
+          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 7 ? " " + styles.barFocused : "")}><kbd>C</kbd> Coach</span>
+          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 8 ? " " + styles.barFocused : "")}><kbd>H</kbd> Scores</span>
+          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 9 ? " " + styles.barFocused : "")}><kbd>O</kbd> Operator</span>
+          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 10 ? " " + styles.barFocused : "")}><kbd>?</kbd> Help</span>
         </div>
       )}
-      {/* Achievement toasts */}
+      
+      {/* Exit confirmation popup */}
+      {showExitPopup && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 9999, flexDirection: 'column', gap: 24,
+        }}>
+          <div style={{ color: '#fff', fontFamily: 'Orbitron, monospace', fontSize: 22, letterSpacing: 2 }}>
+            EXIT NUARCADE?
+          </div>
+          <div style={{ display: 'flex', gap: 20 }}>
+            <button
+              onClick={() => window.nuarcade?.quit?.()}
+              style={{
+                padding: '12px 36px', fontFamily: 'Orbitron, monospace', fontSize: 16,
+                background: exitChoice === 0 ? 'rgba(0,255,255,0.2)' : 'rgba(255,255,255,0.05)',
+                border: exitChoice === 0 ? '2px solid #0ff' : '2px solid rgba(255,255,255,0.2)',
+                color: exitChoice === 0 ? '#0ff' : '#fff', cursor: 'pointer', borderRadius: 6,
+                boxShadow: exitChoice === 0 ? '0 0 16px rgba(0,255,255,0.5)' : 'none',
+              }}
+            >YES</button>
+            <button
+              onClick={() => { setShowExitPopup(false); setExitChoice(0) }}
+              style={{
+                padding: '12px 36px', fontFamily: 'Orbitron, monospace', fontSize: 16,
+                background: exitChoice === 1 ? 'rgba(0,255,255,0.2)' : 'rgba(255,255,255,0.05)',
+                border: exitChoice === 1 ? '2px solid #0ff' : '2px solid rgba(255,255,255,0.2)',
+                color: exitChoice === 1 ? '#0ff' : '#fff', cursor: 'pointer', borderRadius: 6,
+                boxShadow: exitChoice === 1 ? '0 0 16px rgba(0,255,255,0.5)' : 'none',
+              }}
+            >NO</button>
+          </div>
+          <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11, fontFamily: 'monospace' }}>
+            Left/Right to choose   A to confirm   B to cancel
+          </div>
+        </div>
+      )}
+{/* Achievement toasts */}
       <AchievementToastContainer toasts={achieveToasts} onDismiss={dismissToast} />
 
       {/* Error toasts */}
