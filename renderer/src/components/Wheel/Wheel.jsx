@@ -247,8 +247,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const velocityRef = useRef(0)
   const filteredGamesRef = useRef([])
   // Stable refs for gamepad handlers -- avoids stale closure issues
-  const activeCategoryRef  = useRef(activeCategory)
-  const collectionsRef     = useRef(collections)
+  const activeCategoryRef  = useRef(null)
+  const collectionsRef     = useRef(null)
   const currentRef         = useRef(null)
   const showDetailRef      = useRef(false)
   const showSettingsRef    = useRef(false)
