@@ -1326,18 +1326,18 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       {/* Keyboard hint bar -- hidden in cabinet/screenshot mode */}
       {!cabinetMode && !screenshotMode && !attractMode && (
         <div className={styles.hintBar}>
-          <span className={styles.hint}><kbd>Enter</kbd> Detail</span>
-          <span className={styles.hint}><kbd>Space</kbd> Launch</span>
-          <span className={styles.hint}><kbd>F</kbd> Favorite</span>
-          <span className={styles.hint}><kbd>R</kbd> Random</span>
-          <span className={styles.hint}><kbd>N</kbd> Collections</span>
-          <span className={styles.hint}><kbd>T</kbd> Stats</span>
-          <span className={styles.hint}><kbd>A</kbd> Achievements</span>
-          <span className={styles.hint}><kbd>Search</kbd> Keyboard</span>
-          <span className={styles.hint}><kbd>C</kbd> Coach</span>
-          <span className={styles.hint}><kbd>H</kbd> Scores</span>
-          <span className={styles.hint}><kbd>O</kbd> Operator</span>
-          <span className={styles.hint}><kbd>?</kbd> Help</span>
+          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 0 ? " " + styles.barFocused : "")}><kbd>Enter</kbd> Detail</span>
+          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 1 ? " " + styles.barFocused : "")}><kbd>Space</kbd> Launch</span>
+          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 2 ? " " + styles.barFocused : "")}><kbd>F</kbd> Favorite</span>
+          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 3 ? " " + styles.barFocused : "")}><kbd>R</kbd> Random</span>
+          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 4 ? " " + styles.barFocused : "")}><kbd>N</kbd> Collections</span>
+          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 5 ? " " + styles.barFocused : "")}><kbd>T</kbd> Stats</span>
+          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 6 ? " " + styles.barFocused : "")}><kbd>A</kbd> Achievements</span>
+          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 7 ? " " + styles.barFocused : "")}><kbd>Search</kbd> Keyboard</span>
+          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 8 ? " " + styles.barFocused : "")}><kbd>C</kbd> Coach</span>
+          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 9 ? " " + styles.barFocused : "")}><kbd>H</kbd> Scores</span>
+          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 10 ? " " + styles.barFocused : "")}><kbd>O</kbd> Operator</span>
+          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 11 ? " " + styles.barFocused : "")}><kbd>?</kbd> Help</span>
         </div>
       )}
       {/* Achievement toasts */}
