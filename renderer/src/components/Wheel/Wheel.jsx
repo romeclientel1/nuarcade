@@ -680,8 +680,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     enabled: !showDetailRef.current && !showMediaManagerRef.current && !showSettingsRef.current && !showSearchRef.current && !showHelpRef.current && !showVirtualKeyboardRef.current,
     left:     () => navigate(-1),
     right:    () => navigate(1),
-    up:       () => setActiveTab(i => Math.max(0, i - 1)),
-    down:     () => setActiveTab(i => i + 1),
+    // up/down removed -- freezes controller; use LB/RB to filter instead
     confirm:  () => { if (!showDetailRef.current) setShowDetail(true) },
     settings: () => { if (!showSettingsRef.current) setShowSettings(true) },
     back:     () => {
