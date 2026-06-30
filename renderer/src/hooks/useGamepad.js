@@ -23,7 +23,8 @@ export function useGamepad(handlers) {
   const handlersRef = useRef(handlers)
   const btnState    = useRef({})  // { [key]: { pressed, firstAt, lastRepeatAt } }
   const rafRef      = useRef(null)
-  const primedRef   = useRef(false)  // first poll after mount seeds held-button state instead of firing
+  const primedRef    = useRef(false)  // re-primes on every disabled->enabled transition, not just mount
+  const prevEnabledRef = useRef(false)
 
   // Sync handlers ref on every render -- no dependency array so RAF loop never restarts
   useLayoutEffect(() => { handlersRef.current = handlers })
@@ -34,9 +35,16 @@ export function useGamepad(handlers) {
       const h   = handlersRef.current || {}
       const now = Date.now()
 
-      if (h.enabled === false) {
+      const isEnabled = h.enabled !== false
+      if (!isEnabled) {
+        primedRef.current = false       // force a fresh priming pass next time this becomes enabled
+        prevEnabledRef.current = false
         rafRef.current = requestAnimationFrame(poll)
         return
+      }
+      if (!prevEnabledRef.current) {
+        // Just became enabled -- this poll tick will be a priming pass (handled below)
+        prevEnabledRef.current = true
       }
 
       const gp = getActiveGamepad()
