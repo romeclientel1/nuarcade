@@ -1002,10 +1002,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
               {newGameCount > 0 && (
                 <span className={styles.newBadge}>+{newGameCount} new</span>
               )}
-              <button className={styles.searchBtn + (focusZone === 0 && topMenuIdx === 0 ? " " + styles.barFocused : "")} onClick={() => {
-                setShowSearch(true)
-                setShowVirtualKeyboard(true)
-              }}>Search</button>
               <button className={(sortBy !== "default" ? styles.sortActive : styles.sortBtn) + (focusZone === 0 && topMenuIdx === 0 ? " " + styles.barFocused : "")} onClick={() => setShowSort(s => !s)}>Sort</button>
               <button className={styles.randBtn + (focusZone === 0 && topMenuIdx === 1 ? " " + styles.barFocused : "")} onClick={() => {
                 if (filteredGames.length > 0) {
@@ -1035,19 +1031,11 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
               <button className={styles.settingsBtn + (focusZone === 0 && topMenuIdx === 7 ? " " + styles.barFocused : "")} onClick={() => setShowSettings(true)}>Settings</button>
               <button className={styles.helpBtn + (focusZone === 0 && topMenuIdx === 8 ? " " + styles.barFocused : "")} onClick={() => setShowHelp(true)}>?</button>
               <button
-                className={styles.exitBtn + (exitConfirm ? ' ' + styles.exitConfirm : '') + (focusZone === 0 && topMenuIdx === 10 ? ' ' + styles.barFocused : '')}
-                onClick={() => {
-                  if (exitConfirm) {
-                    window.nuarcade?.closeApp?.()
-                  } else {
-                    setExitConfirm(true)
-                    clearTimeout(exitConfirmTimer.current)
-                    exitConfirmTimer.current = setTimeout(() => setExitConfirm(false), 3000)
-                  }
-                }}
+                className={styles.exitBtn + (focusZone === 0 && topMenuIdx === 9 ? " " + styles.barFocused : "")}
+                onClick={() => setShowExitPopup(true)}
                 title="Exit NuArcade"
               >
-                {exitConfirm ? 'CONFIRM' : 'EXIT'}
+                EXIT
               </button>
             </div>
           )}
