@@ -271,7 +271,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const exitConfirmRef         = useRef(false)
   const showExitPopupRef       = useRef(false)
   const exitChoiceRef          = useRef(0)
-  const exitPopupArmedRef      = useRef(false)
   const velocityTimerRef = useRef(null)
   const lastNavTime = useRef(0)
   // Velocity-based navigation with elastic overshoot
@@ -738,24 +737,12 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
 
 
 
-  // Arm the exit popup gamepad shortly after it opens -- prevents the A press
-  // that OPENED the popup from also being read as an instant CONFIRM
-  useEffect(() => {
-    if (showExitPopup) {
-      exitPopupArmedRef.current = false
-      const t = setTimeout(() => { exitPopupArmedRef.current = true }, 250)
-      return () => clearTimeout(t)
-    } else {
-      exitPopupArmedRef.current = false
-    }
-  }, [showExitPopup])
-
   // Exit popup gamepad -- only active when popup is showing
   useGamepad({
-    left:    () => { if (exitPopupArmedRef.current) setExitChoice(0) },
-    right:   () => { if (exitPopupArmedRef.current) setExitChoice(1) },
-    confirm: () => { if (!exitPopupArmedRef.current) return; if (exitChoiceRef.current === 0) { window.nuarcade?.quit?.() } else { setShowExitPopup(false); setExitChoice(1) } },
-    back:    () => { if (!exitPopupArmedRef.current) return; setShowExitPopup(false); setExitChoice(1) },
+    left:    () => setExitChoice(0),
+    right:   () => setExitChoice(1),
+    confirm: () => { if (exitChoiceRef.current === 0) { window.nuarcade?.quit?.() } else { setShowExitPopup(false); setExitChoice(1) } },
+    back:    () => { setShowExitPopup(false); setExitChoice(1) },
     enabled: showExitPopup,
   })
 
