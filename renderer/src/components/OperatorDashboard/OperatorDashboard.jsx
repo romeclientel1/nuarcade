@@ -147,7 +147,6 @@ export default function OperatorDashboard({ games, onClose }) {
             <button className={styles.tab + (tab === "games"    ? " " + styles.tabActive : "")} onClick={() => setTab("games")}>Top Games</button>
             <button className={styles.tab + (tab === "systems"  ? " " + styles.tabActive : "")} onClick={() => setTab("systems")}>Systems</button>
           </div>
-          <button className={styles.closeBtn} onClick={onClose}>ESC</button>
         </div>
 
         <div className={styles.body} ref={bodyRef}>
