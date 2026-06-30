@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react"
+import { useState, useCallback, useRef, useLayoutEffect } from "react"
 import { useGamepad } from "../../hooks/useGamepad"
 import { useOverlayGamepad } from '../../hooks/useOverlayGamepad'
 import styles from "./Collections.module.css"
@@ -60,8 +60,56 @@ export default function Collections({ games, currentGame, onClose }) {
   const { getCollections, createCollection, deleteCollection, addToCollection, removeFromCollection, renameCollection } = useCollections()
   const sideRef = useRef(null)
 
-  // B button closes collections
-  useGamepad({ back: () => onClose?.(), enabled: true })
+  // Full controller navigation: Zone 0 = collection list, Zone 1 = games panel
+  const [zone, setZone] = useState(0)              // 0 = sidebar list, 1 = main games panel
+  const [sideIdx, setSideIdx] = useState(0)         // focused index within colList
+  const [mainIdx, setMainIdx] = useState(0)         // focused index within main panel items
+
+  const colListRef    = useRef([])
+  const activeColRefG  = useRef(null)
+  const zoneRef        = useRef(0)
+  const sideIdxRef     = useRef(0)
+  const mainIdxRef     = useRef(0)
+  const activeGamesRef = useRef([])
+  const currentGameRef = useRef(null)
+  const mainItemCountRef = useRef(0)
+  const mainConfirmRef   = useRef(null)
+
+  useGamepad({
+    up: () => {
+      if (zoneRef.current === 0) {
+        setSideIdx(i => Math.max(0, i - 1))
+      } else {
+        setMainIdx(i => Math.max(0, i - 1))
+      }
+    },
+    down: () => {
+      if (zoneRef.current === 0) {
+        setSideIdx(i => Math.min(Math.max(0, colListRef.current.length - 1), i + 1))
+      } else {
+        const maxIdx = Math.max(0, mainItemCountRef.current - 1)
+        setMainIdx(i => Math.min(maxIdx, i + 1))
+      }
+    },
+    left: () => { if (zoneRef.current === 1) setZone(0) },
+    right: () => { if (zoneRef.current === 0 && activeColRefG.current) setZone(1) },
+    confirm: () => {
+      if (zoneRef.current === 0) {
+        const col = colListRef.current[sideIdxRef.current]
+        if (col) {
+          setActiveCol(col.id === activeColRefG.current ? null : col.id)
+          setZone(1)
+          setMainIdx(0)
+        }
+      } else {
+        mainConfirmRef.current?.()
+      }
+    },
+    back: () => {
+      if (zoneRef.current === 1) { setZone(0) } else { onClose?.() }
+    },
+    enabled: true,
+  })
   const mainRef = useRef(null)
   const [cols, setCols] = useState(() => getCollections())
   const [newName, setNewName] = useState("")
@@ -105,6 +153,36 @@ export default function Collections({ games, currentGame, onClose }) {
     ? games.filter(g => activeColData.games.includes(g.id || g.profile))
     : []
 
+  // Build the flat list of focusable items in the main panel for this render,
+  // and a matching confirm action for whichever one is currently focused.
+  // Empty-state: quick-add buttons (one per collection). Active collection: the
+  // add/remove-current button (if a game is selected) followed by each game's Remove button.
+  let mainItems = []
+  if (!activeCol) {
+    mainItems = colList.map(col => ({
+      action: () => handleToggleGame(col.id, currentGame),
+    }))
+  } else {
+    if (currentGame) {
+      mainItems.push({ action: () => handleToggleGame(activeCol, currentGame) })
+    }
+    mainItems = mainItems.concat(activeGames.map(g => ({
+      action: () => handleToggleGame(activeCol, g),
+    })))
+  }
+
+  useLayoutEffect(() => {
+    zoneRef.current        = zone
+    sideIdxRef.current     = sideIdx
+    mainIdxRef.current     = mainIdx
+    colListRef.current     = colList
+    activeColRefG.current  = activeCol
+    activeGamesRef.current = activeGames
+    currentGameRef.current = currentGame
+    mainItemCountRef.current = mainItems.length
+    mainConfirmRef.current   = mainItems[mainIdx]?.action || null
+  })
+
   return (
     <div className={styles.overlay} onClick={onClose} ref={sideRef}>
       <div className={styles.panel} onClick={e => e.stopPropagation()}>
@@ -129,11 +207,15 @@ export default function Collections({ games, currentGame, onClose }) {
               {colList.length === 0 && (
                 <div className={styles.emptyHint}>No collections yet.</div>
               )}
-              {colList.map(col => (
+              {colList.map((col, ci) => (
                 <div
                   key={col.id}
-                  className={styles.colItem + (activeCol === col.id ? " " + styles.colActive : "")}
-                  onClick={() => setActiveCol(col.id === activeCol ? null : col.id)}
+                  className={
+                    styles.colItem +
+                    (activeCol === col.id ? " " + styles.colActive : "") +
+                    (zone === 0 && sideIdx === ci ? " " + styles.gamepadFocused : "")
+                  }
+                  onClick={() => { setActiveCol(col.id === activeCol ? null : col.id); setZone(1); setSideIdx(ci); setMainIdx(0) }}
                 >
                   {renaming === col.id ? (
                     <input
@@ -168,12 +250,16 @@ export default function Collections({ games, currentGame, onClose }) {
                 {currentGame && colList.length > 0 && (
                   <div className={styles.quickAdd}>
                     <div className={styles.quickAddLabel}>Quick-add "{currentGame.title}":</div>
-                    {colList.map(col => {
+                    {colList.map((col, qi) => {
                       const inCol = col.games.includes(currentGame.id || currentGame.profile)
                       return (
                         <button
                           key={col.id}
-                          className={styles.quickBtn + (inCol ? " " + styles.quickBtnOn : "")}
+                          className={
+                            styles.quickBtn +
+                            (inCol ? " " + styles.quickBtnOn : "") +
+                            (zone === 1 && mainIdx === qi ? " " + styles.gamepadFocused : "")
+                          }
                           onClick={() => { handleToggleGame(col.id, currentGame) }}
                         >
                           {inCol ? "- " : "+ "}{col.name}
@@ -189,7 +275,11 @@ export default function Collections({ games, currentGame, onClose }) {
                 <div className={styles.mainSub}>{activeGames.length} game{activeGames.length !== 1 ? "s" : ""}</div>
                 {currentGame && (
                   <button
-                    className={styles.addCurrentBtn + (activeColData?.games?.includes(currentGame.id || currentGame.profile) ? " " + styles.addCurrentBtnOn : "")}
+                    className={
+                      styles.addCurrentBtn +
+                      (activeColData?.games?.includes(currentGame.id || currentGame.profile) ? " " + styles.addCurrentBtnOn : "") +
+                      (zone === 1 && mainIdx === 0 ? " " + styles.gamepadFocused : "")
+                    }
                     onClick={() => handleToggleGame(activeCol, currentGame)}
                   >
                     {activeColData?.games?.includes(currentGame.id || currentGame.profile)
@@ -201,15 +291,21 @@ export default function Collections({ games, currentGame, onClose }) {
                   {activeGames.length === 0 && (
                     <div className={styles.mainEmptyText} style={{padding:"20px 0"}}>No games yet. Use the button above to add the current game.</div>
                   )}
-                  {activeGames.map(g => (
-                    <div key={g.id || g.profile} className={styles.gameRow}>
-                      <div className={styles.gameInfo}>
-                        <div className={styles.gameTitle}>{g.title}</div>
-                        <div className={styles.gameSystem}>{g.system}</div>
+                  {activeGames.map((g, gi) => {
+                    const itemIdx = gi + (currentGame ? 1 : 0)
+                    return (
+                      <div
+                        key={g.id || g.profile}
+                        className={styles.gameRow + (zone === 1 && mainIdx === itemIdx ? " " + styles.gamepadFocused : "")}
+                      >
+                        <div className={styles.gameInfo}>
+                          <div className={styles.gameTitle}>{g.title}</div>
+                          <div className={styles.gameSystem}>{g.system}</div>
+                        </div>
+                        <button className={styles.removeBtn} onClick={() => handleToggleGame(activeCol, g)}>Remove</button>
                       </div>
-                      <button className={styles.removeBtn} onClick={() => handleToggleGame(activeCol, g)}>Remove</button>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </>
             )}
