@@ -713,20 +713,12 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
 
   // Hint bar actions indexed 0-12
   const hintBarActions = [
-    () => setShowDetail(true),                                   // 0 Detail
-    () => launchGame(),                                          // 1 Launch
-    () => { if (currentRef.current) toggleFavorite(currentRef.current.id || currentRef.current.profile) }, // 2 Favorite
-    () => { if (filteredGamesRef.current.length > 0) { setSelectedIndex(Math.floor(Math.random() * filteredGamesRef.current.length)); sounds.navigate() } }, // 3 Random
-    () => setShowCollections(true),                              // 4 Collections
-    () => setShowStats(true),                                    // 5 Stats
-    () => setShowAchievements(true),                             // 6 Achievements
-    // 7 removed -- Search is in top menu
-    () => setShowCoach(true),                                    // 7 Coach
-    () => setShowHighScores(true),                               // 8 Scores
-    () => setShowOperator(true),                                 // 9 Operator
-    () => setShowHelp(true),                                     // 10 Help
+    () => { if (currentRef.current) toggleFavorite(currentRef.current.id || currentRef.current.profile) }, // 0 Favorite
+    () => setShowCoach(true),                                    // 1 Coach
+    () => setShowHighScores(true),                               // 2 Scores
+    () => setShowOperator(true),                                 // 3 Operator
   ]
-  const HINT_BAR_MAX = 10
+  const HINT_BAR_MAX = 3
   
   const filterLeft = () => {
     const tabs = visibleTabsRef.current
@@ -1236,7 +1228,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
                 {current.status}
               </span>
               <button
-                className={styles.favBtn + (isFavorite(current.id || current.profile) ? " " + styles.favActive : "") + (focusZone === 4 && barFocusIdx === 2 ? " " + styles.barFocused : "")}
+                className={styles.favBtn + (isFavorite(current.id || current.profile) ? " " + styles.favActive : "") + (focusZone === 4 && barFocusIdx === 0 ? " " + styles.barFocused : "")}
                 onClick={() => toggleFavorite(current.id || current.profile)}
                 title="Toggle favorite (F)"
               >
@@ -1339,19 +1331,12 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       {/* Keyboard hint bar -- hidden in cabinet/screenshot mode */}
       {!cabinetMode && !screenshotMode && !attractMode && (
         <div className={styles.hintBar}>
-          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 0 ? " " + styles.barFocused : "")}><kbd>Enter</kbd> Detail</span>
-          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 1 ? " " + styles.barFocused : "")}><kbd>Space</kbd> Launch</span>
-          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 2 ? " " + styles.barFocused : "")}><kbd>F</kbd> Favorite</span>
-          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 3 ? " " + styles.barFocused : "")}><kbd>R</kbd> Random</span>
-          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 4 ? " " + styles.barFocused : "")}><kbd>N</kbd> Collections</span>
-          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 5 ? " " + styles.barFocused : "")}><kbd>T</kbd> Stats</span>
-          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 6 ? " " + styles.barFocused : "")}><kbd>A</kbd> Achievements</span>
-          {/* Search removed from hint bar -- already in top menu zone 0 */}
-          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 7 ? " " + styles.barFocused : "")}><kbd>C</kbd> Coach</span>
-          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 8 ? " " + styles.barFocused : "")}><kbd>H</kbd> Scores</span>
-          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 9 ? " " + styles.barFocused : "")}><kbd>O</kbd> Operator</span>
-          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 10 ? " " + styles.barFocused : "")}><kbd>?</kbd> Help</span>
-        </div>
+              <span className={styles.hint + (focusZone === 4 && barFocusIdx === 0 ? " " + styles.barFocused : "")}><kbd>F</kbd> Favorite</span>
+              {/* Search removed from hint bar -- already in top menu zone 0 */}
+          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 1 ? " " + styles.barFocused : "")}><kbd>C</kbd> Coach</span>
+          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 2 ? " " + styles.barFocused : "")}><kbd>H</kbd> Scores</span>
+          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 3 ? " " + styles.barFocused : "")}><kbd>O</kbd> Operator</span>
+              </div>
       )}
       
       {/* Exit confirmation popup */}
