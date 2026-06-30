@@ -54,10 +54,21 @@ export default function OperatorDashboard({ games, onClose }) {
   const bodyRef = useRef(null)
   const [tab, setTab] = useState("overview")
 
+  const tabList = ['overview', 'games', 'systems']
+
+  const cycleTab = (dir) => {
+    setTab(prev => {
+      const idx = tabList.indexOf(prev)
+      return tabList[(idx + dir + tabList.length) % tabList.length]
+    })
+  }
+
   useOverlayGamepad({
     onClose,
-    onUp:   () => bodyRef.current?.scrollBy({ top: -80, behavior: "smooth" }),
-    onDown: () => bodyRef.current?.scrollBy({ top:  80, behavior: "smooth" }),
+    onUp:    () => bodyRef.current?.scrollBy({ top: -80, behavior: 'smooth' }),
+    onDown:  () => bodyRef.current?.scrollBy({ top:  80, behavior: 'smooth' }),
+    onLeft:  () => cycleTab(-1),
+    onRight: () => cycleTab(1),
   })
 
   useEffect(() => {
