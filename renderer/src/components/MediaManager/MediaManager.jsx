@@ -25,10 +25,11 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
 
   useOverlayGamepad({
     onClose,
-    onUp:    () => scrollRef.current?.scrollBy({ top: -120, behavior: 'smooth' }),
-    onDown:  () => scrollRef.current?.scrollBy({ top:  120, behavior: 'smooth' }),
-    onLeft:  () => setTab(t => { const i = TABS.indexOf(t); return TABS[Math.max(0, i-1)] }),
-    onRight: () => setTab(t => { const i = TABS.indexOf(t); return TABS[Math.min(TABS.length-1, i+1)] }),
+    onUp:      () => scrollRef.current?.scrollBy({ top: -120, behavior: 'smooth' }),
+    onDown:    () => scrollRef.current?.scrollBy({ top:  120, behavior: 'smooth' }),
+    onLeft:    () => setTab(prev => { const i = TABS.indexOf(prev); return TABS[Math.max(0, i-1)] }),
+    onRight:   () => setTab(prev => { const i = TABS.indexOf(prev); return TABS[Math.min(TABS.length-1, i+1)] }),
+    onConfirm: () => setFilter(prev => { const f = ["all","missing","ready"]; return f[(f.indexOf(prev)+1)%f.length] }),
   })
   const [showArtworkMgr, setShowArtworkMgr] = useState(false)
   const [mmConfig, setMmConfig] = useState({})
@@ -377,14 +378,13 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
   }
 
   return (
-    <div className={styles.overlay} ref={scrollRef}>
+    <div className={styles.overlay}>
       <div className={styles.panel}>
         <div className={styles.header}>
           <div className={styles.headerLeft}>
             <div className={styles.title}>Media Manager</div>
             <div className={styles.sub}>Artwork and video previews for your game library</div>
           </div>
-          <button className={styles.closeBtn} onClick={onClose}>x</button>
         </div>
 
         <div className={styles.tabs}>
@@ -485,7 +485,7 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
                 Scanning game library...
               </div>
             ) : (
-              <div className={styles.gameList}>
+              <div className={styles.gameList} ref={scrollRef}>
                 {filteredGames.map(game => (
                   <div key={game.id || game.profile} className={styles.gameRow}>
                     <div className={styles.gameThumb}>
