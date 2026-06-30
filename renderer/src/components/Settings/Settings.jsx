@@ -9,10 +9,12 @@ import { THEMES } from "../../hooks/useTheme"
 
 export default function Settings({ games = [], onClose, onCRTChange, crtEnabled, themeId, onThemeChange, onSetupWizard }) {
   const scrollRef = useRef(null)
+  const saveRef    = useRef(null)
   useOverlayGamepad({
     onClose,
-    onUp:   () => scrollRef.current?.scrollBy({ top: -200, behavior: 'smooth' }),
-    onDown: () => scrollRef.current?.scrollBy({ top:  200, behavior: 'smooth' }),
+    onUp:      () => scrollRef.current?.scrollBy({ top: -200, behavior: 'smooth' }),
+    onDown:    () => scrollRef.current?.scrollBy({ top:  200, behavior: 'smooth' }),
+    onConfirm: () => saveRef.current?.click(),
   })
 
   const [config, setConfig] = useState(null)
@@ -227,17 +229,16 @@ const handleSave = async () => {
   if (!config) return null
 
   return (
-    <div className={styles.overlay} ref={scrollRef}>
+    <div className={styles.overlay}>
       <div className={styles.panel}>
         <div className={styles.header}>
           <div className={styles.headerLeft}>
             <div className={styles.title}>Settings</div>
             <div className={styles.sub}>NuArcade configuration</div>
           </div>
-          <button className={styles.closeBtn} onClick={onClose}>x</button>
         </div>
 
-        <div className={styles.body}>
+        <div className={styles.body} ref={scrollRef}>
 
           {newVersion && (
             <div className={styles.updateBanner}>
@@ -913,7 +914,7 @@ const handleSave = async () => {
           }}>
             Reset to defaults
           </button>
-          <button className={styles.saveBtn} onClick={handleSave}>
+          <button className={styles.saveBtn} ref={saveRef} onClick={handleSave}>
             {saved ? "Saved!" : "Save settings"}
           </button>
         </div>
