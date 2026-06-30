@@ -268,6 +268,13 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const showHelpRef        = useRef(false)
   const showMediaManagerRef = useRef(false)
   const showVirtualKeyboardRef = useRef(false)
+  const showSortRef            = useRef(false)
+  const showCollectionsRef     = useRef(false)
+  const showStatsRef           = useRef(false)
+  const showAchievementsRef    = useRef(false)
+  const showCoachRef           = useRef(false)
+  const showHighScoresRef      = useRef(false)
+  const showOperatorRef        = useRef(false)
   const exitConfirmRef         = useRef(false)
   const showExitPopupRef       = useRef(false)
   const exitChoiceRef          = useRef(0)
@@ -458,6 +465,13 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   showHelpRef.current          = showHelp
   showMediaManagerRef.current  = showMediaManager
   showVirtualKeyboardRef.current = showVirtualKeyboard
+    showSortRef.current            = showSort
+    showCollectionsRef.current     = showCollections
+    showStatsRef.current           = showStats
+    showAchievementsRef.current    = showAchievements
+    showCoachRef.current           = showCoach
+    showHighScoresRef.current      = showHighScores
+    showOperatorRef.current        = showOperator
   const current = filteredGames[selectedIndex] || filteredGames[0]
   currentRef.current = current
 
@@ -754,6 +768,13 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     showHelpRef.current            = showHelp
     showMediaManagerRef.current    = showMediaManager
     showVirtualKeyboardRef.current = showVirtualKeyboard
+    showSortRef.current            = showSort
+    showCollectionsRef.current     = showCollections
+    showStatsRef.current           = showStats
+    showAchievementsRef.current    = showAchievements
+    showCoachRef.current           = showCoach
+    showHighScoresRef.current      = showHighScores
+    showOperatorRef.current        = showOperator
     exitConfirmRef.current         = exitConfirm
     showExitPopupRef.current       = showExitPopup
     exitChoiceRef.current          = exitChoice
@@ -763,7 +784,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   })
 
   useGamepad({
-    enabled: !showDetailRef.current && !showMediaManagerRef.current && !showSettingsRef.current && !showHelpRef.current && !attractMode && !showExitPopupRef.current && !showVirtualKeyboardRef.current,
+    enabled: !showDetailRef.current && !showMediaManagerRef.current && !showSettingsRef.current && !showHelpRef.current && !attractMode && !showExitPopupRef.current && !showVirtualKeyboardRef.current && !showSortRef.current && !showCollectionsRef.current && !showStatsRef.current && !showAchievementsRef.current && !showCoachRef.current && !showHighScoresRef.current && !showOperatorRef.current,
     left: () => {
       const z = focusZoneRef.current
       if (z === 0) { setTopMenuIdx(i => Math.max(0, i - 1)); sounds.navigate(); return }
