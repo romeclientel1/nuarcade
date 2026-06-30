@@ -2,12 +2,14 @@ import { useEffect, useRef } from "react"
 
 // Lightweight gamepad hook for overlay panels
 // B=close, A=confirm, D-pad up/down=scroll, left/right=tab switch
+// Primed ref prevents the button that OPENED the overlay from instantly firing a handler
 export function useOverlayGamepad({ onClose, onUp, onDown, onLeft, onRight, onConfirm, enabled = true }) {
   const lastInput   = useRef(0)
   const handlersRef = useRef({})
   const enabledRef  = useRef(enabled)
+  const primedRef   = useRef(false)   // true after first poll seeds held-button state
 
-  // Keep refs current every render -- no dep array needed on the RAF loop
+  // Keep refs current every render -- stable RAF loop reads from here
   handlersRef.current = { onClose, onUp, onDown, onLeft, onRight, onConfirm }
   enabledRef.current  = enabled
 
@@ -15,6 +17,7 @@ export function useOverlayGamepad({ onClose, onUp, onDown, onLeft, onRight, onCo
   const REPEAT_DELAY = 180
 
   useEffect(() => {
+    primedRef.current = false   // reset on mount so first poll is always a priming pass
     let animFrame
 
     const poll = () => {
@@ -24,7 +27,13 @@ export function useOverlayGamepad({ onClose, onUp, onDown, onLeft, onRight, onCo
         if (gp) {
           const now       = Date.now()
           const canRepeat = now - lastInput.current > REPEAT_DELAY
-          if (canRepeat) {
+
+          if (!primedRef.current) {
+            // Priming pass: seed button state without firing handlers.
+            // Prevents the button that opened this overlay from instantly re-firing.
+            primedRef.current = true
+            lastInput.current = now
+          } else if (canRepeat) {
             if      (gp.buttons[1]?.pressed)                                                       { lastInput.current = now; h.onClose?.() }
             else if (gp.buttons[0]?.pressed)                                                       { lastInput.current = now; h.onConfirm?.() }
             else if (gp.axes[1] < -DEADZONE || gp.buttons[12]?.pressed)                           { lastInput.current = now; h.onUp?.() }
