@@ -165,3 +165,11 @@
   transition: all 0.12s; flex-shrink: 0; margin-left: 12px;
 }
 .removeBtn:hover { border-color: rgba(239,68,68,0.5); color: #f87171; }
+
+
+.gamepadFocused {
+  outline: 2px solid #0ff;
+  outline-offset: -2px;
+  background: rgba(0, 255, 255, 0.12);
+  box-shadow: 0 0 12px rgba(0, 255, 255, 0.5);
+}
