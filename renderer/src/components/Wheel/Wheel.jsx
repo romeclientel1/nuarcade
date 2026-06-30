@@ -342,6 +342,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   useEffect(() => {
     if (bootShown.current || loading || !games.length) return
     bootShown.current = true
+    setShowDetail(false)
+    setSelectedIndex(0)
     if (window.nuarcade?.platform === 'win32') {
       // Check if user has a custom intro video
       const introPath = (config?.mediaPath || 'C:\\Media\\') + 'intro.mp4'
@@ -627,7 +629,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
         setTimeout(() => handleLaunch(), 1200)
       }
     } catch {}
-  }, [games])
+  }, [games.length])
 
   const resetIdleTimer = useCallback(() => {
     setAttractMode(false)
