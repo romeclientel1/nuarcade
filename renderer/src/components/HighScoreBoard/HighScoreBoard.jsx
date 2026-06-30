@@ -34,30 +34,25 @@ export function getAllScores(games) {
 
 export default function HighScoreBoard({ games, onClose, activeProfile }) {
   const scrollRef = useRef(null)
+  const [tab,       setTab      ] = useState('all')
+  const [gameId,    setGameId   ] = useState(null)
+  const [allScores, setAllScores] = useState([])
+  const [gameScores,setGameScores] = useState([])
+  const [newScore,  setNewScore ] = useState('')
+  const [entering,  setEntering ] = useState(false)
+
   useOverlayGamepad({
     onClose,
-    onUp:   () => scrollRef.current?.scrollBy({ top: -120, behavior: 'smooth' }),
-    onDown: () => scrollRef.current?.scrollBy({ top:  120, behavior: 'smooth' }),
+    onUp:    () => scrollRef.current?.scrollBy({ top: -120, behavior: 'smooth' }),
+    onDown:  () => scrollRef.current?.scrollBy({ top:  120, behavior: 'smooth' }),
+    onLeft:  () => setTab('all'),
+    onRight: () => setTab(activeProfile ? 'player' : 'all'),
   })
-  const [tab,      setTab     ] = useState('all')   // 'all' | 'game' | 'player'
-  const [gameId,   setGameId  ] = useState(null)
-  const [allScores, setAllScores] = useState([])
-  const [gameScores, setGameScores] = useState([])
-  const [newScore, setNewScore] = useState('')
-  const [entering, setEntering] = useState(false)
 
+  useEffect(() => { setAllScores(getAllScores(games)) }, [games])
+  useEffect(() => { if (gameId) setGameScores(getScores(gameId)) }, [gameId])
   useEffect(() => {
-    setAllScores(getAllScores(games))
-  }, [games])
-
-  useEffect(() => {
-    if (gameId) setGameScores(getScores(gameId))
-  }, [gameId])
-
-  useEffect(() => {
-    const onKey = (e) => {
-      if (e.key === 'Escape' || e.key === 'h' || e.key === 'H') onClose()
-    }
+    const onKey = (e) => { if (e.key === 'Escape' || e.key === 'h' || e.key === 'H') onClose() }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [])
@@ -73,33 +68,26 @@ export default function HighScoreBoard({ games, onClose, activeProfile }) {
     setEntering(false)
   }
 
-  const formatDate = (ts) => {
-    const d = new Date(ts)
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  }
-
-  const formatScore = (n) => n.toLocaleString()
+  const formatDate  = (ts) => new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  const formatScore = (n)  => n.toLocaleString()
 
   const displayScores = tab === 'game' && gameId ? gameScores : allScores
-  const playerFilter = tab === 'player' && activeProfile ? activeProfile.name : null
-  const filtered = playerFilter ? displayScores.filter(s => s.player === playerFilter) : displayScores
+  const playerFilter  = tab === 'player' && activeProfile ? activeProfile.name : null
+  const filtered      = playerFilter ? displayScores.filter(s => s.player === playerFilter) : displayScores
 
   return (
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.panel} onClick={e => e.stopPropagation()}>
-
         <div className={styles.header}>
           <div className={styles.badge}>HIGH SCORES</div>
           <div className={styles.tabs}>
-            <button className={styles.tab + (tab === 'all' ? ' ' + styles.tabActive : '')} onClick={() => setTab('all')}>All time</button>
+            <button className={styles.tab + (tab === 'all'    ? ' ' + styles.tabActive : '')} onClick={() => setTab('all')}>All time</button>
             <button className={styles.tab + (tab === 'player' ? ' ' + styles.tabActive : '')} onClick={() => setTab('player')} disabled={!activeProfile}>
               {activeProfile ? activeProfile.name : 'My scores'}
             </button>
           </div>
           <button className={styles.closeBtn} onClick={onClose}>ESC</button>
         </div>
-
-        {/* Game selector */}
         <div className={styles.gameSelector}>
           <select
             className={styles.gameSelect}
@@ -108,41 +96,26 @@ export default function HighScoreBoard({ games, onClose, activeProfile }) {
           >
             <option value="">-- Filter by game --</option>
             {games.filter(g => getScores(g.id || g.profile).length > 0).map(g => (
-              <option key={g.id || g.profile} value={g.id || g.profile}>
-                {g.title || g.id || g.profile}
-              </option>
+              <option key={g.id || g.profile} value={g.id || g.profile}>{g.title || g.id || g.profile}</option>
             ))}
           </select>
-          {gameId && (
-            <button className={styles.addScoreBtn} onClick={() => setEntering(true)}>
-              + Add score
-            </button>
-          )}
+          {gameId && <button className={styles.addScoreBtn} onClick={() => setEntering(true)}>+ Add score</button>}
         </div>
-
-        {/* Score entry */}
         {entering && (
           <div className={styles.entryRow}>
             <span className={styles.entryLabel}>Your score:</span>
-            <input
-              className={styles.scoreInput}
-              type="number"
-              value={newScore}
+            <input className={styles.scoreInput} type="number" value={newScore}
               onChange={e => setNewScore(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleSaveScore() }}
-              placeholder="000000"
-              autoFocus
-            />
+              placeholder="000000" autoFocus />
             <button className={styles.saveBtn} onClick={handleSaveScore}>SAVE</button>
             <button className={styles.cancelBtn} onClick={() => { setEntering(false); setNewScore('') }}>CANCEL</button>
           </div>
         )}
-
-        {/* Scoreboard */}
-        <div className={styles.board}>
+        <div className={styles.board} ref={scrollRef}>
           {filtered.length === 0 ? (
             <div className={styles.empty}>
-              {gameId ? 'No scores yet for this game. Select a game and add your score!' : 'No scores recorded yet. Select a game and add your first score!'}
+              {gameId ? 'No scores yet for this game.' : 'No scores recorded yet. Select a game and add your first score!'}
             </div>
           ) : (
             <table className={styles.table}>
@@ -158,15 +131,9 @@ export default function HighScoreBoard({ games, onClose, activeProfile }) {
               <tbody>
                 {filtered.slice(0, 20).map((s, i) => (
                   <tr key={i} className={i === 0 ? styles.topScore : ''}>
-                    <td className={styles.rank}>
-                      {i === 0 ? '[1]' : i === 1 ? '[2]' : i === 2 ? '[3]' : i + 1}
-                    </td>
-                    <td className={styles.playerCol} style={{ color: i < 3 ? '#00c8ff' : undefined }}>
-                      {s.player}
-                    </td>
-                    {tab !== 'game' && (
-                      <td className={styles.gameCol}>{s.gameTitle}</td>
-                    )}
+                    <td className={styles.rank}>{i === 0 ? '[1]' : i === 1 ? '[2]' : i === 2 ? '[3]' : i + 1}</td>
+                    <td className={styles.playerCol} style={{ color: i < 3 ? '#00c8ff' : undefined }}>{s.player}</td>
+                    {tab !== 'game' && <td className={styles.gameCol}>{s.gameTitle}</td>}
                     <td className={styles.scoreCol}>{formatScore(s.score)}</td>
                     <td className={styles.dateCol}>{formatDate(s.date)}</td>
                   </tr>
@@ -175,10 +142,7 @@ export default function HighScoreBoard({ games, onClose, activeProfile }) {
             </table>
           )}
         </div>
-
-        <div className={styles.footer}>
-          Press H or ESC to close
-        </div>
+        <div className={styles.footer}>Press H or ESC to close -- Left/Right: switch tabs</div>
       </div>
     </div>
   )
