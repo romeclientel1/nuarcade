@@ -612,24 +612,12 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     setTimeout(() => setLaunching(false), 3000)
   }
 
-  const autoLaunchRan = useRef(false)
+  // Clear any stale auto-launch state on mount -- prevents GameDetail showing on startup
   useEffect(() => {
-    if (!games.length || autoLaunchRan.current) return
-    autoLaunchRan.current = true
-    try {
-      const raw = localStorage.getItem("nuarcade_auto_launch")
-      if (!raw) return
-      localStorage.removeItem("nuarcade_auto_launch")
-      const lastGame = JSON.parse(raw)
-      const idx = games.findIndex(g =>
-        (g.id && g.id === lastGame.id) || (g.profile && g.profile === lastGame.profile)
-      )
-      if (idx >= 0) {
-        setSelectedIndex(idx)
-        setTimeout(() => handleLaunch(), 1200)
-      }
-    } catch {}
-  }, [games.length])
+    localStorage.removeItem("nuarcade_auto_launch")
+    setShowDetail(false)
+    setSelectedIndex(0)
+  }, [])
 
   const resetIdleTimer = useCallback(() => {
     setAttractMode(false)
