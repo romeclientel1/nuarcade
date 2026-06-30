@@ -23,11 +23,13 @@ export function useGamepad(handlers) {
   const handlersRef = useRef(handlers)
   const btnState    = useRef({})  // { [key]: { pressed, firstAt, lastRepeatAt } }
   const rafRef      = useRef(null)
+  const primedRef   = useRef(false)  // first poll after mount seeds held-button state instead of firing
 
   // Sync handlers ref on every render -- no dependency array so RAF loop never restarts
   useLayoutEffect(() => { handlersRef.current = handlers })
 
   useEffect(() => {
+    primedRef.current = false
     const poll = () => {
       const h   = handlersRef.current || {}
       const now = Date.now()
@@ -43,6 +45,16 @@ export function useGamepad(handlers) {
         const fire = (key, pressed, stateKey) => {
           const prev = btnState.current[stateKey] || { pressed: false, firstAt: 0, lastRepeatAt: 0 }
           const handler = h[key]
+
+          if (!primedRef.current) {
+            // Priming pass: record current physical state without firing handlers.
+            // Prevents a button already held when this instance becomes active
+            // (e.g. the same A press that opened a popup) from instantly firing again.
+            btnState.current[stateKey] = pressed
+              ? { pressed: true, firstAt: now, lastRepeatAt: now }
+              : { pressed: false, firstAt: 0, lastRepeatAt: 0 }
+            return
+          }
 
           if (pressed && !prev.pressed) {
             // Fresh press
@@ -85,6 +97,7 @@ export function useGamepad(handlers) {
         fire('random',      gp.buttons[BTN.SELECT]?.pressed ?? false, 'btn_sel')
         fire('settings',    gp.buttons[BTN.START ]?.pressed ?? false, 'btn_sta')
       }
+      primedRef.current = true
 
       rafRef.current = requestAnimationFrame(poll)
     }
