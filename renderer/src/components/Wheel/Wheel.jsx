@@ -755,8 +755,14 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   useGamepad({
     left:    () => setExitChoice(0),
     right:   () => setExitChoice(1),
-    confirm: () => { if (exitChoiceRef.current === 0) { window.nuarcade?.quit?.() } else { setShowExitPopup(false); setExitChoice(1) } },
-    back:    () => { setShowExitPopup(false); setExitChoice(1) },
+    confirm: () => {
+      if (exitChoiceRef.current === 0) {
+        window.nuarcade?.quit?.()
+      } else {
+        requestAnimationFrame(() => { setShowExitPopup(false); setExitChoice(1) })
+      }
+    },
+    back:    () => { requestAnimationFrame(() => { setShowExitPopup(false); setExitChoice(1) }) },
     enabled: showExitPopup,
   })
 
