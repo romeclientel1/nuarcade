@@ -751,21 +751,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
 
 
 
-  // Exit popup gamepad -- only active when popup is showing
-  useGamepad({
-    left:    () => setExitChoice(0),
-    right:   () => setExitChoice(1),
-    confirm: () => {
-      if (exitChoiceRef.current === 0) {
-        window.nuarcade?.quit?.()
-      } else {
-        requestAnimationFrame(() => { setShowExitPopup(false); setExitChoice(1) })
-      }
-    },
-    back:    () => { requestAnimationFrame(() => { setShowExitPopup(false); setExitChoice(1) }) },
-    enabled: showExitPopup,
-  })
-
   // Sync overlay refs synchronously before every paint -- fixes GameDetail controller conflict
   useLayoutEffect(() => {
     showDetailRef.current          = showDetail
@@ -790,8 +775,9 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   })
 
   useGamepad({
-    enabled: !showDetailRef.current && !showMediaManagerRef.current && !showSettingsRef.current && !showHelpRef.current && !attractMode && !showExitPopupRef.current && !showVirtualKeyboardRef.current && !showSortRef.current && !showCollectionsRef.current && !showStatsRef.current && !showAchievementsRef.current && !showCoachRef.current && !showHighScoresRef.current && !showOperatorRef.current,
+    enabled: !showDetailRef.current && !showMediaManagerRef.current && !showSettingsRef.current && !showHelpRef.current && !attractMode  && !showVirtualKeyboardRef.current && !showSortRef.current && !showCollectionsRef.current && !showStatsRef.current && !showAchievementsRef.current && !showCoachRef.current && !showHighScoresRef.current && !showOperatorRef.current,
     left: () => {
+      if (showExitPopupRef.current) { setExitChoice(0); return }
       const z = focusZoneRef.current
       if (z === 0) { setTopMenuIdx(i => Math.max(0, i - 1)); sounds.navigate(); return }
       if (z === 1) { setTabFocusIdx(i => Math.max(0, i - 1)); sounds.navigate(); return }
@@ -800,6 +786,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       if (z === 4) { setBarFocusIdx(i => Math.max(0, i - 1)); sounds.navigate(); return }
     },
     right: () => {
+      if (showExitPopupRef.current) { setExitChoice(1); return }
       const z = focusZoneRef.current
       if (z === 0) { setTopMenuIdx(i => Math.min(TOP_MENU_MAX, i + 1)); sounds.navigate(); return }
       if (z === 1) { setTabFocusIdx(i => Math.min(visibleTabsRef.current.length - 1, i + 1)); sounds.navigate(); return }
@@ -808,6 +795,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       if (z === 4) { setBarFocusIdx(i => Math.min(HINT_BAR_MAX, i + 1)); sounds.navigate(); return }
     },
     up: () => {
+      if (showExitPopupRef.current) return
       const z = focusZoneRef.current
       if (z === 4) { setFocusZone(3); sounds.navigate(); return }  // hintBar -> launch
       if (z === 3) { setFocusZone(2); sounds.navigate(); return }  // launch -> wheel
@@ -815,6 +803,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       if (z === 1) { setFocusZone(0); sounds.navigate(); return }  // tabs -> topMenu
     },
     down: () => {
+      if (showExitPopupRef.current) return
       const z = focusZoneRef.current
       if (z === 0) { setFocusZone(1); sounds.navigate(); return }  // topMenu -> tabs
       if (z === 1) { setFocusZone(2); sounds.navigate(); return }  // tabs -> wheel
@@ -822,6 +811,11 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       if (z === 3) { setFocusZone(4); sounds.navigate(); return }  // launch -> hintBar
     },
     confirm: () => {
+      if (showExitPopupRef.current) {
+        if (exitChoiceRef.current === 0) { window.nuarcade?.quit?.() }
+        else { setShowExitPopup(false); setExitChoice(1) }
+        return
+      }
       const z = focusZoneRef.current
       if (z === 0) { topMenuActions[topMenuIdxRef.current]?.(); return }
       if (z === 1) {
@@ -837,7 +831,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     },
     settings: () => { if (!showSettingsRef.current) setShowSettings(true) },
     back: () => {
-      if (showExitPopupRef.current)   { setShowExitPopup(false); setExitChoice(0); return }
+      if (showExitPopupRef.current)   { setShowExitPopup(false); setExitChoice(1); return }
       if (showDetailRef.current)      { setShowDetail(false); return }
       if (showSettingsRef.current)    { setShowSettings(false); return }
       if (showSearchRef.current)      { setShowSearch(false); setShowVirtualKeyboard(false); return }
