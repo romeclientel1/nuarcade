@@ -9,6 +9,12 @@ export default function GameCoach({ game, onClose }) {
   const scrollRef = useRef(null)
   const doneRef   = useRef(false)
 
+  useOverlayGamepad({
+    onClose,
+    onUp:   () => scrollRef.current?.scrollBy({ top: -80, behavior: 'smooth' }),
+    onDown: () => scrollRef.current?.scrollBy({ top:  80, behavior: 'smooth' }),
+  })
+
   useEffect(() => {
     if (!game || doneRef.current) return
     doneRef.current = true
