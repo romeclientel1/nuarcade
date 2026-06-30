@@ -16,7 +16,6 @@ import VirtualKeyboard from "../VirtualKeyboard/VirtualKeyboard"
 import BootScreen from "./BootScreen"
 import IntroVideo from "./IntroVideo"
 import GameCoach from "../GameCoach/GameCoach"
-import HighScoreBoard from "../HighScoreBoard/HighScoreBoard"
 import OperatorDashboard from "../OperatorDashboard/OperatorDashboard"
 import { useErrorToast, ErrorToastContainer } from "./ErrorToast"
 import SortMenu from "./SortMenu"
@@ -273,7 +272,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const showStatsRef           = useRef(false)
   const showAchievementsRef    = useRef(false)
   const showCoachRef           = useRef(false)
-  const showHighScoresRef      = useRef(false)
   const showOperatorRef        = useRef(false)
   const exitConfirmRef         = useRef(false)
   const showExitPopupRef       = useRef(false)
@@ -323,7 +321,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const [showDetail, setShowDetail] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
   const [showCoach,      setShowCoach     ] = useState(false)
-  const [showHighScores, setShowHighScores] = useState(false)
   const [showOperator,   setShowOperator  ] = useState(false)
   const [showSort, setShowSort] = useState(false)
   const [showCollections, setShowCollections] = useState(false)
@@ -470,7 +467,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     showStatsRef.current           = showStats
     showAchievementsRef.current    = showAchievements
     showCoachRef.current           = showCoach
-    showHighScoresRef.current      = showHighScores
     showOperatorRef.current        = showOperator
   const current = filteredGames[selectedIndex] || filteredGames[0]
   currentRef.current = current
@@ -662,9 +658,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       if (e.key === "ArrowLeft")  { sounds.navigate(); navigate(-1) }
       if (e.key === "ArrowRight") { sounds.navigate(); navigate(1) }
       if (e.key === "Enter")      { if (!showDetail && !showHelp && !showStats && !showAchievements && !showCollections && !showSettings && !showMediaManager && !showCoach) { sounds.select(); setShowDetail(true) } }
-      if ((e.key === "c" || e.key === "C") && !showDetail && !showHelp && !showStats && !showCoach && !showSettings && !showMediaManager && !showHighScores) { sounds.select?.(); setShowCoach(true) }
-      if ((e.key === "h" || e.key === "H") && !showDetail && !showHelp && !showStats && !showCoach && !showSettings && !showMediaManager) { sounds.select?.(); setShowHighScores(true) }
-      if ((e.key === "o" || e.key === "O") && !showDetail && !showHelp && !showStats && !showCoach && !showSettings && !showMediaManager && !showHighScores) { sounds.select?.(); setShowOperator(true) }
+      if ((e.key === "c" || e.key === "C") && !showDetail && !showHelp && !showStats && !showCoach && !showSettings && !showMediaManager) { sounds.select?.(); setShowCoach(true) }
+      if ((e.key === "o" || e.key === "O") && !showDetail && !showHelp && !showStats && !showCoach && !showSettings && !showMediaManager) { sounds.select?.(); setShowOperator(true) }
       if (e.key === "Escape") {
         sounds.back()
         setShowDetail(false)
@@ -674,7 +669,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       }
 
       // Single-key shortcuts only fire when no overlay is open
-      const anyOverlay = showDetail || showHelp || showStats || showAchievements || showCollections || showSettings || showMediaManager || showCoach || showHighScores || showOperator || showControllerPrompt
+      const anyOverlay = showDetail || showHelp || showStats || showAchievements || showCollections || showSettings || showMediaManager || showCoach || showOperator || showControllerPrompt
       if (anyOverlay) return
 
       // Konami code detector: UP UP DOWN DOWN LEFT RIGHT LEFT RIGHT b a
@@ -701,7 +696,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     }
     window.addEventListener("keydown", handler)
     return () => window.removeEventListener("keydown", handler)
-  }, [filteredGames, selectedIndex, showSearch, showVirtualKeyboard, showDetail, showHelp, showStats, showAchievements, showCollections, showSettings, showMediaManager, showCoach, showHighScores, showOperator, current, handleLaunch])
+  }, [filteredGames, selectedIndex, showSearch, showVirtualKeyboard, showDetail, showHelp, showStats, showAchievements, showCollections, showSettings, showMediaManager, showCoach, showOperator, current, handleLaunch])
 
   // search focus effect removed
 
@@ -728,10 +723,9 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const hintBarActions = [
     () => { if (currentRef.current) toggleFavorite(currentRef.current.id || currentRef.current.profile) }, // 0 Favorite
     () => setShowCoach(true),                                    // 1 Coach
-    () => setShowHighScores(true),                               // 2 Scores
-    () => setShowOperator(true),                                 // 3 Operator
+    () => setShowOperator(true),                               // 2 Operator
   ]
-  const HINT_BAR_MAX = 3
+  const HINT_BAR_MAX = 2
   
   const filterLeft = () => {
     const tabs = visibleTabsRef.current
@@ -764,7 +758,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     showStatsRef.current           = showStats
     showAchievementsRef.current    = showAchievements
     showCoachRef.current           = showCoach
-    showHighScoresRef.current      = showHighScores
     showOperatorRef.current        = showOperator
     exitConfirmRef.current         = exitConfirm
     showExitPopupRef.current       = showExitPopup
@@ -775,7 +768,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   })
 
   useGamepad({
-    enabled: !showDetailRef.current && !showMediaManagerRef.current && !showSettingsRef.current && !showHelpRef.current && !attractMode  && !showVirtualKeyboardRef.current && !showSortRef.current && !showCollectionsRef.current && !showStatsRef.current && !showAchievementsRef.current && !showCoachRef.current && !showHighScoresRef.current && !showOperatorRef.current,
+    enabled: !showDetailRef.current && !showMediaManagerRef.current && !showSettingsRef.current && !showHelpRef.current && !attractMode  && !showVirtualKeyboardRef.current && !showSortRef.current && !showCollectionsRef.current && !showStatsRef.current && !showAchievementsRef.current && !showCoachRef.current && !showOperatorRef.current,
     left: () => {
       if (showExitPopupRef.current) { setExitChoice(0); return }
       const z = focusZoneRef.current
@@ -1274,14 +1267,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
         />
       )}
 
-      {showHighScores && (
-        <HighScoreBoard
-          games={filteredGames}
-          onClose={() => setShowHighScores(false)}
-          activeProfile={activeProfile}
-        />
-      )}
-
       {showOperator && (
         <OperatorDashboard
           games={games}
@@ -1342,8 +1327,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
               <span className={styles.hint + (focusZone === 4 && barFocusIdx === 0 ? " " + styles.barFocused : "")}><kbd>F</kbd> Favorite</span>
               {/* Search removed from hint bar -- already in top menu zone 0 */}
           <span className={styles.hint + (focusZone === 4 && barFocusIdx === 1 ? " " + styles.barFocused : "")}><kbd>C</kbd> Coach</span>
-          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 2 ? " " + styles.barFocused : "")}><kbd>H</kbd> Scores</span>
-          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 3 ? " " + styles.barFocused : "")}><kbd>O</kbd> Operator</span>
+          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 2 ? " " + styles.barFocused : "")}><kbd>O</kbd> Operator</span>
               </div>
       )}
       
