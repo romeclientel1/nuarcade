@@ -198,7 +198,7 @@ function resolveExePath(game, gamesFolderPath) {
 // process stays responsive and Windows doesn't show "Not Responding"
 const yieldToEventLoop = () => new Promise(r => setImmediate(r))
 
-async function scanGames(teknoParrotPath, gamesFolderPath) {
+async function scanGames(teknoParrotPath, gamesFolderPath, retroarchPath) {
   const fsP  = require('fs').promises
   const fsS  = require('fs')
   const path = require('path')
@@ -409,6 +409,25 @@ async function scanGames(teknoParrotPath, gamesFolderPath) {
   }
   stats.total = games.length
   console.log('[scanGames] configured:', stats.configured, 'discovered:', stats.discovered, 'path-missing:', stats.hidden, 'unmatched:', stats.unmatched || 0)
+  // RetroArch launcher card -- only if retroarch.exe exists at configured path
+  if (retroarchPath) {
+    const retroExe = path.join(retroarchPath, 'retroarch.exe')
+    if (fsS.existsSync(retroExe)) {
+      games.push({
+        id:         'retroarch-launcher',
+        title:      'RetroArch',
+        system:     'RetroArch',
+        genre:      'Retro',
+        emulator:   'retroarch',
+        gamePath:   retroExe,
+        status:     'ready',
+        isLauncher: true,
+        configured: true,
+        exeFound:   true,
+      })
+    }
+  }
+
   return { games, stats, unmatched: stats.unmatchedFolders || [] }
 }
 
