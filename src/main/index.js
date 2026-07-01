@@ -1996,6 +1996,15 @@ ipcMain.handle('analyze-folders', async (event, { gamesFolder, tpFolder }) => {
   return { unmatched: folders, profileKeys }
 })
 
+// Suggest likely TeknoParrot GameProfile matches for unmatched game folders
+ipcMain.handle('suggest-folder-matches', async (event, { teknoParrotPath, gamesFolderPath }) => {
+  const { suggestFolderMatches } = require('./scanner')
+  const timeout = new Promise(resolve =>
+    setTimeout(() => resolve({ suggestions: [], error: 'scan timed out' }), 20000)
+  )
+  return await Promise.race([suggestFolderMatches(teknoParrotPath, gamesFolderPath), timeout])
+})
+
 ipcMain.handle('rename-folder', async (event, { gamesFolder, from, to }) => {
   const fs   = require('fs')
   const path = require('path')
