@@ -105,7 +105,7 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork,
   const logoUrl   = gameArt?.logo    || null
 
   const tpThumb   = game.isPinball ? null
-    : game.id ? `${THUMBNAIL_BASE}${game.id}.png` : null
+    : (game.id && !game.isLauncher) ? `${THUMBNAIL_BASE}${game.id}.png` : null
 
 
 
