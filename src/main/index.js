@@ -1669,7 +1669,7 @@ ipcMain.handle('tp-auto-configure', async () => {
   const fs = require('fs')
   const cfg = config.load()
   const tpPath        = cfg.teknoParrotPath || 'F:\\TeknoParrot\\'
-  const gamesFolders  = cfg.arcadeGamesPath || 'F:\\ArcadeGames\\'
+  const gamesFolders  = cfg.gamesFolderPath || 'F:\\ArcadeGames\\'
   const profilesDir   = path.join(tpPath, 'GameProfiles')
   const userProfiles  = path.join(tpPath, 'UserProfiles')
 
