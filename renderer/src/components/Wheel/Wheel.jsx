@@ -313,6 +313,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
 
   const [activeCategory, setActiveCategory] = useState("All")
   const [launching, setLaunching] = useState(false)
+  const [launchError, setLaunchError] = useState(null)
   const [showControllerPrompt, setShowControllerPrompt] = useState(false)
   const [attractMode, setAttractMode] = useState(false)
   const [isSnapping, setIsSnapping] = useState(false)
@@ -524,6 +525,16 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
 
   const launchGame = () => {
     if (launching || !current) return
+    if (current.status === 'not-configured') {
+      setLaunchError('Open TeknoParrot and configure this game -- find it in the TP game list and set the exe path.')
+      setTimeout(() => setLaunchError(null), 5000)
+      return
+    }
+    if (current.status === 'path-missing') {
+      setLaunchError('Game exe not found. Check if the file has moved: ' + (current.gamePath || 'path unknown'))
+      setTimeout(() => setLaunchError(null), 5000)
+      return
+    }
     const hint = getControllerHint(current)
     if (hint) { setShowControllerPrompt(true) } else { handleLaunch() }
   }
@@ -1253,6 +1264,18 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
             <button className={styles.launchBtn + (focusZone === 3 ? " " + styles.barFocused : "")} onClick={launchGame} disabled={launching}>
               {launching ? "Launching..." : current.isPinball ? "Launch Table" : "Launch Game"}
             </button>
+            {launchError && (
+              <div style={{
+                position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
+                background: 'rgba(0,0,0,0.93)', border: '1px solid #ff4444',
+                color: '#ff8888', padding: '16px 24px', borderRadius: 8, maxWidth: 420,
+                fontFamily: 'Share Tech Mono, monospace', fontSize: 13,
+                zIndex: 9999, textAlign: 'center', lineHeight: 1.6,
+              }}>
+                <div style={{ color: '#ff4444', fontSize: 11, marginBottom: 8, letterSpacing: 2 }}>CANNOT LAUNCH</div>
+                {launchError}
+              </div>
+            )}
           </div>
         </div>
       )}
