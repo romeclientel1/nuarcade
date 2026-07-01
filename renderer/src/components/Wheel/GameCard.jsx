@@ -52,10 +52,14 @@ const EMULATOR_COLORS = {
 
 
 const STATUS_COLORS = {
-  Perfect:    "#00ff88",
-  Great:      "#ffaa00",
-  Playable:   "#ffaa00",
-  Unverified: "#888888",
+  Perfect:          "#00ff88",
+  Great:            "#ffaa00",
+  Playable:         "#ffaa00",
+  Unverified:       "#888888",
+  ready:            "#00ff88",
+  discovered:       "#ffaa00",
+  "path-missing":   "#ff4444",
+  "not-configured": "#888888",
 }
 
 export default function GameCard({ game, isCenter, onClick, isFavorite, artwork, artPref }) {
@@ -181,6 +185,19 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork,
       <div className={styles.gradient} />
 
       <div className={styles.statusDot} style={{ background: statusColor }} title={game.status} />
+      {(game.status === 'not-configured' || game.status === 'path-missing' || game.status === 'discovered') && (
+        <div style={{
+          position: 'absolute', bottom: 28, left: 0, right: 0,
+          textAlign: 'center', padding: '3px 6px',
+          background: game.status === 'path-missing' ? 'rgba(255,68,68,0.9)' : 'rgba(20,20,20,0.88)',
+          color: game.status === 'path-missing' ? '#fff' : '#aaa',
+          fontSize: 9, fontFamily: 'Share Tech Mono, monospace',
+          letterSpacing: 1, zIndex: 10,
+        }}>
+          {game.status === 'path-missing'   ? 'FILE MISSING' :
+           game.status === 'not-configured' ? 'SETUP IN TP'  : 'NEEDS CONFIG'}
+        </div>
+      )}
 
       {isFavorite && <div className={styles.favIndicator}>*</div>}
 
