@@ -92,6 +92,25 @@ export default function Settings({ games = [], onClose, onCRTChange, crtEnabled,
     }
   }
 
+  const [saved, setSaved] = useState(false)
+  const [exporting, setExporting] = useState(false)
+  const { newVersion, releaseUrl } = useVersionCheck()
+const { getAllPlaytime, formatTime } = usePlaytime()
+const [showControllerTest, setShowControllerTest] = useState(false)
+const [rescanning, setRescanning] = useState(false)
+const [backingUp, setBackingUp] = useState(false)
+const [restoring, setRestoring] = useState(false)
+  const [artPref, setArtPref] = useState(() => localStorage.getItem('nuarcade_art_pref') || 'sgdb')
+  const updateArtPref = (val) => { setArtPref(val); localStorage.setItem('nuarcade_art_pref', val) }
+const [rescanResult, setRescanResult] = useState(null)
+const [tpConfiguring, setTpConfiguring] = useState(false)
+const [tpResult, setTpResult] = useState(null)
+const [showArtworkMgr, setShowArtworkMgr] = useState(false)
+const [biosResult, setBiosResult] = useState(null)
+const [checkingBios, setCheckingBios] = useState(false)
+const [marqueeOpen, setMarqueeOpen] = useState(false)
+const [ytdlpStatus, setYtdlpStatus] = useState(null) // null=unchecked, 'present', 'missing', 'installing', 'error'
+
   // Check real filesystem existence for every emulator exe -- runs once config loads and after save
   useEffect(() => {
     if (!config || !window.nuarcade?.checkPath) return
@@ -114,24 +133,6 @@ export default function Settings({ games = [], onClose, onCRTChange, crtEnabled,
     })()
     return () => { cancelled = true }
   }, [config, saved])
-  const [saved, setSaved] = useState(false)
-  const [exporting, setExporting] = useState(false)
-  const { newVersion, releaseUrl } = useVersionCheck()
-const { getAllPlaytime, formatTime } = usePlaytime()
-const [showControllerTest, setShowControllerTest] = useState(false)
-const [rescanning, setRescanning] = useState(false)
-const [backingUp, setBackingUp] = useState(false)
-const [restoring, setRestoring] = useState(false)
-  const [artPref, setArtPref] = useState(() => localStorage.getItem('nuarcade_art_pref') || 'sgdb')
-  const updateArtPref = (val) => { setArtPref(val); localStorage.setItem('nuarcade_art_pref', val) }
-const [rescanResult, setRescanResult] = useState(null)
-const [tpConfiguring, setTpConfiguring] = useState(false)
-const [tpResult, setTpResult] = useState(null)
-const [showArtworkMgr, setShowArtworkMgr] = useState(false)
-const [biosResult, setBiosResult] = useState(null)
-const [checkingBios, setCheckingBios] = useState(false)
-const [marqueeOpen, setMarqueeOpen] = useState(false)
-const [ytdlpStatus, setYtdlpStatus] = useState(null) // null=unchecked, 'present', 'missing', 'installing', 'error'
 
   useEffect(() => { loadConfig() }, [])
 
