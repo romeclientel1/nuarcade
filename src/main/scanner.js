@@ -305,8 +305,12 @@ async function scanGames(teknoParrotPath, gamesFolderPath) {
             stats.hidden++
             game.warning = 'Exe not found at: ' + gamePath
             games.push(game)
+          } else {
+            // No GamePath -- show as not-configured so user can see it and set it up in TP
+            stats.notConfigured = (stats.notConfigured || 0) + 1
+            game.warning = 'Not yet configured in TeknoParrot. Open TeknoParrot, find this game, and set the exe path.'
+            games.push(game)
           }
-          // If no GamePath at all -- skip (not yet configured in TP)
         } catch (e) { /* skip bad XML */ }
       }
     } catch (e) {
