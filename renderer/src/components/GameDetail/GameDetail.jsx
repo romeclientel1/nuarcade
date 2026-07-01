@@ -122,7 +122,7 @@ export default function GameDetail({ game, onClose, onLaunch, launching, artwork
   const noteTimer = useRef(null)
   const colors = GENRE_COLORS[game.genre] || GENRE_COLORS.Other
   const statusColor = STATUS_COLORS[game.status] || "#888888"
-  const imgUrl = game.id && !game.isPinball ? THUMBNAIL_BASE + game.id + ".png" : null
+  const imgUrl = game.id && !game.isPinball && !game.isLauncher ? THUMBNAIL_BASE + game.id + ".png" : null
   const fallbackIcon = game.icon || GENRE_ICONS[game.genre] || "--"
 
   const gameId  = game.id || game.profile
