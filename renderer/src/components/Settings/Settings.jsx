@@ -236,6 +236,7 @@ const handleSave = async () => {
             <div className={styles.title}>Settings</div>
             <div className={styles.sub}>NuArcade configuration</div>
           </div>
+          <button className={styles.closeBtn} onClick={onClose} title="Close (B)">X</button>
         </div>
 
         <div className={styles.body} ref={scrollRef}>
@@ -345,7 +346,7 @@ const handleSave = async () => {
           </div>
 
           <div className={styles.section}>
-            <div className={styles.sectionTitle}>Folder Renamer</div>
+            <div className={styles.sectionTitle}>TeknoParrot Folder Renamer</div>
         <div className={styles.pathsNote}>
           Rename unrecognized TeknoParrot game folders to match game profiles for better detection.
         </div>
