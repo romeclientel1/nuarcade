@@ -632,6 +632,12 @@ ipcMain.handle('add-exclusions', async (event, paths) => {
 ipcMain.handle('get-config', () => config.load())
 ipcMain.handle('quit-app', () => { app.quit() })
 
+// Restart the app cleanly -- used after path/emulator config changes that require a fresh scan on next launch
+ipcMain.handle('restart-app', () => {
+  app.relaunch()
+  app.exit(0)
+})
+
 ipcMain.handle('reset-setup', () => {
   config.update({ setupComplete: false })
   return { ok: true }
