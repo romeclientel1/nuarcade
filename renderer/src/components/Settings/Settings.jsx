@@ -21,6 +21,26 @@ const RESTART_KEYS = new Set([
   'steamPath', 'pcGamesPath', 'mediaPath',
 ])
 
+// Real exe filename for each emulator -- used to verify actual installation via filesystem check
+const EMULATOR_EXES = {
+  teknoParrotPath: 'TeknoParrotUi.exe',
+  rpcs3Path: 'rpcs3.exe',
+  xeniaPath: 'xenia.exe',
+  dolphinPath: 'Dolphin.exe',
+  pcsx2Path: 'pcsx2-qt.exe',
+  ryujinxPath: 'Ryujinx.exe',
+  mamePath: 'mame.exe',
+  retroarchPath: 'retroarch.exe',
+  project64Path: 'Project64.exe',
+  duckstationPath: 'duckstation-qt-x64-RelWithDebInfo.exe',
+  flycastPath: 'flycast.exe',
+  model2Path: 'Model2Emulator.exe',
+  model3Path: 'Supermodel.exe',
+  ppssppPath: 'PPSSPPWindows64.exe',
+  cemuPath: 'Cemu.exe',
+  pinballPath: 'VPinballX64.exe',
+}
+
 export default function Settings({ games = [], onClose, onCRTChange, crtEnabled, themeId, onThemeChange, onSetupWizard }) {
   const scrollRef = useRef(null)
   const saveRef    = useRef(null)
@@ -35,6 +55,30 @@ export default function Settings({ games = [], onClose, onCRTChange, crtEnabled,
   const [restartNeeded, setRestartNeeded] = useState(false)
   const [showRestartConfirm, setShowRestartConfirm] = useState(false)
   const changedPathKeysRef = useRef(new Set())
+  const [installedMap, setInstalledMap] = useState({})
+
+  // Check real filesystem existence for every emulator exe -- runs once config loads and after save
+  useEffect(() => {
+    if (!config || !window.nuarcade?.checkPath) return
+    let cancelled = false
+    ;(async () => {
+      const entries = await Promise.all(
+        Object.entries(EMULATOR_EXES).map(async ([pathKey, exeName]) => {
+          const folder = config[pathKey]
+          if (!folder) return [pathKey, false]
+          const sep = (folder.endsWith('\\') || folder.endsWith('/')) ? '' : '\\'
+          try {
+            const result = await window.nuarcade.checkPath(folder + sep + exeName)
+            return [pathKey, !!result?.exists]
+          } catch {
+            return [pathKey, false]
+          }
+        })
+      )
+      if (!cancelled) setInstalledMap(Object.fromEntries(entries))
+    })()
+    return () => { cancelled = true }
+  }, [config, saved])
   const [saved, setSaved] = useState(false)
   const [exporting, setExporting] = useState(false)
   const { newVersion, releaseUrl } = useVersionCheck()
@@ -304,13 +348,13 @@ const handleSave = async () => {
             { name: 'Cemu',                url: 'https://cemu.info',                                                    pathKey: 'cemuPath' },
             { name: 'Visual Pinball X',     url: 'https://github.com/vpinball/vpinball/releases',                      pathKey: 'pinballPath' },
           ].map(e => {
-            const installed = !!config[e.pathKey]
+            const installed = !!installedMap[e.pathKey]
             return (
               <button
                 key={e.name}
                 className={styles.emulatorBtn + (installed ? '' : ' ' + styles.emulatorBtnDim)}
                 onClick={() => window.open(e.url, '_blank')}
-                title={installed ? 'Path configured' : 'Not configured yet -- set its path below after installing'}
+                title={installed ? 'Detected -- exe found at this path' : 'Not detected yet -- install and set its path below'}
               >
                 {installed && <span style={{ color: '#00ff88', marginRight: 6 }}>&#10003;</span>}
                 {e.name}
