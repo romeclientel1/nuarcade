@@ -98,21 +98,16 @@ ipcMain.handle('browse-folder', async () => {
 
 // -- Launch TeknoParrot game -------------------------------------------------
 ipcMain.handle('launch-game', async (event, profilePath) => {
-  const { spawn } = require('child_process')
-  return new Promise((resolve) => {
-    const cfg = config.load()
-    const teknoParrotExe = path.join(cfg.teknoParrotPath, 'TeknoParrotUi.exe')
-    // TeknoParrot expects just the filename, not the full path
-    const profileName = path.basename(profilePath)
-    const args = [`--profile=${profileName}`, '--startGame']
-    const child = spawn(teknoParrotExe, args, {
-      detached: true,
-      stdio: 'ignore',
-      cwd: cfg.teknoParrotPath,  // run from TP directory so it finds its files
-    })
-    child.unref()
-    resolve({ success: true })
-  })
+  const cfg = config.load()
+  const teknoParrotExe = path.join(cfg.teknoParrotPath, 'TeknoParrotUi.exe')
+  const profileName = path.basename(profilePath)
+  const args = ['--profile=' + profileName, '--startGame']
+  try {
+    await launchWithReturn(teknoParrotExe, args, { spawnOpts: { cwd: cfg.teknoParrotPath } })
+    return { success: true }
+  } catch (e) {
+    return { success: false, error: e.message }
+  }
 })
 
 // -- Launch RPCS3 game -------------------------------------------------------
@@ -298,14 +293,14 @@ ipcMain.handle('download-video', async (event, { videoUrl, gameId }) => {
 
 // -- Launch Xenia / Xbox 360 -------------------------------------------------
 ipcMain.handle('launch-xbox360-game', async (event, gamePath) => {
-  const { spawn } = require('child_process')
-  return new Promise((resolve) => {
-    const cfg = config.load()
-    const xeniaExe = path.join(cfg.xeniaPath || 'F:\\Xenia\\', 'xenia.exe')
-    const child = spawn(xeniaExe, [gamePath], { detached: true, stdio: 'ignore' })
-    child.unref()
-    resolve({ success: true })
-  })
+  const cfg = config.load()
+  const xeniaExe = path.join(cfg.xeniaPath || 'F:\\Xenia\\', 'xenia.exe')
+  try {
+    await launchWithReturn(xeniaExe, [gamePath])
+    return { success: true }
+  } catch (e) {
+    return { success: false, error: e.message }
+  }
 })
 
 // -- Launch Dolphin / GC+Wii -------------------------------------------------
