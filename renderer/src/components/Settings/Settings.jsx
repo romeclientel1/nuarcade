@@ -89,6 +89,13 @@ export default function Settings({ games = [], onClose, onCRTChange, crtEnabled,
     setRenamedFolders(prev => ({ ...prev, [folderName]: ok ? 'done' : 'error' }))
     if (ok) {
       changedPathKeysRef.current.add('gamesFolderPath')
+      // Renamed folders need a fresh scan -- clear the cache immediately so a
+      // restart (with or without clicking Save) actually picks up the change
+      try {
+        localStorage.removeItem('nuarcade_game_cache')
+        localStorage.removeItem('nuarcade_game_cache_ts')
+      } catch {}
+      setRestartNeeded(true)
     }
   }
 
