@@ -57,6 +57,41 @@ export default function Settings({ games = [], onClose, onCRTChange, crtEnabled,
   const changedPathKeysRef = useRef(new Set())
   const [installedMap, setInstalledMap] = useState({})
 
+  // -- TeknoParrot Folder Renamer state --
+  const [folderScan, setFolderScan] = useState(null)       // null = not yet scanned
+  const [scanningFolders, setScanningFolders] = useState(false)
+  const [renamedFolders, setRenamedFolders] = useState({}) // folderName -> 'done' | 'error'
+  const [manualPick, setManualPick] = useState({})         // folderName -> chosen target key
+
+  const handleScanFolders = async () => {
+    if (!window.nuarcade?.suggestFolderMatches) return
+    setScanningFolders(true)
+    setFolderScan(null)
+    try {
+      const result = await window.nuarcade.suggestFolderMatches({
+        teknoParrotPath: config.teknoParrotPath,
+        gamesFolderPath: config.gamesFolderPath,
+      })
+      setFolderScan(result)
+    } catch (e) {
+      setFolderScan({ suggestions: [], error: e.message })
+    }
+    setScanningFolders(false)
+  }
+
+  const handleRenameFolder = async (folderName, targetKey) => {
+    if (!targetKey || !window.nuarcade?.renameFolder) return
+    const ok = await window.nuarcade.renameFolder({
+      gamesFolder: config.gamesFolderPath,
+      from: folderName,
+      to: targetKey,
+    })
+    setRenamedFolders(prev => ({ ...prev, [folderName]: ok ? 'done' : 'error' }))
+    if (ok) {
+      changedPathKeysRef.current.add('gamesFolderPath')
+    }
+  }
+
   // Check real filesystem existence for every emulator exe -- runs once config loads and after save
   useEffect(() => {
     if (!config || !window.nuarcade?.checkPath) return
@@ -428,11 +463,81 @@ const handleSave = async () => {
           <div className={styles.section}>
             <div className={styles.sectionTitle}>TeknoParrot Folder Renamer</div>
         <div className={styles.pathsNote}>
-          Rename unrecognized TeknoParrot game folders to match game profiles for better detection.
+          Some game folders don't match TeknoParrot's expected names, so they never show up in your library.
+          Scan below to find likely matches and rename them -- nothing is renamed without your confirmation.
         </div>
-        <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, padding: '8px 0' }}>
-          Folder Renamer coming soon -- use Settings paths to point to your game folders.
-        </div>
+
+        <button
+          className={styles.exportBtn}
+          onClick={handleScanFolders}
+          disabled={scanningFolders || !config.teknoParrotPath || !config.gamesFolderPath}
+          style={{ marginBottom: 12 }}
+        >
+          {scanningFolders ? 'Scanning...' : 'Scan for unmatched folders'}
+        </button>
+
+        {folderScan?.error && (
+          <div style={{ color: '#ff8888', fontSize: 12, padding: '6px 0' }}>{folderScan.error}</div>
+        )}
+
+        {folderScan && !folderScan.error && (
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginBottom: 10 }}>
+            {folderScan.suggestions.length === 0
+              ? 'All folders match a known TeknoParrot profile already -- nothing to rename.'
+              : folderScan.suggestions.length + ' folder(s) out of ' + folderScan.totalFolders + ' need attention.'}
+          </div>
+        )}
+
+        {folderScan?.suggestions?.map(s => {
+          const renameState = renamedFolders[s.folderName]
+          const chosen = manualPick[s.folderName] ?? s.topMatch?.key ?? ''
+          return (
+            <div key={s.folderName} style={{
+              border: '1px solid rgba(255,255,255,0.12)', borderRadius: 6, padding: 10, marginBottom: 8,
+              background: renameState === 'done' ? 'rgba(0,255,136,0.08)' : 'rgba(255,255,255,0.03)',
+            }}>
+              <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 12, color: '#fff', marginBottom: 6 }}>
+                {s.folderName}
+              </div>
+              {renameState === 'done' ? (
+                <div style={{ color: '#00ff88', fontSize: 12 }}>Renamed to {chosen} -- restart to apply.</div>
+              ) : renameState === 'error' ? (
+                <div style={{ color: '#ff4444', fontSize: 12 }}>Rename failed -- target folder may already exist.</div>
+              ) : (
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                  {(s.topMatch || s.alternates?.length) ? (
+                    <select
+                      className={styles.input}
+                      style={{ flex: 1, minWidth: 200 }}
+                      value={chosen}
+                      onChange={e => setManualPick(prev => ({ ...prev, [s.folderName]: e.target.value }))}
+                    >
+                      {s.topMatch && (
+                        <option value={s.topMatch.key}>
+                          {s.topMatch.gameName} ({Math.round(s.topMatch.score * 100)}% match{s.confident ? ', confident' : ''})
+                        </option>
+                      )}
+                      {s.alternates?.map(alt => (
+                        <option key={alt.key} value={alt.key}>
+                          {alt.gameName} ({Math.round(alt.score * 100)}% match)
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, flex: 1 }}>No likely match found.</div>
+                  )}
+                  <button
+                    className={styles.exportBtn}
+                    disabled={!chosen}
+                    onClick={() => handleRenameFolder(s.folderName, chosen)}
+                  >
+                    Rename
+                  </button>
+                </div>
+              )}
+            </div>
+          )
+        })}
 
         <div className={styles.sectionTitle}>Display</div>
             <div className={styles.inputRow}>
