@@ -17,6 +17,7 @@ contextBridge.exposeInMainWorld('nuarcade', {
   // TP Folder Renamer
   analyzeFolders: (opts) => ipcRenderer.invoke('analyze-folders', opts),
   renameFolder:   (opts) => ipcRenderer.invoke('rename-folder', opts),
+  suggestFolderMatches: (opts) => ipcRenderer.invoke('suggest-folder-matches', opts),
 
   // Game launch
   launchGame:          (profilePath)  => ipcRenderer.invoke('launch-game', profilePath),
