@@ -247,6 +247,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const [focusZone,    setFocusZone   ] = useState(2)
   const [showExitPopup, setShowExitPopup] = useState(false)
   const [exitChoice,    setExitChoice   ] = useState(1)  // 0=Yes, 1=No -- default NO
+  const [retroArchChoice, setRetroArchChoice] = useState(1)  // 0=Yes, 1=No -- default NO
   const [topMenuIdx,   setTopMenuIdx  ] = useState(0)   // index within zone 0
   const [tabFocusIdx,  setTabFocusIdx ] = useState(0)   // index within zone 1
   const [barFocusIdx,  setBarFocusIdx ] = useState(0)   // index within zone 4
@@ -274,6 +275,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const showCoachRef           = useRef(false)
   const showOperatorRef        = useRef(false)
   const showRetroArchPopupRef  = useRef(false)
+  const retroArchChoiceRef     = useRef(1)
   const exitConfirmRef         = useRef(false)
   const showExitPopupRef       = useRef(false)
   const exitChoiceRef          = useRef(0)
@@ -472,6 +474,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     showCoachRef.current           = showCoach
     showOperatorRef.current        = showOperator
     showRetroArchPopupRef.current  = showRetroArchPopup
+    retroArchChoiceRef.current     = retroArchChoice
   const current = filteredGames[selectedIndex] || filteredGames[0]
   currentRef.current = current
 
@@ -788,6 +791,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     showCoachRef.current           = showCoach
     showOperatorRef.current        = showOperator
     showRetroArchPopupRef.current  = showRetroArchPopup
+    retroArchChoiceRef.current     = retroArchChoice
     exitConfirmRef.current         = exitConfirm
     showExitPopupRef.current       = showExitPopup
     exitChoiceRef.current          = exitChoice
@@ -799,6 +803,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   useGamepad({
     enabled: !showDetailRef.current && !showMediaManagerRef.current && !showSettingsRef.current && !showHelpRef.current && !attractMode  && !showVirtualKeyboardRef.current && !showSortRef.current && !showCollectionsRef.current && !showStatsRef.current && !showAchievementsRef.current && !showCoachRef.current && !showOperatorRef.current && !showRetroArchPopupRef.current,
     left: () => {
+      if (showRetroArchPopupRef.current) { setRetroArchChoice(0); return }
       if (showExitPopupRef.current) { setExitChoice(0); return }
       const z = focusZoneRef.current
       if (z === 0) { setTopMenuIdx(i => Math.max(0, i - 1)); sounds.navigate(); return }
@@ -808,6 +813,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       if (z === 4) { setBarFocusIdx(i => Math.max(0, i - 1)); sounds.navigate(); return }
     },
     right: () => {
+      if (showRetroArchPopupRef.current) { setRetroArchChoice(1); return }
       if (showExitPopupRef.current) { setExitChoice(1); return }
       const z = focusZoneRef.current
       if (z === 0) { setTopMenuIdx(i => Math.min(TOP_MENU_MAX, i + 1)); sounds.navigate(); return }
@@ -834,8 +840,9 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     },
     confirm: () => {
       if (showRetroArchPopupRef.current) {
-        window.nuarcade?.launchRetroArch?.()
+        if (retroArchChoiceRef.current === 0) { window.nuarcade?.launchRetroArch?.() }
         setShowRetroArchPopup(false)
+        setRetroArchChoice(1)
         return
       }
       if (showExitPopupRef.current) {
@@ -858,7 +865,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     },
     settings: () => { if (!showSettingsRef.current) setShowSettings(true) },
     back: () => {
-      if (showRetroArchPopupRef.current) { setShowRetroArchPopup(false); return }
+      if (showRetroArchPopupRef.current) { setShowRetroArchPopup(false); setRetroArchChoice(1); return }
       if (showExitPopupRef.current)   { setShowExitPopup(false); setExitChoice(1); return }
       if (showDetailRef.current)      { setShowDetail(false); return }
       if (showSettingsRef.current)    { setShowSettings(false); return }
@@ -1391,10 +1398,22 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
             Controller is configured inside RetroArch. Exit RA to return here.
           </div>
           <div style={{ display: 'flex', gap: 20, marginTop: 8 }}>
-            <button style={{ padding: '10px 32px', background: '#9933ff', color: '#fff', border: 'none', borderRadius: 6, fontFamily: 'Orbitron, monospace', fontSize: 14, cursor: 'pointer' }}
-              onClick={() => { window.nuarcade?.launchRetroArch?.(); setShowRetroArchPopup(false) }}>YES</button>
-            <button style={{ padding: '10px 32px', background: '#222', color: '#aaa', border: '1px solid #444', borderRadius: 6, fontFamily: 'Orbitron, monospace', fontSize: 14, cursor: 'pointer' }}
-              onClick={() => setShowRetroArchPopup(false)}>NO</button>
+            <button style={{
+                padding: '10px 32px', borderRadius: 6, fontFamily: 'Orbitron, monospace', fontSize: 14, cursor: 'pointer',
+                background: retroArchChoice === 0 ? 'rgba(153,51,255,0.25)' : 'rgba(255,255,255,0.05)',
+                border: retroArchChoice === 0 ? '2px solid #9933ff' : '2px solid rgba(255,255,255,0.2)',
+                color: retroArchChoice === 0 ? '#c88cff' : '#fff',
+                boxShadow: retroArchChoice === 0 ? '0 0 16px rgba(153,51,255,0.5)' : 'none',
+              }}
+              onClick={() => { window.nuarcade?.launchRetroArch?.(); setShowRetroArchPopup(false); setRetroArchChoice(1) }}>YES</button>
+            <button style={{
+                padding: '10px 32px', borderRadius: 6, fontFamily: 'Orbitron, monospace', fontSize: 14, cursor: 'pointer',
+                background: retroArchChoice === 1 ? 'rgba(153,51,255,0.25)' : 'rgba(255,255,255,0.05)',
+                border: retroArchChoice === 1 ? '2px solid #9933ff' : '2px solid rgba(255,255,255,0.2)',
+                color: retroArchChoice === 1 ? '#c88cff' : '#fff',
+                boxShadow: retroArchChoice === 1 ? '0 0 16px rgba(153,51,255,0.5)' : 'none',
+              }}
+              onClick={() => { setShowRetroArchPopup(false); setRetroArchChoice(1) }}>NO</button>
           </div>
         </div>
       )}
