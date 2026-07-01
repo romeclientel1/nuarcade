@@ -1657,3 +1657,120 @@ function scanPcGames(pcGamesPath) {
 }
 
 module.exports = { ...module.exports, scanSteamGames, scanPcGames }
+
+// -----------------------------------------------------------------------
+// TeknoParrot Folder Renamer -- suggests matches for folders that failed
+// discovery, using fuzzy similarity against every known GameProfile name.
+// Never renames anything itself -- returns suggestions only, user confirms.
+// -----------------------------------------------------------------------
+function levenshtein(a, b) {
+  const m = a.length, n = b.length
+  if (m === 0) return n
+  if (n === 0) return m
+  let prev = new Array(n + 1)
+  let curr = new Array(n + 1)
+  for (let j = 0; j <= n; j++) prev[j] = j
+  for (let i = 1; i <= m; i++) {
+    curr[0] = i
+    for (let j = 1; j <= n; j++) {
+      curr[j] = a[i - 1] === b[j - 1]
+        ? prev[j - 1]
+        : 1 + Math.min(prev[j], curr[j - 1], prev[j - 1])
+    }
+    ;[prev, curr] = [curr, prev]
+  }
+  return prev[n]
+}
+
+function similarityScore(a, b) {
+  if (!a || !b) return 0
+  if (a === b) return 1
+  if (a.includes(b) || b.includes(a)) {
+    const shorter = Math.min(a.length, b.length)
+    const longer = Math.max(a.length, b.length)
+    return 0.75 + 0.2 * (shorter / longer)
+  }
+  const maxLen = Math.max(a.length, b.length)
+  if (maxLen === 0) return 1
+  return 1 - levenshtein(a, b) / maxLen
+}
+
+async function suggestFolderMatches(teknoParrotPath, gamesFolderPath) {
+  const fs = require('fs')
+  const path = require('path')
+
+  if (!teknoParrotPath || !fs.existsSync(teknoParrotPath)) {
+    return { suggestions: [], error: 'TeknoParrot path not found: ' + teknoParrotPath }
+  }
+  if (!gamesFolderPath || !fs.existsSync(gamesFolderPath)) {
+    return { suggestions: [], error: 'Games folder not found: ' + gamesFolderPath }
+  }
+
+  const { XMLParser } = require('fast-xml-parser')
+  const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_', parseAttributeValue: true })
+
+  const normalize = (s) => String(s).toLowerCase().replace(/[^a-z0-9]/g, '')
+
+  const gameProfilesDir = path.join(teknoParrotPath, 'GameProfiles')
+  const profiles = []
+  if (fs.existsSync(gameProfilesDir)) {
+    const xmlFiles = fs.readdirSync(gameProfilesDir).filter(f => f.toLowerCase().endsWith('.xml'))
+    for (const pf of xmlFiles) {
+      try {
+        const raw = fs.readFileSync(path.join(gameProfilesDir, pf), 'utf8')
+        const data = parser.parse(raw)
+        const profile = data?.GameProfile || {}
+        const key = path.basename(pf, '.xml')
+        profiles.push({ key, gameName: profile.GameName || key, norm: normalize(key) })
+      } catch (e) { /* skip bad XML */ }
+    }
+  }
+
+  const userProfilesDir = path.join(teknoParrotPath, 'UserProfiles')
+  const configuredKeys = new Set()
+  if (fs.existsSync(userProfilesDir)) {
+    const userFiles = fs.readdirSync(userProfilesDir).filter(f => f.toLowerCase().endsWith('.xml'))
+    for (const uf of userFiles) configuredKeys.add(path.basename(uf, '.xml'))
+  }
+  const profileNormLookup = {}
+  for (const p of profiles) profileNormLookup[p.norm] = p.key
+
+  let folders = []
+  try {
+    folders = fs.readdirSync(gamesFolderPath, { withFileTypes: true })
+      .filter(e => e.isDirectory())
+      .map(e => e.name)
+  } catch (e) {
+    return { suggestions: [], error: 'Could not read games folder: ' + e.message }
+  }
+
+  const suggestions = []
+  for (const folderName of folders) {
+    if (configuredKeys.has(folderName)) continue
+    const folderNorm = normalize(folderName)
+    if (profileNormLookup[folderNorm]) continue
+
+    const scored = profiles
+      .map(p => ({ key: p.key, gameName: p.gameName, score: similarityScore(folderNorm, p.norm) }))
+      .filter(s => s.score >= 0.35)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3)
+
+    suggestions.push({
+      folderName,
+      topMatch: scored[0] || null,
+      alternates: scored.slice(1),
+      confident: !!(scored[0] && scored[0].score >= 0.7),
+    })
+  }
+
+  suggestions.sort((a, b) => {
+    const as = a.topMatch?.score || 0
+    const bs = b.topMatch?.score || 0
+    return bs - as
+  })
+
+  return { suggestions, totalFolders: folders.length, totalProfiles: profiles.length }
+}
+
+module.exports = { ...module.exports, suggestFolderMatches }
