@@ -7,6 +7,20 @@ import styles from "./Settings.module.css"
 import { useVersionCheck } from "../../hooks/useVersionCheck"
 import { THEMES } from "../../hooks/useTheme"
 
+// Path/emulator config keys that require an app restart to take effect
+// (game library only re-scans on next launch, per the cache design)
+const RESTART_KEYS = new Set([
+  'teknoParrotPath', 'gamesFolderPath', 'mamePath', 'mameGamesPath',
+  'model2Path', 'model2GamesPath', 'model3Path', 'model3GamesPath',
+  'retroarchPath', 'retroarchGamesPath', 'project64Path', 'n64GamesPath',
+  'duckstationPath', 'ps1GamesPath', 'flycastPath', 'dreamcastGamesPath',
+  'ppssppPath', 'pspGamesPath', 'pcsx2Path', 'ps2GamesPath',
+  'rpcs3Path', 'ps3GamesPath', 'xeniaPath', 'xbox360GamesPath',
+  'dolphinPath', 'gcWiiGamesPath', 'cemuPath', 'wiiUGamesPath',
+  'ryujinxPath', 'switchGamesPath', 'pinballPath', 'tablesPath',
+  'steamPath', 'pcGamesPath', 'mediaPath',
+])
+
 export default function Settings({ games = [], onClose, onCRTChange, crtEnabled, themeId, onThemeChange, onSetupWizard }) {
   const scrollRef = useRef(null)
   const saveRef    = useRef(null)
@@ -18,6 +32,9 @@ export default function Settings({ games = [], onClose, onCRTChange, crtEnabled,
   })
 
   const [config, setConfig] = useState(null)
+  const [restartNeeded, setRestartNeeded] = useState(false)
+  const [showRestartConfirm, setShowRestartConfirm] = useState(false)
+  const changedPathKeysRef = useRef(new Set())
   const [saved, setSaved] = useState(false)
   const [exporting, setExporting] = useState(false)
   const { newVersion, releaseUrl } = useVersionCheck()
@@ -170,6 +187,10 @@ const handleSave = async () => {
     if (window.nuarcade) await window.nuarcade.setConfig(config)
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
+    if (changedPathKeysRef.current.size > 0) {
+      setRestartNeeded(true)
+      changedPathKeysRef.current.clear()
+    }
   }
 
   const handleExport = async () => {
@@ -224,6 +245,7 @@ const handleSave = async () => {
   const update = (key, val) => {
     setConfig(c => ({ ...c, [key]: val }))
     if (key === "crtEffect") onCRTChange?.(val)
+    if (RESTART_KEYS.has(key)) changedPathKeysRef.current.add(key)
   }
 
   if (!config) return null
@@ -241,6 +263,15 @@ const handleSave = async () => {
 
         <div className={styles.body} ref={scrollRef}>
 
+          {restartNeeded && (
+            <div className={styles.updateBanner} style={{ background: 'rgba(255,170,0,0.12)', borderColor: '#ffaa00' }}>
+              <span>Restart required to apply your changes.</span>
+              <button className={styles.updateBtn} style={{ background: '#ffaa00' }} onClick={() => setShowRestartConfirm(true)}>
+                Restart Now
+              </button>
+            </div>
+          )}
+
           {newVersion && (
             <div className={styles.updateBanner}>
               <span>NuArcade {newVersion} is available!</span>
@@ -256,32 +287,37 @@ const handleSave = async () => {
         </div>
         <div className={styles.emulatorGrid}>
           {[
-            { name: 'TeknoParrot',          url: 'https://teknoparrot.com/' },
-            { name: 'RPCS3',                url: 'https://rpcs3.net' },
-            { name: 'Xenia',                url: 'https://xenia.jp' },
-            { name: 'Dolphin',              url: 'https://dolphin-emu.org' },
-            { name: 'PCSX2',               url: 'https://pcsx2.net' },
-            { name: 'Ryubing',              url: 'https://ryujinx.app/download' },
-            { name: 'MAME',                url: 'https://www.mamedev.org' },
-            { name: 'RetroArch',           url: 'https://www.retroarch.com' },
-            { name: 'Project64',           url: 'https://www.pj64-emu.com' },
-            { name: 'DuckStation',         url: 'https://www.duckstation.org' },
-            { name: 'Flycast',             url: 'https://github.com/flyinghead/flycast/releases' },
-            { name: 'Model 2 Emulator',    url: 'https://emulation.gametechwiki.com/index.php/Model_2_Emulator' },
-            { name: 'Supermodel (M3)',      url: 'https://github.com/trzy/Supermodel/releases' },
-            { name: 'PPSSPP',              url: 'https://www.ppsspp.org' },
-            { name: 'Cemu',                url: 'https://cemu.info' },
-            { name: 'Visual Pinball X',     url: 'https://github.com/vpinball/vpinball/releases' },
-          ].map(e => (
-            <button
-              key={e.name}
-              className={styles.emulatorBtn}
-              onClick={() => window.open(e.url, '_blank')}
-            >
-              {e.name}
-              <span className={styles.emulatorArrow}>&#8599;</span>
-            </button>
-          ))}
+            { name: 'TeknoParrot',          url: 'https://teknoparrot.com/',                                            pathKey: 'teknoParrotPath' },
+            { name: 'RPCS3',                url: 'https://rpcs3.net',                                                   pathKey: 'rpcs3Path' },
+            { name: 'Xenia',                url: 'https://xenia.jp',                                                    pathKey: 'xeniaPath' },
+            { name: 'Dolphin',              url: 'https://dolphin-emu.org',                                             pathKey: 'dolphinPath' },
+            { name: 'PCSX2',               url: 'https://pcsx2.net',                                                    pathKey: 'pcsx2Path' },
+            { name: 'Ryubing',              url: 'https://ryujinx.app/download',                                        pathKey: 'ryujinxPath' },
+            { name: 'MAME',                url: 'https://www.mamedev.org',                                              pathKey: 'mamePath' },
+            { name: 'RetroArch',           url: 'https://www.retroarch.com',                                            pathKey: 'retroarchPath' },
+            { name: 'Project64',           url: 'https://www.pj64-emu.com',                                             pathKey: 'project64Path' },
+            { name: 'DuckStation',         url: 'https://www.duckstation.org',                                          pathKey: 'duckstationPath' },
+            { name: 'Flycast',             url: 'https://github.com/flyinghead/flycast/releases',                       pathKey: 'flycastPath' },
+            { name: 'Model 2 Emulator',    url: 'https://emulation.gametechwiki.com/index.php/Model_2_Emulator',        pathKey: 'model2Path' },
+            { name: 'Supermodel (M3)',      url: 'https://github.com/trzy/Supermodel/releases',                        pathKey: 'model3Path' },
+            { name: 'PPSSPP',              url: 'https://www.ppsspp.org',                                               pathKey: 'ppssppPath' },
+            { name: 'Cemu',                url: 'https://cemu.info',                                                    pathKey: 'cemuPath' },
+            { name: 'Visual Pinball X',     url: 'https://github.com/vpinball/vpinball/releases',                      pathKey: 'pinballPath' },
+          ].map(e => {
+            const installed = !!config[e.pathKey]
+            return (
+              <button
+                key={e.name}
+                className={styles.emulatorBtn + (installed ? '' : ' ' + styles.emulatorBtnDim)}
+                onClick={() => window.open(e.url, '_blank')}
+                title={installed ? 'Path configured' : 'Not configured yet -- set its path below after installing'}
+              >
+                {installed && <span style={{ color: '#00ff88', marginRight: 6 }}>&#10003;</span>}
+                {e.name}
+                <span className={styles.emulatorArrow}>&#8599;</span>
+              </button>
+            )
+          })}
         </div>
       </div>
 
@@ -921,6 +957,26 @@ const handleSave = async () => {
         </div>
 
       </div>
+
+      {showRestartConfirm && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 10000, flexDirection: 'column', gap: 20,
+        }}>
+          <div style={{ color: '#ffaa00', fontFamily: 'Orbitron, monospace', fontSize: 11, letterSpacing: 3 }}>NUARCADE</div>
+          <div style={{ color: '#fff', fontFamily: 'Orbitron, monospace', fontSize: 20, letterSpacing: 2 }}>Restart Now?</div>
+          <div style={{ color: '#aaa', fontFamily: 'Share Tech Mono, monospace', fontSize: 12, textAlign: 'center', maxWidth: 360 }}>
+            NuArcade needs to restart to apply your changes and rescan the library.
+          </div>
+          <div style={{ display: 'flex', gap: 20, marginTop: 8 }}>
+            <button style={{ padding: '10px 32px', background: '#ffaa00', color: '#000', border: 'none', borderRadius: 6, fontFamily: 'Orbitron, monospace', fontSize: 14, cursor: 'pointer', fontWeight: 'bold' }}
+              onClick={() => window.nuarcade?.restartApp?.()}>YES</button>
+            <button style={{ padding: '10px 32px', background: '#222', color: '#aaa', border: '1px solid #444', borderRadius: 6, fontFamily: 'Orbitron, monospace', fontSize: 14, cursor: 'pointer' }}
+              onClick={() => setShowRestartConfirm(false)}>NO</button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
