@@ -316,7 +316,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const [launching, setLaunching] = useState(false)
   const [launchError, setLaunchError] = useState(null)
   const [showRetroArchPopup, setShowRetroArchPopup] = useState(false)
-  const [launchError, setLaunchError] = useState(null)
   const [showControllerPrompt, setShowControllerPrompt] = useState(false)
   const [attractMode, setAttractMode] = useState(false)
   const [isSnapping, setIsSnapping] = useState(false)
