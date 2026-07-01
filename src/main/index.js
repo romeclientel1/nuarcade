@@ -6,6 +6,33 @@ const { scanMedia } = require('./mediaScanner')
 
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged
 
+let mainWin = null
+
+// Shared launcher -- minimizes NuArcade while a game runs, restores on exit
+function launchWithReturn(exe, args, options) {
+  args = args || []
+  options = options || {}
+  return new Promise(function(resolve, reject) {
+    if (mainWin && !options.keepVisible) mainWin.minimize()
+    var child = spawn(exe, args, Object.assign({
+      cwd: options.cwd || path.dirname(exe),
+      stdio: 'ignore',
+      detached: false,
+    }, options.spawnOpts || {}))
+    child.on('exit', function() {
+      if (mainWin) {
+        mainWin.restore()
+        setTimeout(function() { if (mainWin) mainWin.focus() }, 300)
+      }
+      resolve()
+    })
+    child.on('error', function(err) {
+      if (mainWin) { mainWin.restore(); mainWin.focus() }
+      reject(err)
+    })
+  })
+}
+
 function createWindow() {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize
 
@@ -24,6 +51,7 @@ function createWindow() {
     },
   })
 
+  mainWin = win
   win.once('ready-to-show', () => {
     win.show()
     if (!isDev) win.setFullScreen(true)
@@ -113,10 +141,11 @@ ipcMain.handle('run-updater', async () => {
 // -- Scan TeknoParrot games --------------------------------------------------
 ipcMain.handle('scan-games', async (event, { teknoParrotPath, gamesFolderPath }) => {
   const { scanGames } = require('./scanner')
+  const cfg = config.load()
   const timeout = new Promise(resolve =>
     setTimeout(() => resolve({ games: [], stats: {}, error: 'scan timed out' }), 25000)
   )
-  return await Promise.race([scanGames(teknoParrotPath, gamesFolderPath), timeout])
+  return await Promise.race([scanGames(teknoParrotPath, gamesFolderPath, cfg.retroarchPath), timeout])
 })
 
 // -- Scan RPCS3 games --------------------------------------------------------
@@ -698,6 +727,15 @@ ipcMain.handle('scan-mame-games', async (event, mameGamesPath) => {
 })
 
 // -- RetroArch ---------------------------------------------------------------
+ipcMain.handle('launch-retroarch', async () => {
+  const cfg = config.load()
+  const retroDir = cfg.retroarchPath || 'F:\\RetroArch\\'
+  const retroExe = path.join(retroDir, 'retroarch.exe')
+  if (!require('fs').existsSync(retroExe)) return { success: false, error: 'RetroArch not found at: ' + retroExe }
+  try { await launchWithReturn(retroExe, [], { spawnOpts: { cwd: retroDir } }); return { success: true } }
+  catch (e) { return { success: false, error: e.message } }
+})
+
 ipcMain.handle('launch-retroarch-game', async (event, gamePath) => {
   const fs = require('fs')
   const cfg = config.load()
