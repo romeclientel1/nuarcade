@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('nuarcade', {
   getConfig:   () => ipcRenderer.invoke('get-config'),
   resetSetup:  () => ipcRenderer.invoke('reset-setup'),
   quit:        () => ipcRenderer.invoke('quit-app'),
+  restartApp:  () => ipcRenderer.invoke('restart-app'),
   setConfig:  (updates) => ipcRenderer.invoke('set-config', updates),
 
   // Browse
