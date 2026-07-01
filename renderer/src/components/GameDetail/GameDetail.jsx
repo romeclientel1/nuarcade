@@ -315,6 +315,7 @@ export default function GameDetail({ game, onClose, onLaunch, launching, artwork
               </div>
             </div>
 
+            {!game.isLauncher && (
             <div className={styles.exeSection}>
               <div className={styles.exeLabel}>
                 Controller override
@@ -336,6 +337,7 @@ export default function GameDetail({ game, onClose, onLaunch, launching, artwork
                 ))}
               </div>
             </div>
+            )}
 
             <div className={styles.controlsSection}>
               <div className={styles.exeLabel}>Default controls</div>
