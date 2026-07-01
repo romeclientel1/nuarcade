@@ -1234,7 +1234,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
                   artPref={artPref}
                   artwork={artwork}
                   onClick={() => {
-                    if (index === selectedIndex) { select(); setShowDetail(true) }
+                    if (index === selectedIndex) { sounds.select(); setShowDetail(true) }
                     else setSelectedIndex(index)
                   }}
                 />
@@ -1357,7 +1357,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
           games={games}
           artwork={artwork}
           onClose={() => { sounds.back(); setShowDetail(false) }}
-          onLaunch={() => { s.back(); setShowDetail(false); launchGame() }}
+          onLaunch={() => { sounds.back(); setShowDetail(false); launchGame() }}
           launching={launching}
           onSelectGame={(g) => {
             const idx = filteredGames.findIndex(fg => (fg.id && fg.id === g.id) || (fg.profile && fg.profile === g.profile))
