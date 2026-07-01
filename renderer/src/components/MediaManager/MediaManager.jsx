@@ -385,6 +385,7 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
             <div className={styles.title}>Media Manager</div>
             <div className={styles.sub}>Artwork and video previews for your game library</div>
           </div>
+          <button className={styles.closeBtn} onClick={onClose} title="Close (B)">X</button>
         </div>
 
         <div className={styles.tabs}>
