@@ -273,6 +273,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const showAchievementsRef    = useRef(false)
   const showCoachRef           = useRef(false)
   const showOperatorRef        = useRef(false)
+  const showRetroArchPopupRef  = useRef(false)
   const exitConfirmRef         = useRef(false)
   const showExitPopupRef       = useRef(false)
   const exitChoiceRef          = useRef(0)
@@ -313,6 +314,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
 
   const [activeCategory, setActiveCategory] = useState("All")
   const [launching, setLaunching] = useState(false)
+  const [launchError, setLaunchError] = useState(null)
+  const [showRetroArchPopup, setShowRetroArchPopup] = useState(false)
   const [launchError, setLaunchError] = useState(null)
   const [showControllerPrompt, setShowControllerPrompt] = useState(false)
   const [attractMode, setAttractMode] = useState(false)
@@ -469,6 +472,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     showAchievementsRef.current    = showAchievements
     showCoachRef.current           = showCoach
     showOperatorRef.current        = showOperator
+    showRetroArchPopupRef.current  = showRetroArchPopup
   const current = filteredGames[selectedIndex] || filteredGames[0]
   currentRef.current = current
 
@@ -525,6 +529,10 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
 
   const launchGame = () => {
     if (launching || !current) return
+    if (current.isLauncher && current.id === 'retroarch-launcher') {
+      setShowRetroArchPopup(true)
+      return
+    }
     if (current.status === 'not-configured') {
       setLaunchError('Open TeknoParrot and configure this game -- find it in the TP game list and set the exe path.')
       setTimeout(() => setLaunchError(null), 5000)
@@ -541,6 +549,16 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
 
   const handleLaunch = async () => {
     if (launching || !current) return
+    if (current.gamePath && window.nuarcade?.checkPath) {
+      try {
+        const result = await window.nuarcade.checkPath(current.gamePath)
+        if (!result?.exists) {
+          setLaunchError('Game file not found. Drive may be offline or file moved: ' + current.gamePath)
+          setTimeout(() => setLaunchError(null), 6000)
+          return
+        }
+      } catch (e) { /* proceed -- checkPath unavailable */ }
+    }
     sounds.launch()
     setLaunching(true)
     const gameId = current.id || current.profile
@@ -770,6 +788,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     showAchievementsRef.current    = showAchievements
     showCoachRef.current           = showCoach
     showOperatorRef.current        = showOperator
+    showRetroArchPopupRef.current  = showRetroArchPopup
     exitConfirmRef.current         = exitConfirm
     showExitPopupRef.current       = showExitPopup
     exitChoiceRef.current          = exitChoice
@@ -779,7 +798,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   })
 
   useGamepad({
-    enabled: !showDetailRef.current && !showMediaManagerRef.current && !showSettingsRef.current && !showHelpRef.current && !attractMode  && !showVirtualKeyboardRef.current && !showSortRef.current && !showCollectionsRef.current && !showStatsRef.current && !showAchievementsRef.current && !showCoachRef.current && !showOperatorRef.current,
+    enabled: !showDetailRef.current && !showMediaManagerRef.current && !showSettingsRef.current && !showHelpRef.current && !attractMode  && !showVirtualKeyboardRef.current && !showSortRef.current && !showCollectionsRef.current && !showStatsRef.current && !showAchievementsRef.current && !showCoachRef.current && !showOperatorRef.current && !showRetroArchPopupRef.current,
     left: () => {
       if (showExitPopupRef.current) { setExitChoice(0); return }
       const z = focusZoneRef.current
@@ -815,6 +834,11 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       if (z === 3) { setFocusZone(4); sounds.navigate(); return }  // launch -> hintBar
     },
     confirm: () => {
+      if (showRetroArchPopupRef.current) {
+        window.nuarcade?.launchRetroArch?.()
+        setShowRetroArchPopup(false)
+        return
+      }
       if (showExitPopupRef.current) {
         if (exitChoiceRef.current === 0) { window.nuarcade?.quit?.() }
         else { setShowExitPopup(false); setExitChoice(1) }
@@ -835,6 +859,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     },
     settings: () => { if (!showSettingsRef.current) setShowSettings(true) },
     back: () => {
+      if (showRetroArchPopupRef.current) { setShowRetroArchPopup(false); return }
       if (showExitPopupRef.current)   { setShowExitPopup(false); setExitChoice(1); return }
       if (showDetailRef.current)      { setShowDetail(false); return }
       if (showSettingsRef.current)    { setShowSettings(false); return }
@@ -1355,6 +1380,39 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       )}
       
       {/* Exit confirmation popup */}
+      {showRetroArchPopup && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 9999, flexDirection: 'column', gap: 20,
+        }}>
+          <div style={{ color: '#9933ff', fontFamily: 'Orbitron, monospace', fontSize: 11, letterSpacing: 3 }}>RETROARCH</div>
+          <div style={{ color: '#fff', fontFamily: 'Orbitron, monospace', fontSize: 20, letterSpacing: 2 }}>Open RetroArch?</div>
+          <div style={{ color: '#aaa', fontFamily: 'Share Tech Mono, monospace', fontSize: 12, textAlign: 'center', maxWidth: 360 }}>
+            Controller is configured inside RetroArch. Exit RA to return here.
+          </div>
+          <div style={{ display: 'flex', gap: 20, marginTop: 8 }}>
+            <button style={{ padding: '10px 32px', background: '#9933ff', color: '#fff', border: 'none', borderRadius: 6, fontFamily: 'Orbitron, monospace', fontSize: 14, cursor: 'pointer' }}
+              onClick={() => { window.nuarcade?.launchRetroArch?.(); setShowRetroArchPopup(false) }}>YES</button>
+            <button style={{ padding: '10px 32px', background: '#222', color: '#aaa', border: '1px solid #444', borderRadius: 6, fontFamily: 'Orbitron, monospace', fontSize: 14, cursor: 'pointer' }}
+              onClick={() => setShowRetroArchPopup(false)}>NO</button>
+          </div>
+        </div>
+      )}
+
+      {launchError && (
+        <div style={{
+          position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
+          background: 'rgba(0,0,0,0.93)', border: '1px solid #ff4444',
+          color: '#ff8888', padding: '16px 24px', borderRadius: 8, maxWidth: 420,
+          fontFamily: 'Share Tech Mono, monospace', fontSize: 13,
+          zIndex: 9999, textAlign: 'center', lineHeight: 1.6,
+        }}>
+          <div style={{ color: '#ff4444', fontSize: 11, marginBottom: 8, letterSpacing: 2 }}>CANNOT LAUNCH</div>
+          {launchError}
+        </div>
+      )}
+
       {showExitPopup && (
         <div style={{
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)',
