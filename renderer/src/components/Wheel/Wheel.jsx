@@ -222,7 +222,7 @@ function KonamiCelebration({ onClose }) {
   )
 }
 
-export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange, onSetupWizard, activeProfile, onSwitchPlayer }) {
+export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange, activeProfile, onSwitchPlayer }) {
   const {
     games, stats, loading, libraryEmpty, config,
   toggleFavorite, isFavorite,
@@ -1175,7 +1175,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
           <div className={styles.emptySteps}>
             <div className={styles.emptyStep}>
               <span className={styles.emptyStepNum}>1</span>
-              <span>Install emulators via <strong>Setup Guide</strong> in the wizard</span>
+              <span>Install emulators via <strong>Emulators</strong> section in Settings</span>
             </div>
             <div className={styles.emptyStep}>
               <span className={styles.emptyStepNum}>2</span>
@@ -1357,7 +1357,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
         />
       )}
       {showMediaManager && <MediaManager onClose={() => setShowMediaManager(false)} onVideosUpdated={refreshVideoPaths} />}
-      {showSettings && <Settings games={games} onClose={() => setShowSettings(false)} onCRTChange={onCRTChange} crtEnabled={crtEnabled} themeId={themeId} onThemeChange={onThemeChange} onSetupWizard={onSetupWizard} />}
+      {showSettings && <Settings games={games} onClose={() => setShowSettings(false)} onCRTChange={onCRTChange} crtEnabled={crtEnabled} themeId={themeId} onThemeChange={onThemeChange} />}
       {showDetail && current && (
         <GameDetail
           game={current}
