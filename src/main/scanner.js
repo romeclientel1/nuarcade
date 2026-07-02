@@ -1782,19 +1782,24 @@ module.exports = { ...module.exports, suggestFolderMatches }
 // Reuses the same similarity engine as suggestFolderMatches. Never copies
 // anything itself -- returns suggestions only, user confirms via import.
 // -----------------------------------------------------------------------
+// EmuMovies Sync's own system folder names (confirmed against the live
+// Sync app's system dropdown), plus NuArcade's internal emulator names as
+// a fallback in case Sync was configured using those instead.
 const EMUMOVIES_SYSTEMS = [
-  'MAME', 'TeknoParrot', 'RPCS3', 'Xenia', 'Dolphin',
-  'PCSX2', 'Ryujinx', 'DuckStation', 'Flycast', 'PPSSPP',
-  'Cemu', 'Model2', 'Model3', 'Steam', 'PC',
+  // Confirmed / likely EmuMovies Sync system names
+  'Microsoft Xbox 360', 'Microsoft Xbox', 'Microsoft Xbox One',
+  'Sony Playstation', 'Sony Playstation 2', 'Sony Playstation 3', 'Sony Playstation Portable', 'Sony Playstation Vita',
   'Nintendo Entertainment System', 'Super Nintendo Entertainment System',
-  'Nintendo 64', 'Game Boy Advance', 'Game Boy Color', 'Game Boy',
-  'Nintendo DS', 'GameCube', 'Wii',
+  'Nintendo 64', 'Nintendo Gamecube', 'Nintendo Wii', 'Nintendo Wii U', 'Nintendo Switch',
+  'Nintendo Game Boy', 'Nintendo Game Boy Color', 'Nintendo Game Boy Advance', 'Nintendo DS', 'Nintendo 3DS',
   'Sega Genesis', 'Sega Saturn', 'Sega CD', 'Sega 32X',
-  'Sega Master System', 'Game Gear', 'Sega Dreamcast',
-  'Sony Playstation', 'Sony Playstation 2', 'Sony PSP',
-  'Neo Geo', 'TurboGrafx-16', 'Atari 2600', 'Atari 7800',
-  'Atari Jaguar', 'Atari Lynx', 'Commodore Amiga', 'Commodore 64',
-  'MAME 2003', 'MAME 2010',
+  'Sega Master System', 'Sega Game Gear', 'Sega Dreamcast',
+  'Atari 2600', 'Atari 5200', 'Atari 7800', 'Atari Jaguar', 'Atari Lynx',
+  'Neo Geo', 'TurboGrafx-16', 'Commodore 64', 'Commodore Amiga', '3DO',
+  'MAME', 'Non-Arcade MAME',
+  // NuArcade's own emulator names, as an alternate naming fallback
+  'TeknoParrot', 'RPCS3', 'Xenia', 'Dolphin', 'PCSX2', 'Ryujinx',
+  'DuckStation', 'Flycast', 'PPSSPP', 'Cemu', 'Model2', 'Model3', 'Steam', 'PC',
 ]
 
 function cleanEmuMoviesFilename(filename) {
@@ -1811,9 +1816,16 @@ async function scanEmuMoviesMedia(mediaPath, games) {
     return { suggestions: [], error: 'Media path not found: ' + mediaPath }
   }
 
-  const emumoviesRoot = path.join(mediaPath, 'EmuMovies')
-  if (!fs.existsSync(emumoviesRoot)) {
-    return { suggestions: [], error: 'No EmuMovies folder found at ' + emumoviesRoot + ' -- run EmuMovies Sync first.' }
+  // EmuMovies Sync may write directly into mediaPath/<System>/... or into
+  // mediaPath/EmuMovies/<System>/... depending on how it's configured.
+  // Check both so this works regardless of the exact Sync setup.
+  const possibleRoots = [
+    path.join(mediaPath, 'EmuMovies'),
+    mediaPath,
+  ].filter(r => fs.existsSync(r))
+
+  if (possibleRoots.length === 0) {
+    return { suggestions: [], error: 'Media path not found: ' + mediaPath }
   }
 
   const normalize = (s) => String(s).toLowerCase().replace(/[^a-z0-9]/g, '')
@@ -1822,47 +1834,65 @@ async function scanEmuMoviesMedia(mediaPath, games) {
     .map(g => ({ id: g.id || g.profile, title: g.title, norm: normalize(g.title || '') }))
 
   const suggestions = []
+  const seenFiles = new Set()
+  // Real EmuMovies Sync folder names (confirmed against the live Sync app's
+  // "Available Media" dropdown) -- video quality tiers checked highest-first
   const MEDIA_TARGETS = [
-    { subfolder: 'Video_MP4', type: 'video', exts: ['.mp4'] },
-    { subfolder: 'snap', type: 'artwork', exts: ['.png', '.jpg', '.jpeg'] },
-    { subfolder: 'title', type: 'artwork', exts: ['.png', '.jpg', '.jpeg'] },
+    { subfolder: 'Video_MP4_HI_QUAL', type: 'video', exts: ['.mp4'] },
+    { subfolder: 'Video_MP4_HD',      type: 'video', exts: ['.mp4'] },
+    { subfolder: 'Video_MP4',         type: 'video', exts: ['.mp4'] },
+    { subfolder: 'Video_AVI_HI_QUAL', type: 'video', exts: ['.avi'] },
+    { subfolder: 'Video_AVI_HD',      type: 'video', exts: ['.avi'] },
+    { subfolder: 'Video_AVI',         type: 'video', exts: ['.avi'] },
+    { subfolder: 'Snap',              type: 'artwork', exts: ['.png', '.jpg', '.jpeg'] },
+    { subfolder: 'Title',             type: 'artwork', exts: ['.png', '.jpg', '.jpeg'] },
+    { subfolder: 'Background',        type: 'artwork', exts: ['.png', '.jpg', '.jpeg'] },
+    { subfolder: 'Box',               type: 'artwork', exts: ['.png', '.jpg', '.jpeg'] },
+    { subfolder: 'Box_3D',            type: 'artwork', exts: ['.png', '.jpg', '.jpeg'] },
+    { subfolder: 'Logos',             type: 'artwork', exts: ['.png', '.jpg', '.jpeg'] },
   ]
 
-  for (const system of EMUMOVIES_SYSTEMS) {
-    for (const target of MEDIA_TARGETS) {
-      const folder = path.join(emumoviesRoot, system, target.subfolder)
-      if (!fs.existsSync(folder)) continue
+  for (const emumoviesRoot of possibleRoots) {
+    for (const system of EMUMOVIES_SYSTEMS) {
+      for (const target of MEDIA_TARGETS) {
+        const folder = path.join(emumoviesRoot, system, target.subfolder)
+        if (!fs.existsSync(folder)) continue
 
-      let files = []
-      try {
-        files = fs.readdirSync(folder).filter(f =>
-          target.exts.includes(path.extname(f).toLowerCase())
-        )
-      } catch { continue }
+        let files = []
+        try {
+          files = fs.readdirSync(folder).filter(f =>
+            target.exts.includes(path.extname(f).toLowerCase())
+          )
+        } catch { continue }
 
-      for (const file of files) {
-        const cleanTitle = cleanEmuMoviesFilename(file)
-        const fileNorm = normalize(cleanTitle)
-        if (!fileNorm) continue
+        for (const file of files) {
+          const fullPath = path.join(folder, file)
+          if (seenFiles.has(fullPath)) continue
+          seenFiles.add(fullPath)
 
-        const scored = gameNormList
-          .map(g => ({ id: g.id, title: g.title, score: similarityScore(fileNorm, g.norm) }))
-          .filter(s => s.score >= 0.5)
-          .sort((a, b) => b.score - a.score)
-          .slice(0, 3)
+          const cleanTitle = cleanEmuMoviesFilename(file)
+          const fileNorm = normalize(cleanTitle)
+          if (!fileNorm) continue
 
-        if (scored.length === 0) continue
+          const scored = gameNormList
+            .map(g => ({ id: g.id, title: g.title, score: similarityScore(fileNorm, g.norm) }))
+            .filter(s => s.score >= 0.5)
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 3)
 
-        suggestions.push({
-          sourceFile: path.join(folder, file),
-          fileName: file,
-          cleanTitle,
-          system,
-          mediaType: target.type,
-          topMatch: scored[0],
-          alternates: scored.slice(1),
-          confident: scored[0].score >= 0.75,
-        })
+          if (scored.length === 0) continue
+
+          suggestions.push({
+            sourceFile: fullPath,
+            fileName: file,
+            cleanTitle,
+            system,
+            mediaType: target.type,
+            topMatch: scored[0],
+            alternates: scored.slice(1),
+            confident: scored[0].score >= 0.75,
+          })
+        }
       }
     }
   }
