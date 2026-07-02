@@ -190,19 +190,26 @@ ipcMain.handle('test-screenscraper', async (event, { user, pass }) => {
     const res = await fetch(url, { headers: { 'User-Agent': 'NuArcade/1.0' }, signal: AbortSignal.timeout(8000) })
     const text = await res.text()
 
-    if (text.includes('API closed') || text.includes('Erreur') || /"error"/i.test(text)) {
-      const errMatch = text.match(/"message"\s*:\s*"([^"]+)"/)
-      return { success: false, error: errMatch ? errMatch[1] : 'ScreenScraper rejected the request. Check your username and password.' }
-    }
-
+    // Try structured parsing FIRST -- judge success by whether the real expected
+    // data is present, not by loosely scanning raw text for words like "error"
+    // (ScreenScraper's payload can legitimately contain that substring in unrelated
+    // diagnostic/quota fields even on a fully successful, correctly-authenticated call).
     let data = null
-    try { data = JSON.parse(text) } catch {
-      return { success: false, error: 'Unexpected response from ScreenScraper. Response: ' + text.slice(0, 150) }
-    }
+    try { data = JSON.parse(text) } catch { data = null }
 
     const ssuser = data?.response?.ssuser
-    if (!ssuser || !ssuser.id) {
-      return { success: false, error: 'Login failed -- check your ScreenScraper username and password.' }
+    if (ssuser && ssuser.id) {
+      // Success -- real account data came back, nothing else matters
+    } else if (data) {
+      // Parsed fine but no ssuser -- look for ScreenScraper's own structured error field
+      const apiError = data?.header?.error || data?.response?.error || data?.error
+      return { success: false, error: apiError || 'ScreenScraper responded but returned no account info. The username or password may be incorrect.' }
+    } else {
+      // Didn't parse as JSON at all -- genuine unexpected response, show it for diagnosis
+      if (text.includes('API closed')) {
+        return { success: false, error: 'ScreenScraper API is temporarily closed for maintenance. Try again later.' }
+      }
+      return { success: false, error: 'Unexpected response from ScreenScraper: ' + text.slice(0, 150) }
     }
 
     return {
