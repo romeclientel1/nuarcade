@@ -1837,6 +1837,49 @@ const MEDIA_TARGETS = [
   { subfolder: 'Title',             slot: 'hero',    priority: 3, exts: ['.png', '.jpg', '.jpeg'] },
 ]
 
+// Finds system folders up to two levels deep. Handles both:
+//   root/Microsoft_Xbox_360/...                (Sync pointed straight at root)
+//   root/Xenia/Microsoft_Xbox_360/...          (Sync pointed at a per-emulator
+//                                                wrapper folder -- Sync still
+//                                                creates its own system-named
+//                                                subfolder inside it)
+function findEmuMoviesSystemFolders(fs, path, rootDir, systemNormLookup, normalize) {
+  const results = []
+  let depth1Dirs = []
+  try {
+    depth1Dirs = fs.readdirSync(rootDir, { withFileTypes: true })
+      .filter(e => e.isDirectory())
+      .map(e => e.name)
+  } catch { return results }
+
+  for (const d1 of depth1Dirs) {
+    const canonical1 = systemNormLookup[normalize(d1)]
+    if (canonical1) {
+      results.push({ systemPath: path.join(rootDir, d1), canonicalSystem: canonical1 })
+      continue
+    }
+
+    // No direct match -- this might be a per-emulator wrapper folder
+    // (e.g. "Xenia") with the real Sync-created system folder inside it.
+    const d1Path = path.join(rootDir, d1)
+    let depth2Dirs = []
+    try {
+      depth2Dirs = fs.readdirSync(d1Path, { withFileTypes: true })
+        .filter(e => e.isDirectory())
+        .map(e => e.name)
+    } catch { continue }
+
+    for (const d2 of depth2Dirs) {
+      const canonical2 = systemNormLookup[normalize(d2)]
+      if (canonical2) {
+        results.push({ systemPath: path.join(d1Path, d2), canonicalSystem: canonical2 })
+      }
+    }
+  }
+
+  return results
+}
+
 async function scanEmuMoviesMedia(mediaPath, games) {
   const fs = require('fs')
   const path = require('path')
@@ -1875,19 +1918,11 @@ async function scanEmuMoviesMedia(mediaPath, games) {
   const seenFiles = new Set()
 
   for (const emumoviesRoot of possibleRoots) {
-    let systemDirs = []
-    try {
-      systemDirs = fs.readdirSync(emumoviesRoot, { withFileTypes: true })
-        .filter(e => e.isDirectory())
-        .map(e => e.name)
-    } catch { continue }
+    const systemFolders = findEmuMoviesSystemFolders(fs, path, emumoviesRoot, systemNormLookup, normalize)
 
-    for (const actualSystemDir of systemDirs) {
-      const canonicalSystem = systemNormLookup[normalize(actualSystemDir)]
-      if (!canonicalSystem) continue
+    for (const { systemPath, canonicalSystem } of systemFolders) {
       const isCartSystem = CARTRIDGE_SYSTEMS.has(canonicalSystem)
 
-      const systemPath = path.join(emumoviesRoot, actualSystemDir)
       let subDirs = []
       try {
         subDirs = fs.readdirSync(systemPath, { withFileTypes: true })
