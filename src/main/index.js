@@ -1658,7 +1658,8 @@ ipcMain.handle('pick-folder', async (event) => {
 })
 
 ipcMain.handle('link-snaps-folder', async (event, srcFolder) => {
-  const cfg = loadConfig()
+  const fs = require('fs')
+  const cfg = config.load()
   const mediaRoot = cfg.mediaPath || 'F:\\Media'
   const systems = [
     'MAME', 'TeknoParrot', 'RPCS3', 'Xenia', 'Dolphin',
@@ -1685,7 +1686,7 @@ ipcMain.handle('link-snaps-folder', async (event, srcFolder) => {
 
 // STEP 1: Ensure media folder structure -- STEP 2: Scan media folders and patch game objects
 ipcMain.handle('scan-media', async (event, games) => {
-  const cfg = loadConfig()
+  const cfg = config.load()
   const mediaRoot = cfg.mediaPath || 'F:\\Media'
   try {
     const patched = scanMedia(games, mediaRoot)
@@ -1696,7 +1697,8 @@ ipcMain.handle('scan-media', async (event, games) => {
 })
 
 ipcMain.handle('ensure-media-folders', async (event, customPath) => {
-  const cfg = loadConfig()
+  const fs = require('fs')
+  const cfg = config.load()
   const mediaRoot = customPath || cfg.mediaPath || 'F:\\Media'
   const FOLDER_SCHEMA_VERSION = '4.4.7'
 
@@ -1796,9 +1798,36 @@ ipcMain.handle('ensure-media-folders', async (event, customPath) => {
     const emumoviesRoot = path.join(mediaRoot, 'EmuMovies')
     ensure(emumoviesRoot)
 
+    // What system(s) each emulator actually plays -- written into a README
+    // inside each folder so it's obvious which one to point EmuMovies Sync
+    // at, without needing to remember or look it up separately.
+    const emumoviesSystemDescriptions = {
+      'TeknoParrot':       'Various modern arcade cabinet games (SEGA Nu/ALLS, Taito Type X, Namco System, RingEdge/RingWide, and more).',
+      'RPCS3':             'Sony PlayStation 3',
+      'Xenia':             'Microsoft Xbox 360',
+      'Dolphin':           'Nintendo GameCube and Nintendo Wii',
+      'PCSX2':             'Sony PlayStation 2',
+      'Ryubing':           'Nintendo Switch',
+      'MAME':              'Classic arcade games (thousands of original arcade boards).',
+      'Project64':         'Nintendo 64',
+      'DuckStation':       'Sony PlayStation (PS1)',
+      'Flycast':           'Sega Dreamcast (also NAOMI/Atomiswave arcade)',
+      'Model 2 Emulator':  'Sega Model 2 arcade games',
+      'Supermodel (M3)':   'Sega Model 3 arcade games',
+      'PPSSPP':            'Sony PlayStation Portable',
+      'Cemu':              'Nintendo Wii U',
+      'Visual Pinball X':  'Virtual pinball tables',
+    }
+
     for (const sys of emumoviesSystems) {
       for (const sub of emumoviesSubFolders) {
         ensure(path.join(emumoviesRoot, sys, sub))
+      }
+      const readmePath = path.join(emumoviesRoot, sys, 'README.txt')
+      if (!fs.existsSync(readmePath)) {
+        const description = emumoviesSystemDescriptions[sys] || 'See NuArcade Settings for details.'
+        const readmeText = sys + ' plays: ' + description + '\r\n\r\nPoint EmuMovies Sync\'s destination folder here, select the matching\r\nsystem in Sync, and run a download. NuArcade will find whatever\r\nSync creates inside this folder automatically.'
+        try { fs.writeFileSync(readmePath, readmeText) } catch (e) { /* non-fatal */ }
       }
     }
 
@@ -1820,7 +1849,7 @@ ipcMain.handle('ensure-media-folders', async (event, customPath) => {
     // --- Save version stamp and config ---
     cfg.mediaPath = mediaRoot
     cfg.mediaFoldersVersion = FOLDER_SCHEMA_VERSION
-    saveConfig(cfg)
+    config.save(cfg)
 
     return {
       success: true,
