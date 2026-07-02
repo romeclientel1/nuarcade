@@ -33,10 +33,6 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
   })
   const [showArtworkMgr, setShowArtworkMgr] = useState(false)
   const [mmConfig, setMmConfig] = useState({})
-  const [downloading, setDownloading] = useState({})
-  const [previewing, setPreviewing] = useState({})
-  const [searchResults, setSearchResults] = useState({})
-  const [ssReady, setSsReady] = useState(false)
   const [ytResults, setYtResults] = useState({})
   const [ytSearching, setYtSearching] = useState({})
   const [ytDownloading, setYtDownloading] = useState({})
@@ -48,7 +44,6 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
 
   useEffect(() => {
     scanLibrary()
-    checkSsCredentials()
     window.nuarcade?.getConfig?.().then(cfg => {
       setMmConfig(cfg || {})
       // Check if yt-dlp.exe actually exists on disk
@@ -57,13 +52,6 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
       }
     }).catch(() => {})
   }, [])
-
-  const checkSsCredentials = async () => {
-    try {
-      const cfg = await window.nuarcade?.getConfig()
-      setSsReady(!!(cfg?.screenscraper?.user && cfg?.screenscraper?.pass))
-    } catch {}
-  }
 
   const scanLibrary = async () => {
     setLoading(true)
@@ -130,66 +118,6 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
     setDiagLog(prev => [...prev.slice(-49), { ts, msg, type }])
   }
 
-  const handleSearch = async (game) => {
-    const gid = game.id || game.profile
-    setPreviewing(p => ({ ...p, [gid]: "searching" }))
-    log(`Searching ScreenScraper for: "${game.title}"`)
-    try {
-      if (window.nuarcade && window.nuarcade.searchVideo) {
-        const result = await window.nuarcade.searchVideo(game.title)
-        if (result && result.error) {
-          log(`SS error: ${result.error}`, 'error')
-          setPreviewing(p => ({ ...p, [gid]: "notfound" }))
-        } else if (result && result.url) {
-          log(`Found game ID: ${result.videoId} -- "${result.title}"`, 'ok')
-          log(`Video URL: ${result.url}`, 'ok')
-          setSearchResults(r => ({ ...r, [gid]: result }))
-          setPreviewing(p => ({ ...p, [gid]: "found" }))
-        } else {
-          log(`No video found on ScreenScraper for "${game.title}"`, 'warn')
-          setPreviewing(p => ({ ...p, [gid]: "notfound" }))
-        }
-      } else {
-        log('window.nuarcade.searchVideo not available -- check preload', 'error')
-        setPreviewing(p => ({ ...p, [gid]: "notfound" }))
-      }
-    } catch (e) {
-      log(`Search error: ${e.message || String(e)}`, 'error')
-      setPreviewing(p => ({ ...p, [gid]: "notfound" }))
-    }
-  }
-
-  const handleDownload = async (game) => {
-    const gid = game.id || game.profile
-    const result = searchResults[gid]
-    if (!result) { log(`No search result for ${game.title} -- search first`, 'warn'); return }
-
-    setDownloading(d => ({ ...d, [gid]: "downloading" }))
-    log(`Downloading video for "${game.title}"...`)
-    try {
-      if (window.nuarcade && window.nuarcade.downloadVideo) {
-        const dl = await window.nuarcade.downloadVideo({
-          videoUrl: result.url,
-          gameId: gid,
-        })
-        if (dl.success) {
-          log(`Downloaded OK -- saved to ${dl.outputFile}`, 'ok')
-          setGames(g => g.map(x => (x.id || x.profile) === gid ? { ...x, hasVideo: true } : x))
-          setDownloading(d => ({ ...d, [gid]: "done" }))
-        } else {
-          log(`Download failed: ${dl.error || 'unknown error'}`, 'error')
-          setDownloading(d => ({ ...d, [gid]: "error" }))
-        }
-      } else {
-        log('window.nuarcade.downloadVideo not available', 'error')
-        setDownloading(d => ({ ...d, [gid]: "error" }))
-      }
-    } catch (e) {
-      log(`Download exception: ${e.message || String(e)}`, 'error')
-      setDownloading(d => ({ ...d, [gid]: "error" }))
-    }
-  }
-
   // Must be defined before handleBulkYouTube and handleYtSearch which both call it
   const handleEnsureYtdlp = async () => {
     if (ytdlpAvailable) return true
@@ -211,16 +139,6 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
       log('yt-dlp install error: ' + (e.message || String(e)), 'error')
       setYtdlpInstalling(false)
       return false
-    }
-  }
-
-  const handleDownloadAll = async () => {
-    // Legacy SS bulk -- kept but SS doesn't work without dev creds
-    const missing = filteredGames.filter(g => !g.hasVideo)
-    for (const game of missing) {
-      const gid = game.id || game.profile
-      if (!searchResults[gid]) await handleSearch(game)
-      await handleDownload(game)
     }
   }
 
@@ -402,8 +320,6 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
             <ArtworkManager
               games={games}
               apiKey={mmConfig?.sgdbApiKey}
-              ssUser={mmConfig?.screenscraper?.user}
-              ssPass={mmConfig?.screenscraper?.pass}
               onClose={() => setTab("library")}
               onArtworkUpdate={() => {}}
             />
@@ -413,11 +329,7 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
         {tab === "library" && (
           <div className={styles.body}>
 
-            {!ssReady && (
-              <div className={styles.warningBanner}>
-                Add your ScreenScraper credentials in Settings to enable video downloads.
-              </div>
-            )}
+            
 
             <div className={styles.statsRow}>
               <div className={styles.stat}>
@@ -551,64 +463,11 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
                           </div>
                         )
 
-                        // SS download states
-                        if (downloading[gid] === 'downloading') return (
-                          <div className={styles.dlProgress}>
-                            <div className={styles.spinner} />
-                            Downloading...
-                          </div>
-                        )
-                        if (downloading[gid] === 'done') return <span className={styles.readyLabel}>Downloaded!</span>
-                        if (downloading[gid] === 'error') return (
-                          <div style={{ display: 'flex', gap: 4, flexDirection: 'column', alignItems: 'flex-end' }}>
-                            <span style={{ color: '#ff4444', fontSize: 10 }}>SS error</span>
-                            <button className={styles.dlBtn} style={{ borderColor: 'rgba(255,80,80,0.4)', color: '#ff5050' }} onClick={() => handleYtSearch(game)}>
-                              Try YouTube
-                            </button>
-                          </div>
-                        )
-
-                        // SS searching
-                        if (previewing[gid] === 'searching') return (
-                          <div className={styles.dlProgress}>
-                            <div className={styles.spinner} />
-                            Searching SS...
-                          </div>
-                        )
-
-                        // SS found -- ready to download
-                        if (searchResults[gid]) return (
-                          <div className={styles.searchResult}>
-                            {searchResults[gid].thumbnail && (
-                              <img src={searchResults[gid].thumbnail} alt="" className={styles.ytThumb} onError={e => { e.target.style.display = 'none' }} />
-                            )}
-                            <div className={styles.ytTitle}>{(searchResults[gid].title || '').slice(0, 35)}</div>
-                            <button className={styles.dlBtn} onClick={() => handleDownload(game)}>
-                              Download
-                            </button>
-                          </div>
-                        )
-
-                        // SS returned not-found -- offer YouTube fallback
-                        if (previewing[gid] === 'notfound') return (
-                          <div style={{ display: 'flex', gap: 4, flexDirection: 'column', alignItems: 'flex-end' }}>
-                            <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 9 }}>Not on SS</span>
-                            <button className={styles.dlBtn} style={{ borderColor: 'rgba(255,80,80,0.4)', color: '#ff5050' }} onClick={() => handleYtSearch(game)}>
-                              Try YouTube
-                            </button>
-                          </div>
-                        )
-
-                        // Default: Find video button (try SS first)
+                        // Default: search YouTube for a gameplay clip
                         return (
-                          <div style={{ display: 'flex', gap: 4 }}>
-                            <button className={styles.dlBtn} onClick={() => handleSearch(game)}>
-                              Find video
-                            </button>
-                            <button className={styles.dlBtn} style={{ borderColor: 'rgba(255,80,80,0.3)', color: 'rgba(255,80,80,0.7)' }} onClick={() => handleYtSearch(game)} title="Search YouTube directly">
-                              YT
-                            </button>
-                          </div>
+                          <button className={styles.dlBtn} onClick={() => handleYtSearch(game)}>
+                            Find video
+                          </button>
                         )
                       })()}
                     </div>
@@ -646,12 +505,9 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
             <div className={styles.settingsSection}>
               <div className={styles.sectionTitle}>How videos work</div>
               <div className={styles.sectionSub}>
-                NuArcade uses ScreenScraper for video previews and SteamGridDB for artwork.
+                NuArcade uses YouTube for video previews and SteamGridDB for artwork.
                 Videos are saved to F:/Media/Videos/ and play on the center card when you select a game.
                 No account needed. No manual setup required.
-              </div>
-              <div className={styles.sectionSub} style={{ marginTop: 12 }}>
-                Add your free ScreenScraper account in Settings to enable video previews.
               </div>
             </div>
 
