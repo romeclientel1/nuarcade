@@ -1782,20 +1782,15 @@ ipcMain.handle('ensure-media-folders', async (event, customPath) => {
       'System_Logo',
     ]
 
+    // One folder per emulator NuArcade actually knows how to launch --
+    // matches the exact names shown in Settings' Emulators grid, so what
+    // Rome sees here lines up with what he sees there. RetroArch excluded:
+    // it's multi-system by nature, EmuMovies media should live under the
+    // specific console folders instead, not a single "RetroArch" bucket.
     const emumoviesSystems = [
-      'MAME', 'TeknoParrot', 'RPCS3', 'Xenia', 'Dolphin',
-      'PCSX2', 'Ryujinx', 'DuckStation', 'Flycast', 'PPSSPP',
-      'Cemu', 'Model2', 'Model3', 'Steam', 'PC',
-      'Microsoft_Xbox_360', 'Microsoft_Xbox', 'Microsoft_Xbox_One',
-      'Sony_Playstation', 'Sony_Playstation_2', 'Sony_Playstation_3', 'Sony_Playstation_Portable', 'Sony_Playstation_Vita',
-      'Nintendo_Entertainment_System', 'Super_Nintendo_Entertainment_System',
-      'Nintendo_64', 'Nintendo_Gamecube', 'Nintendo_Wii', 'Nintendo_Wii_U', 'Nintendo_Switch',
-      'Nintendo_Game_Boy', 'Nintendo_Game_Boy_Color', 'Nintendo_Game_Boy_Advance', 'Nintendo_DS', 'Nintendo_3DS',
-      'Sega_Genesis', 'Sega_Saturn', 'Sega_CD', 'Sega_32X',
-      'Sega_Master_System', 'Sega_Game_Gear', 'Sega_Dreamcast',
-      'Atari_2600', 'Atari_5200', 'Atari_7800', 'Atari_Jaguar', 'Atari_Lynx',
-      'Neo_Geo', 'TurboGrafx-16', 'Commodore_64', 'Commodore_Amiga', '3DO',
-      'MAME_2003', 'MAME_2010',
+      'TeknoParrot', 'RPCS3', 'Xenia', 'Dolphin', 'PCSX2', 'Ryubing',
+      'MAME', 'Project64', 'DuckStation', 'Flycast',
+      'Model 2 Emulator', 'Supermodel (M3)', 'PPSSPP', 'Cemu', 'Visual Pinball X',
     ]
 
     const emumoviesRoot = path.join(mediaRoot, 'EmuMovies')
