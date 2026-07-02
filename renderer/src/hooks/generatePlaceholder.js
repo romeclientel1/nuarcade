@@ -21,6 +21,7 @@ const SYSTEM_PALETTES = {
   'Nintendo Switch':  { bg: '#1a0000', accent: '#e4000f', text: '#ff4444' },
   'Xbox 360':         { bg: '#001a00', accent: '#107c10', text: '#44cc44' },
   'Visual Pinball X': { bg: '#1a0a00', accent: '#ff6600', text: '#ffaa44' },
+  RetroArch:           { bg: '#12001f', accent: '#9933ff', text: '#c88cff' },
 }
 
 function hashStr(str) {
