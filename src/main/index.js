@@ -1802,22 +1802,41 @@ ipcMain.handle('ensure-media-folders', async (event, customPath) => {
     // inside each folder so it's obvious which one to point EmuMovies Sync
     // at, without needing to remember or look it up separately.
     const emumoviesSystemDescriptions = {
-      'TeknoParrot':       'Various modern arcade cabinet games (SEGA Nu/ALLS, Taito Type X, Namco System, RingEdge/RingWide, and more).',
       'RPCS3':             'Sony PlayStation 3',
       'Xenia':             'Microsoft Xbox 360',
       'Dolphin':           'Nintendo GameCube and Nintendo Wii',
-      'PCSX2':             'Sony PlayStation 2',
+      'PCSX2':             'Sony Playstation 2',
       'Ryubing':           'Nintendo Switch',
-      'MAME':              'Classic arcade games (thousands of original arcade boards).',
-      'Project64':         'Nintendo 64',
-      'DuckStation':       'Sony PlayStation (PS1)',
-      'Flycast':           'Sega Dreamcast (also NAOMI/Atomiswave arcade)',
+      'MAME':              'MAME -- classic arcade games (thousands of original arcade boards).',
+      'Project64':         'Nintendo N64',
+      'DuckStation':       'Sony Playstation (PS1)',
+      'Flycast':           'Sega Dreamcast (also Sega Naomi and Sammy Atomiswave arcade)',
       'Model 2 Emulator':  'Sega Model 2 arcade games',
       'Supermodel (M3)':   'Sega Model 3 arcade games',
-      'PPSSPP':            'Sony PlayStation Portable',
+      'PPSSPP':            'Sony PSP',
       'Cemu':              'Nintendo Wii U',
-      'Visual Pinball X':  'Virtual pinball tables',
+      'Visual Pinball X':  'Visual Pinball (EmuMovies drops the "X" in its own system name)',
     }
+
+    // TeknoParrot is not one system, and EmuMovies genuinely does not catalog
+    // most of the arcade hardware it actually runs (SEGA Lindbergh, RingEdge,
+    // RingWide, ALL.Net/NU/ALLS, Namco System 357/369/ES-series, Taito Type X
+    // are all absent from EmuMovies' system list as of this writing). The one
+    // confirmed real match is "Konami e-AMUSEMENT" for Bemani-adjacent titles.
+    // For everything else in the TeknoParrot library, use NuArcade's YouTube
+    // video pipeline (Media > Library tab) instead -- EmuMovies won't have it.
+    const teknoParrotReadme = 'TeknoParrot runs many different arcade hardware platforms, not one system.\r\n\r\n' +
+      'Checked against EmuMovies Sync\'s own system list: most of what TeknoParrot\r\n' +
+      'actually emulates -- SEGA Lindbergh, RingEdge, RingWide, ALL.Net/NU/ALLS,\r\n' +
+      'Namco System 357/369/ES-series, Taito Type X -- is NOT in EmuMovies\' catalog.\r\n' +
+      'That covers most racing, lightgun, and rhythm titles (Initial D, Wangan\r\n' +
+      'Midnight, Mario Kart Arcade GP, House of the Dead, etc.) -- EmuMovies simply\r\n' +
+      'will not have media for these regardless of which category you pick.\r\n\r\n' +
+      'The one confirmed real match: select "Konami e-AMUSEMENT" in Sync for any\r\n' +
+      'Konami/Bemani-adjacent titles in your TeknoParrot library.\r\n\r\n' +
+      'For everything else, use NuArcade\'s own YouTube video pipeline instead --\r\n' +
+      'open Media > Library tab and use "Find video" per game. That has real\r\n' +
+      'coverage for popular arcade racing/lightgun titles EmuMovies does not.'
 
     for (const sys of emumoviesSystems) {
       for (const sub of emumoviesSubFolders) {
@@ -1825,8 +1844,13 @@ ipcMain.handle('ensure-media-folders', async (event, customPath) => {
       }
       const readmePath = path.join(emumoviesRoot, sys, 'README.txt')
       if (!fs.existsSync(readmePath)) {
-        const description = emumoviesSystemDescriptions[sys] || 'See NuArcade Settings for details.'
-        const readmeText = sys + ' plays: ' + description + '\r\n\r\nPoint EmuMovies Sync\'s destination folder here, select the matching\r\nsystem in Sync, and run a download. NuArcade will find whatever\r\nSync creates inside this folder automatically.'
+        let readmeText
+        if (sys === 'TeknoParrot') {
+          readmeText = teknoParrotReadme
+        } else {
+          const description = emumoviesSystemDescriptions[sys] || 'See NuArcade Settings for details.'
+          readmeText = sys + ' plays: ' + description + '\r\n\r\nPoint EmuMovies Sync\'s destination folder here, select the matching\r\nsystem in Sync, and run a download. NuArcade will find whatever\r\nSync creates inside this folder automatically.'
+        }
         try { fs.writeFileSync(readmePath, readmeText) } catch (e) { /* non-fatal */ }
       }
     }
