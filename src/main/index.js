@@ -173,6 +173,49 @@ ipcMain.handle('launch-vpx-table', async (event, tablePath) => {
 })
 
 // -- Video via ScreenScraper --------------------------------------------------
+// Verify ScreenScraper credentials actually work -- pings ssuserInfos.php
+// and returns account info (username, tier, daily request quota) or a clear error.
+// Takes credentials directly (not from saved config) so it works before Save is clicked.
+ipcMain.handle('test-screenscraper', async (event, { user, pass }) => {
+  if (!user || !pass) return { success: false, error: 'Username and password required' }
+
+  const base = 'https://www.screenscraper.fr/api2'
+  const DEVID = 'nuarcade'
+  const DEVPASS = 'nuarcade2024'
+  const auth = `devid=${DEVID}&devpassword=${DEVPASS}&softname=nuarcade&output=json&ssid=${encodeURIComponent(user)}&sspassword=${encodeURIComponent(pass)}`
+
+  try {
+    const url = `${base}/ssuserInfos.php?${auth}`
+    const res = await fetch(url, { headers: { 'User-Agent': 'NuArcade/1.0' }, signal: AbortSignal.timeout(8000) })
+    const text = await res.text()
+
+    if (text.includes('API closed') || text.includes('Erreur') || /"error"/i.test(text)) {
+      const errMatch = text.match(/"message"\s*:\s*"([^"]+)"/)
+      return { success: false, error: errMatch ? errMatch[1] : 'ScreenScraper rejected the request. Check your username and password.' }
+    }
+
+    let data = null
+    try { data = JSON.parse(text) } catch {
+      return { success: false, error: 'Unexpected response from ScreenScraper. Response: ' + text.slice(0, 150) }
+    }
+
+    const ssuser = data?.response?.ssuser
+    if (!ssuser || !ssuser.id) {
+      return { success: false, error: 'Login failed -- check your ScreenScraper username and password.' }
+    }
+
+    return {
+      success: true,
+      username: ssuser.id,
+      level: ssuser.niveau || 'member',
+      requestsToday: ssuser.requeststoday || '0',
+      maxRequestsPerDay: ssuser.maxrequestsperday || 'unknown',
+    }
+  } catch (e) {
+    return { success: false, error: 'Connection failed: ' + (e.message || String(e)) }
+  }
+})
+
 ipcMain.handle('search-video', async (event, gameTitle) => {
   const cfg = config.load()
   const ssUser = cfg.screenscraper?.user || ''
