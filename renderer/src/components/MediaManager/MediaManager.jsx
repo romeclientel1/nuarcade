@@ -22,28 +22,36 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState("all")
   const [tab, setTab] = useState("library")
-  const [emFocused, setEmFocused] = useState(false)
+  const [emFocused, setEmFocused] = useState(null) // null | 'create' | 'scan'
   const emScanBtnRef = useRef(null)
+  const emCreateBtnRef = useRef(null)
 
   // Reset focus whenever the tab changes via any path (mouse click, gamepad, etc.)
   useEffect(() => {
-    if (tab !== 'emumovies') setEmFocused(false)
+    if (tab !== 'emumovies') setEmFocused(null)
   }, [tab])
 
   useOverlayGamepad({
     onClose,
     onUp:      () => {
-      if (tab === 'emumovies') { setEmFocused(false); return }
+      if (tab === 'emumovies' && emFocused) { setEmFocused(null); return }
       scrollRef.current?.scrollBy({ top: -120, behavior: 'smooth' })
     },
     onDown:    () => {
-      if (tab === 'emumovies') { setEmFocused(true); return }
+      if (tab === 'emumovies') { setEmFocused('scan'); return }
       scrollRef.current?.scrollBy({ top: 120, behavior: 'smooth' })
     },
-    onLeft:    () => { setEmFocused(false); setTab(prev => { const i = TABS.indexOf(prev); return TABS[Math.max(0, i-1)] }) },
-    onRight:   () => { setEmFocused(false); setTab(prev => { const i = TABS.indexOf(prev); return TABS[Math.min(TABS.length-1, i+1)] }) },
+    onLeft:    () => {
+      if (tab === 'emumovies' && emFocused) { setEmFocused(prev => prev === 'scan' ? 'create' : 'scan'); return }
+      setEmFocused(null); setTab(prev => { const i = TABS.indexOf(prev); return TABS[Math.max(0, i-1)] })
+    },
+    onRight:   () => {
+      if (tab === 'emumovies' && emFocused) { setEmFocused(prev => prev === 'scan' ? 'create' : 'scan'); return }
+      setEmFocused(null); setTab(prev => { const i = TABS.indexOf(prev); return TABS[Math.min(TABS.length-1, i+1)] })
+    },
     onConfirm: () => {
-      if (tab === 'emumovies' && emFocused) { emScanBtnRef.current?.click(); return }
+      if (tab === 'emumovies' && emFocused === 'scan')   { emScanBtnRef.current?.click(); return }
+      if (tab === 'emumovies' && emFocused === 'create') { emCreateBtnRef.current?.click(); return }
       setFilter(prev => { const f = ["all","missing","ready"]; return f[(f.indexOf(prev)+1)%f.length] })
     },
   })
@@ -635,10 +643,15 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
               </div>
 
               <button
+                ref={emCreateBtnRef}
                 className={styles.scanBtn}
                 onClick={handleCreateMediaFolders}
                 disabled={creatingFolders}
-                style={{ marginBottom: 8 }}
+                style={{
+                  marginBottom: 8,
+                  outline: emFocused === 'create' ? '2px solid #0ff' : 'none',
+                  boxShadow: emFocused === 'create' ? '0 0 12px rgba(0,255,255,0.6)' : 'none',
+                }}
               >
                 {creatingFolders ? 'Creating...' : 'Create folder structure'}
               </button>
@@ -660,8 +673,8 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
                 disabled={emScanning}
                 style={{
                   marginTop: 10, marginBottom: 12,
-                  outline: emFocused ? '2px solid #0ff' : 'none',
-                  boxShadow: emFocused ? '0 0 12px rgba(0,255,255,0.6)' : 'none',
+                  outline: emFocused === 'scan' ? '2px solid #0ff' : 'none',
+                  boxShadow: emFocused === 'scan' ? '0 0 12px rgba(0,255,255,0.6)' : 'none',
                 }}
               >
                 {emScanning ? 'Scanning...' : 'Scan EmuMovies folder'}
