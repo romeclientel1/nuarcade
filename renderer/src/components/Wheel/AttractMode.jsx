@@ -94,6 +94,13 @@ export default function AttractMode({ games, isActive, onWake, onSelect, artwork
     videoRef.current.play().catch(() => {})
   }, [currentIdx, isActive])
 
+  // Keep video volume in sync with the "Attract volume" setting
+  useEffect(() => {
+    if (!videoRef.current) return
+    const vol = Math.max(0, Math.min(1, (attractConfig.ambientVolume ?? 35) / 100))
+    videoRef.current.volume = vol
+  }, [attractConfig.ambientVolume, currentIdx])
+
   useEffect(() => {
     const wake = (e) => {
       if (!isActive) return
@@ -152,7 +159,7 @@ export default function AttractMode({ games, isActive, onWake, onSelect, artwork
             ref={videoRef}
             className={styles.bgVideo}
             src={videoUrl}
-            muted loop playsInline autoPlay
+            loop playsInline autoPlay
             onError={() => setVideoError(e => ({ ...e, [currentIdx]: true }))}
           />
         )}
