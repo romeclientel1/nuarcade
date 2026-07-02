@@ -636,7 +636,7 @@ const handleSave = async () => {
           <div className={styles.section}>
             <div className={styles.sectionTitle}>Audio</div>
             <div className={styles.inputRow}>
-              <label className={styles.inputLabel}>Attract volume</label>
+              <label className={styles.inputLabel}>Gameplay video volume</label>
               <div className={styles.sliderWrap}>
                 <input
                   type="range"
@@ -991,6 +991,13 @@ const handleSave = async () => {
               <label className={styles.inputLabel}>Bulk fetch</label>
               <button className={styles.exportBtn} onClick={() => setShowArtworkMgr(true)}>
                 Open Artwork Manager
+              </button>
+              <button
+                className={styles.exportBtn}
+                style={{ marginTop: 8 }}
+                onClick={() => window.open('https://www.emumovies.com', '_blank')}
+              >
+                Open EmuMovies
               </button>
             </div>
           </div>
