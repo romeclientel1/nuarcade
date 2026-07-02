@@ -1808,6 +1808,35 @@ function cleanEmuMoviesFilename(filename) {
   return name.trim()
 }
 
+// Systems that actually shipped on cartridges -- used to gate the Cart art
+// source so disc-based systems (PS1, Xbox 360, GameCube, etc.) never see it
+const CARTRIDGE_SYSTEMS = new Set([
+  'Nintendo Entertainment System', 'Super Nintendo Entertainment System',
+  'Nintendo 64', 'Nintendo Game Boy', 'Nintendo Game Boy Color', 'Nintendo Game Boy Advance',
+  'Sega Genesis', 'Sega Master System', 'Sega Game Gear',
+  'Atari 2600', 'Atari 5200', 'Atari 7800', 'Atari Jaguar', 'Atari Lynx',
+  'Neo Geo', 'TurboGrafx-16', 'Commodore 64',
+])
+
+// Each entry maps one EmuMovies folder to a NuArcade media "slot".
+// priority (lower = better) picks a winner when multiple folders fill the
+// same slot for the same game -- e.g. Video_MP4_HI_QUAL beats Video_MP4.
+// cartOnly folders are skipped entirely for non-cartridge systems.
+const MEDIA_TARGETS = [
+  { subfolder: 'Video_MP4_HI_QUAL', slot: 'video',   priority: 1, exts: ['.mp4'] },
+  { subfolder: 'Video_MP4_HD',      slot: 'video',   priority: 2, exts: ['.mp4'] },
+  { subfolder: 'Video_MP4',         slot: 'video',   priority: 3, exts: ['.mp4'] },
+
+  { subfolder: 'Box_3D',            slot: 'capsule', priority: 1, exts: ['.png', '.jpg', '.jpeg'] },
+  { subfolder: 'Box',               slot: 'capsule', priority: 2, exts: ['.png', '.jpg', '.jpeg'] },
+  { subfolder: 'Cart',              slot: 'capsule', priority: 3, exts: ['.png', '.jpg', '.jpeg'], cartOnly: true },
+  { subfolder: 'Snap',              slot: 'capsule', priority: 4, exts: ['.png', '.jpg', '.jpeg'] },
+
+  { subfolder: 'Background',        slot: 'hero',    priority: 1, exts: ['.png', '.jpg', '.jpeg'] },
+  { subfolder: 'Snap',              slot: 'hero',    priority: 2, exts: ['.png', '.jpg', '.jpeg'] },
+  { subfolder: 'Title',             slot: 'hero',    priority: 3, exts: ['.png', '.jpg', '.jpeg'] },
+]
+
 async function scanEmuMoviesMedia(mediaPath, games) {
   const fs = require('fs')
   const path = require('path')
@@ -1833,28 +1862,18 @@ async function scanEmuMoviesMedia(mediaPath, games) {
     .filter(g => !g.isLauncher)
     .map(g => ({ id: g.id || g.profile, title: g.title, norm: normalize(g.title || '') }))
 
-  const suggestions = []
+  // Pass 1: walk every folder, collect a flat list of raw file candidates
+  // with their matched game guess, slot, and source priority.
+  const rawCandidates = []
   const seenFiles = new Set()
-  // Real EmuMovies Sync folder names (confirmed against the live Sync app's
-  // "Available Media" dropdown) -- video quality tiers checked highest-first
-  const MEDIA_TARGETS = [
-    { subfolder: 'Video_MP4_HI_QUAL', type: 'video', exts: ['.mp4'] },
-    { subfolder: 'Video_MP4_HD',      type: 'video', exts: ['.mp4'] },
-    { subfolder: 'Video_MP4',         type: 'video', exts: ['.mp4'] },
-    { subfolder: 'Video_AVI_HI_QUAL', type: 'video', exts: ['.avi'] },
-    { subfolder: 'Video_AVI_HD',      type: 'video', exts: ['.avi'] },
-    { subfolder: 'Video_AVI',         type: 'video', exts: ['.avi'] },
-    { subfolder: 'Snap',              type: 'artwork', exts: ['.png', '.jpg', '.jpeg'] },
-    { subfolder: 'Title',             type: 'artwork', exts: ['.png', '.jpg', '.jpeg'] },
-    { subfolder: 'Background',        type: 'artwork', exts: ['.png', '.jpg', '.jpeg'] },
-    { subfolder: 'Box',               type: 'artwork', exts: ['.png', '.jpg', '.jpeg'] },
-    { subfolder: 'Box_3D',            type: 'artwork', exts: ['.png', '.jpg', '.jpeg'] },
-    { subfolder: 'Logos',             type: 'artwork', exts: ['.png', '.jpg', '.jpeg'] },
-  ]
 
   for (const emumoviesRoot of possibleRoots) {
     for (const system of EMUMOVIES_SYSTEMS) {
+      const isCartSystem = CARTRIDGE_SYSTEMS.has(system)
+
       for (const target of MEDIA_TARGETS) {
+        if (target.cartOnly && !isCartSystem) continue
+
         const folder = path.join(emumoviesRoot, system, target.subfolder)
         if (!fs.existsSync(folder)) continue
 
@@ -1876,33 +1895,60 @@ async function scanEmuMoviesMedia(mediaPath, games) {
 
           const scored = gameNormList
             .map(g => ({ id: g.id, title: g.title, score: similarityScore(fileNorm, g.norm) }))
-            .filter(s => s.score >= 0.5)
-            .sort((a, b) => b.score - a.score)
-            .slice(0, 3)
+            .sort((a, b) => b.score - a.score)[0]
 
-          if (scored.length === 0) continue
+          if (!scored || scored.score < 0.5) continue
 
-          suggestions.push({
+          rawCandidates.push({
             sourceFile: fullPath,
             fileName: file,
-            cleanTitle,
             system,
-            mediaType: target.type,
-            topMatch: scored[0],
-            alternates: scored.slice(1),
-            confident: scored[0].score >= 0.75,
+            subfolder: target.subfolder,
+            slot: target.slot,
+            priority: target.priority,
+            gameId: scored.id,
+            gameTitle: scored.title,
+            score: scored.score,
           })
         }
       }
     }
   }
 
-  suggestions.sort((a, b) => (b.topMatch?.score || 0) - (a.topMatch?.score || 0))
+  // Pass 2: group by (gameId, slot). Within each group the lowest-priority
+  // (best-quality) source wins as the chosen pick; the rest become alternates.
+  const groups = {}
+  for (const c of rawCandidates) {
+    const key = c.gameId + '|' + c.slot
+    if (!groups[key]) groups[key] = []
+    groups[key].push(c)
+  }
+
+  const suggestions = []
+  for (const key of Object.keys(groups)) {
+    const candidates = groups[key].sort((a, b) => {
+      if (a.priority !== b.priority) return a.priority - b.priority
+      return b.score - a.score
+    })
+    const chosen = candidates[0]
+    const alternates = candidates.slice(1)
+
+    suggestions.push({
+      gameId: chosen.gameId,
+      gameTitle: chosen.gameTitle,
+      slot: chosen.slot,
+      chosenFile: chosen,
+      alternateFiles: alternates,
+      confident: chosen.score >= 0.75,
+    })
+  }
+
+  suggestions.sort((a, b) => (b.chosenFile?.score || 0) - (a.chosenFile?.score || 0))
 
   return { suggestions, totalFound: suggestions.length }
 }
 
-async function importEmuMoviesFile({ sourceFile, gameId, mediaType, mediaPath }) {
+async function importEmuMoviesFile({ sourceFile, gameId, slot, mediaPath }) {
   const fs = require('fs')
   const path = require('path')
 
@@ -1911,19 +1957,20 @@ async function importEmuMoviesFile({ sourceFile, gameId, mediaType, mediaPath })
   }
 
   try {
-    if (mediaType === 'video') {
+    if (slot === 'video') {
       const videosDir = path.join(mediaPath || 'F:\\Media\\', 'Videos')
       if (!fs.existsSync(videosDir)) fs.mkdirSync(videosDir, { recursive: true })
       const destPath = path.join(videosDir, gameId + '.mp4')
       fs.copyFileSync(sourceFile, destPath)
       return { success: true, destPath }
     } else {
+      // slot is 'capsule' or 'hero' -- both are artwork, kept as separate files
       const artworkDir = path.join(mediaPath || 'F:\\Media\\', 'Artwork')
       if (!fs.existsSync(artworkDir)) fs.mkdirSync(artworkDir, { recursive: true })
       const ext = path.extname(sourceFile) || '.png'
-      const destPath = path.join(artworkDir, gameId + ext)
+      const destPath = path.join(artworkDir, gameId + '_' + slot + ext)
       fs.copyFileSync(sourceFile, destPath)
-      return { success: true, destPath, fileUrl: 'file:///' + destPath.replace(/\\/g, '/') }
+      return { success: true, destPath, fileUrl: 'file:///' + destPath.replace(/\\/g, '/'), slot }
     }
   } catch (e) {
     return { success: false, error: e.message }
