@@ -883,6 +883,11 @@ const handleSave = async () => {
 
           <div className={styles.section}>
             <div className={styles.sectionTitle}>Artwork</div>
+            <div className={styles.pathsNote} style={{ marginBottom: 8 }}>
+              This section configures box art/video sources. To find or download a video for a specific game,
+              close Settings and open <strong>Media</strong> from the main menu -- the Library tab there has
+              per-game "Find video" and "YT" buttons.
+            </div>
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>ScreenScraper user</label>
               <input
