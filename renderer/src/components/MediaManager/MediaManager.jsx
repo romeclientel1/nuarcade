@@ -66,13 +66,25 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
 
   const [creatingFolders, setCreatingFolders] = useState(false)
   const [folderResult, setFolderResult] = useState(null)
+  const [emMediaPath, setEmMediaPath] = useState('')
+
+  // Prefill the path field once Settings' configured Media folder loads,
+  // but only if the person hasn't already typed/browsed to something else.
+  useEffect(() => {
+    if (mmConfig?.mediaPath && !emMediaPath) setEmMediaPath(mmConfig.mediaPath)
+  }, [mmConfig?.mediaPath])
+
+  const handleBrowseMediaPath = async () => {
+    const result = await window.nuarcade?.browseFolder()
+    if (result) setEmMediaPath(result)
+  }
 
   const handleCreateMediaFolders = async () => {
     if (!window.nuarcade?.ensureMediaFolders) return
     setCreatingFolders(true)
     setFolderResult(null)
     try {
-      const result = await window.nuarcade.ensureMediaFolders()
+      const result = await window.nuarcade.ensureMediaFolders(emMediaPath || undefined)
       const createdCount = result?.created || 0
       const skippedCount = result?.skipped || 0
       setFolderResult({ createdCount, skippedCount, root: result?.mediaRoot })
@@ -603,11 +615,30 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
                 {mmConfig?.mediaPath || 'F:\\Media\\'}EmuMovies. Nothing imports without your confirmation.
               </div>
 
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 10, marginBottom: 4 }}>
+                <input
+                  className={styles.input}
+                  style={{ flex: 1 }}
+                  value={emMediaPath}
+                  placeholder="F:\\Media"
+                  onChange={e => setEmMediaPath(e.target.value)}
+                  spellCheck={false}
+                />
+                <button className={styles.browseBtn || styles.dlBtn} onClick={handleBrowseMediaPath}>
+                  Browse
+                </button>
+              </div>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 8 }}>
+                No need to create this folder yourself -- the button below builds it from scratch,
+                including this root path if it does not exist yet. This also updates your Settings
+                Media folder to match.
+              </div>
+
               <button
                 className={styles.scanBtn}
                 onClick={handleCreateMediaFolders}
                 disabled={creatingFolders}
-                style={{ marginTop: 10, marginBottom: 8 }}
+                style={{ marginBottom: 8 }}
               >
                 {creatingFolders ? 'Creating...' : 'Create folder structure'}
               </button>
