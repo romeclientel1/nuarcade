@@ -1061,7 +1061,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
                   setSelectedIndex(Math.floor(Math.random() * filteredGames.length))
                   sounds.navigate()
                 }
-              }} title="Random game (R)" className={styles.randBtn + (focusZone === 0 && topMenuIdx === 1 ? " " + styles.barFocused : "")}>RND</button>
+              }} title="Random game (R)">RND</button>
               <button className={styles.colBtn + (focusZone === 0 && topMenuIdx === 2 ? " " + styles.barFocused : "")} onClick={() => setShowCollections(true)} title="Collections (N)">Sets</button>
               <button className={styles.statsBtn + (focusZone === 0 && topMenuIdx === 3 ? " " + styles.barFocused : "")} onClick={() => setShowStats(true)} title="My Stats (T)">Stats</button>
               <button className={styles.achieveBtn + (focusZone === 0 && topMenuIdx === 4 ? " " + styles.barFocused : "")} onClick={() => setShowAchievements(true)} title="Achievements (A)">Ach.</button>
