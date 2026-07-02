@@ -117,6 +117,7 @@ const [biosResult, setBiosResult] = useState(null)
 const [checkingBios, setCheckingBios] = useState(false)
 const [marqueeOpen, setMarqueeOpen] = useState(false)
 const [ytdlpStatus, setYtdlpStatus] = useState(null) // null=unchecked, 'present', 'missing', 'installing', 'error'
+const [ytdlpError, setYtdlpError] = useState(null)
 
   // Check real filesystem existence for every emulator exe -- runs once config loads and after save
   useEffect(() => {
@@ -921,16 +922,21 @@ const handleSave = async () => {
                   disabled={ytdlpStatus === 'installing'}
                   onClick={async () => {
                     setYtdlpStatus('installing')
+                    setYtdlpError(null)
                     try {
                       const r = await window.nuarcade.ensureYtdlp()
                       setYtdlpStatus(r.success ? 'present' : 'error')
-                    } catch { setYtdlpStatus('error') }
+                      if (!r.success) setYtdlpError(r.error || 'Unknown error')
+                    } catch (e) { setYtdlpStatus('error'); setYtdlpError(e.message || String(e)) }
                   }}
                 >
                   {ytdlpStatus === 'present' ? 'Re-download' : 'Install now'}
                 </button>
               </div>
             </div>
+            {ytdlpError && (
+              <div style={{ fontSize: 11, color: '#ff8888', marginTop: -4, marginBottom: 8 }}>Error: {ytdlpError}</div>
+            )}
             <div className={styles.emuNote}>
               YouTube video fallback -- auto-installs on first use. Videos are trimmed to 40s and saved to F:/Media/Videos/.
             </div>
