@@ -64,6 +64,26 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
   const [emImported, setEmImported] = useState({}) // 'gameId|slot' -> 'done' | 'error'
   const [emPick, setEmPick] = useState({}) // 'gameId|slot' -> chosen sourceFile
 
+  const [creatingFolders, setCreatingFolders] = useState(false)
+  const [folderResult, setFolderResult] = useState(null)
+
+  const handleCreateMediaFolders = async () => {
+    if (!window.nuarcade?.ensureMediaFolders) return
+    setCreatingFolders(true)
+    setFolderResult(null)
+    try {
+      const result = await window.nuarcade.ensureMediaFolders()
+      const createdCount = result?.created || 0
+      const skippedCount = result?.skipped || 0
+      setFolderResult({ createdCount, skippedCount, root: result?.mediaRoot })
+      log('Folder structure ready at ' + result?.mediaRoot + ' -- ' + createdCount + ' created, ' + skippedCount + ' already existed', 'ok')
+    } catch (e) {
+      setFolderResult({ error: e.message || String(e) })
+      log('Folder creation exception: ' + (e.message || String(e)), 'error')
+    }
+    setCreatingFolders(false)
+  }
+
   const handleScanEmuMovies = async () => {
     if (!window.nuarcade?.scanEmuMoviesMedia) return
     setEmScanning(true)
@@ -582,6 +602,25 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
                 video/artwork files to your games. Run EmuMovies Sync first, pointed at
                 {mmConfig?.mediaPath || 'F:\\Media\\'}EmuMovies. Nothing imports without your confirmation.
               </div>
+
+              <button
+                className={styles.scanBtn}
+                onClick={handleCreateMediaFolders}
+                disabled={creatingFolders}
+                style={{ marginTop: 10, marginBottom: 8 }}
+              >
+                {creatingFolders ? 'Creating...' : 'Create folder structure'}
+              </button>
+
+              {folderResult?.error && (
+                <div style={{ color: '#ff8888', fontSize: 12, padding: '4px 0' }}>{folderResult.error}</div>
+              )}
+              {folderResult && !folderResult.error && (
+                <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, padding: '4px 0 8px' }}>
+                  Ready at {folderResult.root} -- {folderResult.createdCount} folder(s) created, {folderResult.skippedCount} already existed.
+                  Point EmuMovies Sync's destination folder here.
+                </div>
+              )}
 
               <button
                 ref={emScanBtnRef}
