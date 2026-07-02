@@ -1878,6 +1878,21 @@ ipcMain.handle('analyze-folders', async (event, { gamesFolder, tpFolder }) => {
 })
 
 // Suggest likely TeknoParrot GameProfile matches for unmatched game folders
+// Scan EmuMovies Sync folders for video/artwork and suggest matches to games
+ipcMain.handle('scan-emumovies-media', async (event, { mediaPath, games }) => {
+  const { scanEmuMoviesMedia } = require('./scanner')
+  const timeout = new Promise(resolve =>
+    setTimeout(() => resolve({ suggestions: [], error: 'scan timed out' }), 30000)
+  )
+  return await Promise.race([scanEmuMoviesMedia(mediaPath, games), timeout])
+})
+
+// Copy a matched EmuMovies file into NuArcade's expected video/artwork location
+ipcMain.handle('import-emumovies-file', async (event, opts) => {
+  const { importEmuMoviesFile } = require('./scanner')
+  return await importEmuMoviesFile(opts)
+})
+
 ipcMain.handle('suggest-folder-matches', async (event, { teknoParrotPath, gamesFolderPath }) => {
   const { suggestFolderMatches } = require('./scanner')
   const timeout = new Promise(resolve =>
