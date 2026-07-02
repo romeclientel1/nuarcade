@@ -2,7 +2,7 @@
 
 A modern arcade cabinet frontend built for serious collectors and venue operators. NuArcade replaces HyperSpin and LaunchBox with a clean, fast, AI-powered experience built on Electron + React.
 
-**Current version: v4.5.1**
+**Current version: v4.18.2**
 
 ---
 
@@ -52,9 +52,9 @@ RetroArch games are organized by system subfolder -- only systems with ROMs pres
 
 1. Download the latest installer from [Releases](https://github.com/romeclientel1/nuarcade/releases)
 2. Run `NuArcade-Setup-X.X.X.exe` -- the NSIS installer handles everything
-3. Launch NuArcade -- the 8-step setup wizard opens automatically
-4. Follow the wizard: download emulators, set paths, configure controllers, scan games, set up media
-5. Your library populates automatically after the scan
+3. Launch NuArcade -- it opens straight to the main wheel
+4. Open **Settings** to point NuArcade at your emulators and game folders, configure controllers, and set up media sources
+5. Use **Rescan** in Settings (or restart) after configuring paths to populate your library
 
 ### Default folder layout
 
@@ -127,17 +127,6 @@ NuArcade is fully playable with an Xbox controller. Plug it in before launching.
 | A | Launch the game |
 | B | Close detail, return to wheel |
 
-### Setup Wizard
-
-| Button | Action |
-|---|---|
-| D-pad Right / Down / A | Next step |
-| D-pad Left / Up / B | Previous step |
-| Select (x2) | First press shows CONFIRM EXIT, second press exits app |
-| Controllers Screen: D-pad Left/Right | Cycle between controller cards |
-| Controllers Screen: A | Toggle selected controller ON/OFF |
-| Controllers Screen: D-pad Down to Continue + A | Advance to next step |
-
 ---
 
 ## Media Setup
@@ -145,16 +134,48 @@ NuArcade is fully playable with an Xbox controller. Plug it in before launching.
 NuArcade supports two media sources:
 
 ### SteamGridDB (built-in, free)
-Hero art and capsule images are fetched automatically from SteamGridDB. No setup needed -- just use the Get Media step in the wizard.
+Hero art and capsule images are fetched automatically from SteamGridDB. Configure your API key in Settings -- no other setup needed.
 
-### EmuMovies Sync (recommended for video snaps)
-1. Create a free account at [emumovies.com](https://emumovies.com)
-2. Download EmuMovies Sync from the wizard (Step 7: Get Media)
-3. Point EmuMovies Sync at `F:\Media\EmuMovies\[System Name]\`
-4. EmuMovies Sync auto-renames files to match your ROMs
+### EmuMovies Sync (recommended for video snaps and box art)
+1. Create an account at [emumovies.com](https://emumovies.com) -- a free account works, a supporting/lifetime membership unlocks video content
+2. Download the official EmuMovies Sync desktop app from their site
+3. In NuArcade, open **Media > EmuMovies tab > "Create folder structure"** -- this builds one folder per emulator NuArcade supports (matching the Emulators grid in Settings, minus RetroArch, since RetroArch spans many systems rather than being one itself)
+4. Point EmuMovies Sync's destination folder at the specific emulator folder for whatever you're downloading (e.g. point it at `Xenia` when downloading Xbox 360 content)
+5. In Sync, select the matching system from its own dropdown and run the download -- Sync creates its own system-named subfolder inside whatever folder you pointed it at
+6. Back in NuArcade, click **"Scan EmuMovies folder"** -- it finds media regardless of whether Sync nested it directly or one level inside a per-emulator wrapper folder, and shows you a review list before anything imports
 
-NuArcade creates all EmuMovies-compatible subfolders automatically on first launch:
-`snap`, `title`, `background`, `banner`, `cabinet`, `marquee`, `logo`, `artwork_preview`, `controls`, `cp`, `icon`, `pcb`, `Video_MP4`, and more.
+Each emulator folder gets a `README.txt` explaining what system(s) it plays and which EmuMovies system name to select -- see the table below for the full reference.
+
+The real EmuMovies subfolder names (as of Sync v2.71): `Snap`, `Title`, `Background`, `Box`, `Box_25D`, `Box_3D`, `Box_Full`, `Box_Spine`, `BoxBack`, `Cart`, `Logos`, `Manual`, `System_Logo`, `Video_MP4`, `Video_MP4_HD`, `Video_MP4_HI_QUAL`, `Video_AVI`, `Video_AVI_HD`, `Video_AVI_HI_QUAL`. NuArcade's scanner prefers the highest available video quality tier automatically.
+
+### Emulator to EmuMovies system mapping
+
+Verified directly against EmuMovies Sync's own system dropdown (v2.71) -- these are the exact names to select in Sync for each NuArcade emulator.
+
+| NuArcade emulator | Select this system in EmuMovies Sync |
+|---|---|
+| RPCS3 | Sony PlayStation 3 |
+| Xenia | Microsoft Xbox 360 |
+| Dolphin | Nintendo GameCube, Nintendo Wii |
+| PCSX2 | Sony Playstation 2 |
+| Ryubing | Nintendo Switch |
+| MAME | MAME |
+| Project64 | Nintendo N64 |
+| DuckStation | Sony Playstation (PS1) |
+| Flycast | Sega Dreamcast, Sega Naomi, Sammy Atomiswave |
+| Model 2 Emulator | Sega Model 2 |
+| Supermodel (M3) | Sega Model 3 |
+| PPSSPP | Sony PSP |
+| Cemu | Nintendo Wii U |
+| Visual Pinball X | Visual Pinball (EmuMovies drops the "X") |
+
+### A note on TeknoParrot
+
+TeknoParrot isn't one system -- it runs many different arcade hardware platforms (SEGA Lindbergh, RingEdge, RingWide, ALL.Net/NU/ALLS, Namco System 357/369/ES-series, Taito Type X, and more). Checked against EmuMovies' own system list: **most of that hardware is not in EmuMovies' catalog at all.** That covers the bulk of TeknoParrot's library -- Initial D, Wangan Midnight, Mario Kart Arcade GP, House of the Dead, most racing and lightgun titles run on hardware EmuMovies simply doesn't have media for, regardless of which category you pick.
+
+The one confirmed real match: select **Konami e-AMUSEMENT** in Sync for any Konami/Bemani-adjacent titles in your TeknoParrot library.
+
+For everything else in TeknoParrot, use NuArcade's own YouTube video pipeline instead (**Media > Library tab**, "Find video" per game) -- it has real coverage for popular arcade titles that EmuMovies does not.
 
 ---
 
@@ -221,20 +242,6 @@ NuArcade creates all EmuMovies-compatible subfolders automatically on first laun
 | Tab | Flip center card |
 | Esc | Back / close overlay |
 | Ctrl+W | Quit |
-
----
-
-## Re-running the Setup Wizard
-
-If you need to re-run setup after initial installation:
-
-1. Open NuArcade
-2. Click **Settings** in the top bar
-3. Scroll to the bottom of Settings
-4. Click **Re-run Setup Wizard**
-5. NuArcade reloads into the wizard
-
-This is useful after installing new emulators, moving your games folder, or after a major update.
 
 ---
 
