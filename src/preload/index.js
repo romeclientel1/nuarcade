@@ -18,6 +18,8 @@ contextBridge.exposeInMainWorld('nuarcade', {
   analyzeFolders: (opts) => ipcRenderer.invoke('analyze-folders', opts),
   renameFolder:   (opts) => ipcRenderer.invoke('rename-folder', opts),
   suggestFolderMatches: (opts) => ipcRenderer.invoke('suggest-folder-matches', opts),
+  scanEmuMoviesMedia: (opts) => ipcRenderer.invoke('scan-emumovies-media', opts),
+  importEmuMoviesFile: (opts) => ipcRenderer.invoke('import-emumovies-file', opts),
 
   // Game launch
   launchGame:          (profilePath)  => ipcRenderer.invoke('launch-game', profilePath),
