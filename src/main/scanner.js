@@ -1114,6 +1114,47 @@ const RA_ROM_EXTS = new Set([
   '.dsi','.cso',
 ])
 
+// Alternate/full-name aliases -> canonical RA_SYSTEM_MAP key. Lets a folder
+// named either the short RetroArch-community way ('nes') or a fuller,
+// EmuMovies-style way ('Nintendo NES') resolve to the same accurate
+// system info, rather than falling back to generic metadata.
+const RA_SYSTEM_ALIASES = {
+  nintendoentertainmentsystem: 'nes', nintendones: 'nes',
+  supernintendoentertainmentsystem: 'snes', nintendosnes: 'snes',
+  nintendo64: 'n64', nintendon64: 'n64',
+  nintendogameboyadvance: 'gba',
+  nintendogameboycolor: 'gbc',
+  nintendogameboy: 'gb',
+  nintendods: 'nds',
+  nintendovirtualboy: 'virtualboy',
+  nintendogamecube: 'gamecube',
+  nintendowii: 'wii',
+  segagenesis: 'genesis',
+  segamastersystem: 'mastersystem',
+  segagamegear: 'gamegear',
+  segasaturn: 'saturn',
+  sega32x: 'sega32x',
+  sonyplaystation: 'psx', sonyplaystation1: 'psx',
+  sonypsp: 'psp', sonyplaystationportable: 'psp',
+  atari2600: 'atari2600',
+  atari7800: 'atari7800',
+  atarijaguar: 'atarijaguar',
+  atarilynx: 'atarilynx',
+  necturbografx16: 'pcengine', necpcengine: 'pcengine', necsupergrafx: 'pcengine',
+  snkneogeomvs: 'neogeo', snkneogeoaes: 'neogeo', snkclassics: 'neogeo',
+  snkneogeopocket: 'neogeopocket',
+  commodore64: 'c64',
+  commodoreamiga: 'amiga',
+  sinclairzxspectrum: 'zxspectrum',
+  amstradcpc: 'amstradcpc',
+  gcevectrex: 'vectrex',
+  bandaiwonderswan: 'wonderswan',
+}
+
+function normalizeRaFolder(s) {
+  return String(s).toLowerCase().replace(/[^a-z0-9]/g, '')
+}
+
 async function scanRetroArchGames(retroarchGamesPath) {
   const games = []
   if (!fs.existsSync(retroarchGamesPath)) {
@@ -1129,7 +1170,11 @@ async function scanRetroArchGames(retroarchGamesPath) {
   for (const entry of entries) {
     if (!entry.isDirectory()) continue
     const folderKey = entry.name.toLowerCase()
-    const systemInfo = RA_SYSTEM_MAP[folderKey]
+    // Try the exact short key first (existing RetroArch-community convention),
+    // then fall back to the normalized alias table for fuller names like
+    // "Nintendo NES" -- either naming style now resolves to accurate metadata.
+    const aliasKey = RA_SYSTEM_ALIASES[normalizeRaFolder(entry.name)]
+    const systemInfo = RA_SYSTEM_MAP[folderKey] || (aliasKey ? RA_SYSTEM_MAP[aliasKey] : null)
     const systemLabel = systemInfo ? systemInfo.label : entry.name
     const genre = systemInfo ? systemInfo.genre : 'Classic'
     const icon = systemInfo ? systemInfo.icon : 'RTR'
