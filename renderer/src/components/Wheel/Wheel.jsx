@@ -877,14 +877,12 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       if (showExitPopupRef.current)   { setShowExitPopup(false); setExitChoice(1); return }
       if (showDetailRef.current)      { setShowDetail(false); return }
       if (showSettingsRef.current)    { setShowSettings(false); return }
-      if (showSearchRef.current)      { setShowSearch(false); setShowVirtualKeyboard(false); return }
+      if (showSearchRef.current)      { sounds.back(); setShowSearch(false); setShowVirtualKeyboard(false); setSearch(""); setDebouncedSearch(""); return }
       if (showHelpRef.current)        { setShowHelp(false); return }
       if (showMediaManagerRef.current){ setShowMediaManager(false); return }
       // If in any zone other than wheel, return to wheel
       if (focusZoneRef.current !== 2) { setFocusZone(2); return }
     },
-    // search via keyboard only
-    back:          () => { sounds.back(); setShowDetail(false); setSearch(""); setDebouncedSearch(""); setShowSearch(false) },
     favorite:      () => { if (currentRef.current) toggleFavorite(currentRef.current.id || currentRef.current.profile) },
     filterLeft:  () => {
       const allCats = [...CATEGORIES, ...Object.keys(collectionsRef.current)]
