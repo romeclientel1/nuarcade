@@ -22,14 +22,30 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState("all")
   const [tab, setTab] = useState("library")
+  const [emFocused, setEmFocused] = useState(false)
+  const emScanBtnRef = useRef(null)
+
+  // Reset focus whenever the tab changes via any path (mouse click, gamepad, etc.)
+  useEffect(() => {
+    if (tab !== 'emumovies') setEmFocused(false)
+  }, [tab])
 
   useOverlayGamepad({
     onClose,
-    onUp:      () => scrollRef.current?.scrollBy({ top: -120, behavior: 'smooth' }),
-    onDown:    () => scrollRef.current?.scrollBy({ top:  120, behavior: 'smooth' }),
-    onLeft:    () => setTab(prev => { const i = TABS.indexOf(prev); return TABS[Math.max(0, i-1)] }),
-    onRight:   () => setTab(prev => { const i = TABS.indexOf(prev); return TABS[Math.min(TABS.length-1, i+1)] }),
-    onConfirm: () => setFilter(prev => { const f = ["all","missing","ready"]; return f[(f.indexOf(prev)+1)%f.length] }),
+    onUp:      () => {
+      if (tab === 'emumovies') { setEmFocused(false); return }
+      scrollRef.current?.scrollBy({ top: -120, behavior: 'smooth' })
+    },
+    onDown:    () => {
+      if (tab === 'emumovies') { setEmFocused(true); return }
+      scrollRef.current?.scrollBy({ top: 120, behavior: 'smooth' })
+    },
+    onLeft:    () => { setEmFocused(false); setTab(prev => { const i = TABS.indexOf(prev); return TABS[Math.max(0, i-1)] }) },
+    onRight:   () => { setEmFocused(false); setTab(prev => { const i = TABS.indexOf(prev); return TABS[Math.min(TABS.length-1, i+1)] }) },
+    onConfirm: () => {
+      if (tab === 'emumovies' && emFocused) { emScanBtnRef.current?.click(); return }
+      setFilter(prev => { const f = ["all","missing","ready"]; return f[(f.indexOf(prev)+1)%f.length] })
+    },
   })
   const [showArtworkMgr, setShowArtworkMgr] = useState(false)
   const [mmConfig, setMmConfig] = useState({})
@@ -568,10 +584,15 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
               </div>
 
               <button
+                ref={emScanBtnRef}
                 className={styles.scanBtn}
                 onClick={handleScanEmuMovies}
                 disabled={emScanning}
-                style={{ marginTop: 10, marginBottom: 12 }}
+                style={{
+                  marginTop: 10, marginBottom: 12,
+                  outline: emFocused ? '2px solid #0ff' : 'none',
+                  boxShadow: emFocused ? '0 0 12px rgba(0,255,255,0.6)' : 'none',
+                }}
               >
                 {emScanning ? 'Scanning...' : 'Scan EmuMovies folder'}
               </button>
