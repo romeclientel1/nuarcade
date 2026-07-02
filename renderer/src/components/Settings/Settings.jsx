@@ -56,26 +56,6 @@ export default function Settings({ games = [], onClose, onCRTChange, crtEnabled,
   const [showRestartConfirm, setShowRestartConfirm] = useState(false)
   const changedPathKeysRef = useRef(new Set())
   const [installedMap, setInstalledMap] = useState({})
-  const [ssTestStatus, setSsTestStatus] = useState(null) // null | 'testing' | 'success' | 'error'
-  const [ssTestResult, setSsTestResult] = useState(null)
-
-  const handleTestScreenScraper = async () => {
-    if (!window.nuarcade?.testScreenScraper) return
-    setSsTestStatus('testing')
-    setSsTestResult(null)
-    try {
-      const result = await window.nuarcade.testScreenScraper({
-        user: config.screenscraper?.user,
-        pass: config.screenscraper?.pass,
-      })
-      setSsTestStatus(result.success ? 'success' : 'error')
-      setSsTestResult(result)
-    } catch (e) {
-      setSsTestStatus('error')
-      setSsTestResult({ error: e.message || String(e) })
-    }
-  }
-
   // -- TeknoParrot Folder Renamer state --
   const [folderScan, setFolderScan] = useState(null)       // null = not yet scanned
   const [scanningFolders, setScanningFolders] = useState(false)
@@ -889,46 +869,6 @@ const handleSave = async () => {
               per-game "Find video" and "YT" buttons.
             </div>
             <div className={styles.inputRow}>
-              <label className={styles.inputLabel}>ScreenScraper user</label>
-              <input
-                className={styles.input}
-                value={config.screenscraper?.user || ""}
-                onChange={e => { update("screenscraper", { ...config.screenscraper, user: e.target.value }); setSsTestStatus(null) }}
-                placeholder="your screenscraper.fr username"
-                spellCheck={false}
-              />
-            </div>
-            <div className={styles.inputRow}>
-              <label className={styles.inputLabel}>ScreenScraper pass</label>
-              <input
-                className={styles.input}
-                type="password"
-                value={config.screenscraper?.pass || ""}
-                onChange={e => { update("screenscraper", { ...config.screenscraper, pass: e.target.value }); setSsTestStatus(null) }}
-                placeholder="your screenscraper.fr password"
-              />
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '4px 0 8px' }}>
-              <button
-                className={styles.exportBtn}
-                disabled={ssTestStatus === 'testing' || !config.screenscraper?.user || !config.screenscraper?.pass}
-                onClick={handleTestScreenScraper}
-              >
-                {ssTestStatus === 'testing' ? 'Testing...' : 'Test Connection'}
-              </button>
-              {ssTestStatus === 'success' && ssTestResult && (
-                <span style={{ color: '#00ff88', fontSize: 12 }}>
-                  Connected as {ssTestResult.username} ({ssTestResult.level}) -- {ssTestResult.requestsToday}/{ssTestResult.maxRequestsPerDay} requests today
-                </span>
-              )}
-              {ssTestStatus === 'error' && ssTestResult && (
-                <span style={{ color: '#ff4444', fontSize: 12 }}>{ssTestResult.error}</span>
-              )}
-            </div>
-            <div className={styles.emuNote}>
-              Free account at screenscraper.fr -- covers MAME, retro, and all classic systems.
-            </div>
-            <div className={styles.inputRow}>
               <label className={styles.inputLabel}>yt-dlp path</label>
               <input
                 className={styles.textInput}
@@ -1006,8 +946,6 @@ const handleSave = async () => {
             <ArtworkManager
               games={games}
               apiKey={config?.sgdbApiKey}
-              ssUser={config?.screenscraper?.user}
-              ssPass={config?.screenscraper?.pass}
               onClose={() => setShowArtworkMgr(false)}
               onArtworkUpdate={() => {}}
             />
