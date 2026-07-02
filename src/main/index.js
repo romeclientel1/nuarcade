@@ -1757,40 +1757,45 @@ ipcMain.handle('ensure-media-folders', async (event, customPath) => {
     // --- STEP 2: EmuMovies Sync compatible folders (exact naming match) ---
     // EmuMovies outputs: snap, title, background, banner, cabinet,
     // marquee, logo, artwork_preview, controls, cp, icon, pcb, Video_MP4
+    // Real EmuMovies Sync folder names (confirmed against the live Sync app's
+    // "Available Media" dropdown). Sync uses underscores in place of spaces
+    // throughout its own system folder names (e.g. Microsoft_Xbox_360).
     const emumoviesSubFolders = [
-      'snap',
-      'title',
-      'background',
-      'banner',
-      'cabinet',
-      'marquee',
-      'logo',
-      'artwork_preview',
-      'controls',
-      'cp',
-      'icon',
-      'pcb',
-      'score',
-      'select',
-      'gameover',
+      'Video_MP4_HI_QUAL',
+      'Video_MP4_HD',
       'Video_MP4',
-      'Video_FLV',
+      'Video_AVI_HI_QUAL',
+      'Video_AVI_HD',
+      'Video_AVI',
+      'Snap',
+      'Title',
+      'Background',
+      'Box',
+      'Box_25D',
+      'Box_3D',
+      'Box_Full',
+      'Box_Spine',
+      'BoxBack',
+      'Cart',
+      'Logos',
+      'Manual',
+      'System_Logo',
     ]
 
     const emumoviesSystems = [
       'MAME', 'TeknoParrot', 'RPCS3', 'Xenia', 'Dolphin',
       'PCSX2', 'Ryujinx', 'DuckStation', 'Flycast', 'PPSSPP',
       'Cemu', 'Model2', 'Model3', 'Steam', 'PC',
-      // Common EmuMovies system names
-      'Nintendo Entertainment System', 'Super Nintendo Entertainment System',
-      'Nintendo 64', 'Game Boy Advance', 'Game Boy Color', 'Game Boy',
-      'Nintendo DS', 'GameCube', 'Wii',
-      'Sega Genesis', 'Sega Saturn', 'Sega CD', 'Sega 32X',
-      'Sega Master System', 'Game Gear', 'Sega Dreamcast',
-      'Sony Playstation', 'Sony Playstation 2', 'Sony PSP',
-      'Neo Geo', 'TurboGrafx-16', 'Atari 2600', 'Atari 7800',
-      'Atari Jaguar', 'Atari Lynx', 'Commodore Amiga', 'Commodore 64',
-      'MAME 2003', 'MAME 2010',
+      'Microsoft_Xbox_360', 'Microsoft_Xbox', 'Microsoft_Xbox_One',
+      'Sony_Playstation', 'Sony_Playstation_2', 'Sony_Playstation_3', 'Sony_Playstation_Portable', 'Sony_Playstation_Vita',
+      'Nintendo_Entertainment_System', 'Super_Nintendo_Entertainment_System',
+      'Nintendo_64', 'Nintendo_Gamecube', 'Nintendo_Wii', 'Nintendo_Wii_U', 'Nintendo_Switch',
+      'Nintendo_Game_Boy', 'Nintendo_Game_Boy_Color', 'Nintendo_Game_Boy_Advance', 'Nintendo_DS', 'Nintendo_3DS',
+      'Sega_Genesis', 'Sega_Saturn', 'Sega_CD', 'Sega_32X',
+      'Sega_Master_System', 'Sega_Game_Gear', 'Sega_Dreamcast',
+      'Atari_2600', 'Atari_5200', 'Atari_7800', 'Atari_Jaguar', 'Atari_Lynx',
+      'Neo_Geo', 'TurboGrafx-16', 'Commodore_64', 'Commodore_Amiga', '3DO',
+      'MAME_2003', 'MAME_2010',
     ]
 
     const emumoviesRoot = path.join(mediaRoot, 'EmuMovies')
