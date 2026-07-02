@@ -45,8 +45,8 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
   // -- EmuMovies local Sync import --
   const [emScanResult, setEmScanResult] = useState(null)
   const [emScanning, setEmScanning] = useState(false)
-  const [emImported, setEmImported] = useState({}) // sourceFile -> 'done' | 'error'
-  const [emPick, setEmPick] = useState({}) // sourceFile -> chosen gameId
+  const [emImported, setEmImported] = useState({}) // 'gameId|slot' -> 'done' | 'error'
+  const [emPick, setEmPick] = useState({}) // 'gameId|slot' -> chosen sourceFile
 
   const handleScanEmuMovies = async () => {
     if (!window.nuarcade?.scanEmuMoviesMedia) return
@@ -66,32 +66,32 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
     setEmScanning(false)
   }
 
-  const handleImportEmuMovies = async (suggestion, gameId) => {
-    if (!gameId || !window.nuarcade?.importEmuMoviesFile) return
-    const key = suggestion.sourceFile
+  const handleImportEmuMovies = async (suggestion, sourceFile) => {
+    if (!sourceFile || !window.nuarcade?.importEmuMoviesFile) return
+    const key = suggestion.gameId + '|' + suggestion.slot
     try {
       const result = await window.nuarcade.importEmuMoviesFile({
-        sourceFile: suggestion.sourceFile,
-        gameId,
-        mediaType: suggestion.mediaType,
+        sourceFile,
+        gameId: suggestion.gameId,
+        slot: suggestion.slot,
         mediaPath: mmConfig?.mediaPath,
       })
       if (result.success) {
         setEmImported(prev => ({ ...prev, [key]: 'done' }))
-        if (suggestion.mediaType === 'video') {
-          setGames(g => g.map(x => (x.id || x.profile) === gameId ? { ...x, hasVideo: true } : x))
+        if (suggestion.slot === 'video') {
+          setGames(g => g.map(x => (x.id || x.profile) === suggestion.gameId ? { ...x, hasVideo: true } : x))
           onVideosUpdated?.()
         } else {
           try {
             const artwork = JSON.parse(localStorage.getItem('nuarcade_artwork') || '{}')
-            artwork[gameId] = { ...(artwork[gameId] || {}), hero: result.fileUrl }
+            artwork[suggestion.gameId] = { ...(artwork[suggestion.gameId] || {}), [suggestion.slot]: result.fileUrl }
             localStorage.setItem('nuarcade_artwork', JSON.stringify(artwork))
           } catch {}
         }
-        log('Imported ' + suggestion.fileName + ' -> ' + gameId, 'ok')
+        log('Imported ' + suggestion.slot + ' for ' + suggestion.gameTitle, 'ok')
       } else {
         setEmImported(prev => ({ ...prev, [key]: 'error' }))
-        log('Import failed for ' + suggestion.fileName + ': ' + result.error, 'error')
+        log('Import failed for ' + suggestion.gameTitle + ': ' + result.error, 'error')
       }
     } catch (e) {
       setEmImported(prev => ({ ...prev, [key]: 'error' }))
@@ -589,43 +589,41 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
               )}
 
               {emScanResult?.suggestions?.map(s => {
-                const status = emImported[s.sourceFile]
-                const chosen = emPick[s.sourceFile] ?? s.topMatch?.id ?? ''
+                const key = s.gameId + '|' + s.slot
+                const status = emImported[key]
+                const chosenPath = emPick[key] ?? s.chosenFile?.sourceFile ?? ''
+                const allFiles = [s.chosenFile, ...(s.alternateFiles || [])].filter(Boolean)
+                const slotLabel = s.slot === 'video' ? 'Video' : s.slot === 'capsule' ? 'Box art' : 'Backdrop'
                 return (
-                  <div key={s.sourceFile} style={{
+                  <div key={key} style={{
                     border: '1px solid rgba(255,255,255,0.12)', borderRadius: 6, padding: 10, marginBottom: 8,
                     background: status === 'done' ? 'rgba(0,255,136,0.08)' : 'rgba(255,255,255,0.03)',
                   }}>
                     <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: '#fff', marginBottom: 2 }}>
-                      {s.fileName} <span style={{ color: 'rgba(255,255,255,0.35)' }}>({s.mediaType}, {s.system})</span>
+                      {s.gameTitle} <span style={{ color: 'rgba(255,255,255,0.35)' }}>({slotLabel})</span>
                     </div>
                     {status === 'done' ? (
-                      <div style={{ color: '#00ff88', fontSize: 12 }}>Imported to {chosen}</div>
+                      <div style={{ color: '#00ff88', fontSize: 12 }}>Imported</div>
                     ) : status === 'error' ? (
                       <div style={{ color: '#ff4444', fontSize: 12 }}>Import failed -- see log</div>
                     ) : (
                       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                         <select
                           className={styles.input}
-                          style={{ flex: 1, minWidth: 200 }}
-                          value={chosen}
-                          onChange={e => setEmPick(prev => ({ ...prev, [s.sourceFile]: e.target.value }))}
+                          style={{ flex: 1, minWidth: 240 }}
+                          value={chosenPath}
+                          onChange={e => setEmPick(prev => ({ ...prev, [key]: e.target.value }))}
                         >
-                          {s.topMatch && (
-                            <option value={s.topMatch.id}>
-                              {s.topMatch.title} ({Math.round(s.topMatch.score * 100)}% match{s.confident ? ', confident' : ''})
-                            </option>
-                          )}
-                          {s.alternates?.map(alt => (
-                            <option key={alt.id} value={alt.id}>
-                              {alt.title} ({Math.round(alt.score * 100)}% match)
+                          {allFiles.map(f => (
+                            <option key={f.sourceFile} value={f.sourceFile}>
+                              {f.subfolder} -- {f.system} ({Math.round(f.score * 100)}% match{f === s.chosenFile ? ', best' : ''})
                             </option>
                           ))}
                         </select>
                         <button
                           className={styles.dlBtn}
-                          disabled={!chosen}
-                          onClick={() => handleImportEmuMovies(s, chosen)}
+                          disabled={!chosenPath}
+                          onClick={() => handleImportEmuMovies(s, chosenPath)}
                         >
                           Import
                         </button>
