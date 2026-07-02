@@ -1862,21 +1862,45 @@ async function scanEmuMoviesMedia(mediaPath, games) {
     .filter(g => !g.isLauncher)
     .map(g => ({ id: g.id || g.profile, title: g.title, norm: normalize(g.title || '') }))
 
-  // Pass 1: walk every folder, collect a flat list of raw file candidates
-  // with their matched game guess, slot, and source priority.
+  // Discover actual folders on disk and match them by normalized name --
+  // spaces, underscores, and dashes all normalize the same way, so this
+  // works regardless of exactly how Sync separates words in its folder names.
+  const systemNormLookup = {}
+  for (const sys of EMUMOVIES_SYSTEMS) systemNormLookup[normalize(sys)] = sys
+
+  const subfolderNormLookup = {}
+  for (const target of MEDIA_TARGETS) subfolderNormLookup[normalize(target.subfolder)] = target
+
   const rawCandidates = []
   const seenFiles = new Set()
 
   for (const emumoviesRoot of possibleRoots) {
-    for (const system of EMUMOVIES_SYSTEMS) {
-      const isCartSystem = CARTRIDGE_SYSTEMS.has(system)
+    let systemDirs = []
+    try {
+      systemDirs = fs.readdirSync(emumoviesRoot, { withFileTypes: true })
+        .filter(e => e.isDirectory())
+        .map(e => e.name)
+    } catch { continue }
 
-      for (const target of MEDIA_TARGETS) {
+    for (const actualSystemDir of systemDirs) {
+      const canonicalSystem = systemNormLookup[normalize(actualSystemDir)]
+      if (!canonicalSystem) continue
+      const isCartSystem = CARTRIDGE_SYSTEMS.has(canonicalSystem)
+
+      const systemPath = path.join(emumoviesRoot, actualSystemDir)
+      let subDirs = []
+      try {
+        subDirs = fs.readdirSync(systemPath, { withFileTypes: true })
+          .filter(e => e.isDirectory())
+          .map(e => e.name)
+      } catch { continue }
+
+      for (const actualSubDir of subDirs) {
+        const target = subfolderNormLookup[normalize(actualSubDir)]
+        if (!target) continue
         if (target.cartOnly && !isCartSystem) continue
 
-        const folder = path.join(emumoviesRoot, system, target.subfolder)
-        if (!fs.existsSync(folder)) continue
-
+        const folder = path.join(systemPath, actualSubDir)
         let files = []
         try {
           files = fs.readdirSync(folder).filter(f =>
@@ -1902,7 +1926,7 @@ async function scanEmuMoviesMedia(mediaPath, games) {
           rawCandidates.push({
             sourceFile: fullPath,
             fileName: file,
-            system,
+            system: canonicalSystem,
             subfolder: target.subfolder,
             slot: target.slot,
             priority: target.priority,
@@ -1915,7 +1939,7 @@ async function scanEmuMoviesMedia(mediaPath, games) {
     }
   }
 
-  // Pass 2: group by (gameId, slot). Within each group the lowest-priority
+  // Group by (gameId, slot). Within each group the lowest-priority
   // (best-quality) source wins as the chosen pick; the rest become alternates.
   const groups = {}
   for (const c of rawCandidates) {
