@@ -1786,20 +1786,67 @@ module.exports = { ...module.exports, suggestFolderMatches }
 // Sync app's system dropdown), plus NuArcade's internal emulator names as
 // a fallback in case Sync was configured using those instead.
 const EMUMOVIES_SYSTEMS = [
-  // Confirmed / likely EmuMovies Sync system names
-  'Microsoft Xbox 360', 'Microsoft Xbox', 'Microsoft Xbox One',
-  'Sony Playstation', 'Sony Playstation 2', 'Sony Playstation 3', 'Sony Playstation Portable', 'Sony Playstation Vita',
-  'Nintendo Entertainment System', 'Super Nintendo Entertainment System',
-  'Nintendo 64', 'Nintendo Gamecube', 'Nintendo Wii', 'Nintendo Wii U', 'Nintendo Switch',
-  'Nintendo Game Boy', 'Nintendo Game Boy Color', 'Nintendo Game Boy Advance', 'Nintendo DS', 'Nintendo 3DS',
-  'Sega Genesis', 'Sega Saturn', 'Sega CD', 'Sega 32X',
-  'Sega Master System', 'Sega Game Gear', 'Sega Dreamcast',
-  'Atari 2600', 'Atari 5200', 'Atari 7800', 'Atari Jaguar', 'Atari Lynx',
-  'Neo Geo', 'TurboGrafx-16', 'Commodore 64', 'Commodore Amiga', '3DO',
-  'MAME', 'Non-Arcade MAME',
-  // NuArcade's own emulator names, as an alternate naming fallback
-  'TeknoParrot', 'RPCS3', 'Xenia', 'Dolphin', 'PCSX2', 'Ryujinx',
-  'DuckStation', 'Flycast', 'PPSSPP', 'Cemu', 'Model2', 'Model3', 'Steam', 'PC',
+  // Complete, verified list -- transcribed directly from EmuMovies Sync's
+  // own "System:" dropdown (v2.71). This is the ground truth for what
+  // EmuMovies actually catalogs; using it directly (rather than guessing)
+  // means matching is accurate for every system, not just the ones we
+  // happened to think of. NuArcade's own emulator folder names (Xenia,
+  // TeknoParrot, etc.) intentionally aren't listed here -- they're wrapper
+  // folders the two-level discovery in scanEmuMoviesMedia already looks
+  // inside of automatically when a folder name doesn't match anything below.
+  'Aamber Pegasus', 'Acorn Archimedes', 'Acorn Atom', 'Acorn BBC Micro',
+  'Acorn Electron', 'Alf TV Game', 'American Laser Games', 'Amstrad CPC',
+  'Amstrad GX4000', 'APF Imagination Machine', 'APF MP-1000', 'Apogey BK-01',
+  'Apple II', 'Apple IIGS', 'Apple Macintosh', 'ArcadePC',
+  'Atari 2600', 'Atari 5200', 'Atari 7800', 'Atari 8-bit',
+  'Atari Classics', 'Atari Jaguar', 'Atari Jaguar CD', 'Atari Lynx',
+  'Atari ST', 'Bally Astrocade', 'Bandai Sufami Turbo', 'Bandai WonderSwan',
+  'Bandai WonderSwan Color', 'Big Fish Games', 'Camputers Lynx', 'Capcom Classics',
+  'Capcom Play System', 'Capcom Play System II', 'Capcom Play System III', 'Casio Loopy',
+  'Casio PV-1000', 'Casio PV-2000', 'Coleco ADAM', 'ColecoVision',
+  'Commodore 128', 'Commodore 16', 'Commodore 64', 'Commodore Amiga',
+  'Commodore Amiga CD32', 'Commodore CDTV', 'Commodore MAX Machine', 'Commodore PET',
+  'Commodore Plus 4', 'Commodore VIC-20', 'Daphne', 'Data East Classics',
+  'DICE', 'Doujin Soft', 'Dragon 32-64', 'EACA EG2000 Colour Genie',
+  'Elektronika BK 0011', 'Emerson Arcadia 2001', 'Entex Adventure Vision', 'Epoch Game Pocket Computer',
+  'Epoch Super Cassette Vision', 'Examu Ex-Board', 'Exelvision EXL 100', 'Exidy Sorcerer',
+  'Fairchild Channel F', 'Final Burn Alpha', 'Fujitsu FM Towns', 'Fujitsu FM-7',
+  'Funtech Super Acan', 'Future Pinball', 'Gamepark GP32', 'GCE Vectrex',
+  'Genesis Microchip Nuon', 'Hartung Game Master', 'HBMAME', 'Hector HRX',
+  'Infocom Z-System', 'Interton VC 4000', 'Irem Classics', 'Jupiter ACE',
+  'Konami Classics', 'Konami e-AMUSEMENT', 'Konami Handheld', 'Konix Multi-System',
+  'Locomalito', 'Lviv PC-01', 'Magnavox Odyssey', 'Magnavox Odyssey 2',
+  'MAME', 'Matra and Hachette Alice', 'Mattel Aquarius', 'Mattel Intellivision',
+  'Mega Duck', 'Memotech MTX', 'MGT Sam Coupe', 'Microsoft DOS',
+  'Microsoft MSX2 Plus', 'Microsoft Windows', 'Microsoft Windows 3.x', 'Microsoft Xbox',
+  'Microsoft Xbox 360', 'MiSFiT MAME', 'MSX', 'MSX 2',
+  'MSX 2+', 'MSX Laserdisc', 'MUGEN', 'Namco Classics',
+  'Namco System 22', 'NEC PC-8801', 'NEC PC-9801', 'NEC PC-FX',
+  'NEC SuperGrafx', 'NEC TurboGrafx CD', 'NEC TurboGrafx-16', 'NESiCAxLive',
+  'Nintendo 3DS', 'Nintendo 64DD', 'Nintendo Arcade Systems', 'Nintendo Classics',
+  'Nintendo DSi', 'Nintendo Famicom', 'Nintendo Famicom Disk System', 'Nintendo Game and Watch',
+  'Nintendo Game Boy', 'Nintendo Game Boy Advance', 'Nintendo Game Boy Color', 'Nintendo GameCube',
+  'Nintendo MSU-1', 'Nintendo N64', 'Nintendo NES', 'Nintendo Pokemon Mini',
+  'Nintendo Satellaview', 'Nintendo SNES', 'Nintendo Super Famicom', 'Nintendo Super Gameboy',
+  'Nintendo Switch', 'Nintendo Virtual Boy', 'Nintendo Wii', 'Nintendo Wii U',
+  'Nintendo WiiWare', 'OpenBOR', 'Panasonic 3DO', 'Philips CD-i',
+  'Philips VG 5000', 'Philips Videopac+', 'Pioneer Palcom Laserdisc', 'PopCap',
+  'Radio-86RK Mikrosha', 'RCA Studio II', 'ResidualVM', 'Sammy Atomiswave',
+  'ScummVM', 'Sega 32X', 'Sega CD', 'Sega Dreamcast',
+  'Sega Dreamcast VMU', 'Sega Game Gear', 'Sega Genesis', 'Sega Hikaru',
+  'Sega Master System', 'Sega Model 2', 'Sega Model 3', 'Sega Naomi',
+  'Sega Pico', 'Sega Saturn', 'Sega SC-3000', 'Sega SG-1000',
+  'Sega ST-V', 'Sega Triforce', 'Seta Aleck64', 'Sharp MZ-2500',
+  'Sharp X1', 'Sharp X68000', 'Sinclair ZX Spectrum', 'Sinclair ZX-81',
+  'SNK Classics', 'SNK Neo-Geo AES', 'SNK Neo-Geo CD', 'SNK Neo-Geo MVS',
+  'SNK Neo-Geo Pocket', 'SNK Neo-Geo Pocket Color', 'Sony Playstation', 'Sony Playstation 2',
+  'Sony PlayStation 3', 'Sony PlayStation 4', 'Sony PlayStation Vita', 'Sony PocketStation',
+  'Sony PSP', 'Sony PSP Minis', 'Sord M5', 'Spectravideo',
+  'Taito Classics', 'Tandy TRS-80', 'Tandy TRS-80 CoCo', 'Tangerine Oric',
+  'Texas Instruments TI 99/4A', 'Tiger Game.com', 'Tiger Handheld Electronics', 'Tomy Tutor',
+  'Touhou Project', 'Vector-06C', 'Visual Pinball', 'VTech CreatiVision',
+  'Vtech Socrates', 'Watara Supervision', 'Williams Classics', 'WoW Action Max',
+  'ZiNc',
 ]
 
 function cleanEmuMoviesFilename(filename) {
