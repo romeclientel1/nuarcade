@@ -424,6 +424,7 @@ async function scanGames(teknoParrotPath, gamesFolderPath, retroarchPath) {
         isLauncher: true,
         configured: true,
         exeFound:   true,
+        icon:       'RA',
       })
     }
   }
