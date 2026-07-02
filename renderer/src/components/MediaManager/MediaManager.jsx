@@ -14,7 +14,7 @@ const SAMPLE_GAMES = [
   { id: "BlazBlueCrossTagBattle", title: "BlazBlue Cross Tag Battle",  genre: "Fighting", system: "NESiCAxLive", hasVideo: false },
 ]
 
-const TABS = ['library', 'artwork', 'about']
+const TABS = ['library', 'artwork', 'emumovies', 'about']
 
 export default function MediaManager({ onClose, onVideosUpdated }) {
   const scrollRef = useRef(null)
@@ -41,6 +41,63 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
   const [bulkRunning, setBulkRunning] = useState(false)
   const [bulkProgress, setBulkProgress] = useState(null) // { current, total, title, done, failed }
   const bulkCancelRef = useRef(false)
+
+  // -- EmuMovies local Sync import --
+  const [emScanResult, setEmScanResult] = useState(null)
+  const [emScanning, setEmScanning] = useState(false)
+  const [emImported, setEmImported] = useState({}) // sourceFile -> 'done' | 'error'
+  const [emPick, setEmPick] = useState({}) // sourceFile -> chosen gameId
+
+  const handleScanEmuMovies = async () => {
+    if (!window.nuarcade?.scanEmuMoviesMedia) return
+    setEmScanning(true)
+    setEmScanResult(null)
+    try {
+      const result = await window.nuarcade.scanEmuMoviesMedia({
+        mediaPath: mmConfig?.mediaPath,
+        games,
+      })
+      setEmScanResult(result)
+      log(result.error ? 'EmuMovies scan: ' + result.error : 'EmuMovies scan found ' + (result.totalFound || 0) + ' matches', result.error ? 'warn' : 'ok')
+    } catch (e) {
+      setEmScanResult({ suggestions: [], error: e.message || String(e) })
+      log('EmuMovies scan exception: ' + (e.message || String(e)), 'error')
+    }
+    setEmScanning(false)
+  }
+
+  const handleImportEmuMovies = async (suggestion, gameId) => {
+    if (!gameId || !window.nuarcade?.importEmuMoviesFile) return
+    const key = suggestion.sourceFile
+    try {
+      const result = await window.nuarcade.importEmuMoviesFile({
+        sourceFile: suggestion.sourceFile,
+        gameId,
+        mediaType: suggestion.mediaType,
+        mediaPath: mmConfig?.mediaPath,
+      })
+      if (result.success) {
+        setEmImported(prev => ({ ...prev, [key]: 'done' }))
+        if (suggestion.mediaType === 'video') {
+          setGames(g => g.map(x => (x.id || x.profile) === gameId ? { ...x, hasVideo: true } : x))
+          onVideosUpdated?.()
+        } else {
+          try {
+            const artwork = JSON.parse(localStorage.getItem('nuarcade_artwork') || '{}')
+            artwork[gameId] = { ...(artwork[gameId] || {}), hero: result.fileUrl }
+            localStorage.setItem('nuarcade_artwork', JSON.stringify(artwork))
+          } catch {}
+        }
+        log('Imported ' + suggestion.fileName + ' -> ' + gameId, 'ok')
+      } else {
+        setEmImported(prev => ({ ...prev, [key]: 'error' }))
+        log('Import failed for ' + suggestion.fileName + ': ' + result.error, 'error')
+      }
+    } catch (e) {
+      setEmImported(prev => ({ ...prev, [key]: 'error' }))
+      log('Import exception: ' + (e.message || String(e)), 'error')
+    }
+  }
 
   useEffect(() => {
     scanLibrary()
@@ -309,6 +366,7 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
         <div className={styles.tabs}>
           <button className={styles.tab + (tab === "library" ? " " + styles.tabActive : "")} onClick={() => setTab("library")}>Library</button>
           <button className={styles.tab + (tab === "artwork" ? " " + styles.tabActive : "")} onClick={() => setTab("artwork")}>Artwork</button>
+          <button className={styles.tab + (tab === "emumovies" ? " " + styles.tabActive : "")} onClick={() => setTab("emumovies")}>EmuMovies</button>
           <button className={styles.tab + (tab === "about" ? " " + styles.tabActive : "")} onClick={() => setTab("about")}>About</button>
         </div>
 
@@ -497,6 +555,86 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {tab === "emumovies" && (
+          <div className={styles.body}>
+            <div className={styles.settingsSection}>
+              <div className={styles.sectionSub}>
+                Scans folders populated by EmuMovies' official Sync desktop app and matches
+                video/artwork files to your games. Run EmuMovies Sync first, pointed at
+                {mmConfig?.mediaPath || 'F:\\Media\\'}EmuMovies. Nothing imports without your confirmation.
+              </div>
+
+              <button
+                className={styles.scanBtn}
+                onClick={handleScanEmuMovies}
+                disabled={emScanning}
+                style={{ marginTop: 10, marginBottom: 12 }}
+              >
+                {emScanning ? 'Scanning...' : 'Scan EmuMovies folder'}
+              </button>
+
+              {emScanResult?.error && (
+                <div style={{ color: '#ff8888', fontSize: 12, padding: '6px 0' }}>{emScanResult.error}</div>
+              )}
+
+              {emScanResult && !emScanResult.error && (
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginBottom: 10 }}>
+                  {emScanResult.suggestions.length === 0
+                    ? 'No matching files found.'
+                    : emScanResult.suggestions.length + ' file(s) found with possible matches.'}
+                </div>
+              )}
+
+              {emScanResult?.suggestions?.map(s => {
+                const status = emImported[s.sourceFile]
+                const chosen = emPick[s.sourceFile] ?? s.topMatch?.id ?? ''
+                return (
+                  <div key={s.sourceFile} style={{
+                    border: '1px solid rgba(255,255,255,0.12)', borderRadius: 6, padding: 10, marginBottom: 8,
+                    background: status === 'done' ? 'rgba(0,255,136,0.08)' : 'rgba(255,255,255,0.03)',
+                  }}>
+                    <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: '#fff', marginBottom: 2 }}>
+                      {s.fileName} <span style={{ color: 'rgba(255,255,255,0.35)' }}>({s.mediaType}, {s.system})</span>
+                    </div>
+                    {status === 'done' ? (
+                      <div style={{ color: '#00ff88', fontSize: 12 }}>Imported to {chosen}</div>
+                    ) : status === 'error' ? (
+                      <div style={{ color: '#ff4444', fontSize: 12 }}>Import failed -- see log</div>
+                    ) : (
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                        <select
+                          className={styles.input}
+                          style={{ flex: 1, minWidth: 200 }}
+                          value={chosen}
+                          onChange={e => setEmPick(prev => ({ ...prev, [s.sourceFile]: e.target.value }))}
+                        >
+                          {s.topMatch && (
+                            <option value={s.topMatch.id}>
+                              {s.topMatch.title} ({Math.round(s.topMatch.score * 100)}% match{s.confident ? ', confident' : ''})
+                            </option>
+                          )}
+                          {s.alternates?.map(alt => (
+                            <option key={alt.id} value={alt.id}>
+                              {alt.title} ({Math.round(alt.score * 100)}% match)
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          className={styles.dlBtn}
+                          disabled={!chosen}
+                          onClick={() => handleImportEmuMovies(s, chosen)}
+                        >
+                          Import
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
           </div>
         )}
 
