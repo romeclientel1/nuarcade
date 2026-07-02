@@ -104,14 +104,7 @@ export default function ArtworkManager({ games, onClose, apiKey, ssUser, ssPass,
   const canRun = apiKey || (ssUser && ssPass)
 
   return (
-    <div className={styles.overlay}>
-      <div className={styles.panel}>
-        <div className={styles.header}>
-          <div className={styles.title}>Artwork Manager</div>
-          <button className={styles.closeBtn} onClick={onClose}>X</button>
-        </div>
-
-        <div className={styles.body}>
+    <div className={styles.body}>
           <div className={styles.info}>
             Fetches box art, hero images, and logos for all {games.length} games.
             Uses SteamGridDB for modern titles and ScreenScraper for retro/arcade.
@@ -175,8 +168,6 @@ export default function ArtworkManager({ games, onClose, apiKey, ssUser, ssPass,
               Done - close
             </button>
           )}
-        </div>
-      </div>
     </div>
   )
 }
