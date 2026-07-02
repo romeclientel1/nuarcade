@@ -104,6 +104,7 @@ export default function ArtworkManager({ games, onClose, apiKey, ssUser, ssPass,
   const canRun = apiKey || (ssUser && ssPass)
 
   return (
+    <>
     <div className={styles.body}>
           <div className={styles.info}>
             Fetches box art, hero images, and logos for all {games.length} games.
@@ -169,5 +170,6 @@ export default function ArtworkManager({ games, onClose, apiKey, ssUser, ssPass,
             </button>
           )}
     </div>
+    </>
   )
 }
