@@ -963,7 +963,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       )}
 
       <AttractMode
-        games={filteredGames}
+        games={games.filter(g => !g.isLauncher)}
         isActive={attractMode}
         onSelect={setSelectedIndex}
         onWake={resetIdleTimer}
