@@ -36,8 +36,10 @@ export default function ArtworkManager({ games, onClose, apiKey, ssUser, ssPass,
       const key = game.id || game.profile
       setProgress(Math.round((i / games.length) * 100))
 
-      // Skip if we already have capsule art for this game
-      if (artwork[key]?.capsule) {
+      // Skip if we already have artwork for this game -- checking both
+      // capsule and hero so an EmuMovies-imported hero (with no capsule)
+      // doesn't get silently overwritten by a later bulk fetch here.
+      if (artwork[key]?.capsule || artwork[key]?.hero) {
         skippedCount++
         setSkipped(skippedCount)
         continue
@@ -78,7 +80,7 @@ export default function ArtworkManager({ games, onClose, apiKey, ssUser, ssPass,
       }
 
       if (result) {
-        artwork[key] = result
+        artwork[key] = { ...(artwork[key] || {}), ...result }
         foundCount++
         setFound(foundCount)
         addLog("Found (" + (result.source === "sgdb" ? "SGDB" : "ScreenScraper") + "): " + game.title, "ok")
