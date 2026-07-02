@@ -351,7 +351,11 @@ const handleSave = async () => {
         <div className={styles.body} ref={scrollRef}>
 
           {restartNeeded && (
-            <div className={styles.updateBanner} style={{ background: 'rgba(255,170,0,0.12)', borderColor: '#ffaa00' }}>
+            <div className={styles.updateBanner} style={{
+              background: '#2a1f00', borderColor: '#ffaa00',
+              position: 'sticky', top: 0, zIndex: 50,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+            }}>
               <span>Restart required to apply your changes.</span>
               <button className={styles.updateBtn} style={{ background: '#ffaa00' }} onClick={() => setShowRestartConfirm(true)}>
                 Restart Now
