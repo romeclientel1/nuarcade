@@ -61,6 +61,7 @@ contextBridge.exposeInMainWorld('nuarcade', {
   runUpdater: () => ipcRenderer.invoke('run-updater'),
 
   // Media
+  testScreenScraper: (opts) => ipcRenderer.invoke('test-screenscraper', opts),
   searchVideo:   (title) => ipcRenderer.invoke('search-video', title),
   downloadVideo: (opts)  => ipcRenderer.invoke('download-video', opts),
   getVideos:     ()      => ipcRenderer.invoke('get-videos'),
