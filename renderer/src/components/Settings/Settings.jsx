@@ -1074,16 +1074,7 @@ const handleSave = async () => {
 
           <div className={styles.section}>
             <div className={styles.sectionTitle}>About</div>
-            <div className={styles.inputRow}>
-              <label className={styles.inputLabel}>Setup Wizard</label>
-              <button className={styles.exportBtn} onClick={async () => {
-                await window.nuarcade?.resetSetup?.()
-                onClose()
-                window.location.reload()
-              }}>
-                Re-run Setup Wizard
-              </button>
-            </div>
+
             <div className={styles.aboutGrid}>
               <div className={styles.aboutRow}>
                 <span className={styles.aboutLabel}>Version</span>
