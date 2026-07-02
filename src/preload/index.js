@@ -71,6 +71,7 @@ contextBridge.exposeInMainWorld('nuarcade', {
   downloadUpdate:  (opts) => ipcRenderer.invoke('download-update', opts),
   installUpdate:   (opts) => ipcRenderer.invoke('install-update', opts),
   onUpdateProgress: (cb) => ipcRenderer.on('update-progress', (_, data) => cb(data)),
+  ensureYtdlp:   ()      => ipcRenderer.invoke('ensure-ytdlp'),
   ytdlpSearch:   (opts)  => ipcRenderer.invoke('ytdlp-search', opts),   // { gameTitle, gameId, system, emulator, genre }
   ytdlpDownload: (opts)  => ipcRenderer.invoke('ytdlp-download', opts),
 
