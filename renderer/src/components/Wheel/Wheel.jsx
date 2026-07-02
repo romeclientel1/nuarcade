@@ -503,6 +503,14 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       }, 50)
     }
   }, [current?.id, current?.profile, current?.videoPath])
+
+  // Sync background video volume with the "Attract volume" setting -- applies to both
+  // the A/B crossfade elements here on the main wheel, whenever the value changes
+  useEffect(() => {
+    const vol = Math.max(0, Math.min(1, (config?.ambientVolume ?? 35) / 100))
+    if (bgVideoARef.current) bgVideoARef.current.volume = vol
+    if (bgVideoBRef.current) bgVideoBRef.current.volume = vol
+  }, [config?.ambientVolume, bgVideoA, bgVideoB])
   useEffect(() => {
     if (!current || !window.nuarcade?.updateMarquee) return
     const art = artwork?.[current.id || current.profile]
@@ -944,7 +952,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
           ref={bgVideoARef}
           className={`${styles.bgVideo} ${bgActive !== 'a' ? styles.bgVideoHidden : ''}`}
           src={bgVideoA}
-          muted
           loop
           playsInline
           autoPlay
@@ -955,7 +962,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
           ref={bgVideoBRef}
           className={`${styles.bgVideo} ${bgActive !== 'b' ? styles.bgVideoHidden : ''}`}
           src={bgVideoB}
-          muted
           loop
           playsInline
           autoPlay
@@ -969,8 +975,9 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
         onWake={resetIdleTimer}
         artwork={artwork}
         attractConfig={{
-          cycleSpeed:  config?.attractCycleSpeed || 6,
-          preferArt:   config?.attractPreferArt !== false,
+          cycleSpeed:    config?.attractCycleSpeed || 6,
+          preferArt:     config?.attractPreferArt !== false,
+          ambientVolume: config?.ambientVolume ?? 35,
         }}
       />
 
