@@ -41,7 +41,7 @@ const EMULATOR_EXES = {
   pinballPath: 'VPinballX64.exe',
 }
 
-export default function Settings({ games = [], onClose, onCRTChange, crtEnabled, themeId, onThemeChange, onSetupWizard }) {
+export default function Settings({ games = [], onClose, onCRTChange, crtEnabled, themeId, onThemeChange }) {
   const scrollRef = useRef(null)
   const saveRef    = useRef(null)
   useOverlayGamepad({
@@ -787,14 +787,7 @@ const handleSave = async () => {
 
           <div className={styles.section}>
             <div className={styles.sectionTitle}>Emulators</div>
-            {onSetupWizard && (
-              <div className={styles.inputRow}>
-                <label className={styles.inputLabel}>Add or configure emulators</label>
-                <button className={styles.exportBtn} onClick={() => { onClose(); onSetupWizard() }}>
-                  Open Setup Wizard
-                </button>
-              </div>
-            )}
+            
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>Auto-configure TeknoParrot</label>
               <button
