@@ -477,7 +477,14 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
         {tab === "library" && (
           <div className={styles.body}>
 
-            
+            <div style={{
+              fontSize: 12, fontWeight: 'bold', color: '#f59e0b',
+              background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)',
+              borderRadius: 6, padding: '8px 12px', marginBottom: 10,
+            }}>
+              For YouTube downloads to work reliably, you need to be signed into YouTube in a browser on this PC.
+              Without it, YouTube blocks most automated download attempts.
+            </div>
 
             <div className={styles.statsRow}>
               <div className={styles.stat}>
@@ -728,7 +735,7 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
 
               {emScanResult && !emScanResult.error && (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 10 }}>
-                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>
+                  <div style={{ fontSize: 12, fontWeight: 'bold', color: 'rgba(255,255,255,0.85)' }}>
                     {emScanResult.suggestions.length === 0
                       ? 'No matching files found.'
                       : emScanResult.suggestions.length + ' file(s) found with possible matches.'}
