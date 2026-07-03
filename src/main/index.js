@@ -1320,79 +1320,100 @@ ipcMain.handle('ytdlp-download', async (event, { videoId, gameId }) => {
   return new Promise((resolve) => {
     const url = 'https://www.youtube.com/watch?v=' + videoId
 
-    // Use a unique temp filename so parallel downloads don't collide.
-    // yt-dlp downloads to tempFile, we rename to outputFile on success.
-    const tempId = gameId + '_tmp_' + Date.now()
-    const tempFile = path.join(videosDir, tempId + '.mp4')
+    // Attempts one download. useCookies pulls an already-logged-in browser
+    // session's cookies, which is the standard 2026 fix for YouTube's
+    // "Sign in to confirm you're not a bot" bot-detection wall -- but it
+    // only helps if the person is actually logged into YouTube in that
+    // browser on this same machine, and if the browser/profile isn't found
+    // yt-dlp can hard-fail rather than gracefully skip it. So: try with
+    // cookies first, and if that whole attempt fails for any reason, retry
+    // once without cookies -- this never makes a working case worse.
+    const attemptDownload = (useCookies) => new Promise((attemptResolve) => {
+      const tempId = gameId + '_tmp_' + Date.now() + '_' + (useCookies ? 'c' : 'n')
+      const tempFile = path.join(videosDir, tempId + '.mp4')
 
-    const dlArgs = [
-      url,
-      '--format', 'bestvideo[ext=mp4][height<=480]+bestaudio[ext=m4a]/best[ext=mp4][height<=480]/best[height<=480]/best',
-      '--merge-output-format', 'mp4',
-      '--postprocessor-args', 'ffmpeg:-t 40',
-      '--output', tempFile,
-      '--no-playlist',
-      '--no-warnings',
-      '--socket-timeout', '20',
-      '--retries', '2',
-    ]
+      const dlArgs = [
+        url,
+        '--format', 'bestvideo[ext=mp4][height<=480]+bestaudio[ext=m4a]/best[ext=mp4][height<=480]/best[height<=480]/best',
+        '--merge-output-format', 'mp4',
+        '--postprocessor-args', 'ffmpeg:-t 40',
+        '--output', tempFile,
+        '--no-playlist',
+        '--no-warnings',
+        '--socket-timeout', '20',
+        '--retries', '2',
+        ...(useCookies ? ['--cookies-from-browser', 'chrome'] : []),
+      ]
 
-    let dlStderr = ''
-    const dlProc = spawn(ytdlpExe, dlArgs, { stdio: ['ignore', 'ignore', 'pipe'] })
-    dlProc.stderr.on('data', d => { dlStderr += d.toString() })
+      let dlStderr = ''
+      const dlProc = spawn(ytdlpExe, dlArgs, { stdio: ['ignore', 'ignore', 'pipe'] })
+      dlProc.stderr.on('data', d => { dlStderr += d.toString() })
 
-    const dlTimer = setTimeout(() => {
-      dlProc.kill()
-      try { if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile) } catch {}
-      resolve({ success: false, error: 'Download timed out after 3 minutes' })
-    }, 180000)
+      const dlTimer = setTimeout(() => {
+        dlProc.kill()
+        try { if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile) } catch {}
+        attemptResolve({ success: false, error: 'Download timed out after 3 minutes' })
+      }, 180000)
 
-    dlProc.on('error', (e) => {
-      clearTimeout(dlTimer)
-      resolve({ success: false, error: 'yt-dlp spawn error: ' + e.message })
+      dlProc.on('error', (e) => {
+        clearTimeout(dlTimer)
+        attemptResolve({ success: false, error: 'yt-dlp spawn error: ' + e.message })
+      })
+
+      dlProc.on('close', (code) => {
+        clearTimeout(dlTimer)
+
+        if (code !== 0) {
+          try { if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile) } catch {}
+          return attemptResolve({ success: false, error: dlStderr.slice(-400) || 'yt-dlp exited with code ' + code })
+        }
+
+        let foundFile = null
+        if (fs.existsSync(tempFile)) {
+          foundFile = tempFile
+        } else {
+          try {
+            const match = fs.readdirSync(videosDir)
+              .filter(f => f.startsWith(tempId) && f.toLowerCase().endsWith('.mp4'))
+            if (match.length > 0) foundFile = path.join(videosDir, match[0])
+          } catch {}
+        }
+
+        if (!foundFile) {
+          return attemptResolve({ success: false, error: 'yt-dlp finished but temp file not found (tempId: ' + tempId + ')' })
+        }
+
+        attemptResolve({ success: true, foundFile })
+      })
     })
 
-    dlProc.on('close', (code) => {
-      clearTimeout(dlTimer)
-
-      if (code !== 0) {
-        try { if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile) } catch {}
-        return resolve({ success: false, error: dlStderr.slice(-400) || 'yt-dlp exited with code ' + code })
+    ;(async () => {
+      let result = await attemptDownload(true)
+      if (!result.success) {
+        result = await attemptDownload(false)
       }
 
-      // Find what yt-dlp actually wrote -- it may have sanitized the temp name too
-      let foundFile = null
-
-      if (fs.existsSync(tempFile)) {
-        foundFile = tempFile
-      } else {
-        // Scan for any file starting with our tempId prefix
-        try {
-          const match = fs.readdirSync(videosDir)
-            .filter(f => f.startsWith(tempId) && f.toLowerCase().endsWith('.mp4'))
-          if (match.length > 0) foundFile = path.join(videosDir, match[0])
-        } catch {}
-      }
-
-      if (!foundFile) {
-        return resolve({ success: false, error: 'yt-dlp finished but temp file not found (tempId: ' + tempId + ')' })
+      if (!result.success) {
+        resolve(result)
+        return
       }
 
       // Rename temp -> final gameId path
       try {
         if (fs.existsSync(outputFile)) fs.unlinkSync(outputFile)
-        fs.renameSync(foundFile, outputFile)
+        fs.renameSync(result.foundFile, outputFile)
       } catch (e) {
-        // Rename failed -- use whatever path we have
         saveRegistry()
-        return resolve({ success: true, outputFile: foundFile, startSec: 0 })
+        resolve({ success: true, outputFile: result.foundFile, startSec: 0 })
+        return
       }
 
       saveRegistry()
       resolve({ success: true, outputFile, startSec: 0 })
-    })
+    })()
   })
 })
+
 
 // -- Music: scan F:/Media/Music/ for mp3 files ----------------------------
 ipcMain.handle('get-music-tracks', async () => {
