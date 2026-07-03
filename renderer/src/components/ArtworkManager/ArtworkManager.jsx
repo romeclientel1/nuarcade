@@ -1,15 +1,13 @@
 import { useState, useCallback } from "react"
 import { useSteamGridDB } from "../../hooks/useSteamGridDB"
-import { fetchScreenScraperArtwork } from "../../hooks/useScreenScraper"
 import styles from "./ArtworkManager.module.css"
 
-export default function ArtworkManager({ games, onClose, apiKey, ssUser, ssPass, onArtworkUpdate }) {
+export default function ArtworkManager({ games, onClose, apiKey, onArtworkUpdate }) {
   const [status,   setStatus  ] = useState("idle")
   const [progress, setProgress] = useState(0)
   const [log,      setLog     ] = useState([])
   const [found,    setFound   ] = useState(0)
   const [skipped,  setSkipped ] = useState(0)
-  const [source,   setSource  ] = useState({ sgdb: 0, ss: 0 })
   const { fetchArtworkForGame } = useSteamGridDB(apiKey)
 
   const addLog = (msg, type = "info") => setLog(l => [...l.slice(-60), { msg, type }])
@@ -20,7 +18,6 @@ export default function ArtworkManager({ games, onClose, apiKey, ssUser, ssPass,
     setLog([])
     setFound(0)
     setSkipped(0)
-    setSource({ sgdb: 0, ss: 0 })
 
     // Load existing artwork so we don't re-fetch what we already have
     let artwork = {}
@@ -28,8 +25,6 @@ export default function ArtworkManager({ games, onClose, apiKey, ssUser, ssPass,
 
     let foundCount = 0
     let skippedCount = 0
-    let sgdbCount = 0
-    let ssCount = 0
 
     for (let i = 0; i < games.length; i++) {
       const game = games[i]
@@ -49,14 +44,11 @@ export default function ArtworkManager({ games, onClose, apiKey, ssUser, ssPass,
 
       let result = null
 
-      // Try SteamGridDB first (best for modern games)
       if (apiKey) {
         try {
           result = await fetchArtworkForGame(game.title)
           if (result?.capsule || result?.hero) {
             result.source = "sgdb"
-            sgdbCount++
-            setSource({ sgdb: sgdbCount, ss: ssCount })
           } else {
             result = null
           }
@@ -64,26 +56,11 @@ export default function ArtworkManager({ games, onClose, apiKey, ssUser, ssPass,
         await new Promise(r => setTimeout(r, 200))
       }
 
-      // Fall back to ScreenScraper (best for retro/MAME)
-      if (!result && ssUser && ssPass) {
-        try {
-          result = await fetchScreenScraperArtwork(game, ssUser, ssPass)
-          if (result?.capsule || result?.hero) {
-            result.source = "screenscraper"
-            ssCount++
-            setSource({ sgdb: sgdbCount, ss: ssCount })
-          } else {
-            result = null
-          }
-        } catch (e) { result = null }
-        await new Promise(r => setTimeout(r, 400))
-      }
-
       if (result) {
         artwork[key] = { ...(artwork[key] || {}), ...result }
         foundCount++
         setFound(foundCount)
-        addLog("Found (" + (result.source === "sgdb" ? "SGDB" : "ScreenScraper") + "): " + game.title, "ok")
+        addLog("Found: " + game.title, "ok")
       } else {
         addLog("No art found: " + game.title, "miss")
       }
@@ -99,31 +76,27 @@ export default function ArtworkManager({ games, onClose, apiKey, ssUser, ssPass,
     setProgress(100)
     setStatus("done")
     addLog("Complete! " + foundCount + " found, " + skippedCount + " already had art.", "ok")
-  }, [games, fetchArtworkForGame, apiKey, ssUser, ssPass, onArtworkUpdate])
+  }, [games, fetchArtworkForGame, apiKey, onArtworkUpdate])
 
-  const canRun = apiKey || (ssUser && ssPass)
+  const canRun = !!apiKey
 
   return (
     <>
     <div className={styles.body}>
           <div className={styles.info}>
-            Fetches box art, hero images, and logos for all {games.length} games.
-            Uses SteamGridDB for modern titles and ScreenScraper for retro/arcade.
+            Fetches box art and hero images for all {games.length} games using SteamGridDB.
             Already-fetched games are skipped automatically.
           </div>
 
           {!canRun && (
             <div className={styles.noKey}>
-              Add a SteamGridDB API key or ScreenScraper credentials in Settings to enable artwork download.
+              Add a SteamGridDB API key in Settings to enable artwork download.
             </div>
           )}
 
           <div className={styles.sourceRow}>
             <div className={styles.sourceChip} style={{ opacity: apiKey ? 1 : 0.3 }}>
               SteamGridDB {apiKey ? "ready" : "no key"}
-            </div>
-            <div className={styles.sourceChip} style={{ opacity: ssUser ? 1 : 0.3 }}>
-              ScreenScraper {ssUser ? "ready" : "no credentials"}
             </div>
           </div>
 
@@ -137,11 +110,6 @@ export default function ArtworkManager({ games, onClose, apiKey, ssUser, ssPass,
                   ? "Done! " + found + " games got new artwork."
                   : progress + "% -- " + found + " found, " + skipped + " skipped"}
               </div>
-              {status === "done" && (
-                <div className={styles.sourceStats}>
-                  SteamGridDB: {source.sgdb} | ScreenScraper: {source.ss}
-                </div>
-              )}
               <div className={styles.logBox}>
                 {log.map((l, i) => (
                   <div key={i} className={styles.logLine + " " + (l.type === "ok" ? styles.logOk : l.type === "miss" ? styles.logMiss : "")}>
