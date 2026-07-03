@@ -25,6 +25,9 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
   const [emFocused, setEmFocused] = useState(null) // null | 'create' | 'scan'
   const emScanBtnRef = useRef(null)
   const emCreateBtnRef = useRef(null)
+  const [restartNeeded, setRestartNeeded] = useState(false)
+  const [showRestartConfirm, setShowRestartConfirm] = useState(false)
+  const [importingAll, setImportingAll] = useState(false)
 
   // Reset focus whenever the tab changes via any path (mouse click, gamepad, etc.)
   useEffect(() => {
@@ -144,6 +147,7 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
             localStorage.setItem('nuarcade_artwork', JSON.stringify(artwork))
           } catch {}
         }
+        setRestartNeeded(true)
         log('Imported ' + suggestion.slot + ' for ' + suggestion.gameTitle, 'ok')
       } else {
         setEmImported(prev => ({ ...prev, [key]: 'error' }))
@@ -153,6 +157,19 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
       setEmImported(prev => ({ ...prev, [key]: 'error' }))
       log('Import exception: ' + (e.message || String(e)), 'error')
     }
+  }
+
+  const handleImportAll = async () => {
+    if (!emScanResult?.suggestions?.length || importingAll) return
+    setImportingAll(true)
+    for (const s of emScanResult.suggestions) {
+      const key = s.gameId + '|' + s.slot
+      if (emImported[key] === 'done') continue
+      const chosenPath = emPick[key] ?? s.chosenFile?.sourceFile ?? ''
+      if (!chosenPath) continue
+      await handleImportEmuMovies(s, chosenPath)
+    }
+    setImportingAll(false)
   }
 
   useEffect(() => {
@@ -426,6 +443,23 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
           <button className={styles.tab + (tab === "about" ? " " + styles.tabActive : "")} onClick={() => setTab("about")}>About</button>
         </div>
 
+        {restartNeeded && (
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            gap: 12, padding: '8px 16px', background: '#2a1f00', border: '1px solid #ffaa00',
+            borderRadius: 6, margin: '0 16px 8px', position: 'sticky', top: 0, zIndex: 50,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+          }}>
+            <span style={{ color: '#fff', fontSize: 12 }}>Restart required for imported media to show up.</span>
+            <button
+              style={{ padding: '6px 16px', background: '#ffaa00', color: '#000', border: 'none', borderRadius: 4, fontWeight: 'bold', cursor: 'pointer', fontSize: 12 }}
+              onClick={() => setShowRestartConfirm(true)}
+            >
+              Restart Now
+            </button>
+          </div>
+        )}
+
         {tab === "artwork" && (
           <div className={styles.body}>
             <div style={{ padding: '12px 0 8px', color: 'rgba(255,255,255,0.5)', fontSize: 11 }}>
@@ -685,10 +719,21 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
               )}
 
               {emScanResult && !emScanResult.error && (
-                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginBottom: 10 }}>
-                  {emScanResult.suggestions.length === 0
-                    ? 'No matching files found.'
-                    : emScanResult.suggestions.length + ' file(s) found with possible matches.'}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 10 }}>
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>
+                    {emScanResult.suggestions.length === 0
+                      ? 'No matching files found.'
+                      : emScanResult.suggestions.length + ' file(s) found with possible matches.'}
+                  </div>
+                  {emScanResult.suggestions.length > 0 && (
+                    <button
+                      className={styles.dlBtn}
+                      disabled={importingAll}
+                      onClick={handleImportAll}
+                    >
+                      {importingAll ? 'Importing...' : 'Import All'}
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -770,6 +815,26 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
           </div>
         )}
       </div>
+
+      {showRestartConfirm && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 10000, flexDirection: 'column', gap: 20,
+        }}>
+          <div style={{ color: '#ffaa00', fontFamily: 'Orbitron, monospace', fontSize: 11, letterSpacing: 3 }}>NUARCADE</div>
+          <div style={{ color: '#fff', fontFamily: 'Orbitron, monospace', fontSize: 20, letterSpacing: 2 }}>Restart Now?</div>
+          <div style={{ color: '#aaa', fontFamily: 'Share Tech Mono, monospace', fontSize: 12, textAlign: 'center', maxWidth: 360 }}>
+            NuArcade needs to restart to show the media you just imported.
+          </div>
+          <div style={{ display: 'flex', gap: 20, marginTop: 8 }}>
+            <button style={{ padding: '10px 32px', background: '#ffaa00', color: '#000', border: 'none', borderRadius: 6, fontFamily: 'Orbitron, monospace', fontSize: 14, cursor: 'pointer', fontWeight: 'bold' }}
+              onClick={() => window.nuarcade?.restartApp?.()}>YES</button>
+            <button style={{ padding: '10px 32px', background: '#222', color: '#aaa', border: '1px solid #444', borderRadius: 6, fontFamily: 'Orbitron, monospace', fontSize: 14, cursor: 'pointer' }}
+              onClick={() => setShowRestartConfirm(false)}>NO</button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
