@@ -181,8 +181,10 @@ export default function AttractMode({ games, isActive, onWake, onSelect, artwork
       {/* Scanlines */}
       <div className={styles.scanlines} />
 
-      {/* Capsule art overlay (when hero is available) */}
-      {!hasVideo && heroUrl && capsuleUrl && (
+      {/* Capsule art overlay -- floats over hero art OR video, whichever
+          is the current background. Only fully suppressed when capsule art
+          is itself acting as the background (no video, no hero). */}
+      {(hasVideo || heroUrl) && capsuleUrl && (
         <div className={styles.capsuleWrap} style={fadeStyle}>
           <img src={capsuleUrl} alt="" className={styles.capsuleFloat} />
         </div>
