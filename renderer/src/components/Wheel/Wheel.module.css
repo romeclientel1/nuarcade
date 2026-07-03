@@ -471,9 +471,10 @@
 }
 .mediaBtn {
   padding: 4px 12px;
-  border: 1px solid rgba(0,200,255,0.3);
+  border: 1px solid rgba(0,200,255,0.4);
   background: transparent;
-  color: rgba(0,200,255,0.6);
+  color: rgba(0,200,255,0.9);
+  font-weight: 700;
   font-size: 10px;
   cursor: pointer;
   border-radius: 2px;
@@ -498,9 +499,10 @@
 }
 .settingsBtn {
   padding: 4px 12px;
-  border: 1px solid rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.25);
   background: transparent;
-  color: rgba(255,255,255,0.35);
+  color: rgba(255,255,255,0.8);
+  font-weight: 700;
   font-size: 10px;
   cursor: pointer;
   border-radius: 2px;
@@ -516,9 +518,10 @@
 
 .exitBtn {
   padding: 4px 12px;
-  border: 1px solid rgba(255,80,80,0.25);
+  border: 1px solid rgba(255,80,80,0.35);
   background: transparent;
-  color: rgba(255,80,80,0.4);
+  color: rgba(255,80,80,0.8);
+  font-weight: 700;
   font-size: 10px;
   cursor: pointer;
   border-radius: 2px;
@@ -640,9 +643,10 @@
 }
 .sortBtn {
   padding: 4px 12px;
-  border: 1px solid rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.25);
   background: transparent;
-  color: rgba(255,255,255,0.35);
+  color: rgba(255,255,255,0.8);
+  font-weight: 700;
   font-size: 10px;
   cursor: pointer;
   border-radius: 2px;
@@ -664,8 +668,9 @@
 }
 .helpBtn {
   width: 26px; height: 26px;
-  border: 1px solid rgba(255,255,255,0.15);
-  background: transparent; color: rgba(255,255,255,0.35);
+  border: 1px solid rgba(255,255,255,0.25);
+  background: transparent; color: rgba(255,255,255,0.8);
+  font-weight: 700;
   font-size: 13px; cursor: pointer; border-radius: 50%;
   transition: all 0.15s; display: flex;
   align-items: center; justify-content: center;
@@ -674,24 +679,26 @@
 .helpBtn:hover { border-color: rgba(0,200,255,0.4); color: #00c8ff; }
 .randBtn {
   padding: 0 8px; height: 26px;
-  border: 1px solid rgba(255,255,255,0.15);
-  background: transparent; color: rgba(255,255,255,0.35);
+  border: 1px solid rgba(255,255,255,0.25);
+  background: transparent; color: rgba(255,255,255,0.8);
+  font-weight: 700;
   font-size: 13px; cursor: pointer; border-radius: 4px;
   transition: all 0.15s; display: flex; align-items: center;
 }
 .randBtn:hover { border-color: rgba(250,204,21,0.4); color: #facc15; }
 .colBtn {
   padding: 0 8px; height: 26px;
-  border: 1px solid rgba(255,255,255,0.15);
-  background: transparent; color: rgba(255,255,255,0.35);
+  border: 1px solid rgba(255,255,255,0.25);
+  background: transparent; color: rgba(255,255,255,0.8);
+  font-weight: 700;
   font-size: 11px; cursor: pointer; border-radius: 4px;
   transition: all 0.15s; font-family: monospace;
 }
 .colBtn:hover { border-color: rgba(0,255,136,0.4); color: #00ff88; }
 .statsBtn {
   padding: 0 8px; height: 26px;
-  border: 1px solid rgba(255,255,255,0.15);
-  background: transparent; color: rgba(255,255,255,0.35);
+  border: 1px solid rgba(255,255,255,0.25);
+  background: transparent; color: rgba(255,255,255,0.8);
   font-size: 13px; cursor: pointer; border-radius: 4px;
   transition: all 0.15s; font-family: monospace; font-weight: 700;
 }
@@ -772,7 +779,8 @@
 }
 .hint {
   font-size: 10px;
-  color: rgba(255,255,255,0.2);
+  font-weight: 700;
+  color: rgba(255,255,255,0.55);
   display: flex;
   align-items: center;
   gap: 4px;
@@ -849,8 +857,9 @@
 }
 .achieveBtn {
   padding: 0 8px; height: 26px;
-  border: 1px solid rgba(255,255,255,0.15);
-  background: transparent; color: rgba(255,255,255,0.35);
+  border: 1px solid rgba(255,255,255,0.25);
+  background: transparent; color: rgba(255,255,255,0.8);
+  font-weight: 700;
   font-size: 14px; cursor: pointer; border-radius: 4px;
   transition: all 0.15s;
 }
