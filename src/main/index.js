@@ -1719,46 +1719,15 @@ ipcMain.handle('ensure-media-folders', async (event, customPath) => {
   }
 
   try {
-    // --- STEP 1: NuArcade media folders (art/video per emulator system) ---
-    // NuArcade internal subfolders
-    const nuarcadeSubFolders = [
-      'Images\\Box Art',
-      'Images\\Cabinet Art',
-      'Images\\Marquee',
-      'Images\\Snap',
-      'Images\\Wheel',
-      'Images\\Title',
-      'Images\\Background',
-      'Images\\Banner',
-      'Images\\Logo',
-      'Video',
-    ]
-
-    const systems = [
-      'MAME', 'TeknoParrot', 'RPCS3', 'Xenia', 'Dolphin',
-      'PCSX2', 'Ryujinx', 'DuckStation', 'Flycast', 'PPSSPP',
-      'Cemu', 'Model2', 'Model3', 'RetroArch', 'Steam', 'PC',
-      // RetroArch sub-systems get their own media folders too
-      'NES', 'SNES', 'N64', 'GBA', 'GBC', 'GB', 'NDS',
-      'Genesis', 'Saturn', 'SegaCD', 'Sega32X', 'MasterSystem', 'GameGear',
-      'PlayStation', 'PSP', 'Dreamcast',
-      'NeoGeo', 'PCEngine', 'Atari2600', 'Atari7800', 'AtariJaguar', 'AtariLynx',
-      'Amiga', 'C64', 'DOS', 'ScummVM', 'Arcade',
-    ]
-
+    // Dead-code note: an earlier "Images\\Box Art" / "Images\\Cabinet Art"
+    // per-system folder scheme used to be built here (Step 1), using its own
+    // stale systems list that included individual RetroArch sub-systems like
+    // NES/SNES/Amiga. Confirmed nothing anywhere in the codebase ever reads
+    // from that structure -- it was pure dead weight, and the direct source
+    // of confusing extra folders. Removed. Only the root folder itself needs
+    // creating before the real EmuMovies-compatible structure below.
     ensure(mediaRoot)
-    ensure(path.join(mediaRoot, 'Music'))
-    ensure(path.join(mediaRoot, 'Themes'))
 
-    for (const sys of systems) {
-      for (const sub of nuarcadeSubFolders) {
-        ensure(path.join(mediaRoot, sys, sub))
-      }
-    }
-
-    // --- STEP 2: EmuMovies Sync compatible folders (exact naming match) ---
-    // EmuMovies outputs: snap, title, background, banner, cabinet,
-    // marquee, logo, artwork_preview, controls, cp, icon, pcb, Video_MP4
     // Real EmuMovies Sync folder names (confirmed against the live Sync app's
     // "Available Media" dropdown). Sync uses underscores in place of spaces
     // throughout its own system folder names (e.g. Microsoft_Xbox_360).
@@ -1786,13 +1755,19 @@ ipcMain.handle('ensure-media-folders', async (event, customPath) => {
 
     // One folder per emulator NuArcade actually knows how to launch --
     // matches the exact names shown in Settings' Emulators grid, so what
-    // Rome sees here lines up with what he sees there. RetroArch excluded:
-    // it's multi-system by nature, EmuMovies media should live under the
-    // specific console folders instead, not a single "RetroArch" bucket.
+    // Rome sees here lines up with what he sees there. RetroArch and MAME
+    // excluded: MAME's own arcade catalog lives entirely inside RetroArch,
+    // and RetroArch itself is multi-system by nature -- EmuMovies media for
+    // those older/retro systems should live under the specific console
+    // folders instead, not a single "RetroArch" or "MAME" bucket. Folder
+    // names include every system each emulator actually plays, verified
+    // against each emulator's own documentation, so it's clear at a glance
+    // what belongs in each folder without needing to open a README first.
     const emumoviesSystems = [
-      'TeknoParrot', 'RPCS3', 'Xenia', 'Dolphin', 'PCSX2', 'Ryubing',
-      'MAME', 'Project64', 'DuckStation', 'Flycast',
-      'Model 2 Emulator', 'Supermodel (M3)', 'PPSSPP', 'Cemu', 'Visual Pinball X',
+      'TeknoParrot', 'RPCS3 - PS3', 'Xenia - Xbox 360', 'Dolphin - GameCube - Wii - Triforce',
+      'PCSX2 - PS2', 'Ryubing - Switch', 'Project64 - N64', 'DuckStation - PS1',
+      'Flycast - Dreamcast - Naomi - Atomiswave', 'Model 2 - Sega Model 2', 'Supermodel - Sega Model 3',
+      'PPSSPP - PSP', 'Cemu - Wii U', 'Visual Pinball X',
     ]
 
     const emumoviesRoot = path.join(mediaRoot, 'EmuMovies')
@@ -1802,20 +1777,19 @@ ipcMain.handle('ensure-media-folders', async (event, customPath) => {
     // inside each folder so it's obvious which one to point EmuMovies Sync
     // at, without needing to remember or look it up separately.
     const emumoviesSystemDescriptions = {
-      'RPCS3':             'Sony PlayStation 3',
-      'Xenia':             'Microsoft Xbox 360',
-      'Dolphin':           'Nintendo GameCube and Nintendo Wii',
-      'PCSX2':             'Sony Playstation 2',
-      'Ryubing':           'Nintendo Switch',
-      'MAME':              'MAME -- classic arcade games (thousands of original arcade boards).',
-      'Project64':         'Nintendo N64',
-      'DuckStation':       'Sony Playstation (PS1)',
-      'Flycast':           'Sega Dreamcast (also Sega Naomi and Sammy Atomiswave arcade)',
-      'Model 2 Emulator':  'Sega Model 2 arcade games',
-      'Supermodel (M3)':   'Sega Model 3 arcade games',
-      'PPSSPP':            'Sony PSP',
-      'Cemu':              'Nintendo Wii U',
-      'Visual Pinball X':  'Visual Pinball (EmuMovies drops the "X" in its own system name)',
+      'RPCS3 - PS3':                              'Sony PlayStation 3',
+      'Xenia - Xbox 360':                         'Microsoft Xbox 360',
+      'Dolphin - GameCube - Wii - Triforce':      'Nintendo GameCube, Nintendo Wii, and the Sega/Namco Triforce arcade system',
+      'PCSX2 - PS2':                              'Sony Playstation 2',
+      'Ryubing - Switch':                         'Nintendo Switch',
+      'Project64 - N64':                          'Nintendo N64',
+      'DuckStation - PS1':                        'Sony Playstation (PS1)',
+      'Flycast - Dreamcast - Naomi - Atomiswave': 'Sega Dreamcast, Sega Naomi, Sega Naomi 2, and Sammy Atomiswave arcade',
+      'Model 2 - Sega Model 2':                   'Sega Model 2 arcade games',
+      'Supermodel - Sega Model 3':                'Sega Model 3 arcade games',
+      'PPSSPP - PSP':                             'Sony PSP',
+      'Cemu - Wii U':                             'Nintendo Wii U',
+      'Visual Pinball X':                         'Visual Pinball (EmuMovies drops the "X" in its own system name)',
     }
 
     // TeknoParrot is not one system, and EmuMovies genuinely does not catalog
@@ -1849,7 +1823,16 @@ ipcMain.handle('ensure-media-folders', async (event, customPath) => {
           readmeText = teknoParrotReadme
         } else {
           const description = emumoviesSystemDescriptions[sys] || 'See NuArcade Settings for details.'
-          readmeText = sys + ' plays: ' + description + '\r\n\r\nPoint EmuMovies Sync\'s destination folder here, select the matching\r\nsystem in Sync, and run a download. NuArcade will find whatever\r\nSync creates inside this folder automatically.'
+          readmeText = sys + ' plays: ' + description + '.\r\n\r\n' +
+            'How to use this folder:\r\n' +
+            '1. Point EmuMovies Sync\'s destination folder here.\r\n' +
+            '2. In Sync, select the matching system and run a download.\r\n' +
+            '   Sync creates its own system-named subfolder inside this one --\r\n' +
+            '   that is normal, Sync always names things its own way.\r\n' +
+            '3. In NuArcade, go to Media > EmuMovies tab and click "Scan EmuMovies\r\n' +
+            '   folder". NuArcade finds whatever Sync created and shows a review\r\n' +
+            '   list -- click Import per item. No manual file copying needed;\r\n' +
+            '   NuArcade handles moving the right file to the right place for you.'
         }
         try { fs.writeFileSync(readmePath, readmeText) } catch (e) { /* non-fatal */ }
       }
