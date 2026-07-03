@@ -245,7 +245,7 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
 
   const log = (msg, type = 'info') => {
     const ts = new Date().toLocaleTimeString()
-    setDiagLog(prev => [...prev.slice(-49), { ts, msg, type }])
+    setDiagLog(prev => [...prev.slice(-999), { ts, msg, type }])
   }
 
   // Must be defined before handleBulkYouTube and handleYtSearch which both call it
@@ -577,7 +577,15 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
                           </div>
                         )
                         if (ytDownloading[gid] === 'done') return <span className={styles.readyLabel}>Downloaded!</span>
-                        if (ytDownloading[gid] === 'error') return <span style={{ color: '#ff4444', fontSize: 10 }}>YT error -- retry?</span>
+                        if (ytDownloading[gid] === 'error') return (
+                          <button
+                            className={styles.dlBtn}
+                            style={{ borderColor: 'rgba(255,68,68,0.4)', color: '#ff4444', fontSize: 10 }}
+                            onClick={() => handleYtDownload(game)}
+                          >
+                            YT error -- retry
+                          </button>
+                        )
 
                         // yt-dlp result ready to download
                         if (ytResults[gid]) return (
