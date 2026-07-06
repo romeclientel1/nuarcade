@@ -483,6 +483,7 @@ async function scanPs3Games(ps3GamesPath) {
   const path = require('path')
 
   const games = []
+  let skippedCount = 0
 
   if (!fs.existsSync(ps3GamesPath)) {
     return { games, count: 0, path: ps3GamesPath, error: 'Folder not found' }
@@ -500,9 +501,22 @@ async function scanPs3Games(ps3GamesPath) {
     const gameDir = path.join(ps3GamesPath, entry.name)
     const paramSfo = path.join(gameDir, 'PS3_GAME', 'PARAM.SFO')
     const paramSfoAlt = path.join(gameDir, 'PARAM.SFO')
+    const eboot = path.join(gameDir, 'PS3_GAME', 'USRDIR', 'EBOOT.BIN')
+    const ebootAlt = path.join(gameDir, 'USRDIR', 'EBOOT.BIN')
+
+    const sfoPath = fs.existsSync(paramSfo) ? paramSfo : fs.existsSync(paramSfoAlt) ? paramSfoAlt : null
+    const hasEboot = fs.existsSync(eboot) || fs.existsSync(ebootAlt)
+
+    // A real installed PS3 game always has a PARAM.SFO and/or an EBOOT.BIN
+    // somewhere in its folder. Anything without either marker is something
+    // else entirely -- RPCS3's own cache/config/lock folders, stray test
+    // directories, etc. -- not a game, so it's skipped rather than counted.
+    if (!sfoPath && !hasEboot) {
+      skippedCount++
+      continue
+    }
 
     let title = entry.name
-    const sfoPath = fs.existsSync(paramSfo) ? paramSfo : fs.existsSync(paramSfoAlt) ? paramSfoAlt : null
     if (sfoPath) {
       try {
         const buf = fs.readFileSync(sfoPath)
@@ -522,8 +536,9 @@ async function scanPs3Games(ps3GamesPath) {
     })
   }
 
-  return { games, count: games.length, path: ps3GamesPath }
+  return { games, count: games.length, path: ps3GamesPath, skippedCount }
 }
+
 
 module.exports = { ...module.exports, scanPs3Games }
 
