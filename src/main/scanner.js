@@ -626,7 +626,7 @@ async function scanGCWiiGames(gcWiiGamesPath) {
     return { games, count: 0, path: gcWiiGamesPath, error: 'Folder not found' }
   }
 
-  const EXTS = ['.iso', '.gcm', '.rvz', '.wbfs', '.wad', '.gcz']
+  const EXTS = ['.iso', '.gcm', '.rvz', '.wbfs', '.wad', '.gcz', '.zip', '.7z']
   let entries
   try { entries = fs.readdirSync(gcWiiGamesPath, { withFileTypes: true }) }
   catch (e) { return { games, count: 0, error: e.message } }
@@ -662,7 +662,7 @@ async function scanPs2Games(ps2GamesPath) {
     return { games, count: 0, path: ps2GamesPath, error: 'Folder not found' }
   }
 
-  const EXTS = ['.iso', '.bin', '.img', '.mdf', '.chd']
+  const EXTS = ['.iso', '.bin', '.img', '.mdf', '.chd', '.zip', '.7z']
   let entries
   try { entries = fs.readdirSync(ps2GamesPath, { withFileTypes: true }) }
   catch (e) { return { games, count: 0, error: e.message } }
@@ -1286,7 +1286,7 @@ async function scanN64Games(n64GamesPath) {
   if (!fs.existsSync(n64GamesPath)) {
     return { games, count: 0, path: n64GamesPath, error: 'Folder not found' }
   }
-  const EXTS = ['.n64', '.z64', '.v64', '.ndd']
+  const EXTS = ['.n64', '.z64', '.v64', '.ndd', '.zip', '.7z']
   let entries
   try { entries = fs.readdirSync(n64GamesPath, { withFileTypes: true }) }
   catch (e) { return { games, count: 0, error: e.message } }
@@ -1321,7 +1321,7 @@ async function scanPs1Games(ps1GamesPath) {
   if (!fs.existsSync(ps1GamesPath)) {
     return { games, count: 0, path: ps1GamesPath, error: 'Folder not found' }
   }
-  const EXTS = ['.bin', '.iso', '.chd', '.cue', '.img', '.pbp', '.ecm', '.mdf']
+  const EXTS = ['.bin', '.iso', '.chd', '.cue', '.img', '.pbp', '.ecm', '.mdf', '.zip', '.7z']
   let entries
   try { entries = fs.readdirSync(ps1GamesPath, { withFileTypes: true }) }
   catch (e) { return { games, count: 0, error: e.message } }
@@ -1422,7 +1422,7 @@ async function scanPspGames(pspGamesPath) {
   if (!fs.existsSync(pspGamesPath)) {
     return { games, count: 0, path: pspGamesPath, error: 'Folder not found' }
   }
-  const EXTS = ['.iso', '.cso', '.pbp', '.chd']
+  const EXTS = ['.iso', '.cso', '.pbp', '.chd', '.zip', '.7z']
   let entries
   try { entries = fs.readdirSync(pspGamesPath, { withFileTypes: true }) }
   catch (e) { return { games, count: 0, error: e.message } }
