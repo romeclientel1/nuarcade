@@ -21,6 +21,7 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
   const [games, setGames] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState("all")
+  const [systemFilter, setSystemFilter] = useState("all")
   const [tab, setTab] = useState("library")
   const [emFocused, setEmFocused] = useState(null) // null | 'create' | 'scan'
   const emScanBtnRef = useRef(null)
@@ -301,9 +302,15 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
     let failed = 0
     let processed = 0
     const CONCURRENCY = 4
+    // Timeouts and network hiccups are often transient -- retrying just the
+    // download step usually succeeds on a later attempt, so failed games
+    // (specifically ones with a real search match that failed to download)
+    // get queued for a couple of automatic extra passes before giving up,
+    // rather than requiring Rome to manually re-run the whole bulk fetch.
+    let retryQueue = []
 
     // Process one game: search + download
-    const processGame = async (game) => {
+    const processGame = async (game, isRetryPass = false) => {
       if (bulkCancelRef.current) return
       const gid = game.id || game.profile
       const label = game.title || gid
@@ -327,7 +334,7 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
 
         const queryNote = result.query && result.query !== label ? ' [' + result.query + ']' : ''
         const attemptNote = result.attempt > 1 ? ' (attempt ' + result.attempt + ')' : ''
-        log(`  [${label}] Found: "${result.title}"${queryNote}${attemptNote}`)
+        log(`  [${label}]${isRetryPass ? ' (retry)' : ''} Found: "${result.title}"${queryNote}${attemptNote}`)
 
         const dl = await window.nuarcade.ytdlpDownload({ videoId: result.videoId, gameId: gid })
 
@@ -340,10 +347,15 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
           failed++
           log(`  [${label}] Failed: ${dl.error}`, 'error')
           setYtDownloading(d => ({ ...d, [gid]: 'error' }))
+          // A real search match that failed to download is worth retrying --
+          // "no match" cases (handled above) are not, since a retry would
+          // just find the same lack of a result again.
+          retryQueue.push(game)
         }
       } catch (e) {
         failed++
         log(`  [${label}] Exception: ${e.message || String(e)}`, 'error')
+        retryQueue.push(game)
       } finally {
         processed++
         setBulkProgress({ current: processed, total: missing.length, title: label, done, failed })
@@ -358,7 +370,22 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
       }
       const batch = missing.slice(i, i + CONCURRENCY)
       setBulkProgress({ current: processed, total: missing.length, title: batch.map(g => g.title || g.id || g.profile).join(', ').slice(0, 40), done, failed })
-      await Promise.all(batch.map(processGame))
+      await Promise.all(batch.map(g => processGame(g)))
+    }
+
+    // Up to 2 automatic retry passes for download failures -- each pass only
+    // retries what's still failing, and stops early if a pass fixes nothing.
+    const MAX_RETRY_PASSES = 2
+    for (let pass = 1; pass <= MAX_RETRY_PASSES && retryQueue.length > 0 && !bulkCancelRef.current; pass++) {
+      const toRetry = retryQueue
+      retryQueue = []
+      failed -= toRetry.length
+      log(`Retry pass ${pass} -- retrying ${toRetry.length} failed download(s)...`)
+      for (let i = 0; i < toRetry.length; i += CONCURRENCY) {
+        if (bulkCancelRef.current) break
+        const batch = toRetry.slice(i, i + CONCURRENCY)
+        await Promise.all(batch.map(g => processGame(g, true)))
+      }
     }
 
     log(`Bulk fetch complete -- ${done} downloaded, ${failed} failed`, done > 0 ? 'ok' : 'warn')
@@ -421,7 +448,12 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
     }
   }
 
+  const gameSystemLabel = (g) => g.system || g.genre || g.emulator || 'Other'
+
+  const availableSystems = [...new Set(games.map(gameSystemLabel))].sort()
+
   const filteredGames = games.filter(g => {
+    if (systemFilter !== "all" && gameSystemLabel(g) !== systemFilter) return false
     if (filter === "missing") return !g.hasVideo
     if (filter === "ready") return g.hasVideo
     return true
@@ -552,6 +584,19 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
                   {f.charAt(0).toUpperCase() + f.slice(1)}
                 </button>
               ))}
+              <select
+                className={styles.input}
+                style={{ maxWidth: 220, marginLeft: 8 }}
+                value={systemFilter}
+                onChange={e => setSystemFilter(e.target.value)}
+              >
+                <option value="all">All systems ({games.length})</option>
+                {availableSystems.map(sys => (
+                  <option key={sys} value={sys}>
+                    {sys} ({games.filter(g => gameSystemLabel(g) === sys).length})
+                  </option>
+                ))}
+              </select>
               <button className={styles.scanBtn} onClick={scanLibrary}>Rescan</button>
             </div>
 
