@@ -107,7 +107,7 @@ export default function ArtworkManager({ games, onClose, apiKey, onArtworkUpdate
               </div>
               <div className={styles.stats}>
                 {status === "done"
-                  ? "Done! " + found + " games got new artwork."
+                  ? "Done! " + found + " games got new artwork, " + skipped + " already had art."
                   : progress + "% -- " + found + " found, " + skipped + " skipped"}
               </div>
               <div className={styles.logBox}>
