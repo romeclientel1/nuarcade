@@ -585,7 +585,7 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
                 </button>
               ))}
               <select
-                className={styles.input}
+                className={styles.systemFilterSelect}
                 style={{ maxWidth: 220, marginLeft: 8 }}
                 value={systemFilter}
                 onChange={e => setSystemFilter(e.target.value)}
