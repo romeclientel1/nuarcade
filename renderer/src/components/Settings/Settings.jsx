@@ -56,6 +56,11 @@ export default function Settings({ games = [], onClose, onCRTChange, crtEnabled,
   const [showRestartConfirm, setShowRestartConfirm] = useState(false)
   const changedPathKeysRef = useRef(new Set())
   const [installedMap, setInstalledMap] = useState({})
+  // -- Orphaned media cleanup state --
+  const [orphanScanning, setOrphanScanning] = useState(false)
+  const [orphanResult, setOrphanResult] = useState(null)
+  const [cleaningOrphans, setCleaningOrphans] = useState(false)
+  const [orphanCleanupDone, setOrphanCleanupDone] = useState(null)
   // -- TeknoParrot Folder Renamer state --
   const [folderScan, setFolderScan] = useState(null)       // null = not yet scanned
   const [scanningFolders, setScanningFolders] = useState(false)
@@ -224,6 +229,81 @@ const handleRescan = async () => {
       setRescanResult({ total, results })
   } catch (e) { setRescanResult({ total: 0, results: [], error: e.message }) }
   setRescanning(false)
+}
+
+const handleFindOrphans = async () => {
+  if (!window.nuarcade) return
+  setOrphanScanning(true)
+  setOrphanResult(null)
+  setOrphanCleanupDone(null)
+  try {
+    const cfg = config
+    const validIds = new Set()
+    const collect = async (fn) => {
+      try {
+        const r = await fn()
+        for (const g of (r.games || [])) validIds.add(g.id || g.profile)
+      } catch (e) {}
+    }
+    await collect(() => window.nuarcade.scanGames({ teknoParrotPath: cfg.teknoParrotPath, gamesFolderPath: cfg.gamesFolderPath }))
+    await collect(() => window.nuarcade.scanMameGames(cfg.mameGamesPath))
+    await collect(() => window.nuarcade.scanModel2Games(cfg.model2GamesPath))
+    await collect(() => window.nuarcade.scanModel3Games(cfg.model3GamesPath))
+    await collect(() => window.nuarcade.scanRetroArchGames(cfg.retroarchGamesPath))
+    await collect(() => window.nuarcade.scanN64Games(cfg.n64GamesPath))
+    await collect(() => window.nuarcade.scanPs1Games(cfg.ps1GamesPath))
+    await collect(() => window.nuarcade.scanDreamcastGames(cfg.dreamcastGamesPath))
+    await collect(() => window.nuarcade.scanPspGames(cfg.pspGamesPath))
+    await collect(() => window.nuarcade.scanPs2Games(cfg.ps2GamesPath))
+    await collect(() => window.nuarcade.scanPs3Games(cfg.ps3GamesPath))
+    await collect(() => window.nuarcade.scanXbox360Games(cfg.xbox360GamesPath))
+    await collect(() => window.nuarcade.scanGCWiiGames(cfg.gcWiiGamesPath))
+    await collect(() => window.nuarcade.scanWiiUGames(cfg.wiiUGamesPath))
+    await collect(() => window.nuarcade.scanSwitchGames(cfg.switchGamesPath))
+    await collect(() => window.nuarcade.scanPinball(cfg.tablesPath))
+    await collect(() => window.nuarcade.scanSteamGames(cfg.steamPath))
+    await collect(() => window.nuarcade.scanPcGames(cfg.pcGamesPath))
+
+    // Also check artwork localStorage entries with no matching game at all
+    let orphanedArtworkKeys = []
+    try {
+      const artwork = JSON.parse(localStorage.getItem('nuarcade_artwork') || '{}')
+      orphanedArtworkKeys = Object.keys(artwork).filter(k => !validIds.has(k))
+    } catch (e) {}
+
+    const media = await window.nuarcade.findOrphanedMedia([...validIds])
+    setOrphanResult({ ...media, orphanedArtworkKeys, validCount: validIds.size })
+  } catch (e) {
+    setOrphanResult({ error: e.message })
+  }
+  setOrphanScanning(false)
+}
+
+const handleCleanupOrphans = async () => {
+  if (!orphanResult || cleaningOrphans) return
+  setCleaningOrphans(true)
+  try {
+    const allFiles = [
+      ...(orphanResult.orphanedVideos || []),
+      ...(orphanResult.staleFragments || []),
+      ...(orphanResult.orphanedArtwork || []),
+    ]
+    const result = await window.nuarcade.deleteOrphanedMedia(allFiles)
+
+    if (orphanResult.orphanedArtworkKeys?.length) {
+      try {
+        const artwork = JSON.parse(localStorage.getItem('nuarcade_artwork') || '{}')
+        for (const k of orphanResult.orphanedArtworkKeys) delete artwork[k]
+        localStorage.setItem('nuarcade_artwork', JSON.stringify(artwork))
+      } catch (e) {}
+    }
+
+    setOrphanCleanupDone(result)
+    setOrphanResult(null)
+  } catch (e) {
+    setOrphanCleanupDone({ deleted: 0, errors: [{ error: e.message }] })
+  }
+  setCleaningOrphans(false)
 }
 
 const LS_BACKUP_KEYS = [
@@ -968,6 +1048,41 @@ const handleSave = async () => {
                 </button>
               </div>
             </div>
+
+            <div className={styles.inputRow}>
+              <label className={styles.inputLabel}>Orphaned media</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button className={styles.exportBtn} onClick={handleFindOrphans} disabled={orphanScanning}>
+                  {orphanScanning ? "Scanning..." : "Find orphaned media"}
+                </button>
+              </div>
+            </div>
+            {orphanResult && !orphanResult.error && (
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginBottom: 10 }}>
+                Checked against {orphanResult.validCount} currently-scanned games.
+                Found {orphanResult.orphanedVideos?.length || 0} orphaned video(s),{' '}
+                {orphanResult.staleFragments?.length || 0} stale download fragment(s),{' '}
+                {orphanResult.orphanedArtwork?.length || 0} orphaned artwork file(s), and{' '}
+                {orphanResult.orphanedArtworkKeys?.length || 0} orphaned artwork entr(y/ies) with no matching game.
+                {(orphanResult.orphanedVideos?.length || orphanResult.staleFragments?.length ||
+                  orphanResult.orphanedArtwork?.length || orphanResult.orphanedArtworkKeys?.length) ? (
+                  <div style={{ marginTop: 8 }}>
+                    <button className={styles.exportBtn} style={{ borderColor: 'rgba(255,68,68,0.4)', color: '#ff6666' }}
+                      onClick={handleCleanupOrphans} disabled={cleaningOrphans}>
+                      {cleaningOrphans ? "Cleaning up..." : "Clean up now"}
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ marginTop: 6, color: '#00ff88' }}>Nothing to clean up -- everything matches a real game.</div>
+                )}
+              </div>
+            )}
+            {orphanCleanupDone && (
+              <div style={{ fontSize: 12, color: '#00ff88', marginBottom: 10 }}>
+                Cleaned up {orphanCleanupDone.deleted} file(s).
+                {orphanCleanupDone.errors?.length > 0 && (' ' + orphanCleanupDone.errors.length + ' could not be removed.')}
+              </div>
+            )}
             {rescanResult && (
               <div className={styles.rescanResult}>
                 {rescanResult.error ? (
