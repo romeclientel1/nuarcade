@@ -192,10 +192,10 @@ const handleRescan = async () => {
       try {
         const r = await fn()
         const n = r.games?.length || 0
-        results.push({ label, count: n, error: null })
+        results.push({ label, count: n, error: null, skippedCount: r.skippedCount || 0 })
         return n
       } catch (e) {
-        results.push({ label, count: 0, error: e.message })
+        results.push({ label, count: 0, error: e.message, skippedCount: 0 })
         return 0
       }
     }
@@ -982,6 +982,11 @@ const handleSave = async () => {
                           <span className={styles.rescanCount + (r.count > 0 ? " " + styles.rescanCountHit : "")}>
                             {r.error ? "ERR" : r.count}
                           </span>
+                          {r.skippedCount > 0 && (
+                            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginLeft: 6 }}>
+                              ({r.skippedCount} skipped -- not games)
+                            </span>
+                          )}
                         </div>
                       ))}
                     </div>
