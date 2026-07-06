@@ -235,6 +235,11 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
 
   const { getCollections } = useCollections()
   const [collections, setCollections] = useState(() => getCollections())
+  const [systemLogos, setSystemLogos] = useState({})
+
+  useEffect(() => {
+    window.nuarcade?.getSystemLogos?.().then(r => setSystemLogos(r?.logos || {})).catch(() => {})
+  }, [])
 
   // Refresh collections when panel closes
   const handleCollectionsClose = () => {
@@ -1107,7 +1112,11 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
             className={styles.catPill + (activeCategory === cat ? " " + styles.catActive : "") + (focusZone === 1 && visibleTabsRef.current[tabFocusIdx] === cat ? " " + styles.catFocused : "")}
             onClick={() => setActiveCategory(cat)}
           >
-            {cat === "Favorites" ? "Favorites" : cat === "Recent" ? "Recent" : cat}
+            {systemLogos[cat.toLowerCase()] ? (
+              <img src={systemLogos[cat.toLowerCase()]} alt={cat} className={styles.catLogo} />
+            ) : (
+              cat === "Favorites" ? "Favorites" : cat === "Recent" ? "Recent" : cat
+            )}
             {cat === "Recent" && recentlyPlayed.length > 0 && (
               <span className={styles.catCount}>{recentlyPlayed.length}</span>
             )}
