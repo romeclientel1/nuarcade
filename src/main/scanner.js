@@ -555,23 +555,41 @@ async function scanXbox360Games(xbox360GamesPath) {
   }
 
   const EXTS = ['.iso', '.xex', '.zar', '.god', '.jtag']
-  // Skip known emulator/utility folders
-  const SKIP_XBOX = new Set(['xenia', 'xenia_master', 'xenia_canary', 'xbla', 'plugins', 'cache', 'content'])
+  let skippedCount = 0
   let entries
   try { entries = fs.readdirSync(xbox360GamesPath, { withFileTypes: true }) }
   catch (e) { return { games, count: 0, error: e.message } }
 
   for (const entry of entries) {
     if (entry.isDirectory()) {
-      // Skip known emulator/utility folders
-      if (SKIP_XBOX.has(entry.name.toLowerCase())) continue
-      // Folder-based game -- any subfolder is a game, check for default.xex for path
-      const xexPath = path.join(xbox360GamesPath, entry.name, 'default.xex')
-      const hasXex  = fs.existsSync(xexPath)
+      const gameDir = path.join(xbox360GamesPath, entry.name)
+
+      // A real extracted Xbox 360 game always has a default.xex somewhere in
+      // its folder -- either directly inside, or one level deeper under a
+      // title-ID subfolder some rip tools use. Anything without it is
+      // something else entirely (Xenia's own cache/plugin/content folders,
+      // stray junk, etc.), not a game -- so it's skipped rather than counted.
+      let xexPath = path.join(gameDir, 'default.xex')
+      if (!fs.existsSync(xexPath)) {
+        xexPath = null
+        try {
+          for (const sub of fs.readdirSync(gameDir, { withFileTypes: true })) {
+            if (!sub.isDirectory()) continue
+            const nested = path.join(gameDir, sub.name, 'default.xex')
+            if (fs.existsSync(nested)) { xexPath = nested; break }
+          }
+        } catch (e) {}
+      }
+
+      if (!xexPath) {
+        skippedCount++
+        continue
+      }
+
       games.push({
         id:     'xbox360_' + entry.name.replace(/\s+/g, '_'),
         title:  entry.name,
-        path:   hasXex ? xexPath : path.join(xbox360GamesPath, entry.name),
+        path:   xexPath,
         emulator: 'xenia',
         genre:  'Xbox360',
         system: 'Xbox 360',
@@ -594,8 +612,9 @@ async function scanXbox360Games(xbox360GamesPath) {
       })
     }
   }
-  return { games, count: games.length, path: xbox360GamesPath }
+  return { games, count: games.length, path: xbox360GamesPath, skippedCount }
 }
+
 
 // -- Dolphin / GameCube + Wii Scanner ----------------------------------------
 async function scanGCWiiGames(gcWiiGamesPath) {
