@@ -1024,6 +1024,71 @@ ipcMain.handle('get-videos', async () => {
   }
 })
 
+// -- Orphaned media cleanup ---------------------------------------------------
+// Finds video/artwork files and artwork localStorage entries whose gameId no
+// longer matches any currently-scanned game -- e.g. left over after a scanner
+// fix stops recognizing folders that were never real games in the first place.
+// Read-only: only reports what it finds, never deletes anything by itself.
+ipcMain.handle('find-orphaned-media', async (event, validIds) => {
+  const fs = require('fs')
+  const cfg = config.load()
+  const validSet = new Set(validIds)
+
+  const videosDir = path.join(cfg.mediaPath || 'F:\\Media\\', 'Videos')
+  const artworkDir = path.join(cfg.mediaPath || 'F:\\Media\\', 'Artwork')
+
+  const orphanedVideos = []
+  const staleFragments = []
+  const orphanedArtwork = []
+
+  try {
+    if (fs.existsSync(videosDir)) {
+      for (const f of fs.readdirSync(videosDir)) {
+        if (!f.toLowerCase().endsWith('.mp4')) continue
+        const fullPath = path.join(videosDir, f)
+        // Leftover yt-dlp fragment files from failed/interrupted downloads
+        if (/\.f\d+\.mp4$/i.test(f)) {
+          staleFragments.push(fullPath)
+          continue
+        }
+        const gameId = f.replace(/\.mp4$/i, '')
+        if (!validSet.has(gameId)) orphanedVideos.push(fullPath)
+      }
+    }
+  } catch (e) { /* non-fatal */ }
+
+  try {
+    if (fs.existsSync(artworkDir)) {
+      for (const f of fs.readdirSync(artworkDir)) {
+        const fullPath = path.join(artworkDir, f)
+        const gameId = f.replace(/_(capsule|hero)\.[^.]+$/i, '')
+        if (!validSet.has(gameId)) orphanedArtwork.push(fullPath)
+      }
+    }
+  } catch (e) { /* non-fatal */ }
+
+  return { orphanedVideos, staleFragments, orphanedArtwork }
+})
+
+// -- Delete orphaned media ----------------------------------------------------
+// Deletes exactly the file paths handed in from a prior find-orphaned-media
+// call -- never re-computes what's "orphaned" itself, so there's no chance of
+// deleting something the person didn't actually see and approve.
+ipcMain.handle('delete-orphaned-media', async (event, filePaths) => {
+  const fs = require('fs')
+  let deleted = 0
+  const errors = []
+  for (const p of (filePaths || [])) {
+    try {
+      fs.unlinkSync(p)
+      deleted++
+    } catch (e) {
+      errors.push({ path: p, error: e.message })
+    }
+  }
+  return { deleted, errors }
+})
+
 // -- yt-dlp: search YouTube for a game video preview --------------------------
 // Returns { title, videoId, thumbnail, duration } or { error }
 // -- yt-dlp: auto-download the exe if missing ---------------------------------
