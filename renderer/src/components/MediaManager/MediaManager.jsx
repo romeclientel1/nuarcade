@@ -200,6 +200,14 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
           () => window.nuarcade.scanN64Games && window.nuarcade.scanN64Games(config.n64GamesPath),
           () => window.nuarcade.scanPs1Games && window.nuarcade.scanPs1Games(config.ps1GamesPath),
           () => window.nuarcade.scanPinball && window.nuarcade.scanPinball(config.tablesPath),
+          () => window.nuarcade.scanPspGames && window.nuarcade.scanPspGames(config.pspGamesPath),
+          () => window.nuarcade.scanDreamcastGames && window.nuarcade.scanDreamcastGames(config.dreamcastGamesPath),
+          () => window.nuarcade.scanRetroArchGames && window.nuarcade.scanRetroArchGames(config.retroarchGamesPath),
+          () => window.nuarcade.scanSteamGames && window.nuarcade.scanSteamGames(config.steamPath),
+          () => window.nuarcade.scanPcGames && window.nuarcade.scanPcGames(config.pcGamesPath),
+          () => window.nuarcade.scanModel2Games && window.nuarcade.scanModel2Games(config.model2GamesPath),
+          () => window.nuarcade.scanModel3Games && window.nuarcade.scanModel3Games(config.model3GamesPath),
+          () => window.nuarcade.scanWiiUGames && window.nuarcade.scanWiiUGames(config.wiiUGamesPath),
         ]
         for (const scanner of scanners) {
           try {
