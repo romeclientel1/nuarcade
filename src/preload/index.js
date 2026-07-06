@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld('nuarcade', {
   quit:        () => ipcRenderer.invoke('quit-app'),
   restartApp:  () => ipcRenderer.invoke('restart-app'),
   findOrphanedMedia:  (validIds) => ipcRenderer.invoke('find-orphaned-media', validIds),
+  getSystemLogos: () => ipcRenderer.invoke('get-system-logos'),
   deleteOrphanedMedia: (filePaths) => ipcRenderer.invoke('delete-orphaned-media', filePaths),
   setConfig:  (updates) => ipcRenderer.invoke('set-config', updates),
 
