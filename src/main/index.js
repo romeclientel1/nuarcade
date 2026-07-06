@@ -1089,6 +1089,31 @@ ipcMain.handle('delete-orphaned-media', async (event, filePaths) => {
   return { deleted, errors }
 })
 
+// -- System logos for the category strip --------------------------------------
+// Reads any image files dropped into SystemLogos/ and maps them by filename
+// (minus extension, lowercased) to a system/category name -- e.g.
+// SystemLogos/xbox360.png shows up for the "Xbox360" category pill. Never
+// creates or ships any logo images itself, just loads what's already there.
+ipcMain.handle('get-system-logos', async () => {
+  const fs = require('fs')
+  const cfg = config.load()
+  const logosDir = path.join(cfg.mediaPath || 'F:\\Media\\', 'SystemLogos')
+  const logos = {}
+
+  try {
+    if (!fs.existsSync(logosDir)) fs.mkdirSync(logosDir, { recursive: true })
+    const IMG_EXTS = ['.png', '.jpg', '.jpeg', '.webp', '.svg']
+    for (const f of fs.readdirSync(logosDir)) {
+      const ext = path.extname(f).toLowerCase()
+      if (!IMG_EXTS.includes(ext)) continue
+      const key = path.basename(f, ext).toLowerCase()
+      logos[key] = 'file:///' + path.join(logosDir, f).replace(/\\/g, '/')
+    }
+  } catch (e) { /* non-fatal */ }
+
+  return { logos, logosDir }
+})
+
 // -- yt-dlp: search YouTube for a game video preview --------------------------
 // Returns { title, videoId, thumbnail, duration } or { error }
 // -- yt-dlp: auto-download the exe if missing ---------------------------------
