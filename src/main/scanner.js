@@ -433,6 +433,51 @@ module.exports = { scanGames, parseProfile }
 // -- RPCS3 Game Scanner ------------------------------------------------------
 // RPCS3 stores games in folders named by their serial (e.g. BLES01807)
 // Each folder contains a PS3_GAME subfolder with PARAM.SFO holding the title
+
+// PARAM.SFO is Sony's structured binary metadata format -- a fixed header,
+// followed by a key-name table and a SEPARATE data-value table. Each key's
+// actual value lives at a computed offset in the data table, not just
+// "nearby bytes" after the key name in the raw byte stream, so this parses
+// the real structure instead of guessing with a regex.
+function parseParamSfoTitle(buf) {
+  try {
+    if (buf.length < 20) return null
+    const magic = buf.readUInt32BE(0)
+    if (magic !== 0x00505346) return null // "\0PSF"
+
+    const keyTableStart = buf.readUInt32LE(8)
+    const dataTableStart = buf.readUInt32LE(12)
+    const tableEntries = buf.readUInt32LE(16)
+    const indexTableStart = 20
+
+    for (let i = 0; i < tableEntries; i++) {
+      const entryOffset = indexTableStart + i * 16
+      if (entryOffset + 16 > buf.length) break
+
+      const keyOffset = buf.readUInt16LE(entryOffset)
+      const dataLen = buf.readUInt32LE(entryOffset + 4)
+      const dataOffset = buf.readUInt32LE(entryOffset + 12)
+
+      const keyStart = keyTableStart + keyOffset
+      let keyEnd = keyStart
+      while (keyEnd < buf.length && buf[keyEnd] !== 0) keyEnd++
+      const keyName = buf.toString('ascii', keyStart, keyEnd)
+
+      if (keyName === 'TITLE') {
+        const valStart = dataTableStart + dataOffset
+        const valEnd = Math.min(valStart + dataLen, buf.length)
+        let raw = buf.toString('utf8', valStart, valEnd)
+        const nullIdx = raw.indexOf('\u0000')
+        if (nullIdx !== -1) raw = raw.slice(0, nullIdx)
+        return raw.trim() || null
+      }
+    }
+  } catch (e) {
+    return null
+  }
+  return null
+}
+
 async function scanPs3Games(ps3GamesPath) {
   const fs = require('fs')
   const path = require('path')
@@ -456,15 +501,13 @@ async function scanPs3Games(ps3GamesPath) {
     const paramSfo = path.join(gameDir, 'PS3_GAME', 'PARAM.SFO')
     const paramSfoAlt = path.join(gameDir, 'PARAM.SFO')
 
-    // Try to read game title from PARAM.SFO (binary format - extract ASCII title)
     let title = entry.name
     const sfoPath = fs.existsSync(paramSfo) ? paramSfo : fs.existsSync(paramSfoAlt) ? paramSfoAlt : null
     if (sfoPath) {
       try {
         const buf = fs.readFileSync(sfoPath)
-        // PARAM.SFO: find TITLE key - it's a UTF-8 string after the data table
-        const titleMatch = buf.toString('latin1').match(/TITLE\x00[\s\S]{4,20}([A-Za-z0-9][\x20-\x7E]{2,80})/)
-        if (titleMatch) title = titleMatch[1].replace(/\x00.*/, '').trim()
+        const parsedTitle = parseParamSfoTitle(buf)
+        if (parsedTitle) title = parsedTitle
       } catch (e) {}
     }
 
@@ -483,6 +526,7 @@ async function scanPs3Games(ps3GamesPath) {
 }
 
 module.exports = { ...module.exports, scanPs3Games }
+
 
 
 // -- Xenia / Xbox 360 Scanner ------------------------------------------------
