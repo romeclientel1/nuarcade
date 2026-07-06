@@ -397,6 +397,20 @@
 
 .input:focus { border-color: #00c8ff; }
 
+.systemFilterSelect {
+  background: #0a0e14;
+  border: 1px solid rgba(0,200,255,0.2);
+  border-radius: 3px;
+  padding: 8px 12px;
+  color: #fff;
+  font-size: 12px;
+  outline: none;
+}
+.systemFilterSelect option {
+  background: #0a0e14;
+  color: #fff;
+}
+
 .loginBtn {
   padding: 10px 24px;
   border: 1px solid #00c8ff;
