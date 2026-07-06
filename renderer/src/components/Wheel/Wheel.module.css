@@ -95,6 +95,14 @@
   color: rgba(0,200,255,0.7);
 }
 
+.catLogo {
+  height: 16px;
+  max-width: 60px;
+  object-fit: contain;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
 .catActive {
   border-color: var(--accent) !important;
   color: var(--accent) !important;
