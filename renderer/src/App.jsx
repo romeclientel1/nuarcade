@@ -45,7 +45,17 @@ export default function App() {
   const [phase, setPhase] = useState("intro")
   const [currentPlayer, setCurrentPlayer] = useState(null)
   const { profiles, addProfile, deleteProfile } = usePlayerProfiles()
-  useTheme()
+  const { themeId, setTheme } = useTheme()
+  // Settings already persists this to the backend config under crtEffect --
+  // this just loads that saved value on launch and mirrors live changes so
+  // the CRT overlay actually reflects what's configured instead of being
+  // permanently hardcoded on.
+  const [crtEnabled, setCrtEnabled] = useState(true)
+  useEffect(() => {
+    window.nuarcade?.getConfig?.().then(cfg => {
+      if (cfg && typeof cfg.crtEffect === 'boolean') setCrtEnabled(cfg.crtEffect)
+    }).catch(() => {})
+  }, [])
 
   const handleIntroComplete = () => setPhase("playerSelect")
 
@@ -92,10 +102,14 @@ export default function App() {
           <Wheel
             activeProfile={currentPlayer}
             onSwitchPlayer={handleReturnToPlayerSelect}
+            crtEnabled={crtEnabled}
+            onCRTChange={setCrtEnabled}
+            themeId={themeId}
+            onThemeChange={setTheme}
           />
         )}
 
-        <CRT enabled={true} />
+        <CRT enabled={crtEnabled} />
         <CoinCounter />
 
       </div>
