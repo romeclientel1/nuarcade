@@ -22,23 +22,23 @@ const RESTART_KEYS = new Set([
 ])
 
 // Real exe filename for each emulator -- used to verify actual installation via filesystem check
-const EMULATOR_EXES = {
-  teknoParrotPath: 'TeknoParrotUi.exe',
-  rpcs3Path: 'rpcs3.exe',
-  xeniaPath: 'xenia.exe',
-  dolphinPath: 'Dolphin.exe',
-  pcsx2Path: 'pcsx2-qt.exe',
-  ryujinxPath: 'Ryujinx.exe',
-  mamePath: 'mame.exe',
-  retroarchPath: 'retroarch.exe',
-  project64Path: 'Project64.exe',
-  duckstationPath: 'duckstation-qt-x64-RelWithDebInfo.exe',
-  flycastPath: 'flycast.exe',
-  model2Path: 'Model2Emulator.exe',
-  model3Path: 'Supermodel.exe',
-  ppssppPath: 'PPSSPPWindows64.exe',
-  cemuPath: 'Cemu.exe',
-  pinballPath: 'VPinballX64.exe',
+const EMULATOR_EXE_KEYWORDS = {
+  teknoParrotPath: 'teknoparrot',
+  rpcs3Path: 'rpcs3',
+  xeniaPath: 'xenia',
+  dolphinPath: 'dolphin',
+  pcsx2Path: 'pcsx2',
+  ryujinxPath: 'ryu',
+  mamePath: 'mame',
+  retroarchPath: 'retroarch',
+  project64Path: 'project64',
+  duckstationPath: 'duckstation',
+  flycastPath: 'flycast',
+  model2Path: 'model2',
+  model3Path: 'supermodel',
+  ppssppPath: 'ppsspp',
+  cemuPath: 'cemu',
+  pinballPath: 'vpinball',
 }
 
 export default function Settings({ games = [], onClose, onCRTChange, crtEnabled, themeId, onThemeChange }) {
@@ -129,13 +129,12 @@ const [ytdlpError, setYtdlpError] = useState(null)
     let cancelled = false
     ;(async () => {
       const entries = await Promise.all(
-        Object.entries(EMULATOR_EXES).map(async ([pathKey, exeName]) => {
+        Object.entries(EMULATOR_EXE_KEYWORDS).map(async ([pathKey, keyword]) => {
           const folder = config[pathKey]
           if (!folder) return [pathKey, false]
-          const sep = (folder.endsWith('\\') || folder.endsWith('/')) ? '' : '\\'
           try {
-            const result = await window.nuarcade.checkPath(folder + sep + exeName)
-            return [pathKey, !!result?.exists]
+            const result = await window.nuarcade.findExeInFolder(folder, keyword)
+            return [pathKey, !!result?.found]
           } catch {
             return [pathKey, false]
           }
