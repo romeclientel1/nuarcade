@@ -105,7 +105,7 @@ export default function Settings({ games = [], onClose, onCRTChange, crtEnabled,
 
   const [saved, setSaved] = useState(false)
   const [exporting, setExporting] = useState(false)
-  const { newVersion, releaseUrl } = useVersionCheck()
+  const { updateAvailable, remoteVersion, handleDownload } = useVersionCheck()
 const { getAllPlaytime, formatTime } = usePlaytime()
 const [showControllerTest, setShowControllerTest] = useState(false)
 const [rescanning, setRescanning] = useState(false)
@@ -442,10 +442,10 @@ const handleSave = async () => {
             </div>
           )}
 
-          {newVersion && (
+          {updateAvailable && (
             <div className={styles.updateBanner}>
-              <span>NuArcade {newVersion} is available!</span>
-              <button className={styles.updateLink} onClick={() => window.open(releaseUrl, '_blank')}>Download</button>
+              <span>NuArcade {remoteVersion} is available!</span>
+              <button className={styles.updateLink} onClick={handleDownload}>Download</button>
             </div>
           )}
 
@@ -1182,7 +1182,7 @@ const handleSave = async () => {
             <div className={styles.aboutGrid}>
               <div className={styles.aboutRow}>
                 <span className={styles.aboutLabel}>Version</span>
-                <span className={styles.aboutVal}>{window.nuarcade?.version || 'v4.0.7'} {newVersion ? '(v' + newVersion + ' available)' : '(latest)'}</span>
+                <span className={styles.aboutVal}>{window.nuarcade?.version || 'v4.0.7'} {updateAvailable ? '(v' + remoteVersion + ' available)' : '(latest)'}</span>
               </div>
               <div className={styles.aboutRow}>
                 <span className={styles.aboutLabel}>Platform</span>
