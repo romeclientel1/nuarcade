@@ -693,27 +693,6 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
               </div>
             )}
 
-            {diagLog.length > 0 && (
-              <div className={styles.diagPanel}>
-                <div className={styles.diagHeader}>
-                  Diagnostic Log
-                  <button className={styles.diagClear} onClick={() => setDiagLog([])}>Clear</button>
-                </div>
-                <div className={styles.diagBody}>
-                  {diagLog.map((entry, i) => (
-                    <div key={i} className={styles.diagLine} style={{
-                      color: entry.type === 'error' ? '#ef4444' :
-                             entry.type === 'warn'  ? '#f59e0b' :
-                             entry.type === 'ok'    ? '#00ff88' :
-                             'rgba(255,255,255,0.6)'
-                    }}>
-                      <span className={styles.diagTs}>{entry.ts}</span>
-                      {entry.msg}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         )}
 
@@ -880,6 +859,28 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
                   <span className={styles.pathValue}>WanganMidnightMaximumTune5DX.mp4</span>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {diagLog.length > 0 && (
+          <div className={styles.diagPanel}>
+            <div className={styles.diagHeader}>
+              Diagnostic Log
+              <button className={styles.diagClear} onClick={() => setDiagLog([])}>Clear</button>
+            </div>
+            <div className={styles.diagBody}>
+              {diagLog.map((entry, i) => (
+                <div key={i} className={styles.diagLine} style={{
+                  color: entry.type === 'error' ? '#ef4444' :
+                         entry.type === 'warn'  ? '#f59e0b' :
+                         entry.type === 'ok'    ? '#00ff88' :
+                         'rgba(255,255,255,0.6)'
+                }}>
+                  <span className={styles.diagTs}>{entry.ts}</span>
+                  {entry.msg}
+                </div>
+              ))}
             </div>
           </div>
         )}
