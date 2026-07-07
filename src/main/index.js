@@ -1084,6 +1084,11 @@ ipcMain.handle('find-orphaned-media', async (event, validIds) => {
   try {
     if (fs.existsSync(artworkDir)) {
       for (const f of fs.readdirSync(artworkDir)) {
+        // Only touch files that actually match our own naming pattern --
+        // stray non-artwork files (Thumbs.db, .DS_Store, etc.) shouldn't be
+        // flagged as orphaned game art just because they don't match a
+        // valid game id.
+        if (!/_(capsule|hero)\.[a-z0-9]+$/i.test(f)) continue
         const fullPath = path.join(artworkDir, f)
         const gameId = f.replace(/_(capsule|hero)\.[^.]+$/i, '')
         if (!validSet.has(gameId)) orphanedArtwork.push(fullPath)
