@@ -376,13 +376,58 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
       setEmScanResult(emResult)
 
       if (emResult?.suggestions?.length) {
-        setAutoFillStage('Importing ' + emResult.suggestions.length + ' EmuMovies match(es)...')
-        log('Auto-fill: importing ' + emResult.suggestions.length + ' EmuMovies match(es)...', 'info')
-        for (const s of emResult.suggestions) {
+        const emTotal = emResult.suggestions.length
+        log('Auto-fill: importing ' + emTotal + ' EmuMovies match(es)...', 'info')
+
+        // Same batching as Import All -- reading/writing the entire artwork
+        // registry on every single item compounds into minutes of silent
+        // work at this scale, with no way to tell it's still running versus
+        // stuck. Read once, accumulate in memory, flush periodically.
+        let emArtwork = {}
+        try { emArtwork = JSON.parse(localStorage.getItem('nuarcade_artwork') || '{}') } catch {}
+        let emArtworkDirty = false
+        let emVideoUpdated = false
+        let emDone = 0
+
+        for (let i = 0; i < emTotal; i++) {
           if (bulkCancelRef.current) break
+          const s = emResult.suggestions[i]
           const chosenPath = s.chosenFile?.sourceFile
-          if (chosenPath) await handleImportEmuMovies(s, chosenPath)
+          setAutoFillStage('Importing EmuMovies matches... (' + (i + 1) + ' / ' + emTotal + ')')
+          if (!chosenPath) continue
+
+          try {
+            const result = await window.nuarcade.importEmuMoviesFile({
+              sourceFile: chosenPath,
+              gameId: s.gameId,
+              slot: s.slot,
+              mediaPath: mmConfig?.mediaPath,
+            })
+            if (result.success) {
+              emDone++
+              if (s.slot === 'video') {
+                setGames(g => g.map(x => (x.id || x.profile) === s.gameId ? { ...x, hasVideo: true } : x))
+                emVideoUpdated = true
+              } else {
+                emArtwork[s.gameId] = { ...(emArtwork[s.gameId] || {}), [s.slot]: result.fileUrl }
+                emArtworkDirty = true
+              }
+              setRestartNeeded(true)
+            }
+          } catch (e) {}
+
+          if (emArtworkDirty && i % 50 === 0) {
+            try { localStorage.setItem('nuarcade_artwork', JSON.stringify(emArtwork)) } catch {}
+          }
         }
+
+        if (emArtworkDirty) {
+          try { localStorage.setItem('nuarcade_artwork', JSON.stringify(emArtwork)) } catch {}
+          onArtworkUpdated?.()
+        }
+        if (emVideoUpdated) onVideosUpdated?.()
+
+        log('Auto-fill: imported ' + emDone + ' / ' + emTotal + ' EmuMovies match(es)', 'ok')
       } else {
         log('Auto-fill: no EmuMovies matches found' + (emResult?.error ? ' (' + emResult.error + ')' : ''), 'warn')
       }
