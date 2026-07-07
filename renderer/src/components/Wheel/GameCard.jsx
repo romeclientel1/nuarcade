@@ -139,7 +139,17 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork,
           <img
             src={generatePlaceholderSvg(game)}
             alt=""
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85, zIndex: 1 }}
+            style={{
+              position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 1,
+              // Real capsule art (especially EmuMovies "3D box" style, which
+              // is a stylized graphic on a transparent background rather
+              // than a full-bleed rectangle) can have transparent regions --
+              // without hiding the placeholder once real art loads, this
+              // unrelated generated image shows through those gaps instead
+              // of the card's own background color.
+              opacity: (showCapsule && capsLoaded) ? 0 : 0.85,
+              transition: 'opacity 0.3s ease',
+            }}
           />
         )}
 
