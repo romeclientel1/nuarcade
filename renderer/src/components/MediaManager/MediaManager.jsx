@@ -16,7 +16,7 @@ const SAMPLE_GAMES = [
 
 const TABS = ['library', 'artwork', 'emumovies', 'about']
 
-export default function MediaManager({ onClose, onVideosUpdated }) {
+export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdated }) {
   const scrollRef = useRef(null)
   const [games, setGames] = useState([])
   const [loading, setLoading] = useState(true)
@@ -146,6 +146,7 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
             const artwork = JSON.parse(localStorage.getItem('nuarcade_artwork') || '{}')
             artwork[suggestion.gameId] = { ...(artwork[suggestion.gameId] || {}), [suggestion.slot]: result.fileUrl }
             localStorage.setItem('nuarcade_artwork', JSON.stringify(artwork))
+            onArtworkUpdated?.()
           } catch {}
         }
         setRestartNeeded(true)
@@ -509,7 +510,7 @@ export default function MediaManager({ onClose, onVideosUpdated }) {
               games={games}
               apiKey={mmConfig?.sgdbApiKey}
               onClose={() => setTab("library")}
-              onArtworkUpdate={() => {}}
+              onArtworkUpdate={() => onArtworkUpdated?.()}
             />
           </div>
         )}
