@@ -1258,26 +1258,38 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
         <div className={styles.wheelArea}>
           <button className={styles.navBtn} onClick={() => navigate(-1)}>&#8249;</button>
           <div className={styles.cardTrack}>
-            {filteredGames.map((game, index) => (
-              <div
-                key={game.id || game.profile}
-                className={styles.cardSlot}
-                style={getCardStyle(index)}
-              >
-                <GameCard
-                  game={game}
-                  isCenter={index === selectedIndex}
-                  isAttract={attractMode}
-                  isFavorite={isFavorite(game.id || game.profile)}
-                  artPref={artPref}
-                  artwork={artwork}
-                  onClick={() => {
-                    if (index === selectedIndex) { sounds.select(); setShowDetail(true) }
-                    else setSelectedIndex(index)
-                  }}
-                />
-              </div>
-            ))}
+            {filteredGames.map((game, index) => {
+              const cardStyle = getCardStyle(index)
+              return (
+                <div
+                  key={game.id || game.profile}
+                  className={styles.cardSlot}
+                  style={cardStyle}
+                >
+                  {/* getCardStyle already hides far cards via display:none,
+                      but that alone doesn't stop the browser from loading
+                      images for hidden DOM nodes -- skipping the mount
+                      entirely for anything outside the visible window is
+                      what actually avoids triggering hundreds of
+                      simultaneous artwork loads on every wheel mount or
+                      category switch. */}
+                  {cardStyle.display !== 'none' && (
+                    <GameCard
+                      game={game}
+                      isCenter={index === selectedIndex}
+                      isAttract={attractMode}
+                      isFavorite={isFavorite(game.id || game.profile)}
+                      artPref={artPref}
+                      artwork={artwork}
+                      onClick={() => {
+                        if (index === selectedIndex) { sounds.select(); setShowDetail(true) }
+                        else setSelectedIndex(index)
+                      }}
+                    />
+                  )}
+                </div>
+              )
+            })}
           </div>
           <button className={styles.navBtn} onClick={() => navigate(1)}>&#8250;</button>
         </div>
