@@ -8,7 +8,12 @@ export default function ArtworkManager({ games, onClose, apiKey, onArtworkUpdate
   const [log,      setLog     ] = useState([])
   const [found,    setFound   ] = useState(0)
   const [skipped,  setSkipped ] = useState(0)
+  const [systemFilter, setSystemFilter] = useState("all")
   const { fetchArtworkForGame } = useSteamGridDB(apiKey)
+
+  const gameSystemLabel = (g) => g.system || g.genre || g.emulator || 'Other'
+  const availableSystems = [...new Set(games.map(gameSystemLabel))].sort()
+  const filteredGames = systemFilter === "all" ? games : games.filter(g => gameSystemLabel(g) === systemFilter)
 
   const addLog = (msg, type = "info") => setLog(l => [...l.slice(-60), { msg, type }])
 
@@ -26,10 +31,10 @@ export default function ArtworkManager({ games, onClose, apiKey, onArtworkUpdate
     let foundCount = 0
     let skippedCount = 0
 
-    for (let i = 0; i < games.length; i++) {
-      const game = games[i]
+    for (let i = 0; i < filteredGames.length; i++) {
+      const game = filteredGames[i]
       const key = game.id || game.profile
-      setProgress(Math.round((i / games.length) * 100))
+      setProgress(Math.round((i / filteredGames.length) * 100))
 
       // Skip if we already have artwork for this game -- checking both
       // capsule and hero so an EmuMovies-imported hero (with no capsule)
@@ -76,7 +81,7 @@ export default function ArtworkManager({ games, onClose, apiKey, onArtworkUpdate
     setProgress(100)
     setStatus("done")
     addLog("Complete! " + foundCount + " found, " + skippedCount + " already had art.", "ok")
-  }, [games, fetchArtworkForGame, apiKey, onArtworkUpdate])
+  }, [filteredGames, fetchArtworkForGame, apiKey, onArtworkUpdate])
 
   const canRun = !!apiKey
 
@@ -84,9 +89,23 @@ export default function ArtworkManager({ games, onClose, apiKey, onArtworkUpdate
     <>
     <div className={styles.body}>
           <div className={styles.info}>
-            Fetches box art and hero images for all {games.length} games using SteamGridDB.
+            Fetches box art and hero images for {systemFilter === "all" ? "all " + games.length : filteredGames.length} games using SteamGridDB.
             Already-fetched games are skipped automatically.
           </div>
+
+          <select
+            className={styles.systemFilterSelect}
+            style={{ marginBottom: 10, maxWidth: 220 }}
+            value={systemFilter}
+            onChange={e => setSystemFilter(e.target.value)}
+          >
+            <option value="all">All systems ({games.length})</option>
+            {availableSystems.map(sys => (
+              <option key={sys} value={sys}>
+                {sys} ({games.filter(g => gameSystemLabel(g) === sys).length})
+              </option>
+            ))}
+          </select>
 
           {!canRun && (
             <div className={styles.noKey}>
