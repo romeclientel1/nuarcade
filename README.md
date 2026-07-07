@@ -144,6 +144,8 @@ Hero art and capsule images are fetched automatically from SteamGridDB. Configur
 5. In Sync, select the matching system from its own dropdown and run the download -- Sync creates its own system-named subfolder inside whatever folder you pointed it at
 6. Back in NuArcade, click **"Scan EmuMovies folder"** -- it finds media regardless of whether Sync nested it directly or one level inside a per-emulator wrapper folder, and shows you a review list before anything imports
 
+> **Step 6 is required, not automatic.** Downloading media with EmuMovies Sync only puts files on disk -- it doesn't do anything inside NuArcade by itself. Nothing shows up on the wheel until you go back into **Media > EmuMovies tab** and click "Scan EmuMovies folder" (then import from the results). It's easy to assume the videos and box art will "just work" once Sync finishes downloading -- they won't, until this step runs.
+
 Each emulator folder gets a `README.txt` explaining what system(s) it plays and which EmuMovies system name to select -- see the table below for the full reference.
 
 The real EmuMovies subfolder names (as of Sync v2.71): `Snap`, `Title`, `Background`, `Box`, `Box_25D`, `Box_3D`, `Box_Full`, `Box_Spine`, `BoxBack`, `Cart`, `Logos`, `Manual`, `System_Logo`, `Video_MP4`, `Video_MP4_HD`, `Video_MP4_HI_QUAL`, `Video_AVI`, `Video_AVI_HD`, `Video_AVI_HI_QUAL`. NuArcade's scanner prefers the highest available video quality tier automatically.
