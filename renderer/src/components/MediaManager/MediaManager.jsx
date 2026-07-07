@@ -30,6 +30,7 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
   const [restartNeeded, setRestartNeeded] = useState(false)
   const [showRestartConfirm, setShowRestartConfirm] = useState(false)
   const [importingAll, setImportingAll] = useState(false)
+  const [importProgress, setImportProgress] = useState({ current: 0, total: 0 })
 
   // Reset focus whenever the tab changes via any path (mouse click, gamepad, etc.)
   useEffect(() => {
@@ -168,14 +169,79 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
   const handleImportAll = async () => {
     if (!emScanResult?.suggestions?.length || importingAll) return
     setImportingAll(true)
-    for (const s of emScanResult.suggestions) {
+
+    const pending = emScanResult.suggestions.filter(s => emImported[s.gameId + '|' + s.slot] !== 'done')
+    setImportProgress({ current: 0, total: pending.length })
+
+    // Reading, modifying, and re-writing the entire artwork registry on
+    // every single import (the old per-item approach via
+    // handleImportEmuMovies) is fine at small scale but compounds into
+    // minutes of silent work at thousands of items, with the UI just
+    // showing static "Importing..." the whole time -- easy to mistake for
+    // stuck or finished and restart mid-run, which drops most of the batch.
+    // Reading once, accumulating in memory, and flushing periodically
+    // avoids that entirely.
+    let artwork = {}
+    try { artwork = JSON.parse(localStorage.getItem('nuarcade_artwork') || '{}') } catch {}
+    let artworkDirty = false
+    let videoUpdated = false
+    const importedKeys = {}
+    let doneCount = 0
+    let errorCount = 0
+
+    for (let i = 0; i < pending.length; i++) {
+      const s = pending[i]
       const key = s.gameId + '|' + s.slot
-      if (emImported[key] === 'done') continue
       const chosenPath = emPick[key] ?? s.chosenFile?.sourceFile ?? ''
+      setImportProgress({ current: i + 1, total: pending.length })
+
       if (!chosenPath) continue
-      await handleImportEmuMovies(s, chosenPath)
+
+      try {
+        const result = await window.nuarcade.importEmuMoviesFile({
+          sourceFile: chosenPath,
+          gameId: s.gameId,
+          slot: s.slot,
+          mediaPath: mmConfig?.mediaPath,
+        })
+        if (result.success) {
+          importedKeys[key] = 'done'
+          doneCount++
+          if (s.slot === 'video') {
+            setGames(g => g.map(x => (x.id || x.profile) === s.gameId ? { ...x, hasVideo: true } : x))
+            videoUpdated = true
+          } else {
+            artwork[s.gameId] = { ...(artwork[s.gameId] || {}), [s.slot]: result.fileUrl }
+            artworkDirty = true
+          }
+          setRestartNeeded(true)
+        } else {
+          importedKeys[key] = 'error'
+          errorCount++
+          log('Import failed for ' + s.gameTitle + ': ' + result.error, 'error')
+        }
+      } catch (e) {
+        importedKeys[key] = 'error'
+        errorCount++
+        log('Import exception: ' + (e.message || String(e)), 'error')
+      }
+
+      if (artworkDirty && i % 50 === 0) {
+        try { localStorage.setItem('nuarcade_artwork', JSON.stringify(artwork)) } catch {}
+      }
     }
+
+    if (artworkDirty) {
+      try { localStorage.setItem('nuarcade_artwork', JSON.stringify(artwork)) } catch {}
+      onArtworkUpdated?.()
+    }
+    if (videoUpdated) onVideosUpdated?.()
+
+    setEmImported(prev => ({ ...prev, ...importedKeys }))
+    log('Import All complete -- ' + doneCount + ' imported, ' + errorCount + ' failed', 'ok')
+
     setImportingAll(false)
+    setImportProgress({ current: 0, total: 0 })
   }
 
   useEffect(() => {
@@ -884,7 +950,9 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
                       disabled={importingAll}
                       onClick={handleImportAll}
                     >
-                      {importingAll ? 'Importing...' : 'Import All'}
+                      {importingAll
+                        ? 'Importing ' + importProgress.current + ' / ' + importProgress.total + '...'
+                        : 'Import All'}
                     </button>
                   )}
                 </div>
