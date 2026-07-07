@@ -62,7 +62,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 65%;
+  height: 35%;
   background: linear-gradient(transparent, rgba(0,0,0,0.97));
   pointer-events: none;
 }
