@@ -90,8 +90,8 @@ export default function App() {
 
         {phase === "main" && (
           <Wheel
-            player={currentPlayer}
-            onExit={handleReturnToPlayerSelect}
+            activeProfile={currentPlayer}
+            onSwitchPlayer={handleReturnToPlayerSelect}
           />
         )}
 
