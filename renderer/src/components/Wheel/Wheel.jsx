@@ -404,6 +404,13 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const [artwork, setArtwork] = useState(() => {
     try { return JSON.parse(localStorage.getItem("nuarcade_artwork") || "{}") } catch { return {} }
   })
+  // Media Manager writes new artwork straight to localStorage while this
+  // component stays mounted underneath it as an overlay -- without this,
+  // newly fetched/imported artwork would sit there correctly saved but never
+  // show up until a full restart forced a fresh read.
+  const refreshArtwork = () => {
+    try { setArtwork(JSON.parse(localStorage.getItem("nuarcade_artwork") || "{}")) } catch {}
+  }
   const sgdbKey = config?.sgdbApiKey || null
   const { fetchArtworkForGame } = useSteamGridDB(sgdbKey)
 
@@ -1370,7 +1377,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
           resultCount={filteredGames.length}
         />
       )}
-      {showMediaManager && <MediaManager onClose={() => setShowMediaManager(false)} onVideosUpdated={refreshVideoPaths} />}
+      {showMediaManager && <MediaManager onClose={() => setShowMediaManager(false)} onVideosUpdated={refreshVideoPaths} onArtworkUpdated={refreshArtwork} />}
       {showSettings && <Settings games={games} onClose={() => setShowSettings(false)} onCRTChange={onCRTChange} crtEnabled={crtEnabled} themeId={themeId} onThemeChange={onThemeChange} />}
       {showDetail && current && (
         <GameDetail
