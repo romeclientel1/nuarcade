@@ -302,7 +302,7 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
     let done = 0
     let failed = 0
     let processed = 0
-    const CONCURRENCY = 4
+    const CONCURRENCY = 2
     // Timeouts and network hiccups are often transient -- retrying just the
     // download step usually succeeds on a later attempt, so failed games
     // (specifically ones with a real search match that failed to download)
