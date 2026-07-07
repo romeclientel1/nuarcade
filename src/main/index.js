@@ -842,6 +842,30 @@ ipcMain.handle('check-path', async (event, folderPath) => {
     return { exists: false }
   }
 })
+
+// -- Fuzzy emulator executable detection --------------------------------------
+// Exact .exe filenames drift across emulator releases and forks (DuckStation's
+// build name has changed over versions; Ryujinx was discontinued and forked
+// into things like Ryubing) -- rather than requiring an exact match, this
+// checks whether ANY .exe in the folder contains the given keyword, so
+// detection survives those renames instead of silently going stale.
+ipcMain.handle('find-exe-in-folder', async (event, folderPath, keyword) => {
+  const fs = require('fs')
+  const path = require('path')
+  try {
+    if (!folderPath || !fs.existsSync(folderPath)) return { found: false }
+    const files = fs.readdirSync(folderPath)
+    const kw = String(keyword).toLowerCase().replace(/[^a-z0-9]/g, '')
+    const match = files.find(f => {
+      if (path.extname(f).toLowerCase() !== '.exe') return false
+      const norm = f.toLowerCase().replace(/[^a-z0-9]/g, '')
+      return norm.includes(kw)
+    })
+    return { found: !!match, exeName: match || null }
+  } catch (e) {
+    return { found: false, error: e.message }
+  }
+})
 // Creates all required F: drive folders on first launch if they don't exist.
 // Mirrors the NSIS installer script as a belt-and-suspenders fallback.
 function ensureCabinetFolders() {
