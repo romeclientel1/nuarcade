@@ -13,7 +13,6 @@ import Achievements from "../Achievements/Achievements"
 import { computeStats } from "../Achievements/computeStats"
 import { AchievementToastContainer, useAchievementToasts } from "../Achievements/AchievementToast"
 import VirtualKeyboard from "../VirtualKeyboard/VirtualKeyboard"
-import BootScreen from "./BootScreen"
 import IntroVideo from "./IntroVideo"
 import GameCoach from "../GameCoach/GameCoach"
 import OperatorDashboard from "../OperatorDashboard/OperatorDashboard"
@@ -336,7 +335,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const [showCollections, setShowCollections] = useState(false)
   const [showStats, setShowStats] = useState(false)
   const [showAchievements, setShowAchievements] = useState(false)
-  const [showBoot, setShowBoot] = useState(false)
   const [showIntro, setShowIntro] = useState(false)
   const [showKonami, setShowKonami] = useState(false)
   const konamiSeq = useRef([])
@@ -363,16 +361,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       const introPath = (config?.mediaPath || 'C:\\Media\\') + 'intro.mp4'
       if (window.nuarcade?.checkPath) {
         window.nuarcade.checkPath(introPath)
-          .then(r => {
-            if (r?.exists) {
-              setShowIntro(true) // play intro first, then boot screen
-            } else {
-              setShowBoot(true)
-            }
-          })
-          .catch(() => setShowBoot(true))
-      } else {
-        setShowBoot(true)
+          .then(r => { if (r?.exists) setShowIntro(true) })
+          .catch(() => {})
       }
     }
   }, [games.length, loading])
@@ -1502,24 +1492,11 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       {/* Error toasts */}
       <ErrorToastContainer toasts={errorToasts} onDismiss={dismissError} />
 
-      {/* Custom intro video -- plays before boot screen if intro.mp4 exists */}
+      {/* Custom intro video -- plays once on first library load if intro.mp4 exists */}
       {showIntro && (
         <IntroVideo
           mediaPath={config?.mediaPath}
-          onComplete={() => { setShowIntro(false); setShowBoot(true) }}
-        />
-      )}
-
-      {/* Boot screen -- shown once on first library load */}
-      {showBoot && (
-        <BootScreen
-          games={games}
-          artwork={artwork}
-          onComplete={() => {
-            setShowBoot(false)
-            // TODO: artwork={artwork}deoPaths once center card issue is solved
-            // setTimeout(() => refreshVideoPaths(), 500)
-          }}
+          onComplete={() => setShowIntro(false)}
         />
       )}
 
