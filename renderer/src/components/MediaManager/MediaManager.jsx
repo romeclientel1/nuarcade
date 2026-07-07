@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import { useOverlayGamepad } from '../../hooks/useOverlayGamepad'
 import styles from "./MediaManager.module.css"
 import ArtworkManager from "../ArtworkManager/ArtworkManager"
+import { useSteamGridDB } from "../../hooks/useSteamGridDB"
 
 const THUMBNAIL_BASE = "https://raw.githubusercontent.com/teknogods/TeknoParrotUIThumbnails/master/Icons/"
 
@@ -72,6 +73,9 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
 
   // -- EmuMovies local Sync import --
   const [emScanResult, setEmScanResult] = useState(null)
+  const [autoFilling, setAutoFilling] = useState(false)
+  const [autoFillStage, setAutoFillStage] = useState('')
+  const { fetchArtworkForGame } = useSteamGridDB(mmConfig?.sgdbApiKey)
   const [emScanning, setEmScanning] = useState(false)
   const [emImported, setEmImported] = useState({}) // 'gameId|slot' -> 'done' | 'error'
   const [emPick, setEmPick] = useState({}) // 'gameId|slot' -> chosen sourceFile
@@ -280,6 +284,88 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
       setYtdlpInstalling(false)
       return false
     }
+  }
+
+  // One-click priority chain: EmuMovies first (best quality, curated art and
+  // video), then SteamGridDB for whatever artwork EmuMovies didn't have, then
+  // YouTube for whatever video is still missing. Click again while running
+  // to cancel, same pattern as the standalone YouTube bulk fetch.
+  const handleAutoFillEverything = async () => {
+    if (autoFilling) {
+      bulkCancelRef.current = true
+      return
+    }
+
+    bulkCancelRef.current = false
+    setAutoFilling(true)
+    log('Auto-fill: starting -- EmuMovies first, then SteamGridDB/YouTube for what remains', 'info')
+
+    try {
+      // Stage 1: EmuMovies -- scan directly rather than through
+      // handleScanEmuMovies, since its result lands in state and wouldn't be
+      // readable synchronously here. Still mirror it into emScanResult so
+      // the EmuMovies tab shows the same results if visited afterward.
+      setAutoFillStage('Scanning EmuMovies folder...')
+      const emResult = await window.nuarcade.scanEmuMoviesMedia({ mediaPath: mmConfig?.mediaPath, games })
+      setEmScanResult(emResult)
+
+      if (emResult?.suggestions?.length) {
+        setAutoFillStage('Importing ' + emResult.suggestions.length + ' EmuMovies match(es)...')
+        log('Auto-fill: importing ' + emResult.suggestions.length + ' EmuMovies match(es)...', 'info')
+        for (const s of emResult.suggestions) {
+          if (bulkCancelRef.current) break
+          const chosenPath = s.chosenFile?.sourceFile
+          if (chosenPath) await handleImportEmuMovies(s, chosenPath)
+        }
+      } else {
+        log('Auto-fill: no EmuMovies matches found' + (emResult?.error ? ' (' + emResult.error + ')' : ''), 'warn')
+      }
+
+      // Stage 2: SteamGridDB -- only for games EmuMovies didn't cover
+      if (!bulkCancelRef.current) {
+        setAutoFillStage('Fetching remaining artwork from SteamGridDB...')
+        log('Auto-fill: fetching remaining artwork from SteamGridDB...', 'info')
+        let artwork = {}
+        try { artwork = JSON.parse(localStorage.getItem('nuarcade_artwork') || '{}') } catch {}
+        let artworkFound = 0
+        let checked = 0
+        for (const game of games) {
+          if (bulkCancelRef.current) break
+          if (game.isLauncher) continue
+          const gid = game.id || game.profile
+          if (artwork[gid]?.capsule || artwork[gid]?.hero) continue
+          checked++
+          try {
+            const result = await fetchArtworkForGame(game.title)
+            if (result?.capsule || result?.hero) {
+              artwork[gid] = { ...(artwork[gid] || {}), ...result, source: 'sgdb' }
+              artworkFound++
+            }
+          } catch (e) {}
+          await new Promise(r => setTimeout(r, 200))
+          if (checked % 10 === 0) {
+            try { localStorage.setItem('nuarcade_artwork', JSON.stringify(artwork)) } catch {}
+          }
+        }
+        try { localStorage.setItem('nuarcade_artwork', JSON.stringify(artwork)) } catch {}
+        onArtworkUpdated?.()
+        log('Auto-fill: SteamGridDB found artwork for ' + artworkFound + ' more game(s)', 'ok')
+      }
+
+      // Stage 3: YouTube -- only for games still missing video
+      if (!bulkCancelRef.current) {
+        setAutoFillStage('Fetching remaining video from YouTube...')
+        log('Auto-fill: fetching remaining video from YouTube...', 'info')
+        await handleBulkYouTube()
+      }
+
+      log(bulkCancelRef.current ? 'Auto-fill cancelled' : 'Auto-fill complete', bulkCancelRef.current ? 'warn' : 'ok')
+    } catch (e) {
+      log('Auto-fill exception: ' + (e.message || String(e)), 'error')
+    }
+
+    setAutoFillStage('')
+    setAutoFilling(false)
   }
 
   const handleBulkYouTube = async () => {
@@ -525,6 +611,25 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
             }}>
               For YouTube downloads to work reliably, you need to be signed into YouTube in a browser on this PC.
               Without it, YouTube blocks most automated download attempts.
+            </div>
+
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 12,
+              background: 'rgba(0,200,255,0.06)', border: '1px solid rgba(0,200,255,0.25)',
+              borderRadius: 6, padding: '10px 14px', marginBottom: 10,
+            }}>
+              <button
+                className={styles.scanBtn}
+                style={{ borderColor: 'rgba(0,200,255,0.5)', flexShrink: 0 }}
+                onClick={handleAutoFillEverything}
+              >
+                {autoFilling ? 'Cancel auto-fill' : 'Auto-fill Everything'}
+              </button>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)' }}>
+                {autoFilling
+                  ? autoFillStage || 'Working...'
+                  : 'One click: EmuMovies first for every game, then SteamGridDB and YouTube fill in whatever is still missing.'}
+              </div>
             </div>
 
             <div className={styles.statsRow}>
