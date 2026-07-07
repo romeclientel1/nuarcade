@@ -22,6 +22,7 @@ import { useArcadeSounds } from "../../hooks/useArcadeSounds"
 import { useMusicPlayer  } from "../../hooks/useMusicPlayer"
 import { usePlaytime } from "../../hooks/usePlaytime"
 import { useSteamGridDB } from "../../hooks/useSteamGridDB"
+import { useVersionCheck } from "../../hooks/useVersionCheck"
 import { getControllerHint } from "../../data/controllerHints"
 import ControllerPrompt from "../ControllerPrompt/ControllerPrompt"
 
@@ -401,6 +402,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const refreshArtwork = () => {
     try { setArtwork(JSON.parse(localStorage.getItem("nuarcade_artwork") || "{}")) } catch {}
   }
+  const { updateAvailable, remoteVersion, handleDownload } = useVersionCheck()
   const sgdbKey = config?.sgdbApiKey || null
   const { fetchArtworkForGame } = useSteamGridDB(sgdbKey)
 
@@ -1093,6 +1095,16 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
               <button className={styles.mediaBtn + (focusZone === 0 && topMenuIdx === 6 ? " " + styles.barFocused : "")} onClick={() => setShowMediaManager(true)}>Media</button>
               <button className={styles.settingsBtn + (focusZone === 0 && topMenuIdx === 7 ? " " + styles.barFocused : "")} onClick={() => setShowSettings(true)}>Settings</button>
               <button className={styles.helpBtn + (focusZone === 0 && topMenuIdx === 8 ? " " + styles.barFocused : "")} onClick={() => setShowHelp(true)}>?</button>
+              {updateAvailable && (
+                <button
+                  className={styles.settingsBtn}
+                  style={{ borderColor: 'rgba(255,170,0,0.5)', color: '#ffaa00' }}
+                  onClick={handleDownload}
+                  title={"NuArcade " + remoteVersion + " is available -- click to download"}
+                >
+                  UPDATE
+                </button>
+              )}
               <button
                 className={styles.exitBtn + (focusZone === 0 && topMenuIdx === 9 ? " " + styles.barFocused : "")}
                 onClick={() => setShowExitPopup(true)}
