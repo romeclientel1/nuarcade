@@ -143,7 +143,7 @@ export default function ArtworkManager({ games, onClose, apiKey, onArtworkUpdate
         <div className={styles.footer}>
           {status === "idle" && (
             <button className={styles.startBtn} onClick={runDownload} disabled={!canRun} style={{ opacity: canRun ? 1 : 0.4 }}>
-              Fetch artwork for all {games.length} games
+              Fetch artwork for {systemFilter === "all" ? "all " + games.length : filteredGames.length} games
             </button>
           )}
           {status === "running" && (
