@@ -2,7 +2,7 @@
 
 A modern arcade cabinet frontend built for serious collectors and venue operators. NuArcade replaces HyperSpin and LaunchBox with a clean, fast, AI-powered experience built on Electron + React.
 
-**Current version: v4.18.2**
+**Current version: v4.28.2**
 
 ---
 
@@ -176,6 +176,16 @@ TeknoParrot isn't one system -- it runs many different arcade hardware platforms
 The one confirmed real match: select **Konami e-AMUSEMENT** in Sync for any Konami/Bemani-adjacent titles in your TeknoParrot library.
 
 For everything else in TeknoParrot, use NuArcade's own YouTube video pipeline instead (**Media > Library tab**, "Find video" per game) -- it has real coverage for popular arcade titles that EmuMovies does not.
+
+### System Logos (optional)
+
+The category pills above your wheel can show a real system logo instead of plain text, once you add your own images.
+
+1. Drop image files into `<your Media folder>\SystemLogos\` -- created automatically the first time this runs
+2. Name each file to match the category exactly (lowercase, no spaces): `xbox360.png`, `ps1.png`, `ps2.png`, `dreamcast.png`, `n64.png`, `switch.png`, `wiiu.png`, `gcwii.png`, `pinball.png`, etc. -- `.png`, `.jpg`, `.jpeg`, `.webp`, and `.svg` all work
+3. Restart NuArcade (same as any config/media change)
+
+Any category without a matching logo just keeps showing its text label, so this can be done incrementally. NuArcade doesn't ship or generate any logo images itself -- since official console logos are trademarked, you'll need to source your own (fan art, icon packs, or your own designs all work).
 
 ---
 
