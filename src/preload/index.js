@@ -112,6 +112,7 @@ contextBridge.exposeInMainWorld('nuarcade', {
 
   // Path verification
   checkPath: (folderPath) => ipcRenderer.invoke('check-path', folderPath),
+  findExeInFolder: (folderPath, keyword) => ipcRenderer.invoke('find-exe-in-folder', folderPath, keyword),
 
   // LED / external event hooks
   gameSelected:    (gameData) => ipcRenderer.invoke('game-selected',    gameData),
