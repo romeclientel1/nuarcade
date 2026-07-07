@@ -297,7 +297,7 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
     bulkCancelRef.current = false
     setBulkRunning(true)
     setBulkProgress({ current: 0, total: missing.length, title: '', done: 0, failed: 0 })
-    log(`Starting YouTube bulk fetch -- ${missing.length} games, 4 parallel...`)
+    log(`Starting YouTube bulk fetch -- ${missing.length} games, 2 parallel...`)
 
     let done = 0
     let failed = 0
@@ -547,7 +547,7 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
                   onClick={handleBulkYouTube}
                   disabled={stats.missing === 0 && !bulkRunning}
                 >
-                  {bulkRunning ? 'Cancel fetch' : 'Auto-fetch via YouTube (4x parallel)'}
+                  {bulkRunning ? 'Cancel fetch' : 'Auto-fetch via YouTube (2x parallel)'}
                 </button>
                 {bulkProgress && (
                   <div style={{ width: '100%', minWidth: 220 }}>
