@@ -939,6 +939,14 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       opacity,
       zIndex,
       pointerEvents: signed === 0 ? 'auto' : 'none',
+      // Without this, the overshoot-then-correct navigation logic (two
+      // separate setSelectedIndex calls 80ms apart, by design -- see
+      // navigate()) has nothing to animate between, so it reads as two
+      // jarring instant snaps instead of the intended spring motion. The
+      // browser smoothly redirects an in-progress transition when the
+      // target changes mid-flight, which is what actually produces the
+      // spring feel here.
+      transition: 'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease',
     }
   
   // Xbox controller mapping
