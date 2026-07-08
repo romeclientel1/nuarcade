@@ -117,13 +117,27 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
     if (!window.nuarcade?.scanEmuMoviesMedia) return
     setEmScanning(true)
     setEmScanResult(null)
+    // Backend scan is a single blocking call with no way to report
+    // mid-scan progress over IPC, so the diagnostic log previously only
+    // ever got one line, right at the end -- on a library this size that
+    // reads as "nothing happening" for however long the scan takes. This
+    // start line at least confirms it's actually running.
+    log('Scanning EmuMovies folder against ' + games.length + ' games...', 'info')
     try {
       const result = await window.nuarcade.scanEmuMoviesMedia({
         mediaPath: mmConfig?.mediaPath,
         games,
       })
       setEmScanResult(result)
-      log(result.error ? 'EmuMovies scan: ' + result.error : 'EmuMovies scan found ' + (result.totalFound || 0) + ' matches', result.error ? 'warn' : 'ok')
+      if (result.error) {
+        log('EmuMovies scan: ' + result.error, 'warn')
+      } else {
+        const suggestions = result.suggestions || []
+        const videoCount = suggestions.filter(s => s.slot === 'video').length
+        const capsuleCount = suggestions.filter(s => s.slot === 'capsule').length
+        const heroCount = suggestions.filter(s => s.slot === 'hero').length
+        log('EmuMovies scan found ' + suggestions.length + ' matches (' + videoCount + ' video, ' + capsuleCount + ' capsule, ' + heroCount + ' hero)', 'ok')
+      }
     } catch (e) {
       setEmScanResult({ suggestions: [], error: e.message || String(e) })
       log('EmuMovies scan exception: ' + (e.message || String(e)), 'error')
