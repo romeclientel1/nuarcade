@@ -4,6 +4,8 @@ A modern arcade cabinet frontend built for serious collectors and venue operator
 
 **Current version: v5.0.1**
 
+**New to NuArcade or just need a refresher?** See the [User Manual](USER_MANUAL.md) -- covers everything from a guest's quick start to full owner setup.
+
 ---
 
 ## What's New in 5.0
@@ -235,7 +237,6 @@ Any category without a matching logo just keeps showing its text label, so this 
 - Velocity-based momentum -- hold a direction to accelerate, release to coast
 - Elastic overshoot -- wheel snaps with a satisfying spring feel
 - System color-coded cards -- each emulator has its own color identity
-- Card flip -- press Y or tap the center card to flip it and see game details on the back
 - Background video crossfade per game
 - Card shine sweep animation on selection
 
@@ -255,10 +256,6 @@ Any category without a matching logo just keeps showing its text label, so this 
 - Per-player playtime, game history, favorites, and ratings
 - Switch players mid-session
 
-### High Score Board
-- Press H to view and log high scores per game
-- Tracks initials, score, and date
-
 ### Controller Hints
 - 2-second overlay on game launch showing the correct controller layout
 - Covers TeknoParrot, MAME, Model 2, and Model 3
@@ -268,9 +265,9 @@ Any category without a matching logo just keeps showing its text label, so this 
 - Group games into custom lists
 
 ### Auto-Updater
-- Checks GitHub releases every 6 hours
-- One-click download and silent install
-- Progress bar shows download status
+- An amber "UPDATE" badge appears on the main wheel's top bar when a new version is available
+- Checks for updates once per session (not on a background timer)
+- Clicking the badge opens the GitHub release page for you to download and run manually -- there's no silent in-app install
 
 ---
 
@@ -278,19 +275,19 @@ Any category without a matching logo just keeps showing its text label, so this 
 
 | Key | Action |
 |---|---|
-| Arrow Up / W | Navigate up |
-| Arrow Down / S | Navigate down |
-| Enter / Space | Launch game |
-| D | Open game detail |
+| Left / Right Arrow | Previous / next game |
+| Enter | Open game detail view |
+| Space | Launch game |
 | F | Toggle favorite |
-| H | High score board |
 | C | AI Game Coach |
+| O | Operator dashboard |
 | N | Collections |
 | T | Stats |
-| O | Operator dashboard |
-| Tab | Flip center card |
+| A | Achievements |
+| R | Random game |
+| S | Screenshot mode |
+| ? | Toggle help |
 | Esc | Back / close overlay |
-| Ctrl+W | Quit |
 
 ---
 
