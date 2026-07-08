@@ -1345,7 +1345,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
           </div>
           <div className={styles.infoRight}>
             <button className={styles.launchBtn + (focusZone === 3 ? " " + styles.barFocused : "")} onClick={launchGame} disabled={launching}>
-              {launching ? "Launching..." : current.isPinball ? "Launch Table" : "Launch Game"}
+              {launching ? "Launching..." : current.isPinball ? "Launch Table" : current.emulator === "retroarch" ? "Launch RetroArch to Play" : "Launch Game"}
             </button>
             {launchError && (
               <div style={{
