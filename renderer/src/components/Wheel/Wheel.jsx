@@ -213,9 +213,9 @@ function KonamiCelebration({ onClose }) {
         style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
       />
       <div style={{ position: 'relative', textAlign: 'center', padding: '0 24px' }}>
-        <div style={headStyle}>RELEASE 100</div>
-        <div style={subStyle}>100 RELEASES AND COUNTING</div>
-        <div style={tagStyle}>NUARCADE v4.4.9 // ROME CLIENTEL // 2026</div>
+        <div style={headStyle}>V5.0</div>
+        <div style={subStyle}>MAJOR RELEASE UNLOCKED</div>
+        <div style={tagStyle}>NUARCADE {window.nuarcade?.version || 'v5.0.0'} // ROME CLIENTEL // 2026</div>
         <div style={codeStyle}>UP UP DOWN DOWN LEFT RIGHT LEFT RIGHT B A</div>
       </div>
     </div>
@@ -1524,7 +1524,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
         />
       )}
 
-      {/* Konami code easter egg -- BUILD 100 celebration */}
+      {/* Konami code easter egg -- version milestone celebration */}
       {showKonami && (
         <KonamiCelebration onClose={() => setShowKonami(false)} />
       )}
