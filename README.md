@@ -2,7 +2,44 @@
 
 A modern arcade cabinet frontend built for serious collectors and venue operators. NuArcade replaces HyperSpin and LaunchBox with a clean, fast, AI-powered experience built on Electron + React.
 
-**Current version: v4.32.5**
+**Current version: v5.0.0**
+
+---
+
+## What's New in 5.0
+
+The biggest stability pass NuArcade has had. Highlights:
+
+**Media & Artwork**
+- Fixed a core bug where fetched or imported artwork sat correctly in storage but never appeared on the wheel without a full restart
+- New "Auto-fill Everything" workflow -- one click runs EmuMovies first, then SteamGridDB and YouTube fill in whatever's still missing
+- 3D box art (transparent-background EmuMovies style) now displays correctly instead of showing an unrelated placeholder image through the transparent areas
+- Card artwork now fills significantly more of each card -- the dark title gradient was covering nearly 40% of the art for no real reason
+- EmuMovies bulk import ("Import All" and Auto-fill) is dramatically faster at large libraries -- fixed a bottleneck that made it look stuck or finished when it was still working
+- Orphaned media cleanup no longer misidentifies stray system files as orphaned game art
+
+**Performance**
+- Wheel artwork now loads far faster -- previously every game in the library mounted its card and artwork simultaneously on load, even the hundreds not on screen
+- YouTube bulk fetch defaults to 2 concurrent downloads instead of 4, reducing timeout failures
+
+**Scanning & Compatibility**
+- PS3 and Xbox 360 scanners now properly validate game folders instead of counting junk/cache directories as games
+- RetroArch category added, and a systemic config-path bug fixed across 9 scanners (RetroArch, PS3, Switch, Xbox 360, GC/Wii, PS2, Dreamcast, Steam, TeknoParrot)
+- DuckStation and Ryujinx/Ryubing detection now uses fuzzy matching instead of exact filenames, so it survives version updates
+- .zip/.7z support added across several scanners
+
+**Wheel & UI**
+- System logos now show in the category strip
+- Wheel navigation has a real spring/overshoot animation instead of a jarring instant snap
+- Player initials now display correctly at the top of the screen
+- CRT effect and theme color settings are now properly wired and persist across restarts
+- Category pill and bottom hint bar text bumped from barely-visible to actually readable
+- Removed the boot splash screen cycling top games on startup
+
+**Quality of Life**
+- Update-check system fixed and now shows directly on the home screen, not just buried in Settings
+- Diagnostic log in Media Manager now visible from every tab instead of only the Library tab
+- System filter dropdowns added to both the Library and Artwork tabs
 
 ---
 
