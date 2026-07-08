@@ -220,7 +220,7 @@ export default function GameDetail({ game, onClose, onLaunch, launching, artwork
               onClick={onLaunch}
               disabled={launching}
             >
-              {launching ? "Launching..." : game.isPinball ? "Launch Table" : "Launch Game"}
+              {launching ? "Launching..." : game.isPinball ? "Launch Table" : game.emulator === "retroarch" ? "Launch RetroArch to Play" : "Launch Game"}
             </button>
             {lc.count > 0 && (
               <button
@@ -310,7 +310,7 @@ export default function GameDetail({ game, onClose, onLaunch, launching, artwork
             <div className={styles.exeSection}>
               <div className={styles.exeLabel}>Launch command</div>
               <div className={styles.exeBox}>
-                {game.isPinball ? "VPX: " : "TeknoParrotUi.exe --profile="}
+                {game.isPinball ? "VPX: " : game.emulator === "retroarch" ? "RetroArch.exe -L <core> " : "TeknoParrotUi.exe --profile="}
                 <span style={{ color: colors.accent }}>{game.profile}</span>
               </div>
             </div>
