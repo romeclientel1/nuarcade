@@ -575,6 +575,11 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     }
     sounds.launch()
     setLaunching(true)
+    // The background gameplay video (and its audio) has no reason to keep
+    // playing once the actual game launches -- pause whichever of the A/B
+    // slots is currently active. Resumed below once the emulator closes.
+    bgVideoARef.current?.pause()
+    bgVideoBRef.current?.pause()
     const gameId = current.id || current.profile
     const sessionStart = startSession(gameId)
     recordLaunch(gameId)
@@ -584,6 +589,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     const handleFocusReturn = () => {
       endSession(gameId, sessionStart)
       setAchievementStats(computeStats(games))
+      const activeRef = bgActive === 'a' ? bgVideoARef : bgVideoBRef
+      activeRef.current?.play().catch(() => {})
       window.removeEventListener("focus", handleFocusReturn)
     }
     window.addEventListener("focus", handleFocusReturn)
@@ -592,6 +599,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     const handleVisibility = () => {
       if (document.visibilityState === "visible") {
         endSession(gameId, sessionStart)
+        const activeRef2 = bgActive === 'a' ? bgVideoARef : bgVideoBRef
+        activeRef2.current?.play().catch(() => {})
         document.removeEventListener("visibilitychange", handleVisibility)
       }
     }
