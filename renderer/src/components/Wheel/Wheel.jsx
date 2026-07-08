@@ -30,7 +30,7 @@ import ControllerPrompt from "../ControllerPrompt/ControllerPrompt"
 import styles from "./Wheel.module.css"
 import { useMediaFolders } from "../../hooks/useMediaFolders"
 
-const CATEGORIES = ["All", "Favorites", "Recent", "Arcade", "MAME", "Retro", "Racing", "Fighting", "Shooter", "Rhythm", "Flying", "Sports", "N64", "PS1", "PSP", "Dreamcast", "Model2", "Model3", "PS3", "Xbox360", "GCWii", "WiiU", "PS2", "Switch", "Pinball", "PC"]
+const CATEGORIES = ["All", "Favorites", "Recent", "Arcade", "MAME", "Retro", "Racing", "Fighting", "Shooter", "Rhythm", "Flying", "Sports", "N64", "PS1", "PSP", "Dreamcast", "Model2", "Model3", "PS3", "Xbox360", "GCWii", "WiiU", "PS2", "Switch", "Pinball", "PC", "RetroArch"]
 const ATTRACT_TIMEOUT = 120000
 
 function sortGames(games, sortBy) {
