@@ -113,14 +113,14 @@ ipcMain.handle('launch-game', async (event, profilePath) => {
 
 // -- Launch RPCS3 game -------------------------------------------------------
 ipcMain.handle('launch-ps3-game', async (event, gamePath) => {
-  const { spawn } = require('child_process')
-  return new Promise((resolve) => {
-    const cfg = config.load()
-    const rpcs3Exe = path.join(cfg.rpcs3Path || 'F:\\RPCS3\\', 'rpcs3.exe')
-    const child = spawn(rpcs3Exe, ['--no-gui', gamePath], { detached: true, stdio: 'ignore' })
-    child.unref()
-    resolve({ success: true })
-  })
+  const cfg = config.load()
+  const rpcs3Exe = path.join(cfg.rpcs3Path || 'F:\\RPCS3\\', 'rpcs3.exe')
+  try {
+    await launchWithReturn(rpcs3Exe, ['--no-gui', gamePath])
+    return { success: true }
+  } catch (e) {
+    return { success: false, error: e.message }
+  }
 })
 
 // -- Run TeknoParrot updater -------------------------------------------------
@@ -186,26 +186,26 @@ ipcMain.handle('launch-xbox360-game', async (event, gamePath) => {
 
 // -- Launch Dolphin / GC+Wii -------------------------------------------------
 ipcMain.handle('launch-gcwii-game', async (event, gamePath) => {
-  const { spawn } = require('child_process')
-  return new Promise((resolve) => {
-    const cfg = config.load()
-    const dolphinExe = path.join(cfg.dolphinPath || 'F:\\Dolphin\\', 'Dolphin.exe')
-    const child = spawn(dolphinExe, ['-e', gamePath, '--batch'], { detached: true, stdio: 'ignore' })
-    child.unref()
-    resolve({ success: true })
-  })
+  const cfg = config.load()
+  const dolphinExe = path.join(cfg.dolphinPath || 'F:\\Dolphin\\', 'Dolphin.exe')
+  try {
+    await launchWithReturn(dolphinExe, ['-e', gamePath, '--batch'])
+    return { success: true }
+  } catch (e) {
+    return { success: false, error: e.message }
+  }
 })
 
 // -- Launch PCSX2 / PS2 ------------------------------------------------------
 ipcMain.handle('launch-ps2-game', async (event, gamePath) => {
-  const { spawn } = require('child_process')
-  return new Promise((resolve) => {
-    const cfg = config.load()
-    const pcsx2Exe = path.join(cfg.pcsx2Path || 'F:\\PCSX2\\', 'pcsx2.exe')
-    const child = spawn(pcsx2Exe, [gamePath, '--nogui'], { detached: true, stdio: 'ignore' })
-    child.unref()
-    resolve({ success: true })
-  })
+  const cfg = config.load()
+  const pcsx2Exe = path.join(cfg.pcsx2Path || 'F:\\PCSX2\\', 'pcsx2.exe')
+  try {
+    await launchWithReturn(pcsx2Exe, [gamePath, '--nogui'])
+    return { success: true }
+  } catch (e) {
+    return { success: false, error: e.message }
+  }
 })
 
 // -- Scan Xbox 360 games -----------------------------------------------------
@@ -229,14 +229,14 @@ ipcMain.handle('scan-ps2-games', async (event, ps2GamesPath) => {
 
 // -- Launch Ryujinx / Switch --------------------------------------------------
 ipcMain.handle('launch-switch-game', async (event, gamePath) => {
-  const { spawn } = require('child_process')
-  return new Promise((resolve) => {
-    const cfg = config.load()
-    const ryujinxExe = path.join(cfg.ryujinxPath || 'F:\\Ryujinx\\', 'Ryujinx.exe')
-    const child = spawn(ryujinxExe, [gamePath], { detached: true, stdio: 'ignore' })
-    child.unref()
-    resolve({ success: true })
-  })
+  const cfg = config.load()
+  const ryujinxExe = path.join(cfg.ryujinxPath || 'F:\\Ryujinx\\', 'Ryujinx.exe')
+  try {
+    await launchWithReturn(ryujinxExe, [gamePath])
+    return { success: true }
+  } catch (e) {
+    return { success: false, error: e.message }
+  }
 })
 
 // -- Scan Switch games --------------------------------------------------------
@@ -592,15 +592,14 @@ ipcMain.handle('launch-mame-game', async (event, gamePath) => {
     } catch {}
   }
 
-  const { spawn } = require('child_process')
   const romFile = path.basename(gamePath, path.extname(gamePath))
   const romsDir = path.dirname(gamePath)
-  spawn(mameExe, [romFile, '-rompath', romsDir], {
-    detached: true,
-    stdio: 'ignore',
-    cwd: mameDir,
-  }).unref()
-  return { launched: true }
+  try {
+    await launchWithReturn(mameExe, [romFile, '-rompath', romsDir], { cwd: mameDir })
+    return { success: true }
+  } catch (e) {
+    return { success: false, error: e.message }
+  }
 })
 
 ipcMain.handle('scan-mame-games', async (event, mameGamesPath) => {
@@ -667,8 +666,12 @@ ipcMain.handle('launch-retroarch-game', async (event, gamePath) => {
     ? ['-f', '-L', corePath, gamePath]
     : ['-f', gamePath]
 
-  spawn(retroExe, args, { detached: true, stdio: 'ignore' }).unref()
-  return { launched: true, core: coreName || 'auto' }
+  try {
+    await launchWithReturn(retroExe, args)
+    return { success: true, core: coreName || 'auto' }
+  } catch (e) {
+    return { success: false, error: e.message }
+  }
 })
 
 ipcMain.handle('scan-retroarch-games', async (event, retroarchGamesPath) => {
@@ -680,9 +683,12 @@ ipcMain.handle('scan-retroarch-games', async (event, retroarchGamesPath) => {
 ipcMain.handle('launch-n64-game', async (event, gamePath) => {
   const cfg = config.load()
   const p64Exe = path.join(cfg.project64Path || 'F:\\Project64\\', 'Project64.exe')
-  const { spawn } = require('child_process')
-  spawn(p64Exe, [gamePath], { detached: true, stdio: 'ignore' }).unref()
-  return { launched: true }
+  try {
+    await launchWithReturn(p64Exe, [gamePath])
+    return { success: true }
+  } catch (e) {
+    return { success: false, error: e.message }
+  }
 })
 
 ipcMain.handle('scan-n64-games', async (event, n64GamesPath) => {
@@ -694,9 +700,12 @@ ipcMain.handle('scan-n64-games', async (event, n64GamesPath) => {
 ipcMain.handle('launch-ps1-game', async (event, gamePath) => {
   const cfg = config.load()
   const dsExe = path.join(cfg.duckstationPath || 'F:\\DuckStation\\', 'duckstation-qt-x64-ReleaseLTCG.exe')
-  const { spawn } = require('child_process')
-  spawn(dsExe, [gamePath], { detached: true, stdio: 'ignore' }).unref()
-  return { launched: true }
+  try {
+    await launchWithReturn(dsExe, [gamePath])
+    return { success: true }
+  } catch (e) {
+    return { success: false, error: e.message }
+  }
 })
 
 ipcMain.handle('scan-ps1-games', async (event, ps1GamesPath) => {
@@ -708,9 +717,12 @@ ipcMain.handle('scan-ps1-games', async (event, ps1GamesPath) => {
 ipcMain.handle('launch-flycast-game', async (event, gamePath) => {
   const cfg = config.load()
   const flyExe = path.join(cfg.flycastPath || 'F:\\Flycast\\', 'flycast.exe')
-  const { spawn } = require('child_process')
-  spawn(flyExe, [gamePath], { detached: true, stdio: 'ignore' }).unref()
-  return { launched: true }
+  try {
+    await launchWithReturn(flyExe, [gamePath])
+    return { success: true }
+  } catch (e) {
+    return { success: false, error: e.message }
+  }
 })
 
 ipcMain.handle('scan-dreamcast-games', async (event, dreamcastGamesPath) => {
@@ -766,9 +778,12 @@ ipcMain.handle('launch-model2-game', async (event, gamePath) => {
   const cfg = config.load()
   const m2Exe = path.join(cfg.model2Path || 'F:\\Model2\\', 'emulator_multicpu.exe')
   const romName = path.basename(gamePath, path.extname(gamePath))
-  const { spawn } = require('child_process')
-  spawn(m2Exe, [romName], { cwd: path.dirname(m2Exe), detached: true, stdio: 'ignore' }).unref()
-  return { launched: true }
+  try {
+    await launchWithReturn(m2Exe, [romName], { cwd: path.dirname(m2Exe) })
+    return { success: true }
+  } catch (e) {
+    return { success: false, error: e.message }
+  }
 })
 
 ipcMain.handle('scan-model2-games', async (event, model2GamesPath) => {
@@ -780,9 +795,12 @@ ipcMain.handle('scan-model2-games', async (event, model2GamesPath) => {
 ipcMain.handle('launch-model3-game', async (event, gamePath) => {
   const cfg = config.load()
   const m3Exe = path.join(cfg.model3Path || 'F:\\Supermodel\\', 'Supermodel.exe')
-  const { spawn } = require('child_process')
-  spawn(m3Exe, [gamePath, '-fullscreen'], { detached: true, stdio: 'ignore' }).unref()
-  return { launched: true }
+  try {
+    await launchWithReturn(m3Exe, [gamePath, '-fullscreen'])
+    return { success: true }
+  } catch (e) {
+    return { success: false, error: e.message }
+  }
 })
 
 ipcMain.handle('scan-model3-games', async (event, model3GamesPath) => {
@@ -808,9 +826,12 @@ ipcMain.handle('save-txt', async (event, { content, defaultName }) => {
 ipcMain.handle('launch-psp-game', async (event, gamePath) => {
   const cfg = config.load()
   const ppssppExe = path.join(cfg.ppssppPath || 'F:\\PPSSPP\\', 'PPSSPPWindows64.exe')
-  const { spawn } = require('child_process')
-  spawn(ppssppExe, [gamePath], { detached: true, stdio: 'ignore' }).unref()
-  return { launched: true }
+  try {
+    await launchWithReturn(ppssppExe, [gamePath])
+    return { success: true }
+  } catch (e) {
+    return { success: false, error: e.message }
+  }
 })
 
 ipcMain.handle('scan-psp-games', async (event, pspGamesPath) => {
@@ -822,9 +843,12 @@ ipcMain.handle('scan-psp-games', async (event, pspGamesPath) => {
 ipcMain.handle('launch-wiiu-game', async (event, gamePath) => {
   const cfg = config.load()
   const cemuExe = path.join(cfg.cemuPath || 'F:\\Cemu\\', 'Cemu.exe')
-  const { spawn } = require('child_process')
-  spawn(cemuExe, ['-f', '-g', gamePath], { detached: true, stdio: 'ignore' }).unref()
-  return { launched: true }
+  try {
+    await launchWithReturn(cemuExe, ['-f', '-g', gamePath])
+    return { success: true }
+  } catch (e) {
+    return { success: false, error: e.message }
+  }
 })
 
 ipcMain.handle('scan-wiiu-games', async (event, wiiUGamesPath) => {
