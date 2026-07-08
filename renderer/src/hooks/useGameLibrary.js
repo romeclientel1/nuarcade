@@ -72,49 +72,49 @@ export function useGameLibrary() {
           // TeknoParrot
           try {
             const tpResult = await window.nuarcade.scanGames({
-              teknoParrotPath: cfg.paths?.teknoparrot || cfg.teknoParrotPath || '',
-              gamesFolderPath: cfg.paths?.arcadeGames || cfg.gamesFolderPath || '',
+              teknoParrotPath: cfg.teknoParrotPath || '',
+              gamesFolderPath: cfg.gamesFolderPath || '',
             })
             if (tpResult.games?.length) allGames = [...allGames, ...tpResult.games]
             if (tpResult.stats) setStats(tpResult.stats)
           } catch (e) { console.warn('TP scan error:', e) }
 
           // ?? RPCS3 ????????????????????????????????????????????
-          if (cfg.mode !== 'pinball' && cfg.paths?.ps3Games    || cfg.paths?.ps3Games    || cfg.ps3GamesPath    || ''    || '') {
+          if (cfg.mode !== 'pinball' && cfg.ps3GamesPath) {
             try {
-              const ps3Result = await window.nuarcade.scanPs3Games(cfg.paths?.ps3Games    || cfg.paths?.ps3Games    || cfg.ps3GamesPath    || ''    || '')
+              const ps3Result = await window.nuarcade.scanPs3Games(cfg.ps3GamesPath)
               if (ps3Result.games?.length) allGames = [...allGames, ...ps3Result.games]
             } catch (e) { console.warn('RPCS3 scan error:', e) }
           }
 
           // ?? Ryujinx / Switch ??????????????????????????????????
-          if (cfg.mode !== 'pinball' && cfg.paths?.switchGames || cfg.paths?.switchGames || cfg.switchGamesPath || '' || '') {
+          if (cfg.mode !== 'pinball' && cfg.switchGamesPath) {
             try {
-              const swResult = await window.nuarcade.scanSwitchGames(cfg.paths?.switchGames || cfg.paths?.switchGames || cfg.switchGamesPath || '' || '')
+              const swResult = await window.nuarcade.scanSwitchGames(cfg.switchGamesPath)
               if (swResult.games?.length) allGames = [...allGames, ...swResult.games]
             } catch (e) { console.warn('Ryujinx scan error:', e) }
           }
 
           // ?? Xenia / Xbox 360 ?????????????????????????????????
-          if (cfg.mode !== 'pinball' && cfg.paths?.xbox360Games || cfg.xbox360GamesPath || '') {
+          if (cfg.mode !== 'pinball' && cfg.xbox360GamesPath) {
             try {
-              const x360Result = await window.nuarcade.scanXbox360Games(cfg.paths?.xbox360Games || cfg.xbox360GamesPath || '')
+              const x360Result = await window.nuarcade.scanXbox360Games(cfg.xbox360GamesPath)
               if (x360Result.games?.length) allGames = [...allGames, ...x360Result.games]
             } catch (e) { console.warn('Xenia scan error:', e) }
           }
 
           // ?? Dolphin / GameCube + Wii ??????????????????????????
-          if (cfg.mode !== 'pinball' && cfg.paths?.gcGames     || cfg.gcWiiGamesPath  || '') {
+          if (cfg.mode !== 'pinball' && cfg.gcWiiGamesPath) {
             try {
-              const gcWiiResult = await window.nuarcade.scanGCWiiGames(cfg.paths?.gcGames     || cfg.gcWiiGamesPath  || '')
+              const gcWiiResult = await window.nuarcade.scanGCWiiGames(cfg.gcWiiGamesPath)
               if (gcWiiResult.games?.length) allGames = [...allGames, ...gcWiiResult.games]
             } catch (e) { console.warn('Dolphin scan error:', e) }
           }
 
           // ?? PCSX2 / PS2 ??????????????????????????????????????
-          if (cfg.mode !== 'pinball' && cfg.paths?.ps2Games    || cfg.paths?.ps2Games    || cfg.ps2GamesPath    || ''    || '') {
+          if (cfg.mode !== 'pinball' && cfg.ps2GamesPath) {
             try {
-              const ps2Result = await window.nuarcade.scanPs2Games(cfg.paths?.ps2Games    || cfg.paths?.ps2Games    || cfg.ps2GamesPath    || ''    || '')
+              const ps2Result = await window.nuarcade.scanPs2Games(cfg.ps2GamesPath)
               if (ps2Result.games?.length) allGames = [...allGames, ...ps2Result.games]
             } catch (e) { console.warn('PCSX2 scan error:', e) }
           }
@@ -128,9 +128,9 @@ export function useGameLibrary() {
           }
 
           // RetroArch / Classic Consoles
-          if (cfg.mode !== 'pinball' && cfg.paths?.retroarch   || cfg.retroarchGamesPath || '') {
+          if (cfg.mode !== 'pinball' && cfg.retroarchGamesPath) {
             try {
-              const raResult = await window.nuarcade.scanRetroArchGames(cfg.paths?.retroarch   || cfg.retroarchGamesPath || '')
+              const raResult = await window.nuarcade.scanRetroArchGames(cfg.retroarchGamesPath)
               if (raResult.games?.length) allGames = [...allGames, ...raResult.games]
             } catch (e) { console.warn('RetroArch scan error:', e) }
           }
@@ -152,9 +152,9 @@ export function useGameLibrary() {
           }
 
           // Flycast / Dreamcast
-          if (cfg.mode !== 'pinball' && cfg.paths?.dreamcastGames || cfg.dreamcastGamesPath || '') {
+          if (cfg.mode !== 'pinball' && cfg.dreamcastGamesPath) {
             try {
-              const dcResult = await window.nuarcade.scanDreamcastGames(cfg.paths?.dreamcastGames || cfg.dreamcastGamesPath || '')
+              const dcResult = await window.nuarcade.scanDreamcastGames(cfg.dreamcastGamesPath)
               if (dcResult.games?.length) allGames = [...allGames, ...dcResult.games]
             } catch (e) { console.warn('Flycast scan error:', e) }
           }
@@ -168,9 +168,9 @@ export function useGameLibrary() {
           }
 
           // Steam games
-          if (cfg.enabledEmulators?.steam !== false && cfg.paths?.steam       || cfg.paths?.steam       || cfg.steamPath       || ''       || '') {
+          if (cfg.enabledEmulators?.steam !== false && cfg.steamPath) {
             try {
-              const steamResult = await window.nuarcade.scanSteamGames(cfg.paths?.steam       || cfg.paths?.steam       || cfg.steamPath       || ''       || '')
+              const steamResult = await window.nuarcade.scanSteamGames(cfg.steamPath)
               if (steamResult.games?.length) allGames = [...allGames, ...steamResult.games]
             } catch (e) { console.warn('Steam scan error:', e) }
           }
@@ -200,9 +200,9 @@ export function useGameLibrary() {
           }
 
           // PPSSPP / PSP
-          if (cfg.mode !== 'pinball' && cfg.paths?.pspGames    || cfg.pspGamesPath    || '') {
+          if (cfg.mode !== 'pinball' && cfg.pspGamesPath) {
             try {
-              const pspResult = await window.nuarcade.scanPspGames(cfg.paths?.pspGames    || cfg.pspGamesPath    || '')
+              const pspResult = await window.nuarcade.scanPspGames(cfg.pspGamesPath)
               if (pspResult.games?.length) allGames = [...allGames, ...pspResult.games]
             } catch (e) { console.warn('PPSSPP scan error:', e) }
           }
