@@ -105,6 +105,29 @@ function getControls(genre) {
   ]
 }
 
+// Maps a game's emulator field to what actually gets executed, for the
+// "Launch command" diagnostic line below. Previously this only handled
+// pinball/RetroArch/TeknoParrot correctly and showed a misleading
+// TeknoParrot command for every other emulator.
+const EXE_LABELS = {
+  rpcs3: 'rpcs3.exe --no-gui ',
+  xenia: 'xenia.exe ',
+  dolphin: 'Dolphin.exe -e ',
+  pcsx2: 'pcsx2.exe ',
+  ryujinx: 'Ryujinx.exe ',
+  mame: 'mame.exe ',
+  retroarch: 'RetroArch.exe -L <core> ',
+  project64: 'Project64.exe ',
+  duckstation: 'DuckStation.exe ',
+  flycast: 'Flycast.exe ',
+  model2: 'emulator_multicpu.exe ',
+  model3: 'Supermodel.exe ',
+  ppsspp: 'PPSSPPWindows64.exe ',
+  cemu: 'Cemu.exe -f -g ',
+  steam: 'steam://rungameid/',
+  pc: '',
+}
+
 export default function GameDetail({ game, onClose, onLaunch, launching, artwork, games = [], onSelectGame }) {
   const [imgError, setImgError] = useState(false)
   const [controllerOverride, setControllerOverride] = useState("auto")
@@ -310,8 +333,8 @@ export default function GameDetail({ game, onClose, onLaunch, launching, artwork
             <div className={styles.exeSection}>
               <div className={styles.exeLabel}>Launch command</div>
               <div className={styles.exeBox}>
-                {game.isPinball ? "VPX: " : game.emulator === "retroarch" ? "RetroArch.exe -L <core> " : "TeknoParrotUi.exe --profile="}
-                <span style={{ color: colors.accent }}>{game.profile}</span>
+                {game.isPinball ? "VPX: " : (EXE_LABELS[game.emulator] ?? "TeknoParrotUi.exe --profile=")}
+                <span style={{ color: colors.accent }}>{game.path || game.profilePath || game.profile}</span>
               </div>
             </div>
 
