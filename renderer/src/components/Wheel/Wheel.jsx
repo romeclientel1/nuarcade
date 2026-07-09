@@ -322,6 +322,12 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const [activeCategory, setActiveCategory] = useState("All")
   const [launching, setLaunching] = useState(false)
   const [launchError, setLaunchError] = useState(null)
+  // The 3s post-launch cooldown below is meant to debounce a rapid
+  // double-launch of the SAME game, not to disable launching every other
+  // game too for the next 3 seconds. Without this, switching to a
+  // different game right after a launch attempt would show a disabled,
+  // seemingly-dead launch button until the previous cooldown expired.
+  useEffect(() => { setLaunching(false) }, [selectedIndex])
   const [showRetroArchPopup, setShowRetroArchPopup] = useState(false)
   const [showControllerPrompt, setShowControllerPrompt] = useState(false)
   const [attractMode, setAttractMode] = useState(false)
@@ -675,9 +681,13 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
         // instead of silently doing nothing.
         if (launchResult && launchResult.success === false) {
           showError("Failed to launch " + current.title + ": " + (launchResult.error || "unknown error"))
+          setLaunching(false)
+          return
         }
       } catch (e) {
         showError("Failed to launch " + current.title + ": " + (e.message || "unknown error"))
+        setLaunching(false)
+        return
       }
     } else {
       console.log("Dev mode would launch:", current.profile)
