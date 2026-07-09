@@ -87,6 +87,7 @@
   opacity: 0.12;
   filter: blur(12px);
   z-index: 0;
+  pointer-events: none;
   border-radius: 8px;
 }
 
