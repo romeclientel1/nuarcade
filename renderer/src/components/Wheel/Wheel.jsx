@@ -322,12 +322,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const [activeCategory, setActiveCategory] = useState("All")
   const [launching, setLaunching] = useState(false)
   const [launchError, setLaunchError] = useState(null)
-  // The 3s post-launch cooldown below is meant to debounce a rapid
-  // double-launch of the SAME game, not to disable launching every other
-  // game too for the next 3 seconds. Without this, switching to a
-  // different game right after a launch attempt would show a disabled,
-  // seemingly-dead launch button until the previous cooldown expired.
-  useEffect(() => { setLaunching(false) }, [selectedIndex])
   const [showRetroArchPopup, setShowRetroArchPopup] = useState(false)
   const [showControllerPrompt, setShowControllerPrompt] = useState(false)
   const [attractMode, setAttractMode] = useState(false)
@@ -730,7 +724,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
 
       if (e.key === "ArrowLeft")  { sounds.navigate(); navigate(-1) }
       if (e.key === "ArrowRight") { sounds.navigate(); navigate(1) }
-      if (e.key === "Enter")      { if (!showDetail && !showHelp && !showStats && !showAchievements && !showCollections && !showSettings && !showMediaManager && !showCoach) { sounds.select(); setShowDetail(true) } }
+      if (e.key === "Enter")      { if (!showDetail && !showHelp && !showStats && !showAchievements && !showCollections && !showSettings && !showMediaManager && !showCoach) { sounds.select(); setLaunching(false); setShowDetail(true) } }
       if ((e.key === "c" || e.key === "C") && !showDetail && !showHelp && !showStats && !showCoach && !showSettings && !showMediaManager) { sounds.select?.(); setShowCoach(true) }
       if ((e.key === "o" || e.key === "O") && !showDetail && !showHelp && !showStats && !showCoach && !showSettings && !showMediaManager) { sounds.select?.(); setShowOperator(true) }
       if (e.key === "Escape") {
@@ -901,7 +895,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
         if (tab) setActiveCategory(tab)
         setFocusZone(2); return
       }
-      if (z === 2) { if (!showDetailRef.current) setShowDetail(true); return }
+      if (z === 2) { if (!showDetailRef.current) { setLaunching(false); setShowDetail(true) } return }
       if (z === 3) { launchGame(); return }
       if (z === 4) { hintBarActions[barFocusIdxRef.current]?.(); return }
     },
@@ -1312,7 +1306,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
                       artPref={artPref}
                       artwork={artwork}
                       onClick={() => {
-                        if (index === selectedIndex) { sounds.select(); setShowDetail(true) }
+                        if (index === selectedIndex) { sounds.select(); setLaunching(false); setShowDetail(true) }
                         else setSelectedIndex(index)
                       }}
                     />
@@ -1442,6 +1436,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
           onSelectGame={(g) => {
             const idx = filteredGames.findIndex(fg => (fg.id && fg.id === g.id) || (fg.profile && fg.profile === g.profile))
             if (idx >= 0) setSelectedIndex(idx)
+            setLaunching(false)
             setShowDetail(false)
             setTimeout(() => setShowDetail(true), 50)
           }}
