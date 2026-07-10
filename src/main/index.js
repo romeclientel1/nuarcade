@@ -617,7 +617,7 @@ ipcMain.handle('launch-retroarch', async () => {
   catch (e) { return { success: false, error: e.message } }
 })
 
-ipcMain.handle('launch-retroarch-game', async (event, gamePath) => {
+ipcMain.handle('launch-retroarch-game', async (event, gamePath, system) => {
   const fs = require('fs')
   const cfg = config.load()
   const retroDir = cfg.retroarchPath || 'F:\\RetroArch\\'
@@ -659,7 +659,35 @@ ipcMain.handle('launch-retroarch-game', async (event, gamePath) => {
     '.vec':  'vecx_libretro.dll',
   }
 
-  const coreName = CORE_MAP[ext]
+  // System-aware core map -- takes priority over the extension guess below.
+  // Needed because several systems share disc-image extensions (.iso/.cue/.chd/.bin)
+  // and any system's ROMs may be zipped (.zip/.7z), which the extension alone can't disambiguate.
+  const SYSTEM_CORE_MAP = {
+    nes: 'nestopia_libretro.dll',
+    snes: 'snes9x_libretro.dll',
+    n64: 'mupen64plus_next_libretro.dll',
+    genesis: 'genesis_plus_gx_libretro.dll',
+    megadrive: 'genesis_plus_gx_libretro.dll',
+    mastersystem: 'genesis_plus_gx_libretro.dll',
+    gamegear: 'genesis_plus_gx_libretro.dll',
+    sega32x: 'picodrive_libretro.dll',
+    gba: 'mgba_libretro.dll',
+    gbc: 'gambatte_libretro.dll',
+    gb: 'gambatte_libretro.dll',
+    psx: 'pcsx_rearmed_libretro.dll',
+    ps1: 'pcsx_rearmed_libretro.dll',
+    '3do': 'opera_libretro.dll',
+    pce: 'mednafen_pce_libretro.dll',
+    pcengine: 'mednafen_pce_libretro.dll',
+    neogeopocket: 'mednafen_ngp_libretro.dll',
+    wonderswan: 'mednafen_wswan_libretro.dll',
+    atari2600: 'stella_libretro.dll',
+    atari7800: 'prosystem_libretro.dll',
+    atarilynx: 'handy_libretro.dll',
+    vectrex: 'vecx_libretro.dll',
+  }
+
+  const coreName = (system && SYSTEM_CORE_MAP[system]) || CORE_MAP[ext]
   const corePath = coreName ? path.join(retroDir, 'cores', coreName) : null
 
   const args = corePath && fs.existsSync(corePath)
