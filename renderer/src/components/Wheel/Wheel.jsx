@@ -654,7 +654,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
         else if (emu === 'pcsx2')       launchResult = await window.nuarcade.launchPs2Game(gamePath)
         else if (emu === 'ryujinx')     launchResult = await window.nuarcade.launchSwitchGame(gamePath)
         else if (emu === 'mame')        launchResult = await window.nuarcade.launchMameGame(gamePath)
-        else if (emu === 'retroarch')   launchResult = await window.nuarcade.launchRetroArchGame(gamePath)
+        else if (emu === 'retroarch')   launchResult = await window.nuarcade.launchRetroArchGame(gamePath, current.core)
         else if (emu === 'project64')   launchResult = await window.nuarcade.launchN64Game(gamePath)
         else if (emu === 'duckstation') launchResult = await window.nuarcade.launchPs1Game(gamePath)
         else if (emu === 'flycast')     launchResult = await window.nuarcade.launchFlycastGame(gamePath)
