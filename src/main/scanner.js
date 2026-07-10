@@ -404,25 +404,6 @@ async function scanGames(teknoParrotPath, gamesFolderPath, retroarchPath) {
   }
   stats.total = games.length
   console.log('[scanGames] configured:', stats.configured, 'discovered:', stats.discovered, 'path-missing:', stats.hidden, 'unmatched:', stats.unmatched || 0)
-  // RetroArch launcher card -- only if retroarch.exe exists at configured path
-  if (retroarchPath) {
-    const retroExe = path.join(retroarchPath, 'retroarch.exe')
-    if (fsS.existsSync(retroExe)) {
-      games.push({
-        id:         'retroarch-launcher',
-        title:      'RetroArch',
-        system:     'RetroArch',
-        genre:      'Retro',
-        emulator:   'retroarch',
-        gamePath:   retroExe,
-        status:     'ready',
-        isLauncher: true,
-        configured: true,
-        exeFound:   true,
-        icon:       'RA',
-      })
-    }
-  }
 
   return { games, stats, unmatched: stats.unmatchedFolders || [] }
 }
