@@ -453,12 +453,12 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   filteredGamesRef.current = filteredGames
   // Build visible tabs list -- only categories that have games
   const _retroArchSystems = [...new Set(games.filter(g => g.emulator === 'retroarch' && g.system).map(g => g.system))].sort()
-  const _visibleTabs = CATEGORIES.filter(cat => {
+  const _visibleTabs = [...new Set(CATEGORIES.filter(cat => {
     if (cat === 'All') return true
     if (cat === 'Favorites') return games.some(g => isFavorite(g.id || g.profile))
     if (cat === 'Recent') return recentlyPlayed.length > 0
     return games.some(g => g.genre === cat || g.system === cat || g.emulator === cat.toLowerCase())
-  }).concat(Object.keys(collections)).concat(_retroArchSystems)
+  }).concat(_retroArchSystems))].concat(Object.keys(collections))
   visibleTabsRef.current = _visibleTabs
   focusZoneRef.current   = focusZone
   topMenuIdxRef.current  = topMenuIdx
@@ -1143,44 +1143,26 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       </div>
 
       <div className={styles.categoryStrip}>
-        {CATEGORIES.filter(cat => {
-          if (cat === "All") return true
-          if (cat === "Favorites") return games.some(g => isFavorite(g.id || g.profile))
-          if (cat === "Recent") return recentlyPlayed.length > 0
-          return games.some(g => g.genre === cat || g.system === cat || g.emulator === cat.toLowerCase())
-        }).concat(_retroArchSystems).map(cat => (
-          <button
-            key={cat}
-            ref={el => { if (el && focusZone === 1 && visibleTabsRef.current[tabFocusIdx] === cat) el.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" }) }}
-            className={styles.catPill + (activeCategory === cat ? " " + styles.catActive : "") + (focusZone === 1 && visibleTabsRef.current[tabFocusIdx] === cat ? " " + styles.catFocused : "")}
-            onClick={() => setActiveCategory(cat)}
-          >
-            {systemLogos[cat.toLowerCase()] ? (
-              <img src={systemLogos[cat.toLowerCase()]} alt={cat} className={styles.catLogo} />
-            ) : (
-              cat === "Favorites" ? "Favorites" : cat === "Recent" ? "Recent" : cat
-            )}
-            {cat === "Recent" && recentlyPlayed.length > 0 && (
-              <span className={styles.catCount}>{recentlyPlayed.length}</span>
-            )}
-            {cat !== "Favorites" && cat !== "Recent" && (
-              <span className={styles.catCount}>
-                {cat === "All" ? games.length : games.filter(g => g.genre === cat || g.system === cat || g.emulator === cat.toLowerCase()).length}
-              </span>
-            )}
-          </button>
-        ))}
-        {Object.values(collections).map(col => (
-          <button
-            key={col.id}
-            ref={el => { if (el && focusZone === 1 && visibleTabsRef.current[tabFocusIdx] === col.id) el.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" }) }}
-            className={styles.catPill + " " + styles.catCollection + (activeCategory === col.id ? " " + styles.catActive : "") + (focusZone === 1 && visibleTabsRef.current[tabFocusIdx] === col.id ? " " + styles.catFocused : "")}
-            onClick={() => setActiveCategory(col.id)}
-          >
-            {col.name}
-            <span className={styles.catCount}>{col.games.length}</span>
-          </button>
-        ))}
+        {_visibleTabs.map(cat => {
+          const col = collections[cat]
+          const label = col ? col.name : (cat === "Favorites" ? "Favorites" : cat === "Recent" ? "Recent" : cat)
+          const count = col ? col.games.length : (cat === "Recent" ? recentlyPlayed.length : cat === "All" ? games.length : games.filter(g => g.genre === cat || g.system === cat || g.emulator === cat.toLowerCase()).length)
+          return (
+            <button
+              key={cat}
+              ref={el => { if (el && focusZone === 1 && visibleTabsRef.current[tabFocusIdx] === cat) el.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" }) }}
+              className={styles.catPill + (col ? " " + styles.catCollection : "") + (activeCategory === cat ? " " + styles.catActive : "") + (focusZone === 1 && visibleTabsRef.current[tabFocusIdx] === cat ? " " + styles.catFocused : "")}
+              onClick={() => setActiveCategory(cat)}
+            >
+              {!col && systemLogos[cat.toLowerCase()] ? (
+                <img src={systemLogos[cat.toLowerCase()]} alt={cat} className={styles.catLogo} />
+              ) : label}
+              {cat !== "Favorites" && (
+                <span className={styles.catCount}>{count}</span>
+              )}
+            </button>
+          )
+        })}
       </div>
 
       {/* Recently played carousel -- shown when library has games and recent list is non-empty */}
