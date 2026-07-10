@@ -662,32 +662,50 @@ ipcMain.handle('launch-retroarch-game', async (event, gamePath, system) => {
   // System-aware core map -- takes priority over the extension guess below.
   // Needed because several systems share disc-image extensions (.iso/.cue/.chd/.bin)
   // and any system's ROMs may be zipped (.zip/.7z), which the extension alone can't disambiguate.
-  const SYSTEM_CORE_MAP = {
-    nes: 'nestopia_libretro.dll',
-    snes: 'snes9x_libretro.dll',
-    n64: 'mupen64plus_next_libretro.dll',
-    genesis: 'genesis_plus_gx_libretro.dll',
-    megadrive: 'genesis_plus_gx_libretro.dll',
-    mastersystem: 'genesis_plus_gx_libretro.dll',
-    gamegear: 'genesis_plus_gx_libretro.dll',
-    sega32x: 'picodrive_libretro.dll',
-    gba: 'mgba_libretro.dll',
-    gbc: 'gambatte_libretro.dll',
-    gb: 'gambatte_libretro.dll',
-    psx: 'pcsx_rearmed_libretro.dll',
-    ps1: 'pcsx_rearmed_libretro.dll',
-    '3do': 'opera_libretro.dll',
-    pce: 'mednafen_pce_libretro.dll',
-    pcengine: 'mednafen_pce_libretro.dll',
-    neogeopocket: 'mednafen_ngp_libretro.dll',
-    wonderswan: 'mednafen_wswan_libretro.dll',
-    atari2600: 'stella_libretro.dll',
-    atari7800: 'prosystem_libretro.dll',
-    atarilynx: 'handy_libretro.dll',
-    vectrex: 'vecx_libretro.dll',
+  // System-aware core selection -- scans the actual cores folder and picks the
+  // first installed candidate for the game's system, rather than assuming one
+  // exact filename. Works for any RetroArch setup, not just one specific machine.
+  const SYSTEM_CORE_CANDIDATES = {
+    nes: ['nestopia_libretro.dll', 'fceumm_libretro.dll', 'quicknes_libretro.dll', 'mesen_libretro.dll'],
+    snes: ['snes9x_libretro.dll', 'bsnes_libretro.dll', 'snes9x2010_libretro.dll'],
+    n64: ['mupen64plus_next_libretro.dll', 'parallel_n64_libretro.dll'],
+    genesis: ['genesis_plus_gx_libretro.dll', 'picodrive_libretro.dll'],
+    megadrive: ['genesis_plus_gx_libretro.dll', 'picodrive_libretro.dll'],
+    mastersystem: ['genesis_plus_gx_libretro.dll', 'picodrive_libretro.dll'],
+    gamegear: ['genesis_plus_gx_libretro.dll', 'picodrive_libretro.dll'],
+    sega32x: ['picodrive_libretro.dll'],
+    gba: ['mgba_libretro.dll', 'vba_next_libretro.dll', 'vbam_libretro.dll'],
+    gbc: ['gambatte_libretro.dll', 'mgba_libretro.dll', 'gearboy_libretro.dll'],
+    gb: ['gambatte_libretro.dll', 'mgba_libretro.dll', 'gearboy_libretro.dll', 'sameboy_libretro.dll'],
+    psx: ['pcsx_rearmed_libretro.dll', 'swanstation_libretro.dll', 'mednafen_psx_libretro.dll', 'mednafen_psx_hw_libretro.dll'],
+    ps1: ['pcsx_rearmed_libretro.dll', 'swanstation_libretro.dll', 'mednafen_psx_libretro.dll', 'mednafen_psx_hw_libretro.dll'],
+    '3do': ['opera_libretro.dll'],
+    pce: ['mednafen_pce_libretro.dll', 'mednafen_pce_fast_libretro.dll', 'mednafen_supergrafx_libretro.dll'],
+    pcengine: ['mednafen_pce_libretro.dll', 'mednafen_pce_fast_libretro.dll', 'mednafen_supergrafx_libretro.dll'],
+    neogeopocket: ['mednafen_ngp_libretro.dll'],
+    wonderswan: ['mednafen_wswan_libretro.dll'],
+    atari2600: ['stella_libretro.dll', 'stella2014_libretro.dll'],
+    atari7800: ['prosystem_libretro.dll'],
+    atarilynx: ['handy_libretro.dll'],
+    vectrex: ['vecx_libretro.dll'],
   }
 
-  const coreName = (system && SYSTEM_CORE_MAP[system]) || CORE_MAP[ext]
+  function findInstalledCore(system) {
+    const candidates = SYSTEM_CORE_CANDIDATES[system]
+    if (!candidates) return null
+    let installed
+    try {
+      installed = new Set(fs.readdirSync(path.join(retroDir, 'cores')).map(f => f.toLowerCase()))
+    } catch (e) {
+      return null
+    }
+    for (const candidate of candidates) {
+      if (installed.has(candidate.toLowerCase())) return candidate
+    }
+    return null
+  }
+
+  const coreName = (system && findInstalledCore(system)) || CORE_MAP[ext]
   const corePath = coreName ? path.join(retroDir, 'cores', coreName) : null
 
   const args = corePath && fs.existsSync(corePath)
