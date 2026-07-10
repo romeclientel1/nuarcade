@@ -1172,6 +1172,7 @@ const RA_SYSTEM_MAP = {
   'amiga':        { label: 'Amiga',              genre: 'Classic',    icon: 'AMG', exts: ['.adf','.hdf','.lha'] },
   'vectrex':      { label: 'Vectrex',            genre: 'Classic',    icon: 'VEC', exts: ['.vec','.bin'] },
   'wonderswan':   { label: 'WonderSwan',         genre: 'Platformer', icon: 'WSW', exts: ['.ws','.wsc'] },
+  '3do':          { label: 'Panasonic 3DO',     genre: 'Classic',    icon: '3DO', exts: ['.iso','.cue','.chd','.bin'] },
 }
 
 const RA_ROM_EXTS = new Set([
@@ -1205,6 +1206,7 @@ const RA_SYSTEM_ALIASES = {
   segagamegear: 'gamegear',
   segasaturn: 'saturn',
   sega32x: 'sega32x',
+  panasonic3do: '3do',
   sonyplaystation: 'psx', sonyplaystation1: 'psx',
   sonypsp: 'psp', sonyplaystationportable: 'psp',
   atari2600: 'atari2600',
@@ -1246,6 +1248,7 @@ async function scanRetroArchGames(retroarchGamesPath) {
     // "Nintendo NES" -- either naming style now resolves to accurate metadata.
     const aliasKey = RA_SYSTEM_ALIASES[normalizeRaFolder(entry.name)]
     const systemInfo = RA_SYSTEM_MAP[folderKey] || (aliasKey ? RA_SYSTEM_MAP[aliasKey] : null)
+    const canonicalKey = RA_SYSTEM_MAP[folderKey] ? folderKey : (aliasKey && RA_SYSTEM_MAP[aliasKey] ? aliasKey : folderKey)
     const systemLabel = systemInfo ? systemInfo.label : entry.name
     const genre = systemInfo ? systemInfo.genre : 'Classic'
     const icon = systemInfo ? systemInfo.icon : 'RTR'
@@ -1268,7 +1271,7 @@ async function scanRetroArchGames(retroarchGamesPath) {
         icon,
         emulator: 'retroarch',
         romPath: path.join(systemPath, rom.name),
-        core: folderKey,
+        core: canonicalKey,
       })
     }
   }
