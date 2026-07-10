@@ -33,7 +33,7 @@ contextBridge.exposeInMainWorld('nuarcade', {
   launchSwitchGame:    (gamePath)     => ipcRenderer.invoke('launch-switch-game', gamePath),
   launchMameGame:      (gamePath)     => ipcRenderer.invoke('launch-mame-game', gamePath),
   launchRetroArch:     ()             => ipcRenderer.invoke('launch-retroarch'),
-  launchRetroArchGame: (gamePath)     => ipcRenderer.invoke('launch-retroarch-game', gamePath),
+  launchRetroArchGame: (gamePath, system) => ipcRenderer.invoke('launch-retroarch-game', gamePath, system),
   launchN64Game:       (gamePath)     => ipcRenderer.invoke('launch-n64-game', gamePath),
   launchPs1Game:       (gamePath)     => ipcRenderer.invoke('launch-ps1-game', gamePath),
   launchFlycastGame:   (gamePath)     => ipcRenderer.invoke('launch-flycast-game', gamePath),
