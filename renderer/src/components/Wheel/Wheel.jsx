@@ -645,7 +645,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     } catch (e) {}
     if (window.nuarcade) {
       const emu = current.emulator || 'teknoparrot'
-      const gamePath = current.path || current.profilePath || current.profile
+      const gamePath = current.path || current.profilePath || current.profile || current.romPath
       try {
         let launchResult = null
         if (emu === 'rpcs3')            launchResult = await window.nuarcade.launchPs3Game(gamePath)
