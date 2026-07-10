@@ -30,7 +30,7 @@ import ControllerPrompt from "../ControllerPrompt/ControllerPrompt"
 import styles from "./Wheel.module.css"
 import { useMediaFolders } from "../../hooks/useMediaFolders"
 
-const CATEGORIES = ["All", "Favorites", "Recent", "Arcade", "MAME", "Retro", "Racing", "Fighting", "Shooter", "Rhythm", "Flying", "Sports", "N64", "PS1", "PSP", "Dreamcast", "Model2", "Model3", "PS3", "Xbox360", "GCWii", "WiiU", "PS2", "Switch", "Pinball", "PC", "RetroArch"]
+const CATEGORIES = ["All", "Favorites", "Recent", "Arcade", "MAME", "Retro", "Racing", "Fighting", "Shooter", "Rhythm", "Flying", "Sports", "N64", "PS1", "PSP", "Dreamcast", "Model2", "Model3", "PS3", "Xbox360", "GCWii", "WiiU", "PS2", "Switch", "Pinball", "PC"]
 const ATTRACT_TIMEOUT = 120000
 
 function sortGames(games, sortBy) {
@@ -452,12 +452,13 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const filteredGames = useMemo(() => getFilteredGames(), [games, activeCategory, debouncedSearch, collections])
   filteredGamesRef.current = filteredGames
   // Build visible tabs list -- only categories that have games
+  const _retroArchSystems = [...new Set(games.filter(g => g.emulator === 'retroarch' && g.system).map(g => g.system))].sort()
   const _visibleTabs = CATEGORIES.filter(cat => {
     if (cat === 'All') return true
     if (cat === 'Favorites') return games.some(g => isFavorite(g.id || g.profile))
     if (cat === 'Recent') return recentlyPlayed.length > 0
     return games.some(g => g.genre === cat || g.system === cat || g.emulator === cat.toLowerCase())
-  }).concat(Object.keys(collections))
+  }).concat(Object.keys(collections)).concat(_retroArchSystems)
   visibleTabsRef.current = _visibleTabs
   focusZoneRef.current   = focusZone
   topMenuIdxRef.current  = topMenuIdx
@@ -1147,9 +1148,10 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
           if (cat === "Favorites") return games.some(g => isFavorite(g.id || g.profile))
           if (cat === "Recent") return recentlyPlayed.length > 0
           return games.some(g => g.genre === cat || g.system === cat || g.emulator === cat.toLowerCase())
-        }).map(cat => (
+        }).concat(_retroArchSystems).map(cat => (
           <button
             key={cat}
+            ref={el => { if (el && focusZone === 1 && visibleTabsRef.current[tabFocusIdx] === cat) el.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" }) }}
             className={styles.catPill + (activeCategory === cat ? " " + styles.catActive : "") + (focusZone === 1 && visibleTabsRef.current[tabFocusIdx] === cat ? " " + styles.catFocused : "")}
             onClick={() => setActiveCategory(cat)}
           >
@@ -1171,6 +1173,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
         {Object.values(collections).map(col => (
           <button
             key={col.id}
+            ref={el => { if (el && focusZone === 1 && visibleTabsRef.current[tabFocusIdx] === col.id) el.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" }) }}
             className={styles.catPill + " " + styles.catCollection + (activeCategory === col.id ? " " + styles.catActive : "") + (focusZone === 1 && visibleTabsRef.current[tabFocusIdx] === col.id ? " " + styles.catFocused : "")}
             onClick={() => setActiveCategory(col.id)}
           >
