@@ -1138,6 +1138,7 @@ const RA_SYSTEM_MAP = {
   // NEC
   'pcengine':     { label: 'PC Engine',          genre: 'Platformer', icon: 'PCE', exts: ['.pce','.cue','.bin','.chd'] },
   'pce':          { label: 'PC Engine',          genre: 'Platformer', icon: 'PCE', exts: ['.pce','.cue','.bin','.chd'] },
+  'pcfx':         { label: 'PC-FX',              genre: 'Platformer', icon: 'PCF', exts: ['.iso','.cue','.bin','.chd'] },
   // SNK
   'neogeo':       { label: 'Neo Geo',            genre: 'Fighting',   icon: 'NEO', exts: ['.neo','.zip','.7z'] },
   'neogeopocket': { label: 'NGP',     genre: 'Fighting',   icon: 'NGP', exts: ['.ngp','.ngc'] },
