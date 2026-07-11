@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 
-const CURRENT_VERSION = "5.0.14"
+const CURRENT_VERSION = "5.0.15"
 
 export function useVersionCheck() {
   const [updateAvailable, setUpdateAvailable] = useState(false)
