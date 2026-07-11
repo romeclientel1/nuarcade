@@ -76,6 +76,7 @@
   padding: 14px 36px;
   overflow-x: auto;
   overflow-y: hidden;
+  overscroll-behavior-x: contain;
   flex-wrap: nowrap;
   scroll-behavior: smooth;
   scrollbar-width: none;
