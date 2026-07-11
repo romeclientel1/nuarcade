@@ -1122,6 +1122,7 @@ const RA_SYSTEM_MAP = {
   'megadrive':    { label: 'Genesis',       genre: 'Platformer', icon: 'GEN', exts: ['.md','.gen','.bin','.smd'] },
   'mastersystem': { label: 'Master System',      genre: 'Platformer', icon: 'SMS', exts: ['.sms','.sg'] },
   'gamegear':     { label: 'Game Gear',          genre: 'Platformer', icon: 'GGR', exts: ['.gg'] },
+  'sg1000':       { label: 'SG-1000',            genre: 'Classic',    icon: 'SG1', exts: ['.sg','.sc'] },
   'saturn':       { label: 'Saturn',        genre: 'Fighting',   icon: 'SAT', exts: ['.iso','.cue','.bin','.chd'] },
   'segacd':       { label: 'Sega CD',            genre: 'Platformer', icon: 'SCD', exts: ['.iso','.cue','.bin','.chd'] },
   'sega32x':      { label: '32X',           genre: 'Platformer', icon: '32X', exts: ['.32x','.bin'] },
@@ -1203,6 +1204,14 @@ const RA_SYSTEM_ALIASES = {
   amstradcpc: 'amstradcpc',
   gcevectrex: 'vectrex',
   bandaiwonderswan: 'wonderswan',
+  tgcd: 'pcengine', tg16: 'pcengine', pcecd: 'pcengine',
+  sfc: 'snes',
+  saturnjapan: 'saturn',
+  megadrivejapan: 'megadrive',
+  fds: 'nes', famicom: 'nes',
+  mameroms: 'mame',
+  jaguar: 'atarijaguar',
+  '3d0': '3do',
 }
 
 function normalizeRaFolder(s) {
