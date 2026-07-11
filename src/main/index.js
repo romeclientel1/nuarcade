@@ -14,17 +14,35 @@ function launchWithReturn(exe, args, options) {
   options = options || {}
   return new Promise(function(resolve, reject) {
     if (mainWin && !options.keepVisible) mainWin.minimize()
+    var startedAt = Date.now()
+    var stderrBuf = ''
     var child = spawn(exe, args, Object.assign({
       cwd: options.cwd || path.dirname(exe),
-      stdio: 'ignore',
+      stdio: ['ignore', 'ignore', 'pipe'],
       detached: false,
     }, options.spawnOpts || {}))
-    child.on('exit', function() {
+    if (child.stderr) {
+      child.stderr.on('data', function(chunk) {
+        stderrBuf += chunk.toString()
+        if (stderrBuf.length > 4000) stderrBuf = stderrBuf.slice(-4000)
+      })
+    }
+    setTimeout(function() {
+      try {
+        require('child_process').exec('powershell -NoProfile -WindowStyle Hidden -Command "(New-Object -ComObject WScript.Shell).AppActivate(' + child.pid + ')"', function() {})
+      } catch (e) {}
+    }, 1500)
+    child.on('exit', function(code) {
       if (mainWin) {
         mainWin.restore()
         setTimeout(function() { if (mainWin) mainWin.focus() }, 300)
       }
-      resolve()
+      var elapsed = Date.now() - startedAt
+      if (elapsed < 4000 && code !== 0) {
+        reject(new Error('Exited immediately (code ' + code + ')' + (stderrBuf ? ': ' + stderrBuf.trim().slice(-300) : '')))
+      } else {
+        resolve()
+      }
     })
     child.on('error', function(err) {
       if (mainWin) { mainWin.restore(); mainWin.focus() }
@@ -677,6 +695,7 @@ ipcMain.handle('launch-retroarch-game', async (event, gamePath, system) => {
     sg1000: ['genesis_plus_gx_libretro.dll'],
     segacd: ['genesis_plus_gx_libretro.dll', 'picodrive_libretro.dll'],
     saturn: ['mednafen_saturn_libretro.dll', 'yabause_libretro.dll'],
+    pcfx: ['mednafen_pcfx_libretro.dll'],
     gba: ['mgba_libretro.dll', 'vba_next_libretro.dll', 'vbam_libretro.dll'],
     gbc: ['gambatte_libretro.dll', 'mgba_libretro.dll', 'gearboy_libretro.dll'],
     gb: ['gambatte_libretro.dll', 'mgba_libretro.dll', 'gearboy_libretro.dll', 'sameboy_libretro.dll'],
