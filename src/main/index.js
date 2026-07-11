@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, screen, dialog, shell } = require('electron')
+const { app, BrowserWindow, ipcMain, screen, dialog, shell, globalShortcut } = require('electron')
 const path = require('path')
 const { exec, spawn } = require('child_process')
 const config = require('./config')
@@ -37,7 +37,13 @@ function launchWithReturn(exe, args, options) {
     }
     setTimeout(nudgeFocus, 1500)
     setTimeout(nudgeFocus, 4000)
+    try {
+      globalShortcut.register('Escape', function() {
+        try { exec('taskkill /PID ' + child.pid + ' /T /F', function() {}) } catch (e) {}
+      })
+    } catch (e) {}
     child.on('exit', function(code) {
+      try { globalShortcut.unregister('Escape') } catch (e) {}
       if (mainWin) {
         mainWin.restore()
         setTimeout(function() {
@@ -55,6 +61,7 @@ function launchWithReturn(exe, args, options) {
       }
     })
     child.on('error', function(err) {
+      try { globalShortcut.unregister('Escape') } catch (e) {}
       if (mainWin) { mainWin.restore(); mainWin.focus() }
       reject(err)
     })
