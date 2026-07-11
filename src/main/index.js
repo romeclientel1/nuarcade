@@ -13,7 +13,10 @@ function launchWithReturn(exe, args, options) {
   args = args || []
   options = options || {}
   return new Promise(function(resolve, reject) {
-    if (mainWin && !options.keepVisible) mainWin.minimize()
+    if (mainWin && !options.keepVisible) {
+      mainWin.setFullScreen(false)
+      mainWin.minimize()
+    }
     var startedAt = Date.now()
     var stderrBuf = ''
     var child = spawn(exe, args, Object.assign({
@@ -27,15 +30,22 @@ function launchWithReturn(exe, args, options) {
         if (stderrBuf.length > 4000) stderrBuf = stderrBuf.slice(-4000)
       })
     }
-    setTimeout(function() {
+    function nudgeFocus() {
       try {
         require('child_process').exec('powershell -NoProfile -WindowStyle Hidden -Command "(New-Object -ComObject WScript.Shell).AppActivate(' + child.pid + ')"', function() {})
       } catch (e) {}
-    }, 1500)
+    }
+    setTimeout(nudgeFocus, 1500)
+    setTimeout(nudgeFocus, 4000)
     child.on('exit', function(code) {
       if (mainWin) {
         mainWin.restore()
-        setTimeout(function() { if (mainWin) mainWin.focus() }, 300)
+        setTimeout(function() {
+          if (mainWin) {
+            mainWin.focus()
+            if (!options.keepVisible) mainWin.setFullScreen(true)
+          }
+        }, 300)
       }
       var elapsed = Date.now() - startedAt
       if (elapsed < 4000 && code !== 0) {
