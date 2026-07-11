@@ -798,14 +798,14 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const filterLeft = () => {
     const tabs = visibleTabsRef.current
     const idx = tabs.indexOf(activeCategoryRef.current)
-    const newIdx = Math.max(0, idx - 1)
+    const newIdx = idx <= 0 ? tabs.length - 1 : idx - 1
     setTabFocusIdx(newIdx)
     setActiveCategory(tabs[newIdx])
   }
   const filterRight = () => {
     const tabs = visibleTabsRef.current
     const idx = tabs.indexOf(activeCategoryRef.current)
-    const newIdx = Math.min(tabs.length - 1, idx + 1)
+    const newIdx = idx >= tabs.length - 1 ? 0 : idx + 1
     setTabFocusIdx(newIdx)
     setActiveCategory(tabs[newIdx])
   }
