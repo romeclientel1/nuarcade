@@ -1,6 +1,7 @@
 const fs = require('fs')
 const path = require('path')
 const { XMLParser } = require('fast-xml-parser')
+const config = require('./config')
 
 const parser = new XMLParser({
   ignoreAttributes: false,
@@ -1129,6 +1130,7 @@ const RA_SYSTEM_MAP = {
   // Sony
   'psx':          { label: 'PS1',      genre: 'Action',     icon: 'PS1', exts: ['.iso','.cue','.bin','.chd','.pbp'] },
   'ps1':          { label: 'PS1',      genre: 'Action',     icon: 'PS1', exts: ['.iso','.cue','.bin','.chd','.pbp'] },
+  'ps2':          { label: 'PS2',      genre: 'Action',     icon: 'PS2', exts: ['.iso','.bin','.chd'] },
   'psp':          { label: 'PSP',                genre: 'Action',     icon: 'PSP', exts: ['.iso','.cso','.pbp'] },
   // Atari
   'atari2600':    { label: 'Atari 2600',         genre: 'Classic',    icon: 'AT2', exts: ['.a26','.bin','.rom'] },
@@ -1156,6 +1158,7 @@ const RA_SYSTEM_MAP = {
   'vectrex':      { label: 'Vectrex',            genre: 'Classic',    icon: 'VEC', exts: ['.vec','.bin'] },
   'wonderswan':   { label: 'WonderSwan',         genre: 'Platformer', icon: 'WSW', exts: ['.ws','.wsc'] },
   '3do':          { label: '3DO',     genre: 'Classic',    icon: '3DO', exts: ['.iso','.cue','.chd','.bin'] },
+  'atomiswave':   { label: 'Atomiswave', genre: 'Fighting',  icon: 'ATW', exts: ['.zip','.chd','.bin'] },
 }
 
 const RA_ROM_EXTS = new Set([
@@ -1230,6 +1233,8 @@ async function scanRetroArchGames(retroarchGamesPath) {
     return { games, count: 0, path: retroarchGamesPath, error: e.message }
   }
 
+  const cfg = config.load()
+
   // Walk each subfolder as a system
   for (const entry of entries) {
     if (!entry.isDirectory()) continue
@@ -1244,6 +1249,10 @@ async function scanRetroArchGames(retroarchGamesPath) {
     const genre = systemInfo ? systemInfo.genre : 'Classic'
     const icon = systemInfo ? systemInfo.icon : 'RTR'
     const validExts = systemInfo ? new Set(systemInfo.exts) : RA_ROM_EXTS
+    const dedicatedEmulator =
+      (canonicalKey === 'psx' || canonicalKey === 'ps1') && cfg.enabledEmulators && cfg.enabledEmulators.duckstation ? 'duckstation' :
+      canonicalKey === 'ps2' && cfg.enabledEmulators && cfg.enabledEmulators.pcsx2 ? 'pcsx2' :
+      'retroarch'
 
     const systemPath = path.join(retroarchGamesPath, entry.name)
     let romFiles = []
@@ -1260,7 +1269,7 @@ async function scanRetroArchGames(retroarchGamesPath) {
         genre,
         system: systemLabel,
         icon,
-        emulator: 'retroarch',
+        emulator: dedicatedEmulator,
         romPath: path.join(systemPath, rom.name),
         core: canonicalKey,
       })
