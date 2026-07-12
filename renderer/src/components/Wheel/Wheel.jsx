@@ -956,6 +956,11 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       transition: 'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease',
     }
   
+  // Xbox controller mapping
+
+
+}
+
   const getTabStyle = (index) => {
     const tabs = visibleTabsRef.current
     const n = tabs.length
@@ -976,11 +981,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       transition: 'transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease',
     }
   }
-  
-  // Xbox controller mapping
-
-
-}
 
   if (loading) return <div style={{ width:"100vw", height:"100vh", background:"#000", display:"flex", alignItems:"center", justifyContent:"center", color:"#888", fontFamily:"monospace", fontSize:14 }}>Scanning game library...</div>
 
