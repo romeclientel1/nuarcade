@@ -709,7 +709,7 @@ ipcMain.handle('launch-retroarch-game', async (event, gamePath, system) => {
     mastersystem: ['genesis_plus_gx_libretro.dll', 'picodrive_libretro.dll'],
     gamegear: ['genesis_plus_gx_libretro.dll', 'picodrive_libretro.dll'],
     sega32x: ['picodrive_libretro.dll'],
-    sg1000: ['genesis_plus_gx_libretro.dll'],
+    sg1000: ['genesis_plus_gx_wide_libretro.dll', 'genesis_plus_gx_libretro.dll'],
     segacd: ['genesis_plus_gx_libretro.dll', 'picodrive_libretro.dll'],
     saturn: ['yabause_libretro.dll', 'mednafen_saturn_libretro.dll'],
     pcfx: ['mednafen_pcfx_libretro.dll'],
