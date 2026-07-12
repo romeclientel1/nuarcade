@@ -1150,7 +1150,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
           return (
             <button
               key={cat}
-              ref={el => { if (el && focusZone === 1 && visibleTabsRef.current[tabFocusIdx] === cat) el.scrollIntoView({ behavior: "smooth", inline: "nearest", block: "nearest" }) }}
+              ref={el => { if (el && focusZone === 1 && visibleTabsRef.current[tabFocusIdx] === cat) el.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" }) }}
               className={styles.catPill + (col ? " " + styles.catCollection : "") + (activeCategory === cat ? " " + styles.catActive : "") + (focusZone === 1 && visibleTabsRef.current[tabFocusIdx] === cat ? " " + styles.catFocused : "")}
               onClick={() => setActiveCategory(cat)}
             >
