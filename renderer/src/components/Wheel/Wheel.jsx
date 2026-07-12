@@ -795,20 +795,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   ]
   const HINT_BAR_MAX = 2
   
-  const filterLeft = () => {
-    const tabs = visibleTabsRef.current
-    const idx = tabs.indexOf(activeCategoryRef.current)
-    const newIdx = idx <= 0 ? tabs.length - 1 : idx - 1
-    setTabFocusIdx(newIdx)
-    setActiveCategory(tabs[newIdx])
-  }
-  const filterRight = () => {
-    const tabs = visibleTabsRef.current
-    const idx = tabs.indexOf(activeCategoryRef.current)
-    const newIdx = idx >= tabs.length - 1 ? 0 : idx + 1
-    setTabFocusIdx(newIdx)
-    setActiveCategory(tabs[newIdx])
-  }
 
 
 
@@ -969,6 +955,27 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       // spring feel here.
       transition: 'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease',
     }
+  
+  const getTabStyle = (index) => {
+    const tabs = visibleTabsRef.current
+    const n = tabs.length
+    if (!n) return {}
+    const diff = index - tabFocusIdx
+    const wrapped = ((diff % n) + n) % n
+    const signed = wrapped > n / 2 ? wrapped - n : wrapped
+    const absPos = Math.abs(signed)
+    if (absPos > 8) return { display: 'none' }
+    const SLOT_WIDTH = 168
+    const x = signed * SLOT_WIDTH
+    const opacity = signed === 0 ? 1 : Math.max(0.35, 1 - absPos * 0.11)
+    const scale = signed === 0 ? 1 : Math.max(0.88, 1 - absPos * 0.025)
+    return {
+      transform: 'translateX(' + x + 'px) scale(' + scale + ')',
+      opacity,
+      zIndex: 10 - absPos,
+      transition: 'transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease',
+    }
+  }
   
   // Xbox controller mapping
 
@@ -1147,16 +1154,16 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       </div>
 
       <div className={styles.categoryStrip}>
-        {_visibleTabs.map(cat => {
+        {_visibleTabs.map((cat, tabIdx) => {
           const col = collections[cat]
           const label = col ? col.name : (cat === "Favorites" ? "Favorites" : cat === "Recent" ? "Recent" : cat)
           const count = col ? col.games.length : (cat === "Recent" ? recentlyPlayed.length : cat === "All" ? games.length : games.filter(g => g.genre === cat || g.system === cat || g.emulator === cat.toLowerCase()).length)
           return (
             <button
               key={cat}
-              ref={el => { if (el && focusZone === 1 && visibleTabsRef.current[tabFocusIdx] === cat) el.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" }) }}
+              style={getTabStyle(tabIdx)}
               className={styles.catPill + (col ? " " + styles.catCollection : "") + (activeCategory === cat ? " " + styles.catActive : "") + (focusZone === 1 && visibleTabsRef.current[tabFocusIdx] === cat ? " " + styles.catFocused : "")}
-              onClick={() => setActiveCategory(cat)}
+              onClick={() => { setTabFocusIdx(tabIdx); setActiveCategory(cat) }}
             >
               {!col && systemLogos[cat.toLowerCase()] ? (
                 <img src={systemLogos[cat.toLowerCase()]} alt={cat} className={styles.catLogo} />
