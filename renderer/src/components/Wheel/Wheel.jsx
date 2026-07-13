@@ -725,7 +725,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
 
       if (e.key === "ArrowLeft")  { sounds.navigate(); navigate(-1) }
       if (e.key === "ArrowRight") { sounds.navigate(); navigate(1) }
-      if (e.key === "Enter")      { if (!showDetail && !showHelp && !showStats && !showAchievements && !showCollections && !showSettings && !showMediaManager && !showCoach) { sounds.select(); setLaunching(false); setShowDetail(true) } }
+      if (e.key === "Enter") { if (!showDetail && !showHelp && !showStats && !showAchievements && !showCollections && !showSettings && !showMediaManager && !showCoach) { sounds.select(); setLaunching(false); setShowDetail(true) } else if (showDetail) { if (current) launchGame() } }
       if ((e.key === "c" || e.key === "C") && !showDetail && !showHelp && !showStats && !showCoach && !showSettings && !showMediaManager) { sounds.select?.(); setShowCoach(true) }
       if ((e.key === "o" || e.key === "O") && !showDetail && !showHelp && !showStats && !showCoach && !showSettings && !showMediaManager) { sounds.select?.(); setShowOperator(true) }
       if (e.key === "Escape") {
