@@ -830,7 +830,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       if (showExitPopupRef.current) { setExitChoice(0); return }
       const z = focusZoneRef.current
       if (z === 0) { setTopMenuIdx(i => Math.max(0, i - 1)); sounds.navigate(); return }
-      if (z === 1) { setTabFocusIdx(i => Math.max(0, i - 1)); sounds.navigate(); return }
+      if (z === 1) { const tabs = visibleTabsRef.current; const newIdx = tabFocusIdxRef.current <= 0 ? tabs.length - 1 : tabFocusIdxRef.current - 1; setTabFocusIdx(newIdx); setActiveCategory(tabs[newIdx]); sounds.navigate(); return }
       if (z === 2) { navigate(-1); return }
       if (z === 3) { return }
       if (z === 4) { setBarFocusIdx(i => Math.max(0, i - 1)); sounds.navigate(); return }
@@ -840,7 +840,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       if (showExitPopupRef.current) { setExitChoice(1); return }
       const z = focusZoneRef.current
       if (z === 0) { setTopMenuIdx(i => Math.min(TOP_MENU_MAX, i + 1)); sounds.navigate(); return }
-      if (z === 1) { setTabFocusIdx(i => Math.min(visibleTabsRef.current.length - 1, i + 1)); sounds.navigate(); return }
+      if (z === 1) { const tabs = visibleTabsRef.current; const newIdx = tabFocusIdxRef.current >= tabs.length - 1 ? 0 : tabFocusIdxRef.current + 1; setTabFocusIdx(newIdx); setActiveCategory(tabs[newIdx]); sounds.navigate(); return }
       if (z === 2) { navigate(1); return }
       if (z === 3) { return }
       if (z === 4) { setBarFocusIdx(i => Math.min(HINT_BAR_MAX, i + 1)); sounds.navigate(); return }
