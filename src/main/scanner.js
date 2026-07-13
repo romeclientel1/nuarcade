@@ -650,21 +650,44 @@ async function scanPs2Games(ps2GamesPath) {
   catch (e) { return { games, count: 0, error: e.message } }
 
   for (const entry of entries) {
-    if (!entry.isFile()) continue
-    const ext = path.extname(entry.name).toLowerCase()
-    if (!EXTS.includes(ext)) continue
-    const title = entry.name.replace(/\.[^.]+$/, '').replace(/_/g, ' ')
-    games.push({
-      id: 'ps2_' + title.replace(/\s+/g, '_'),
-      title,
-      path: path.join(ps2GamesPath, entry.name),
-      emulator: 'pcsx2',
-      genre: 'PS2',
-      system: 'PlayStation 2',
-      status: 'Playable',
-      icon: 'PS2',
-      artwork: null,
-    })
+    if (entry.isFile()) {
+      const ext = path.extname(entry.name).toLowerCase()
+      if (!EXTS.includes(ext)) continue
+      const title = entry.name.replace(/\.[^.]+$/, '').replace(/_/g, ' ')
+      games.push({
+        id: 'ps2_' + title.replace(/\s+/g, '_'),
+        title,
+        path: path.join(ps2GamesPath, entry.name),
+        emulator: 'pcsx2',
+        genre: 'PS2',
+        system: 'PlayStation 2',
+        status: 'Playable',
+        icon: 'PS2',
+        artwork: null,
+      })
+    } else if (entry.isDirectory()) {
+      const subDir = path.join(ps2GamesPath, entry.name)
+      let subEntries = []
+      try { subEntries = fs.readdirSync(subDir, { withFileTypes: true }) } catch (e) { continue }
+      let match = null
+      for (const wantExt of EXTS) {
+        match = subEntries.find(function(se) { return se.isFile() && path.extname(se.name).toLowerCase() === wantExt })
+        if (match) break
+      }
+      if (!match) continue
+      const title = entry.name.replace(/_/g, ' ')
+      games.push({
+        id: 'ps2_' + title.replace(/\s+/g, '_'),
+        title,
+        path: path.join(subDir, match.name),
+        emulator: 'pcsx2',
+        genre: 'PS2',
+        system: 'PlayStation 2',
+        status: 'Playable',
+        icon: 'PS2',
+        artwork: null,
+      })
+    }
   }
   return { games, count: games.length, path: ps2GamesPath }
 }
