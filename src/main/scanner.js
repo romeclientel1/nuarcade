@@ -1275,6 +1275,7 @@ async function scanRetroArchGames(retroarchGamesPath) {
     const dedicatedEmulator =
       (canonicalKey === 'psx' || canonicalKey === 'ps1') && cfg.enabledEmulators && cfg.enabledEmulators.duckstation ? 'duckstation' :
       canonicalKey === 'ps2' && cfg.enabledEmulators && cfg.enabledEmulators.pcsx2 ? 'pcsx2' :
+      canonicalKey === 'mame' && cfg.enabledEmulators && cfg.enabledEmulators.mame ? 'mame' :
       'retroarch'
 
     const systemPath = path.join(retroarchGamesPath, entry.name)
