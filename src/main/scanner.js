@@ -639,6 +639,11 @@ function normalizePs2Serial(str) {
   return String(str || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
 }
 
+function extractPs2Serial(name) {
+  const m = String(name || '').match(/[A-Za-z]{4}[-_]?\d{5}/)
+  return m ? m[0] : name
+}
+
 function loadPs2GameIndex(pcsx2Path) {
   const lookup = new Map()
   if (!pcsx2Path) return lookup
@@ -685,7 +690,7 @@ async function scanPs2Games(ps2GamesPath, pcsx2Path) {
       if (!EXTS.includes(ext)) continue
       const rawName = entry.name.replace(/\.[^.]+$/, '')
       const cleanedTitle = rawName.replace(/_/g, ' ')
-      const dbMatch = gameIndex.get(normalizePs2Serial(rawName))
+      const dbMatch = gameIndex.get(normalizePs2Serial(extractPs2Serial(rawName)))
       games.push({
         id: 'ps2_' + cleanedTitle.replace(/\s+/g, '_'),
         title: dbMatch ? dbMatch.name : cleanedTitle,
@@ -709,7 +714,7 @@ async function scanPs2Games(ps2GamesPath, pcsx2Path) {
       }
       if (!match) continue
       const cleanedTitle = entry.name.replace(/_/g, ' ')
-      const dbMatch = gameIndex.get(normalizePs2Serial(entry.name))
+      const dbMatch = gameIndex.get(normalizePs2Serial(extractPs2Serial(entry.name)))
       games.push({
         id: 'ps2_' + cleanedTitle.replace(/\s+/g, '_'),
         title: dbMatch ? dbMatch.name : cleanedTitle,
