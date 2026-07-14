@@ -234,9 +234,9 @@ ipcMain.handle('launch-gcwii-game', async (event, gamePath) => {
 // -- Launch PCSX2 / PS2 ------------------------------------------------------
 ipcMain.handle('launch-ps2-game', async (event, gamePath) => {
   const cfg = config.load()
-  const pcsx2Exe = path.join(cfg.pcsx2Path || 'F:\\PCSX2\\', 'pcsx2.exe')
+  const pcsx2Exe = path.join(cfg.pcsx2Path || 'F:\\PCSX2\\', 'pcsx2-qt.exe')
   try {
-    await launchWithReturn(pcsx2Exe, [gamePath, '--nogui'])
+    await launchWithReturn(pcsx2Exe, ['-nogui', '--', gamePath])
     return { success: true }
   } catch (e) {
     return { success: false, error: e.message }
