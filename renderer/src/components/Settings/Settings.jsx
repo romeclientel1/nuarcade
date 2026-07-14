@@ -105,7 +105,7 @@ export default function Settings({ games = [], onClose, onCRTChange, crtEnabled,
 
   const [saved, setSaved] = useState(false)
   const [exporting, setExporting] = useState(false)
-  const { updateAvailable, remoteVersion, handleDownload } = useVersionCheck()
+  const { updateAvailable, remoteVersion, handleUpdateNow, installing, progress } = useVersionCheck()
 const { getAllPlaytime, formatTime } = usePlaytime()
 const [showControllerTest, setShowControllerTest] = useState(false)
 const [rescanning, setRescanning] = useState(false)
@@ -445,7 +445,9 @@ const handleSave = async () => {
           {updateAvailable && (
             <div className={styles.updateBanner}>
               <span>NuArcade {remoteVersion} is available!</span>
-              <button className={styles.updateLink} onClick={handleDownload}>Download</button>
+              <button className={styles.updateLink} onClick={handleUpdateNow} disabled={installing}>
+                {installing ? (progress != null ? ("Installing... " + progress + "%") : "Installing...") : "Update Now"}
+              </button>
             </div>
           )}
 
