@@ -265,9 +265,9 @@ Any category without a matching logo just keeps showing its text label, so this 
 - Group games into custom lists
 
 ### Auto-Updater
-- An amber "UPDATE" badge appears on the main wheel's top bar when a new version is available
+- An amber "UPDATE" badge appears on the main wheel's top bar and in Settings when a new version is available
 - Checks for updates once per session (not on a background timer)
-- Clicking the badge opens the GitHub release page for you to download and run manually -- there's no silent in-app install
+- Clicking the badge downloads and silently installs the new version in the background (with a live progress indicator), then restarts NuArcade automatically -- no browser trip, no installer wizard
 
 ---
 
@@ -294,6 +294,11 @@ Any category without a matching logo just keeps showing its text label, so this 
 ## Folder Schema Versioning
 
 NuArcade tracks which version of the media/ROM folder structure has been created on your cabinet. When a new version introduces new system support, folders are automatically created on next launch without any manual steps.
+
+### Game Library Cache
+Scanned games (titles, artwork, metadata) are cached locally for 24 hours to keep launches fast. **This cache survives app updates and reinstalls** -- it's stored separately from the app itself.
+
+If a fix changes how games are scanned or titled and you don't see it reflected: go to Settings -> "Rescan all emulators", then fully close and reopen NuArcade. Rescanning alone clears the cache but doesn't refresh what's currently on screen -- only a fresh launch does that.
 
 ---
 
