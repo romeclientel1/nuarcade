@@ -402,7 +402,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const refreshArtwork = () => {
     try { setArtwork(JSON.parse(localStorage.getItem("nuarcade_artwork") || "{}")) } catch {}
   }
-  const { updateAvailable, remoteVersion, handleDownload } = useVersionCheck()
+  const { updateAvailable, remoteVersion, handleUpdateNow, installing, progress } = useVersionCheck()
   const sgdbKey = config?.sgdbApiKey || null
   const { fetchArtworkForGame } = useSteamGridDB(sgdbKey)
 
@@ -1135,10 +1135,11 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
                 <button
                   className={styles.settingsBtn}
                   style={{ borderColor: 'rgba(255,170,0,0.5)', color: '#ffaa00' }}
-                  onClick={handleDownload}
-                  title={"NuArcade " + remoteVersion + " is available -- click to download"}
+                  onClick={handleUpdateNow}
+                  disabled={installing}
+                  title={installing ? "Installing update..." : ("NuArcade " + remoteVersion + " is available -- click to install")}
                 >
-                  UPDATE
+                  {installing ? (progress != null ? ("UPDATING " + progress + "%") : "UPDATING...") : "UPDATE"}
                 </button>
               )}
               <button
