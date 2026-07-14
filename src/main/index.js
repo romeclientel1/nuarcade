@@ -258,7 +258,8 @@ ipcMain.handle('scan-gcwii-games', async (event, gcWiiGamesPath) => {
 // -- Scan PS2 games ----------------------------------------------------------
 ipcMain.handle('scan-ps2-games', async (event, ps2GamesPath) => {
   const { scanPs2Games } = require('./scanner')
-  return scanPs2Games(ps2GamesPath)
+  const cfg = config.load()
+  return scanPs2Games(ps2GamesPath, cfg.pcsx2Path)
 })
 
 
