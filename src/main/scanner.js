@@ -635,7 +635,36 @@ async function scanGCWiiGames(gcWiiGamesPath) {
 }
 
 // -- PCSX2 / PS2 Scanner -----------------------------------------------------
-async function scanPs2Games(ps2GamesPath) {
+function normalizePs2Serial(str) {
+  return String(str || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
+}
+
+function loadPs2GameIndex(pcsx2Path) {
+  const lookup = new Map()
+  if (!pcsx2Path) return lookup
+  try {
+    const yaml = require('js-yaml')
+    const fs = require('fs')
+    const path = require('path')
+    const indexPath = path.join(pcsx2Path, 'resources', 'GameIndex.yaml')
+    if (!fs.existsSync(indexPath)) return lookup
+    const raw = fs.readFileSync(indexPath, 'utf8')
+    const data = yaml.load(raw)
+    if (data && typeof data === 'object') {
+      Object.keys(data).forEach(function(serial) {
+        const dbEntry = data[serial]
+        if (dbEntry && dbEntry.name) {
+          lookup.set(normalizePs2Serial(serial), { name: dbEntry.name, region: dbEntry.region || null })
+        }
+      })
+    }
+  } catch (e) {
+    // Missing or unparsable GameIndex.yaml - fall back to filename titles silently
+  }
+  return lookup
+}
+
+async function scanPs2Games(ps2GamesPath, pcsx2Path) {
   const fs = require('fs')
   const path = require('path')
   const games = []
@@ -644,6 +673,7 @@ async function scanPs2Games(ps2GamesPath) {
     return { games, count: 0, path: ps2GamesPath, error: 'Folder not found' }
   }
 
+  const gameIndex = loadPs2GameIndex(pcsx2Path)
   const EXTS = ['.iso', '.bin', '.img', '.mdf', '.chd', '.zip', '.7z']
   let entries
   try { entries = fs.readdirSync(ps2GamesPath, { withFileTypes: true }) }
@@ -653,10 +683,13 @@ async function scanPs2Games(ps2GamesPath) {
     if (entry.isFile()) {
       const ext = path.extname(entry.name).toLowerCase()
       if (!EXTS.includes(ext)) continue
-      const title = entry.name.replace(/\.[^.]+$/, '').replace(/_/g, ' ')
+      const rawName = entry.name.replace(/\.[^.]+$/, '')
+      const cleanedTitle = rawName.replace(/_/g, ' ')
+      const dbMatch = gameIndex.get(normalizePs2Serial(rawName))
       games.push({
-        id: 'ps2_' + title.replace(/\s+/g, '_'),
-        title,
+        id: 'ps2_' + cleanedTitle.replace(/\s+/g, '_'),
+        title: dbMatch ? dbMatch.name : cleanedTitle,
+        region: dbMatch ? dbMatch.region : null,
         path: path.join(ps2GamesPath, entry.name),
         emulator: 'pcsx2',
         genre: 'PS2',
@@ -675,10 +708,12 @@ async function scanPs2Games(ps2GamesPath) {
         if (match) break
       }
       if (!match) continue
-      const title = entry.name.replace(/_/g, ' ')
+      const cleanedTitle = entry.name.replace(/_/g, ' ')
+      const dbMatch = gameIndex.get(normalizePs2Serial(entry.name))
       games.push({
-        id: 'ps2_' + title.replace(/\s+/g, '_'),
-        title,
+        id: 'ps2_' + cleanedTitle.replace(/\s+/g, '_'),
+        title: dbMatch ? dbMatch.name : cleanedTitle,
+        region: dbMatch ? dbMatch.region : null,
         path: path.join(subDir, match.name),
         emulator: 'pcsx2',
         genre: 'PS2',
@@ -693,7 +728,6 @@ async function scanPs2Games(ps2GamesPath) {
 }
 
 module.exports = { ...module.exports, scanXbox360Games, scanGCWiiGames, scanPs2Games }
-
 
 // -- Ryujinx / Nintendo Switch Scanner ---------------------------------------
 async function scanSwitchGames(switchGamesPath) {
