@@ -52,6 +52,7 @@ contextBridge.exposeInMainWorld('nuarcade', {
   scanPinball:          (tablesPath)          => ipcRenderer.invoke('scan-pinball', tablesPath),
   scanMameGames:        (mameGamesPath)       => ipcRenderer.invoke('scan-mame-games', mameGamesPath),
   scanRetroArchGames:   (retroarchGamesPath)  => ipcRenderer.invoke('scan-retroarch-games', retroarchGamesPath),
+  fetchBezelsForSystem: (system) => ipcRenderer.invoke('fetch-bezels-for-system', system),
   scanN64Games:         (n64GamesPath)        => ipcRenderer.invoke('scan-n64-games', n64GamesPath),
   scanPs1Games:         (ps1GamesPath)        => ipcRenderer.invoke('scan-ps1-games', ps1GamesPath),
   scanDreamcastGames:   (dreamcastGamesPath)  => ipcRenderer.invoke('scan-dreamcast-games', dreamcastGamesPath),
