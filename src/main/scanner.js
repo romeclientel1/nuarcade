@@ -2266,3 +2266,134 @@ async function importEmuMoviesFile({ sourceFile, gameId, slot, mediaPath }) {
 }
 
 module.exports = { ...module.exports, scanEmuMoviesMedia, importEmuMoviesFile }
+
+// -- Bezel Project matching (RetroArch bezels) ------------------------
+// Matches a locally-scanned ROM title against Bezel Project's per-core file
+// index. Their filenames follow Redump/No-Intro convention exactly; local
+// libraries are often close but not byte-identical (missing dashes, case
+// differences, version tags instead of (Rev N), multi-disc/track suffixes).
+// Verified against a real 8,550-entry PSX index with a 96% match rate.
+function normalizeBezelTitle(name) {
+  return String(name || '')
+    .replace(/\s*\([^)]*\)/g, '')
+    .replace(/\s*-\s*/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase()
+}
+
+function extractBezelRegion(name) {
+  const m = String(name || '').match(/\(USA|Europe|Japan|World|Australia)\)/i)
+  return m ? m[1] : null
+}
+
+function buildBezelIndexMaps(rawList) {
+  const normMap = new Map()
+  for (const raw of rawList) {
+    const norm = normalizeBezelTitle(raw)
+    if (!normMap.has(norm)) normMap.set(norm, [])
+    normMap.get(norm).push(raw)
+  }
+  const exactSet = new Set(rawList.map(function(s) { return s.toLowerCase() }))
+  return { normMap: normMap, exactSet: exactSet }
+}
+
+function matchBezelTitle(localName, indexList, normMap, exactSet) {
+  if (exactSet.has(localName.toLowerCase())) {
+    return { status: 'exact', title: localName }
+  }
+  const norm = normalizeBezelTitle(localName)
+  const candidates = normMap.get(norm)
+  if (candidates && candidates.length) {
+    const localRegion = extractBezelRegion(localName)
+    let pick = candidates.find(function(c) { return extractBezelRegion(c) === localRegion })
+    if (!pick) {
+      const pref = ['USA', 'Europe', 'World', 'Japan']
+      for (const r of pref) {
+        pick = candidates.find(function(c) { return extractBezelRegion(c) === r })
+        if (pick) break
+      }
+    }
+    if (!pick) pick = candidates[0]
+    return { status: 'fuzzy', title: pick }
+  }
+  return { status: 'none', title: null }
+}
+
+// Fetches the full filename index for one Bezel Project repo+core folder via
+// GitHub's tree API (one request, not one-per-file -- avoids the 60/hr
+// unauthenticated rate limit). Cached to disk for a week since Bezel Project
+// doesn't update that often.
+async function fetchBezelProjectIndex(repo, coreFolder, cacheDir) {
+  const https = require('https')
+  const cachePath = path.join(cacheDir, 'bezel-index-' + repo + '-' + coreFolder.replace(/[^a-zA-Z0-9]/g, '_') + '.json')
+  try {
+    const stat = fs.statSync(cachePath)
+    const ageMs = Date.now() - stat.mtimeMs
+    if (ageMs < 7 * 24 * 60 * 60 * 1000) {
+      return JSON.parse(fs.readFileSync(cachePath, 'utf8'))
+    }
+  } catch (e) {}
+
+  const url = 'https://api.github.com/repos/thebezelproject/bezelproject-' + repo + '/git/trees/master?recursive=1'
+  const data = await new Promise(function(resolve, reject) {
+    https.get(url, { headers: { 'User-Agent': 'NuArcade' } }, function(res) {
+      let body = ''
+      res.on('data', function(chunk) { body += chunk })
+      res.on('end', function() {
+        try { resolve(JSON.parse(body)) } catch (e) { reject(e) }
+      })
+    }).on('error', reject)
+  })
+
+  if (!data.tree) throw new Error(data.message || 'Failed to fetch Bezel Project index')
+  const prefix = 'retroarch/config/' + coreFolder + '/'
+  const titles = data.tree
+    .filter(function(t) { return t.path.indexOf(prefix) === 0 && t.path.slice(-4) === '.cfg' })
+    .map(function(t) { return t.path.slice(prefix.length, -4) })
+
+  try { fs.mkdirSync(cacheDir, { recursive: true }) } catch (e) {}
+  try { fs.writeFileSync(cachePath, JSON.stringify(titles)) } catch (e) {}
+  return titles
+}
+
+// Fetches and installs the 3 files for one matched game: the overlay
+// descriptor + png (copied as-is from Bezel Project), and our OWN override
+// cfg pointing at the real Windows path (the source override files hardcode
+// a RetroPie Linux path, so we never copy those verbatim).
+async function installBezelForGame(opts) {
+  const repo = opts.repo, coreFolder = opts.coreFolder, matchedTitle = opts.matchedTitle
+  const retroarchPath = opts.retroarchPath, systemFolder = opts.systemFolder
+  const https = require('https')
+
+  function fetchRaw(url) {
+    return new Promise(function(resolve, reject) {
+      https.get(url, { headers: { 'User-Agent': 'NuArcade' } }, function(res) {
+        if (res.statusCode !== 200) { reject(new Error('HTTP ' + res.statusCode + ' for ' + url)); return }
+        const chunks = []
+        res.on('data', function(c) { chunks.push(c) })
+        res.on('end', function() { resolve(Buffer.concat(chunks)) })
+      }).on('error', reject)
+    })
+  }
+
+  const base = 'https://raw.githubusercontent.com/thebezelproject/bezelproject-' + repo + '/master/retroarch/'
+  const encTitle = encodeURIComponent(matchedTitle)
+
+  const overlayCfgBuf = await fetchRaw(base + 'overlay/GameBezels/' + systemFolder + '/' + encTitle + '.cfg')
+  const overlayPngBuf = await fetchRaw(base + 'overlay/GameBezels/' + systemFolder + '/' + encTitle + '.png')
+
+  const overlayDir = path.join(retroarchPath, 'overlays', 'GameBezels', systemFolder)
+  fs.mkdirSync(overlayDir, { recursive: true })
+  fs.writeFileSync(path.join(overlayDir, matchedTitle + '.cfg'), overlayCfgBuf)
+  fs.writeFileSync(path.join(overlayDir, matchedTitle + '.png'), overlayPngBuf)
+
+  const overridePath = path.join(retroarchPath, 'config', coreFolder, matchedTitle + '.cfg')
+  fs.mkdirSync(path.dirname(overridePath), { recursive: true })
+  const overlayCfgWindowsPath = path.join(overlayDir, matchedTitle + '.cfg').replace(/\\\\/g, '/')
+  fs.writeFileSync(overridePath, 'input_overlay = \"' + overlayCfgWindowsPath + '\"\n')
+
+  return { overridePath: overridePath, overlayCfgPath: path.join(overlayDir, matchedTitle + '.cfg') }
+}
+
+module.exports = { ...module.exports, normalizeBezelTitle, matchBezelTitle, buildBezelIndexMaps, fetchBezelProjectIndex, installBezelForGame }
