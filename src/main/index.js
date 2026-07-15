@@ -812,6 +812,18 @@ ipcMain.handle('launch-retroarch-game', async (event, gamePath, system) => {
   }
 })
 
+ipcMain.handle('prune-mame-artwork', async (event, dryRun) => {
+  const cfg = config.load()
+  const { pruneMameArtwork } = require('./scanner')
+  const artworkPath = path.join(cfg.mamePath || 'F:\\MAME\\', 'artwork')
+  try {
+    const result = await pruneMameArtwork(cfg.mameGamesPath, artworkPath, dryRun)
+    return { success: true, total: result.total, kept: result.kept, removed: result.removed, removedNames: result.removedNames, dryRun: result.dryRun }
+  } catch (e) {
+    return { success: false, error: e.message }
+  }
+})
+
 ipcMain.handle('fetch-bezels-for-system', async (event, system) => {
   const cfg = config.load()
   const fs = require('fs')
