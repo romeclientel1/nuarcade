@@ -116,6 +116,7 @@ const [restoring, setRestoring] = useState(false)
 const [rescanResult, setRescanResult] = useState(null)
 const [bezelFetching, setBezelFetching] = useState(false)
 const [bezelResult, setBezelResult] = useState(null)
+const [bezelSystemLabel, setBezelSystemLabel] = useState('')
 const [tpConfiguring, setTpConfiguring] = useState(false)
 const [tpResult, setTpResult] = useState(null)
 const [showArtworkMgr, setShowArtworkMgr] = useState(false)
@@ -232,10 +233,11 @@ const handleRescan = async () => {
   setRescanning(false)
 }
 
-const handleFetchBezels = async (system) => {
+const handleFetchBezels = async (system, label) => {
   if (!window.nuarcade) return
   setBezelFetching(true)
   setBezelResult(null)
+  setBezelSystemLabel(label)
   try {
     const r = await window.nuarcade.fetchBezelsForSystem(system)
     setBezelResult(r)
@@ -1067,23 +1069,34 @@ const handleSave = async () => {
 
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>RetroArch bezels</label>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button className={styles.exportBtn} onClick={() => handleFetchBezels('psx')} disabled={bezelFetching}>
-                  {bezelFetching ? "Fetching..." : "Fetch PSX bezels"}
-                </button>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {[
+                  { key: 'psx', label: 'PSX' },
+                  { key: 'nes', label: 'NES' },
+                  { key: 'snes', label: 'SNES' },
+                  { key: 'genesis', label: 'Genesis' },
+                  { key: 'n64', label: 'N64' },
+                  { key: 'saturn', label: 'Saturn' },
+                ].map(function(s) {
+                  return (
+                    <button key={s.key} className={styles.exportBtn} onClick={() => handleFetchBezels(s.key, s.label)} disabled={bezelFetching}>
+                      {bezelFetching ? '...' : s.label}
+                    </button>
+                  )
+                })}
               </div>
               <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>
-                Matches your PSX library against Bezel Project's index and installs real per-game bezels for whichever RetroArch core is actually installed.
+                Matches your library for the selected system against Bezel Project's index and installs real per-game bezels for whichever RetroArch core is actually installed. More systems added as they're verified.
               </div>
             </div>
             {bezelResult && (
               <div style={{ fontSize: 12, marginBottom: 10 }}>
                 {bezelResult.error ? (
-                  <div style={{ color: "#ef4444" }}>{bezelResult.error}</div>
+                  <div style={{ color: "#ef4444" }}>{bezelSystemLabel}: {bezelResult.error}</div>
                 ) : (
                   <>
                     <div style={{ color: '#00ff88' }}>
-                      {bezelResult.installed} of {bezelResult.total} games got bezels ({bezelResult.exact} exact, {bezelResult.fuzzy} fuzzy match) via {bezelResult.coreFolder}
+                      {bezelSystemLabel}: {bezelResult.installed} of {bezelResult.total} games got bezels ({bezelResult.exact} exact, {bezelResult.fuzzy} fuzzy match) via {bezelResult.coreFolder}
                     </div>
                     {bezelResult.missed > 0 && (
                       <div style={{ color: 'rgba(255,255,255,0.5)', marginTop: 4 }}>
