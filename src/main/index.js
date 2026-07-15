@@ -653,12 +653,82 @@ ipcMain.handle('launch-retroarch', async () => {
   catch (e) { return { success: false, error: e.message } }
 })
 
+// -- RetroArch core selection (shared by launch + bezel matching) -----------
+// System-aware core candidates -- scans the actual cores folder and picks the
+// first installed candidate for the game's system, rather than assuming one
+// exact filename. Works for any RetroArch setup, not just one specific machine.
+const SYSTEM_CORE_CANDIDATES = {
+  nes: ['nestopia_libretro.dll', 'fceumm_libretro.dll', 'quicknes_libretro.dll', 'mesen_libretro.dll'],
+  snes: ['snes9x_libretro.dll', 'bsnes_libretro.dll', 'snes9x2010_libretro.dll'],
+  n64: ['mupen64plus_next_libretro.dll', 'parallel_n64_libretro.dll'],
+  genesis: ['genesis_plus_gx_libretro.dll', 'picodrive_libretro.dll'],
+  megadrive: ['genesis_plus_gx_libretro.dll', 'picodrive_libretro.dll'],
+  mastersystem: ['genesis_plus_gx_libretro.dll', 'picodrive_libretro.dll'],
+  gamegear: ['genesis_plus_gx_libretro.dll', 'picodrive_libretro.dll'],
+  sega32x: ['picodrive_libretro.dll'],
+  sg1000: ['genesis_plus_gx_wide_libretro.dll', 'genesis_plus_gx_libretro.dll'],
+  segacd: ['genesis_plus_gx_libretro.dll', 'picodrive_libretro.dll'],
+  saturn: ['yabause_libretro.dll', 'mednafen_saturn_libretro.dll'],
+  pcfx: ['mednafen_pcfx_libretro.dll'],
+  atomiswave: ['reicast_libretro.dll', 'redream_libretro.dll'],
+  gba: ['mgba_libretro.dll', 'vba_next_libretro.dll', 'vbam_libretro.dll'],
+  gbc: ['gambatte_libretro.dll', 'mgba_libretro.dll', 'gearboy_libretro.dll'],
+  gb: ['gambatte_libretro.dll', 'mgba_libretro.dll', 'gearboy_libretro.dll', 'sameboy_libretro.dll'],
+  psx: ['pcsx_rearmed_libretro.dll', 'swanstation_libretro.dll', 'mednafen_psx_libretro.dll', 'mednafen_psx_hw_libretro.dll'],
+  ps1: ['pcsx_rearmed_libretro.dll', 'swanstation_libretro.dll', 'mednafen_psx_libretro.dll', 'mednafen_psx_hw_libretro.dll'],
+  '3do': ['opera_libretro.dll', '4do_libretro.dll'],
+  pce: ['mednafen_pce_libretro.dll', 'mednafen_pce_fast_libretro.dll', 'mednafen_supergrafx_libretro.dll'],
+  pcengine: ['mednafen_pce_libretro.dll', 'mednafen_pce_fast_libretro.dll', 'mednafen_supergrafx_libretro.dll'],
+  neogeopocket: ['mednafen_ngp_libretro.dll'],
+  wonderswan: ['mednafen_wswan_libretro.dll'],
+  atari2600: ['stella_libretro.dll', 'stella2014_libretro.dll'],
+  atari7800: ['prosystem_libretro.dll'],
+  atarilynx: ['handy_libretro.dll'],
+  atarijaguar: ['virtualjaguar_libretro.dll'],
+  mame: ['mame_libretro.dll', 'mame2003_plus_libretro.dll', 'fbneo_libretro.dll'],
+  fba: ['fbneo_libretro.dll', 'fbalpha_libretro.dll'],
+  arcade: ['mame_libretro.dll', 'fbneo_libretro.dll'],
+  neogeo: ['fbneo_libretro.dll', 'fbalpha2012_neogeo_libretro.dll', 'mame_libretro.dll'],
+  vectrex: ['vecx_libretro.dll'],
+}
+
+function findInstalledCore(retroDir, system) {
+  const fs = require('fs')
+  const candidates = SYSTEM_CORE_CANDIDATES[system]
+  if (!candidates) return null
+  let installed
+  try {
+    installed = new Set(fs.readdirSync(path.join(retroDir, 'cores')).map(function(f) { return f.toLowerCase() }))
+  } catch (e) {
+    return null
+  }
+  for (const candidate of candidates) {
+    if (installed.has(candidate.toLowerCase())) return candidate
+  }
+  return null
+}
+
+// -- Bezel Project integration ------------------------------------------------
+// Maps an installed core filename to (a) the GitHub repo suffix and (b) the
+// exact core-folder name Bezel Project (and RetroArch itself) use for
+// per-core config/overlay paths. These are RetroArch's own core display
+// names, verified directly against the real repos -- not guesses.
+const BEZEL_SYSTEM_REPO = {
+  psx: 'PSX',
+  ps1: 'PSX',
+}
+const BEZEL_CORE_FOLDER_MAP = {
+  'pcsx_rearmed_libretro.dll': 'PCSX-ReARMed',
+  'swanstation_libretro.dll': 'SwanStation',
+  'mednafen_psx_libretro.dll': 'Beetle PSX',
+  'mednafen_psx_hw_libretro.dll': 'Beetle PSX HW',
+}
+
 ipcMain.handle('launch-retroarch-game', async (event, gamePath, system) => {
   const fs = require('fs')
   const cfg = config.load()
   const retroDir = cfg.retroarchPath || 'F:\\RetroArch\\'
   const retroExe = path.join(retroDir, 'retroarch.exe')
-  const { spawn } = require('child_process')
   const ext = path.extname(gamePath).toLowerCase()
 
   // Extension -> core dll mapping (most common cores)
@@ -695,74 +765,94 @@ ipcMain.handle('launch-retroarch-game', async (event, gamePath, system) => {
     '.vec':  'vecx_libretro.dll',
   }
 
-  // System-aware core map -- takes priority over the extension guess below.
-  // Needed because several systems share disc-image extensions (.iso/.cue/.chd/.bin)
-  // and any system's ROMs may be zipped (.zip/.7z), which the extension alone can't disambiguate.
-  // System-aware core selection -- scans the actual cores folder and picks the
-  // first installed candidate for the game's system, rather than assuming one
-  // exact filename. Works for any RetroArch setup, not just one specific machine.
-  const SYSTEM_CORE_CANDIDATES = {
-    nes: ['nestopia_libretro.dll', 'fceumm_libretro.dll', 'quicknes_libretro.dll', 'mesen_libretro.dll'],
-    snes: ['snes9x_libretro.dll', 'bsnes_libretro.dll', 'snes9x2010_libretro.dll'],
-    n64: ['mupen64plus_next_libretro.dll', 'parallel_n64_libretro.dll'],
-    genesis: ['genesis_plus_gx_libretro.dll', 'picodrive_libretro.dll'],
-    megadrive: ['genesis_plus_gx_libretro.dll', 'picodrive_libretro.dll'],
-    mastersystem: ['genesis_plus_gx_libretro.dll', 'picodrive_libretro.dll'],
-    gamegear: ['genesis_plus_gx_libretro.dll', 'picodrive_libretro.dll'],
-    sega32x: ['picodrive_libretro.dll'],
-    sg1000: ['genesis_plus_gx_wide_libretro.dll', 'genesis_plus_gx_libretro.dll'],
-    segacd: ['genesis_plus_gx_libretro.dll', 'picodrive_libretro.dll'],
-    saturn: ['yabause_libretro.dll', 'mednafen_saturn_libretro.dll'],
-    pcfx: ['mednafen_pcfx_libretro.dll'],
-    atomiswave: ['reicast_libretro.dll', 'redream_libretro.dll'],
-    gba: ['mgba_libretro.dll', 'vba_next_libretro.dll', 'vbam_libretro.dll'],
-    gbc: ['gambatte_libretro.dll', 'mgba_libretro.dll', 'gearboy_libretro.dll'],
-    gb: ['gambatte_libretro.dll', 'mgba_libretro.dll', 'gearboy_libretro.dll', 'sameboy_libretro.dll'],
-    psx: ['pcsx_rearmed_libretro.dll', 'swanstation_libretro.dll', 'mednafen_psx_libretro.dll', 'mednafen_psx_hw_libretro.dll'],
-    ps1: ['pcsx_rearmed_libretro.dll', 'swanstation_libretro.dll', 'mednafen_psx_libretro.dll', 'mednafen_psx_hw_libretro.dll'],
-    '3do': ['opera_libretro.dll', '4do_libretro.dll'],
-    pce: ['mednafen_pce_libretro.dll', 'mednafen_pce_fast_libretro.dll', 'mednafen_supergrafx_libretro.dll'],
-    pcengine: ['mednafen_pce_libretro.dll', 'mednafen_pce_fast_libretro.dll', 'mednafen_supergrafx_libretro.dll'],
-    neogeopocket: ['mednafen_ngp_libretro.dll'],
-    wonderswan: ['mednafen_wswan_libretro.dll'],
-    atari2600: ['stella_libretro.dll', 'stella2014_libretro.dll'],
-    atari7800: ['prosystem_libretro.dll'],
-    atarilynx: ['handy_libretro.dll'],
-    atarijaguar: ['virtualjaguar_libretro.dll'],
-    mame: ['mame_libretro.dll', 'mame2003_plus_libretro.dll', 'fbneo_libretro.dll'],
-    fba: ['fbneo_libretro.dll', 'fbalpha_libretro.dll'],
-    arcade: ['mame_libretro.dll', 'fbneo_libretro.dll'],
-    neogeo: ['fbneo_libretro.dll', 'fbalpha2012_neogeo_libretro.dll', 'mame_libretro.dll'],
-    vectrex: ['vecx_libretro.dll'],
-  }
-
-  function findInstalledCore(system) {
-    const candidates = SYSTEM_CORE_CANDIDATES[system]
-    if (!candidates) return null
-    let installed
-    try {
-      installed = new Set(fs.readdirSync(path.join(retroDir, 'cores')).map(f => f.toLowerCase()))
-    } catch (e) {
-      return null
-    }
-    for (const candidate of candidates) {
-      if (installed.has(candidate.toLowerCase())) return candidate
-    }
-    return null
-  }
-
-  const coreName = (system && findInstalledCore(system)) || CORE_MAP[ext]
+  const coreName = (system && findInstalledCore(retroDir, system)) || CORE_MAP[ext]
   const corePath = coreName ? path.join(retroDir, 'cores', coreName) : null
 
   const args = corePath && fs.existsSync(corePath)
     ? ['-f', '-L', corePath, gamePath]
     : ['-f', gamePath]
 
+  // If a Bezel Project-installed override exists for this exact game, force-load
+  // it directly via --appendconfig -- more reliable than RetroArch's own
+  // auto-override detection, which silently does nothing if certain settings
+  // (auto_overrides_enable, game_specific_options) aren't already turned on.
+  const coreFolder = coreName && BEZEL_CORE_FOLDER_MAP[coreName.toLowerCase()]
+  if (coreFolder) {
+    const romTitle = path.basename(gamePath, path.extname(gamePath))
+    const overridePath = path.join(retroDir, 'config', coreFolder, romTitle + '.cfg')
+    if (fs.existsSync(overridePath)) {
+      args.push('--appendconfig', overridePath)
+    }
+  }
+
   try {
     await launchWithReturn(retroExe, args)
     return { success: true, core: coreName || 'auto' }
   } catch (e) {
     return { success: false, error: e.message }
+  }
+})
+
+ipcMain.handle('fetch-bezels-for-system', async (event, system) => {
+  const cfg = config.load()
+  const fs = require('fs')
+  const retroDir = cfg.retroarchPath || 'F:\\RetroArch\\'
+  const repo = BEZEL_SYSTEM_REPO[system]
+  if (!repo) return { success: false, error: 'Bezel matching not yet supported for "' + system + '"' }
+
+  const coreName = findInstalledCore(retroDir, system)
+  const coreFolder = coreName && BEZEL_CORE_FOLDER_MAP[coreName.toLowerCase()]
+  if (!coreFolder) {
+    return { success: false, error: 'No supported installed core found for "' + system + '" -- checked: ' + (SYSTEM_CORE_CANDIDATES[system] || []).join(', ') }
+  }
+
+  const { scanRetroArchGames, fetchBezelProjectIndex, buildBezelIndexMaps, matchBezelTitle, installBezelForGame } = require('./scanner')
+
+  const raScan = await scanRetroArchGames(cfg.retroarchGamesPath)
+  const targets = raScan.games.filter(function(g) {
+    return g.core === system && g.emulator === 'retroarch'
+  })
+
+  let index
+  try {
+    index = await fetchBezelProjectIndex(repo, coreFolder, path.join(retroDir, '.nuarcade-bezel-cache'))
+  } catch (e) {
+    return { success: false, error: 'Could not fetch Bezel Project index: ' + e.message }
+  }
+  const maps = buildBezelIndexMaps(index)
+
+  let installed = 0, exact = 0, fuzzy = 0, missed = 0
+  const missedTitles = []
+  for (const game of targets) {
+    const localTitle = path.basename(game.romPath, path.extname(game.romPath))
+    const m = matchBezelTitle(localTitle, index, maps.normMap, maps.exactSet)
+    if (m.status === 'none') { missed++; missedTitles.push(localTitle); continue }
+    if (m.status === 'exact') exact++; else fuzzy++
+    try {
+      await installBezelForGame({
+        repo: repo,
+        coreFolder: coreFolder,
+        matchedTitle: m.title,
+        retroarchPath: retroDir,
+        systemFolder: repo,
+      })
+      installed++
+    } catch (e) {
+      missed++
+      missedTitles.push(localTitle + ' (fetch failed: ' + e.message + ')')
+    }
+  }
+
+  return {
+    success: true,
+    total: targets.length,
+    installed: installed,
+    exact: exact,
+    fuzzy: fuzzy,
+    missed: missed,
+    missedTitles: missedTitles.slice(0, 30),
+    core: coreName,
+    coreFolder: coreFolder,
   }
 })
 
