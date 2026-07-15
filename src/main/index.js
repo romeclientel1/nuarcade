@@ -716,12 +716,31 @@ function findInstalledCore(retroDir, system) {
 const BEZEL_SYSTEM_REPO = {
   psx: 'PSX',
   ps1: 'PSX',
+  nes: 'NES',
+  snes: 'SNES',
+  genesis: 'MegaDrive',
+  megadrive: 'MegaDrive',
+  n64: 'N64',
+  saturn: 'Saturn',
 }
 const BEZEL_CORE_FOLDER_MAP = {
   'pcsx_rearmed_libretro.dll': 'PCSX-ReARMed',
   'swanstation_libretro.dll': 'SwanStation',
   'mednafen_psx_libretro.dll': 'Beetle PSX',
   'mednafen_psx_hw_libretro.dll': 'Beetle PSX HW',
+  'nestopia_libretro.dll': 'Nestopia',
+  'fceumm_libretro.dll': 'FCEUmm',
+  'quicknes_libretro.dll': 'QuickNES',
+  'mesen_libretro.dll': 'Mesen',
+  'snes9x_libretro.dll': 'Snes9x',
+  'bsnes_libretro.dll': 'bsnes',
+  'snes9x2010_libretro.dll': 'Snes9x 2010',
+  'genesis_plus_gx_libretro.dll': 'Genesis Plus GX',
+  'picodrive_libretro.dll': 'PicoDrive',
+  'mupen64plus_next_libretro.dll': 'Mupen64Plus-Next',
+  'parallel_n64_libretro.dll': 'ParaLLEl N64',
+  'yabause_libretro.dll': 'Yabause',
+  'mednafen_saturn_libretro.dll': 'Beetle Saturn',
 }
 
 ipcMain.handle('launch-retroarch-game', async (event, gamePath, system) => {
