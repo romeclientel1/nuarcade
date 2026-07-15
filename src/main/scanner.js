@@ -2397,3 +2397,50 @@ async function installBezelForGame(opts) {
 }
 
 module.exports = { ...module.exports, normalizeBezelTitle, matchBezelTitle, buildBezelIndexMaps, fetchBezelProjectIndex, installBezelForGame }
+
+// -- MAME artwork pruning -----------------------------------------------------
+// Third-party bezel packs (EmuMovies, etc.) cover the entire MAME driver list
+// (11,000+ zips) regardless of what you actually own. This compares what's
+// installed against your real MAME ROM library and identifies (optionally
+// deletes) artwork zips that don't match any owned game.
+async function pruneMameArtwork(mameGamesPath, mameArtworkPath, dryRun) {
+  const ownedNames = new Set()
+  let romEntries = []
+  try { romEntries = fs.readdirSync(mameGamesPath, { withFileTypes: true }) } catch (e) {
+    throw new Error('MAME ROMs folder not found: ' + mameGamesPath)
+  }
+  for (const entry of romEntries) {
+    if (!entry.isFile()) continue
+    const ext = path.extname(entry.name).toLowerCase()
+    if (ext !== '.zip' && ext !== '.7z') continue
+    ownedNames.add(entry.name.replace(/\.[^.]+$/, '').toLowerCase())
+  }
+
+  let artworkEntries = []
+  try { artworkEntries = fs.readdirSync(mameArtworkPath, { withFileTypes: true }) } catch (e) {
+    throw new Error('MAME artwork folder not found: ' + mameArtworkPath)
+  }
+
+  let total = 0, kept = 0, removed = 0
+  const removedNames = []
+  for (const entry of artworkEntries) {
+    if (!entry.isFile()) continue
+    const ext = path.extname(entry.name).toLowerCase()
+    if (ext !== '.zip') continue
+    total++
+    const name = entry.name.replace(/\.[^.]+$/, '').toLowerCase()
+    if (ownedNames.has(name)) {
+      kept++
+    } else {
+      removed++
+      removedNames.push(entry.name)
+      if (!dryRun) {
+        try { fs.unlinkSync(path.join(mameArtworkPath, entry.name)) } catch (e) {}
+      }
+    }
+  }
+
+  return { total: total, kept: kept, removed: removed, removedNames: removedNames.slice(0, 30), dryRun: !!dryRun }
+}
+
+module.exports = { ...module.exports, pruneMameArtwork }
