@@ -114,6 +114,8 @@ const [restoring, setRestoring] = useState(false)
   const [artPref, setArtPref] = useState(() => localStorage.getItem('nuarcade_art_pref') || 'sgdb')
   const updateArtPref = (val) => { setArtPref(val); localStorage.setItem('nuarcade_art_pref', val) }
 const [rescanResult, setRescanResult] = useState(null)
+const [bezelFetching, setBezelFetching] = useState(false)
+const [bezelResult, setBezelResult] = useState(null)
 const [tpConfiguring, setTpConfiguring] = useState(false)
 const [tpResult, setTpResult] = useState(null)
 const [showArtworkMgr, setShowArtworkMgr] = useState(false)
@@ -228,6 +230,19 @@ const handleRescan = async () => {
       setRescanResult({ total, results })
   } catch (e) { setRescanResult({ total: 0, results: [], error: e.message }) }
   setRescanning(false)
+}
+
+const handleFetchBezels = async (system) => {
+  if (!window.nuarcade) return
+  setBezelFetching(true)
+  setBezelResult(null)
+  try {
+    const r = await window.nuarcade.fetchBezelsForSystem(system)
+    setBezelResult(r)
+  } catch (e) {
+    setBezelResult({ success: false, error: e.message })
+  }
+  setBezelFetching(false)
 }
 
 const handleFindOrphans = async () => {
@@ -1049,6 +1064,36 @@ const handleSave = async () => {
                 </button>
               </div>
             </div>
+
+            <div className={styles.inputRow}>
+              <label className={styles.inputLabel}>RetroArch bezels</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button className={styles.exportBtn} onClick={() => handleFetchBezels('psx')} disabled={bezelFetching}>
+                  {bezelFetching ? "Fetching..." : "Fetch PSX bezels"}
+                </button>
+              </div>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>
+                Matches your PSX library against Bezel Project's index and installs real per-game bezels for whichever RetroArch core is actually installed.
+              </div>
+            </div>
+            {bezelResult && (
+              <div style={{ fontSize: 12, marginBottom: 10 }}>
+                {bezelResult.error ? (
+                  <div style={{ color: "#ef4444" }}>{bezelResult.error}</div>
+                ) : (
+                  <>
+                    <div style={{ color: '#00ff88' }}>
+                      {bezelResult.installed} of {bezelResult.total} games got bezels ({bezelResult.exact} exact, {bezelResult.fuzzy} fuzzy match) via {bezelResult.coreFolder}
+                    </div>
+                    {bezelResult.missed > 0 && (
+                      <div style={{ color: 'rgba(255,255,255,0.5)', marginTop: 4 }}>
+                        {bezelResult.missed} not found -- e.g. {bezelResult.missedTitles?.slice(0, 5).join(', ')}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
 
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>Orphaned media</label>
