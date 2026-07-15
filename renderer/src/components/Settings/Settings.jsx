@@ -1092,6 +1092,23 @@ const handleSave = async () => {
                   { key: 'genesis', label: 'Genesis' },
                   { key: 'n64', label: 'N64' },
                   { key: 'saturn', label: 'Saturn' },
+                  { key: 'gba', label: 'GBA' },
+                  { key: 'gbc', label: 'GBC' },
+                  { key: 'gb', label: 'GB' },
+                  { key: 'atomiswave', label: 'Atomiswave' },
+                  { key: '3do', label: '3DO' },
+                  { key: 'pce', label: 'PCEngine' },
+                  { key: 'mastersystem', label: 'MasterSystem' },
+                  { key: 'gamegear', label: 'GameGear' },
+                  { key: 'segacd', label: 'SegaCD' },
+                  { key: 'sega32x', label: 'Sega32X' },
+                  { key: 'atari2600', label: 'Atari2600' },
+                  { key: 'atari7800', label: 'Atari7800' },
+                  { key: 'atarilynx', label: 'AtariLynx' },
+                  { key: 'atarijaguar', label: 'AtariJaguar' },
+                  { key: 'neogeopocket', label: 'NeoGeoPocket' },
+                  { key: 'wonderswan', label: 'WonderSwan' },
+                  { key: 'vectrex', label: 'Vectrex' },
                 ].map(function(s) {
                   return (
                     <button key={s.key} className={styles.exportBtn} onClick={() => handleFetchBezels(s.key, s.label)} disabled={bezelFetching}>
