@@ -2283,7 +2283,7 @@ function normalizeBezelTitle(name) {
 }
 
 function extractBezelRegion(name) {
-  const m = String(name || '').match(/\(USA|Europe|Japan|World|Australia)\)/i)
+  const m = String(name || '').match(/\((USA|Europe|Japan|World|Australia)\)/i)
   return m ? m[1] : null
 }
 
