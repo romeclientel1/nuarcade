@@ -117,6 +117,8 @@ const [rescanResult, setRescanResult] = useState(null)
 const [bezelFetching, setBezelFetching] = useState(false)
 const [bezelResult, setBezelResult] = useState(null)
 const [bezelSystemLabel, setBezelSystemLabel] = useState('')
+const [pruneFetching, setPruneFetching] = useState(false)
+const [pruneResult, setPruneResult] = useState(null)
 const [tpConfiguring, setTpConfiguring] = useState(false)
 const [tpResult, setTpResult] = useState(null)
 const [showArtworkMgr, setShowArtworkMgr] = useState(false)
@@ -245,6 +247,19 @@ const handleFetchBezels = async (system, label) => {
     setBezelResult({ success: false, error: e.message })
   }
   setBezelFetching(false)
+}
+
+const handlePruneMameArtwork = async (dryRun) => {
+  if (!window.nuarcade) return
+  setPruneFetching(true)
+  if (dryRun) setPruneResult(null)
+  try {
+    const r = await window.nuarcade.pruneMameArtwork(dryRun)
+    setPruneResult(r)
+  } catch (e) {
+    setPruneResult({ success: false, error: e.message })
+  }
+  setPruneFetching(false)
 }
 
 const handleFindOrphans = async () => {
@@ -1104,6 +1119,38 @@ const handleSave = async () => {
                       </div>
                     )}
                   </>
+                )}
+              </div>
+            )}
+
+            <div className={styles.inputRow}>
+              <label className={styles.inputLabel}>MAME artwork cleanup</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button className={styles.exportBtn} onClick={() => handlePruneMameArtwork(true)} disabled={pruneFetching}>
+                  {pruneFetching ? '...' : 'Preview MAME bezel cleanup'}
+                </button>
+                {pruneResult && !pruneResult.error && pruneResult.dryRun && pruneResult.removed > 0 && (
+                  <button className={styles.exportBtn} style={{ borderColor: 'rgba(239,68,68,0.5)', color: '#ef4444' }} onClick={() => handlePruneMameArtwork(false)} disabled={pruneFetching}>
+                    Confirm delete {pruneResult.removed} unused bezels
+                  </button>
+                )}
+              </div>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>
+                Compares installed MAME artwork against your actual owned ROM library and removes zips that don't match anything you own. Preview first -- nothing is deleted until you confirm.
+              </div>
+            </div>
+            {pruneResult && (
+              <div style={{ fontSize: 12, marginBottom: 10 }}>
+                {pruneResult.error ? (
+                  <div style={{ color: '#ef4444' }}>{pruneResult.error}</div>
+                ) : pruneResult.dryRun ? (
+                  <div style={{ color: '#00ff88' }}>
+                    {pruneResult.total} artwork zips found -- {pruneResult.kept} match your library, {pruneResult.removed} would be removed
+                  </div>
+                ) : (
+                  <div style={{ color: '#00ff88' }}>
+                    Done -- removed {pruneResult.removed} unused artwork zips, kept {pruneResult.kept}
+                  </div>
                 )}
               </div>
             )}
