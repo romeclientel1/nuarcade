@@ -15,7 +15,7 @@ const SAMPLE_GAMES = [
   { id: "BlazBlueCrossTagBattle", title: "BlazBlue Cross Tag Battle",  genre: "Fighting", system: "NESiCAxLive", hasVideo: false },
 ]
 
-const TABS = ['library', 'artwork', 'emumovies', 'about']
+const TABS = ['library', 'artwork', 'bezels', 'emumovies', 'about']
 
 export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdated }) {
   const scrollRef = useRef(null)
@@ -31,6 +31,9 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
   const [showRestartConfirm, setShowRestartConfirm] = useState(false)
   const [importingAll, setImportingAll] = useState(false)
   const [importProgress, setImportProgress] = useState({ current: 0, total: 0 })
+  const [bezelFetching, setBezelFetching] = useState(false)
+  const [bezelResult, setBezelResult] = useState(null)
+  const [bezelSystemLabel, setBezelSystemLabel] = useState('')
 
   // Reset focus whenever the tab changes via any path (mouse click, gamepad, etc.)
   useEffect(() => {
@@ -340,6 +343,20 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
   const log = (msg, type = 'info') => {
     const ts = new Date().toLocaleTimeString()
     setDiagLog(prev => [...prev.slice(-999), { ts, msg, type }])
+  }
+
+  const handleFetchBezels = async (system, label) => {
+    if (!window.nuarcade) return
+    setBezelFetching(true)
+    setBezelResult(null)
+    setBezelSystemLabel(label)
+    try {
+      const r = await window.nuarcade.fetchBezelsForSystem(system)
+      setBezelResult(r)
+    } catch (e) {
+      setBezelResult({ success: false, error: e.message })
+    }
+    setBezelFetching(false)
   }
 
   // Must be defined before handleBulkYouTube and handleYtSearch which both call it
@@ -691,6 +708,7 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
         <div className={styles.tabs}>
           <button className={styles.tab + (tab === "library" ? " " + styles.tabActive : "")} onClick={() => setTab("library")}>Library</button>
           <button className={styles.tab + (tab === "artwork" ? " " + styles.tabActive : "")} onClick={() => setTab("artwork")}>Artwork</button>
+          <button className={styles.tab + (tab === "bezels" ? " " + styles.tabActive : "")} onClick={() => setTab("bezels")}>Bezels</button>
           <button className={styles.tab + (tab === "emumovies" ? " " + styles.tabActive : "")} onClick={() => setTab("emumovies")}>EmuMovies</button>
           <button className={styles.tab + (tab === "about" ? " " + styles.tabActive : "")} onClick={() => setTab("about")}>About</button>
         </div>
@@ -723,6 +741,68 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
               onClose={() => setTab("library")}
               onArtworkUpdate={() => onArtworkUpdated?.()}
             />
+          </div>
+        )}
+
+        {tab === "bezels" && (
+          <div className={styles.body}>
+            <div className={styles.settingsSection}>
+              <div className={styles.sectionTitle}>RetroArch Bezels</div>
+              <div className={styles.sectionSub}>
+                Matches your library for the selected system against Bezel Project's index and installs real per-game bezels for whichever RetroArch core is actually installed. More systems added as they're verified.
+              </div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+                {[
+                  { key: 'psx', label: 'PSX' },
+                  { key: 'nes', label: 'NES' },
+                  { key: 'snes', label: 'SNES' },
+                  { key: 'genesis', label: 'Genesis' },
+                  { key: 'n64', label: 'N64' },
+                  { key: 'saturn', label: 'Saturn' },
+                  { key: 'gba', label: 'GBA' },
+                  { key: 'gbc', label: 'GBC' },
+                  { key: 'gb', label: 'GB' },
+                  { key: 'atomiswave', label: 'Atomiswave' },
+                  { key: '3do', label: '3DO' },
+                  { key: 'pce', label: 'PCEngine' },
+                  { key: 'mastersystem', label: 'MasterSystem' },
+                  { key: 'gamegear', label: 'GameGear' },
+                  { key: 'segacd', label: 'SegaCD' },
+                  { key: 'sega32x', label: 'Sega32X' },
+                  { key: 'atari2600', label: 'Atari2600' },
+                  { key: 'atari7800', label: 'Atari7800' },
+                  { key: 'atarilynx', label: 'AtariLynx' },
+                  { key: 'atarijaguar', label: 'AtariJaguar' },
+                  { key: 'neogeopocket', label: 'NeoGeoPocket' },
+                  { key: 'wonderswan', label: 'WonderSwan' },
+                  { key: 'vectrex', label: 'Vectrex' },
+                ].map(function(s) {
+                  return (
+                    <button key={s.key} className={styles.dlBtn} onClick={() => handleFetchBezels(s.key, s.label)} disabled={bezelFetching}>
+                      {bezelFetching ? '...' : s.label}
+                    </button>
+                  )
+                })}
+              </div>
+              {bezelResult && (
+                <div style={{ fontSize: 12 }}>
+                  {bezelResult.error ? (
+                    <div style={{ color: "#ef4444" }}>{bezelSystemLabel}: {bezelResult.error}</div>
+                  ) : (
+                    <>
+                      <div style={{ color: '#00ff88' }}>
+                        {bezelSystemLabel}: {bezelResult.installed} of {bezelResult.total} games got bezels ({bezelResult.exact} exact, {bezelResult.fuzzy} fuzzy match) via {bezelResult.coreFolder}
+                      </div>
+                      {bezelResult.missed > 0 && (
+                        <div style={{ color: 'rgba(255,255,255,0.5)', marginTop: 4 }}>
+                          {bezelResult.missed} not found -- e.g. {bezelResult.missedTitles?.slice(0, 5).join(', ')}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
