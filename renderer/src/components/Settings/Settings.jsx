@@ -114,9 +114,6 @@ const [restoring, setRestoring] = useState(false)
   const [artPref, setArtPref] = useState(() => localStorage.getItem('nuarcade_art_pref') || 'sgdb')
   const updateArtPref = (val) => { setArtPref(val); localStorage.setItem('nuarcade_art_pref', val) }
 const [rescanResult, setRescanResult] = useState(null)
-const [bezelFetching, setBezelFetching] = useState(false)
-const [bezelResult, setBezelResult] = useState(null)
-const [bezelSystemLabel, setBezelSystemLabel] = useState('')
 const [pruneFetching, setPruneFetching] = useState(false)
 const [pruneResult, setPruneResult] = useState(null)
 const [tpConfiguring, setTpConfiguring] = useState(false)
@@ -233,20 +230,6 @@ const handleRescan = async () => {
       setRescanResult({ total, results })
   } catch (e) { setRescanResult({ total: 0, results: [], error: e.message }) }
   setRescanning(false)
-}
-
-const handleFetchBezels = async (system, label) => {
-  if (!window.nuarcade) return
-  setBezelFetching(true)
-  setBezelResult(null)
-  setBezelSystemLabel(label)
-  try {
-    const r = await window.nuarcade.fetchBezelsForSystem(system)
-    setBezelResult(r)
-  } catch (e) {
-    setBezelResult({ success: false, error: e.message })
-  }
-  setBezelFetching(false)
 }
 
 const handlePruneMameArtwork = async (dryRun) => {
@@ -1081,64 +1064,6 @@ const handleSave = async () => {
                 </button>
               </div>
             </div>
-
-            <div className={styles.inputRow}>
-              <label className={styles.inputLabel}>RetroArch bezels</label>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {[
-                  { key: 'psx', label: 'PSX' },
-                  { key: 'nes', label: 'NES' },
-                  { key: 'snes', label: 'SNES' },
-                  { key: 'genesis', label: 'Genesis' },
-                  { key: 'n64', label: 'N64' },
-                  { key: 'saturn', label: 'Saturn' },
-                  { key: 'gba', label: 'GBA' },
-                  { key: 'gbc', label: 'GBC' },
-                  { key: 'gb', label: 'GB' },
-                  { key: 'atomiswave', label: 'Atomiswave' },
-                  { key: '3do', label: '3DO' },
-                  { key: 'pce', label: 'PCEngine' },
-                  { key: 'mastersystem', label: 'MasterSystem' },
-                  { key: 'gamegear', label: 'GameGear' },
-                  { key: 'segacd', label: 'SegaCD' },
-                  { key: 'sega32x', label: 'Sega32X' },
-                  { key: 'atari2600', label: 'Atari2600' },
-                  { key: 'atari7800', label: 'Atari7800' },
-                  { key: 'atarilynx', label: 'AtariLynx' },
-                  { key: 'atarijaguar', label: 'AtariJaguar' },
-                  { key: 'neogeopocket', label: 'NeoGeoPocket' },
-                  { key: 'wonderswan', label: 'WonderSwan' },
-                  { key: 'vectrex', label: 'Vectrex' },
-                ].map(function(s) {
-                  return (
-                    <button key={s.key} className={styles.exportBtn} onClick={() => handleFetchBezels(s.key, s.label)} disabled={bezelFetching}>
-                      {bezelFetching ? '...' : s.label}
-                    </button>
-                  )
-                })}
-              </div>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>
-                Matches your library for the selected system against Bezel Project's index and installs real per-game bezels for whichever RetroArch core is actually installed. More systems added as they're verified.
-              </div>
-            </div>
-            {bezelResult && (
-              <div style={{ fontSize: 12, marginBottom: 10 }}>
-                {bezelResult.error ? (
-                  <div style={{ color: "#ef4444" }}>{bezelSystemLabel}: {bezelResult.error}</div>
-                ) : (
-                  <>
-                    <div style={{ color: '#00ff88' }}>
-                      {bezelSystemLabel}: {bezelResult.installed} of {bezelResult.total} games got bezels ({bezelResult.exact} exact, {bezelResult.fuzzy} fuzzy match) via {bezelResult.coreFolder}
-                    </div>
-                    {bezelResult.missed > 0 && (
-                      <div style={{ color: 'rgba(255,255,255,0.5)', marginTop: 4 }}>
-                        {bezelResult.missed} not found -- e.g. {bezelResult.missedTitles?.slice(0, 5).join(', ')}
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            )}
 
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>MAME artwork cleanup</label>
