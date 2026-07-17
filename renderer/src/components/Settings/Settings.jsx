@@ -1116,7 +1116,7 @@ const handleSave = async () => {
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>Local bezel folder</label>
               <div style={{ display: 'flex', gap: 8 }}>
-                <button className={styles.exportBtn} onClick={() => handleInstallLocalBezels(true)} disabled={localBezelFetching || !config.bezelSourcePath}>
+                <button className={styles.exportBtn} onClick={() => handleInstallLocalBezels(true)} disabled={localBezelFetching}>
                   {localBezelFetching ? '...' : 'Preview local bezel install'}
                 </button>
                 {localBezelResult && !localBezelResult.error && localBezelResult.dryRun && localBezelResult.installed > 0 && (
@@ -1126,7 +1126,7 @@ const handleSave = async () => {
                 )}
               </div>
               <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>
-                Scans your Bezel Source Folder (set above in Paths) for artwork matching your owned MAME ROMs -- from your own EmuMovies Sync or Hyperspin downloads, never fetched or redistributed by NuArcade. Never overwrites existing artwork. Preview first -- nothing installs until you confirm.
+                Fills bezel gaps in three passes: native MAME artwork from your Bezel Source Folder (set above in Paths -- from your own EmuMovies Sync or Hyperspin downloads, never fetched or redistributed by NuArcade), RetroArch-style overlays in that same folder converted automatically, then NuArcade's own bundled placeholder art as a last resort. Never overwrites existing artwork. Preview first -- nothing installs until you confirm.
               </div>
             </div>
             {localBezelResult && (
@@ -1135,11 +1135,12 @@ const handleSave = async () => {
                   <div style={{ color: '#ef4444' }}>{localBezelResult.error}</div>
                 ) : localBezelResult.dryRun ? (
                   <div style={{ color: '#00ff88' }}>
-                    {localBezelResult.totalOwned} ROMs owned -- {localBezelResult.skippedHasArt} already have artwork, {localBezelResult.installed} would be installed from your local folder, {localBezelResult.notInSource} not found in that folder
+                    {localBezelResult.totalOwned} ROMs owned -- {localBezelResult.skippedHasArt} already have artwork, {localBezelResult.installed} would be installed ({localBezelResult.installedNative} native, {localBezelResult.installedConverted} converted, {localBezelResult.installedFallback} placeholder art), {localBezelResult.notFound} with no bezel available
+                    {localBezelResult.conversionFailed > 0 ? ` (${localBezelResult.conversionFailed} overlay${localBezelResult.conversionFailed === 1 ? '' : 's'} found but not auto-convertible, fell back to placeholder art)` : ''}
                   </div>
                 ) : (
                   <div style={{ color: '#00ff88' }}>
-                    Done -- installed {localBezelResult.installed} bezels from your local folder
+                    Done -- installed {localBezelResult.installed} bezels ({localBezelResult.installedNative} native, {localBezelResult.installedConverted} converted, {localBezelResult.installedFallback} placeholder art)
                   </div>
                 )}
               </div>
