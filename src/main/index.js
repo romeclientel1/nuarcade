@@ -869,8 +869,20 @@ ipcMain.handle('install-local-bezels', async (event, dryRun) => {
   const { installLocalBezels } = require('./scanner')
   const artworkPath = path.join(cfg.mamePath || 'F:\\MAME\\', 'artwork')
   try {
-    const result = await installLocalBezels(cfg.mameGamesPath, artworkPath, cfg.bezelSourcePath, dryRun)
-    return { success: true, totalOwned: result.totalOwned, installed: result.installed, skippedHasArt: result.skippedHasArt, notInSource: result.notInSource, installedNames: result.installedNames, dryRun: result.dryRun }
+    const result = await installLocalBezels(cfg.mameGamesPath, artworkPath, cfg.bezelSourcePath, cfg.mamePath, dryRun)
+    return {
+      success: true,
+      totalOwned: result.totalOwned,
+      installed: result.installed,
+      installedNative: result.installedNative,
+      installedConverted: result.installedConverted,
+      installedFallback: result.installedFallback,
+      skippedHasArt: result.skippedHasArt,
+      conversionFailed: result.conversionFailed,
+      notFound: result.notFound,
+      installedNames: result.installedNames,
+      dryRun: result.dryRun,
+    }
   } catch (e) {
     return { success: false, error: e.message }
   }
