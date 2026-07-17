@@ -1325,9 +1325,16 @@ async function scanRetroArchGames(retroarchGamesPath) {
       if (!rom.isFile()) continue
       const ext = path.extname(rom.name).toLowerCase()
       if (!validExts.has(ext) && !RA_ROM_EXTS.has(ext)) continue
-      const title = rom.name.replace(/\.[^.]+$/, '')
+      const romName = rom.name.replace(/\.[^.]+$/, '')
+      // MAME games routed through the RetroArch folder structure get the
+      // same dictionary/fallback title resolution as the dedicated MAME
+      // scanner, instead of showing raw shortnames like "whp". id stays
+      // keyed off romName regardless -- never off the resolved title --
+      // so existing collections/favorites/controller overrides for these
+      // games don't silently break when the display title changes.
+      const title = canonicalKey === 'mame' ? mameTitle(romName) : romName
       games.push({
-        id: 'ra_' + folderKey + '_' + title.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase(),
+        id: 'ra_' + folderKey + '_' + romName.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase(),
         title,
         genre,
         system: systemLabel,
