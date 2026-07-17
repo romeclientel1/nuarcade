@@ -37,6 +37,7 @@ function launchWithReturn(exe, args, options) {
     }
     setTimeout(nudgeFocus, 1500)
     setTimeout(nudgeFocus, 4000)
+    setTimeout(nudgeFocus, 8000)
     try {
       globalShortcut.register('Escape', function() {
         try { exec('taskkill /PID ' + child.pid + ' /T /F', function() {}) } catch (e) {}
@@ -631,7 +632,7 @@ ipcMain.handle('launch-mame-game', async (event, gamePath) => {
   const romFile = path.basename(gamePath, path.extname(gamePath))
   const romsDir = path.dirname(gamePath)
   try {
-    await launchWithReturn(mameExe, [romFile, '-rompath', romsDir], { cwd: mameDir })
+    await launchWithReturn(mameExe, [romFile, '-rompath', romsDir, '-nowindow'], { cwd: mameDir })
     return { success: true }
   } catch (e) {
     return { success: false, error: e.message }
