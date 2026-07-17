@@ -2398,6 +2398,120 @@ async function installBezelForGame(opts) {
 
 module.exports = { ...module.exports, normalizeBezelTitle, matchBezelTitle, buildBezelIndexMaps, fetchBezelProjectIndex, installBezelForGame }
 
+// -- Bezel fallback chain: Tier 2 (converted) + Tier 3 (generic template) ---
+// Tier 2 -- a RetroArch-style overlay bezel (title.cfg + title.png) can sit in
+// the SAME user-owned local folder as Tier 1's native MAME zips. RetroArch
+// overlay bezels hide the real screen geometry in the PNG's alpha channel
+// rather than the .cfg (confirmed overlay0_descs = 0 on every real bezel .cfg
+// inspected this session) -- so converting one to native MAME format means
+// finding that transparent rectangle and writing a .lay pointing at it. Still
+// just reading a folder the user already owns; no new source, no new rights
+// question.
+function detectAlphaScreenRect(pngBuffer) {
+  const { PNG } = require('pngjs')
+  const png = PNG.sync.read(pngBuffer)
+  const width = png.width, height = png.height, data = png.data
+  let minX = width, minY = height, maxX = -1, maxY = -1, transparentCount = 0
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const alpha = data[((width * y + x) << 2) + 3]
+      if (alpha === 0) {
+        transparentCount++
+        if (x < minX) minX = x
+        if (x > maxX) maxX = x
+        if (y < minY) minY = y
+        if (y > maxY) maxY = y
+      }
+    }
+  }
+  if (maxX < 0) return null
+  const boxW = maxX - minX + 1, boxH = maxY - minY + 1
+  const boxArea = boxW * boxH
+  // Real bezel cutouts are solid rectangles -- require the transparent
+  // region to actually fill the vast majority of its own bounding box (not
+  // scattered noise pixels), and to be a meaningful fraction of the image
+  // (not a few stray transparent pixels). Fail closed: a bad detection here
+  // means "treat as not found", never "install something with wrong bounds".
+  if ((transparentCount / boxArea) < 0.85) return null
+  if (boxArea < width * height * 0.02) return null
+  return { left: minX, top: minY, right: maxX + 1, bottom: maxY + 1, width: width, height: height }
+}
+
+function generateMameLayXml(imageFileName, rect, imgWidth, imgHeight) {
+  return '<?xml version="1.0"?>\n' +
+    '<mamelayout version="2">\n' +
+    '  <element name="bezel_image">\n' +
+    '    <image file="' + imageFileName + '"/>\n' +
+    '  </element>\n' +
+    '  <view name="Bezel">\n' +
+    '    <screen index="0">\n' +
+    '      <bounds left="' + rect.left + '" top="' + rect.top + '" right="' + rect.right + '" bottom="' + rect.bottom + '"/>\n' +
+    '    </screen>\n' +
+    '    <element ref="bezel_image">\n' +
+    '      <bounds left="0" top="0" right="' + imgWidth + '" bottom="' + imgHeight + '"/>\n' +
+    '    </element>\n' +
+    '  </view>\n' +
+    '</mamelayout>\n'
+}
+
+async function convertOverlayToMameZip(pngPath) {
+  const AdmZip = require('adm-zip')
+  const pngBuffer = fs.readFileSync(pngPath)
+  const rect = detectAlphaScreenRect(pngBuffer)
+  if (!rect) return null
+  const layXml = generateMameLayXml('bezel.png', rect, rect.width, rect.height)
+  const zip = new AdmZip()
+  zip.addFile('bezel.png', pngBuffer)
+  zip.addFile('default.lay', Buffer.from(layXml, 'utf8'))
+  return zip.toBuffer()
+}
+
+// Tier 3 -- two original, hand-generated, unbranded orientation templates
+// bundled with NuArcade itself (assets/bezels/). Zero rights exposure --
+// it's our own art, shipped in the installer, not fetched from anywhere.
+// Orientation comes straight from MAME's own driver database via -listxml,
+// so no separate orientation source needs to be maintained.
+function findMameExe(mameDir) {
+  let mameExe = path.join(mameDir, 'mame.exe')
+  if (fs.existsSync(mameExe)) return mameExe
+  try {
+    const entries = fs.readdirSync(mameDir)
+    const mameFile = entries.find(function(f) {
+      return f.toLowerCase().startsWith('mame') && f.toLowerCase().endsWith('.exe')
+    })
+    if (mameFile) return path.join(mameDir, mameFile)
+  } catch (e) {}
+  return null
+}
+
+const orientationCache = new Map()
+
+function getRomOrientation(mameDir, romName) {
+  if (orientationCache.has(romName)) return orientationCache.get(romName)
+  const mameExe = mameDir ? findMameExe(mameDir) : null
+  if (!mameExe) return null
+  try {
+    const { execFileSync } = require('child_process')
+    const output = execFileSync(mameExe, [romName, '-listxml'], {
+      encoding: 'utf8', timeout: 15000, maxBuffer: 20 * 1024 * 1024, cwd: mameDir,
+    })
+    const m = output.match(/<display[^>]*\brotate="(\d+)"/)
+    if (!m) { orientationCache.set(romName, null); return null }
+    const rotate = parseInt(m[1], 10)
+    const orientation = (rotate === 90 || rotate === 270) ? 'vertical' : 'horizontal'
+    orientationCache.set(romName, orientation)
+    return orientation
+  } catch (e) {
+    orientationCache.set(romName, null)
+    return null
+  }
+}
+
+function getFallbackTemplatePath(orientation) {
+  const fileName = orientation === 'vertical' ? 'fallback_vertical.zip' : 'fallback_horizontal.zip'
+  return path.join(__dirname, '..', '..', 'assets', 'bezels', fileName)
+}
+
 // -- MAME artwork pruning -----------------------------------------------------
 // Third-party bezel packs (EmuMovies, etc.) cover the entire MAME driver list
 // (11,000+ zips) regardless of what you actually own. This compares what's
@@ -2451,7 +2565,7 @@ module.exports = { ...module.exports, pruneMameArtwork }
 // NuArcade -- for MAME bezel zips matching owned ROMs. Only ever fills a
 // genuine gap: never overwrites artwork that's already installed. Dry-run
 // first, same pattern as pruneMameArtwork.
-async function installLocalBezels(mameGamesPath, mameArtworkPath, bezelSourcePath, dryRun) {
+async function installLocalBezels(mameGamesPath, mameArtworkPath, bezelSourcePath, mameDir, dryRun) {
   const ownedNames = new Set()
   let romEntries = []
   try { romEntries = fs.readdirSync(mameGamesPath, { withFileTypes: true }) } catch (e) {
@@ -2476,48 +2590,97 @@ async function installLocalBezels(mameGamesPath, mameArtworkPath, bezelSourcePat
     // No artwork folder yet -- fine, everything owned counts as a gap
   }
 
-  if (!bezelSourcePath) {
-    throw new Error('No bezel source folder set -- point Settings at your EmuMovies Sync or Hyperspin bezel folder first.')
-  }
-  let sourceEntries = []
-  try { sourceEntries = fs.readdirSync(bezelSourcePath, { withFileTypes: true }) } catch (e) {
-    throw new Error('Bezel source folder not found: ' + bezelSourcePath)
-  }
-  const sourceMap = new Map()
-  for (const entry of sourceEntries) {
-    if (!entry.isFile()) continue
-    if (path.extname(entry.name).toLowerCase() !== '.zip') continue
-    sourceMap.set(entry.name.replace(/\.[^.]+$/, '').toLowerCase(), entry.name)
+  // Tier 1 (native) + Tier 2 (converted) both read the SAME user-owned local
+  // folder. No bezelSourcePath just means those two tiers contribute
+  // nothing -- Tier 3 (bundled templates) still runs regardless, since it
+  // needs no user folder at all.
+  const nativeMap = new Map()
+  const overlayMap = new Map()
+  if (bezelSourcePath) {
+    let sourceEntries = []
+    try { sourceEntries = fs.readdirSync(bezelSourcePath, { withFileTypes: true }) } catch (e) {
+      throw new Error('Bezel source folder not found: ' + bezelSourcePath)
+    }
+    const cfgNames = new Set()
+    for (const entry of sourceEntries) {
+      if (!entry.isFile()) continue
+      const ext = path.extname(entry.name).toLowerCase()
+      const base = entry.name.replace(/\.[^.]+$/, '').toLowerCase()
+      if (ext === '.zip') nativeMap.set(base, entry.name)
+      else if (ext === '.cfg') cfgNames.add(base)
+    }
+    for (const entry of sourceEntries) {
+      if (!entry.isFile()) continue
+      const ext = path.extname(entry.name).toLowerCase()
+      const base = entry.name.replace(/\.[^.]+$/, '').toLowerCase()
+      if (ext === '.png' && cfgNames.has(base)) overlayMap.set(base, entry.name)
+    }
   }
 
-  let installed = 0, skippedHasArt = 0, notInSource = 0
+  let installedNative = 0, installedConverted = 0, installedFallback = 0
+  let skippedHasArt = 0, conversionFailed = 0, notFound = 0
   const installedNamesList = []
+
   for (const romName of ownedNames) {
-    if (installedNames.has(romName)) {
-      skippedHasArt++
+    if (installedNames.has(romName)) { skippedHasArt++; continue }
+
+    if (nativeMap.has(romName)) {
+      installedNative++
+      installedNamesList.push(romName)
+      if (!dryRun) {
+        if (!fs.existsSync(mameArtworkPath)) fs.mkdirSync(mameArtworkPath, { recursive: true })
+        const destPath = path.join(mameArtworkPath, romName + '.zip')
+        if (fs.existsSync(destPath)) { installedNative--; installedNamesList.pop(); skippedHasArt++; continue }
+        fs.copyFileSync(path.join(bezelSourcePath, nativeMap.get(romName)), destPath)
+      }
       continue
     }
-    if (!sourceMap.has(romName)) {
-      notInSource++
+
+    if (overlayMap.has(romName)) {
+      let zipBuffer = null
+      try { zipBuffer = await convertOverlayToMameZip(path.join(bezelSourcePath, overlayMap.get(romName))) } catch (e) { zipBuffer = null }
+      if (zipBuffer) {
+        installedConverted++
+        installedNamesList.push(romName)
+        if (!dryRun) {
+          if (!fs.existsSync(mameArtworkPath)) fs.mkdirSync(mameArtworkPath, { recursive: true })
+          const destPath = path.join(mameArtworkPath, romName + '.zip')
+          if (fs.existsSync(destPath)) { installedConverted--; installedNamesList.pop(); skippedHasArt++; continue }
+          fs.writeFileSync(destPath, zipBuffer)
+        }
+        continue
+      }
+      conversionFailed++
+      // Falls through to Tier 3 -- a bad conversion is treated the same as
+      // nothing usable having been found.
+    }
+
+    const orientation = getRomOrientation(mameDir, romName)
+    const templatePath = orientation ? getFallbackTemplatePath(orientation) : null
+    if (templatePath && fs.existsSync(templatePath)) {
+      installedFallback++
+      installedNamesList.push(romName)
+      if (!dryRun) {
+        if (!fs.existsSync(mameArtworkPath)) fs.mkdirSync(mameArtworkPath, { recursive: true })
+        const destPath = path.join(mameArtworkPath, romName + '.zip')
+        if (fs.existsSync(destPath)) { installedFallback--; installedNamesList.pop(); skippedHasArt++; continue }
+        fs.writeFileSync(destPath, fs.readFileSync(templatePath))
+      }
       continue
     }
-    installed++
-    installedNamesList.push(romName)
-    if (!dryRun) {
-      if (!fs.existsSync(mameArtworkPath)) fs.mkdirSync(mameArtworkPath, { recursive: true })
-      const destPath = path.join(mameArtworkPath, romName + '.zip')
-      // Belt-and-suspenders: re-check right before writing, in case anything
-      // landed here since the scan started. Never overwrite, ever.
-      if (fs.existsSync(destPath)) { installed--; installedNamesList.pop(); skippedHasArt++; continue }
-      fs.copyFileSync(path.join(bezelSourcePath, sourceMap.get(romName)), destPath)
-    }
+
+    notFound++
   }
 
   return {
     totalOwned: ownedNames.size,
-    installed: installed,
+    installed: installedNative + installedConverted + installedFallback,
+    installedNative: installedNative,
+    installedConverted: installedConverted,
+    installedFallback: installedFallback,
     skippedHasArt: skippedHasArt,
-    notInSource: notInSource,
+    conversionFailed: conversionFailed,
+    notFound: notFound,
     installedNames: installedNamesList.slice(0, 30),
     dryRun: !!dryRun,
   }
