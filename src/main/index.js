@@ -863,6 +863,18 @@ ipcMain.handle('prune-mame-artwork', async (event, dryRun) => {
   }
 })
 
+ipcMain.handle('install-local-bezels', async (event, dryRun) => {
+  const cfg = config.load()
+  const { installLocalBezels } = require('./scanner')
+  const artworkPath = path.join(cfg.mamePath || 'F:\\MAME\\', 'artwork')
+  try {
+    const result = await installLocalBezels(cfg.mameGamesPath, artworkPath, cfg.bezelSourcePath, dryRun)
+    return { success: true, totalOwned: result.totalOwned, installed: result.installed, skippedHasArt: result.skippedHasArt, notInSource: result.notInSource, installedNames: result.installedNames, dryRun: result.dryRun }
+  } catch (e) {
+    return { success: false, error: e.message }
+  }
+})
+
 ipcMain.handle('fetch-bezels-for-system', async (event, system) => {
   const cfg = config.load()
   const fs = require('fs')
