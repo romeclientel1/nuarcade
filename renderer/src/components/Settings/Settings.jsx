@@ -116,6 +116,8 @@ const [restoring, setRestoring] = useState(false)
 const [rescanResult, setRescanResult] = useState(null)
 const [pruneFetching, setPruneFetching] = useState(false)
 const [pruneResult, setPruneResult] = useState(null)
+const [localBezelFetching, setLocalBezelFetching] = useState(false)
+const [localBezelResult, setLocalBezelResult] = useState(null)
 const [tpConfiguring, setTpConfiguring] = useState(false)
 const [tpResult, setTpResult] = useState(null)
 const [showArtworkMgr, setShowArtworkMgr] = useState(false)
@@ -243,6 +245,19 @@ const handlePruneMameArtwork = async (dryRun) => {
     setPruneResult({ success: false, error: e.message })
   }
   setPruneFetching(false)
+}
+
+const handleInstallLocalBezels = async (dryRun) => {
+  if (!window.nuarcade) return
+  setLocalBezelFetching(true)
+  if (dryRun) setLocalBezelResult(null)
+  try {
+    const r = await window.nuarcade.installLocalBezels(dryRun)
+    setLocalBezelResult(r)
+  } catch (e) {
+    setLocalBezelResult({ success: false, error: e.message })
+  }
+  setLocalBezelFetching(false)
 }
 
 const handleFindOrphans = async () => {
@@ -517,6 +532,7 @@ const handleSave = async () => {
               { key: "gamesFolderPath",    label: "Arcade Games",         sub: "Folder containing your TP game subfolders" },
               { key: "mamePath",           label: "MAME",                 sub: "Folder containing mame.exe" },
               { key: "mameGamesPath",      label: "MAME ROMs",            sub: "Folder containing .zip ROM files" },
+              { key: "bezelSourcePath",     label: "Bezel Source Folder",  sub: "Your own EmuMovies Sync / Hyperspin bezel downloads (optional)" },
               { key: "model2Path",         label: "Model 2",              sub: "Folder containing Model2Emulator.exe" },
               { key: "model2GamesPath",    label: "Model 2 Games",        sub: "Folder containing Model 2 game folders" },
               { key: "model3Path",         label: "Supermodel (M3)",      sub: "Folder containing Supermodel.exe" },
@@ -1092,6 +1108,38 @@ const handleSave = async () => {
                 ) : (
                   <div style={{ color: '#00ff88' }}>
                     Done -- removed {pruneResult.removed} unused artwork zips, kept {pruneResult.kept}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className={styles.inputRow}>
+              <label className={styles.inputLabel}>Local bezel folder</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button className={styles.exportBtn} onClick={() => handleInstallLocalBezels(true)} disabled={localBezelFetching || !config.bezelSourcePath}>
+                  {localBezelFetching ? '...' : 'Preview local bezel install'}
+                </button>
+                {localBezelResult && !localBezelResult.error && localBezelResult.dryRun && localBezelResult.installed > 0 && (
+                  <button className={styles.exportBtn} style={{ borderColor: 'rgba(0,255,136,0.5)', color: '#00ff88' }} onClick={() => handleInstallLocalBezels(false)} disabled={localBezelFetching}>
+                    Confirm install {localBezelResult.installed} bezels
+                  </button>
+                )}
+              </div>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>
+                Scans your Bezel Source Folder (set above in Paths) for artwork matching your owned MAME ROMs -- from your own EmuMovies Sync or Hyperspin downloads, never fetched or redistributed by NuArcade. Never overwrites existing artwork. Preview first -- nothing installs until you confirm.
+              </div>
+            </div>
+            {localBezelResult && (
+              <div style={{ fontSize: 12, marginBottom: 10 }}>
+                {localBezelResult.error ? (
+                  <div style={{ color: '#ef4444' }}>{localBezelResult.error}</div>
+                ) : localBezelResult.dryRun ? (
+                  <div style={{ color: '#00ff88' }}>
+                    {localBezelResult.totalOwned} ROMs owned -- {localBezelResult.skippedHasArt} already have artwork, {localBezelResult.installed} would be installed from your local folder, {localBezelResult.notInSource} not found in that folder
+                  </div>
+                ) : (
+                  <div style={{ color: '#00ff88' }}>
+                    Done -- installed {localBezelResult.installed} bezels from your local folder
                   </div>
                 )}
               </div>
