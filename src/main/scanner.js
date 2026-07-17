@@ -2444,3 +2444,83 @@ async function pruneMameArtwork(mameGamesPath, mameArtworkPath, dryRun) {
 }
 
 module.exports = { ...module.exports, pruneMameArtwork }
+
+// -- Local bezel folder install (Tier 1 of the bezel fallback chain) ---------
+// Scans a user-designated local folder -- populated by the user's own paid
+// EmuMovies Sync or Hyperspin access, not fetched or redistributed by
+// NuArcade -- for MAME bezel zips matching owned ROMs. Only ever fills a
+// genuine gap: never overwrites artwork that's already installed. Dry-run
+// first, same pattern as pruneMameArtwork.
+async function installLocalBezels(mameGamesPath, mameArtworkPath, bezelSourcePath, dryRun) {
+  const ownedNames = new Set()
+  let romEntries = []
+  try { romEntries = fs.readdirSync(mameGamesPath, { withFileTypes: true }) } catch (e) {
+    throw new Error('MAME ROMs folder not found: ' + mameGamesPath)
+  }
+  for (const entry of romEntries) {
+    if (!entry.isFile()) continue
+    const ext = path.extname(entry.name).toLowerCase()
+    if (ext !== '.zip' && ext !== '.7z') continue
+    ownedNames.add(entry.name.replace(/\.[^.]+$/, '').toLowerCase())
+  }
+
+  const installedNames = new Set()
+  try {
+    const artworkEntries = fs.readdirSync(mameArtworkPath, { withFileTypes: true })
+    for (const entry of artworkEntries) {
+      if (!entry.isFile()) continue
+      if (path.extname(entry.name).toLowerCase() !== '.zip') continue
+      installedNames.add(entry.name.replace(/\.[^.]+$/, '').toLowerCase())
+    }
+  } catch (e) {
+    // No artwork folder yet -- fine, everything owned counts as a gap
+  }
+
+  if (!bezelSourcePath) {
+    throw new Error('No bezel source folder set -- point Settings at your EmuMovies Sync or Hyperspin bezel folder first.')
+  }
+  let sourceEntries = []
+  try { sourceEntries = fs.readdirSync(bezelSourcePath, { withFileTypes: true }) } catch (e) {
+    throw new Error('Bezel source folder not found: ' + bezelSourcePath)
+  }
+  const sourceMap = new Map()
+  for (const entry of sourceEntries) {
+    if (!entry.isFile()) continue
+    if (path.extname(entry.name).toLowerCase() !== '.zip') continue
+    sourceMap.set(entry.name.replace(/\.[^.]+$/, '').toLowerCase(), entry.name)
+  }
+
+  let installed = 0, skippedHasArt = 0, notInSource = 0
+  const installedNamesList = []
+  for (const romName of ownedNames) {
+    if (installedNames.has(romName)) {
+      skippedHasArt++
+      continue
+    }
+    if (!sourceMap.has(romName)) {
+      notInSource++
+      continue
+    }
+    installed++
+    installedNamesList.push(romName)
+    if (!dryRun) {
+      if (!fs.existsSync(mameArtworkPath)) fs.mkdirSync(mameArtworkPath, { recursive: true })
+      const destPath = path.join(mameArtworkPath, romName + '.zip')
+      // Belt-and-suspenders: re-check right before writing, in case anything
+      // landed here since the scan started. Never overwrite, ever.
+      if (fs.existsSync(destPath)) { installed--; installedNamesList.pop(); skippedHasArt++; continue }
+      fs.copyFileSync(path.join(bezelSourcePath, sourceMap.get(romName)), destPath)
+    }
+  }
+
+  return {
+    totalOwned: ownedNames.size,
+    installed: installed,
+    skippedHasArt: skippedHasArt,
+    notInSource: notInSource,
+    installedNames: installedNamesList.slice(0, 30),
+    dryRun: !!dryRun,
+  }
+}
+
+module.exports = { ...module.exports, installLocalBezels }
