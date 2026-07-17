@@ -20,6 +20,12 @@ The biggest stability pass NuArcade has had. Highlights:
 - EmuMovies bulk import ("Import All" and Auto-fill) is dramatically faster at large libraries -- fixed a bottleneck that made it look stuck or finished when it was still working
 - Orphaned media cleanup no longer misidentifies stray system files as orphaned game art
 
+**Bezels & Artwork Matching**
+- Real per-game bezel matching for 23 RetroArch systems (NES, SNES, Genesis, N64, Saturn, GBA/GBC/GB, PSX, and more) -- auto-detects whichever RetroArch core is actually installed and pulls matching artwork from Bezel Project, no manual setup per system
+- Bezel matching moved out of Settings into its own tab in Media Manager, alongside a new MAME artwork cleanup tool that compares installed bezels against your real ROM library and removes anything that does not match -- dry-run first, nothing deletes until you confirm
+- New: point NuArcade at your own EmuMovies Sync or Hyperspin bezel downloads (Settings > Paths > "Bezel Source Folder") and it will auto-install matching bezels for any MAME game that does not already have artwork -- existing artwork is never touched or overwritten
+- Fixed Sega Saturn bezel matching for setups running the YabaSanshiro core -- previously only Yabause and Beetle Saturn were recognized, so YabaSanshiro users got no bezels at all
+
 **Performance**
 - Wheel artwork now loads far faster -- previously every game in the library mounted its card and artwork simultaneously on load, even the hundreds not on screen
 - YouTube bulk fetch defaults to 2 concurrent downloads instead of 4, reducing timeout failures
