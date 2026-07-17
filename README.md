@@ -24,6 +24,7 @@ The biggest stability pass NuArcade has had. Highlights:
 - Real per-game bezel matching for 23 RetroArch systems (NES, SNES, Genesis, N64, Saturn, GBA/GBC/GB, PSX, and more) -- auto-detects whichever RetroArch core is actually installed and pulls matching artwork from Bezel Project, no manual setup per system
 - Bezel matching moved out of Settings into its own tab in Media Manager, alongside a new MAME artwork cleanup tool that compares installed bezels against your real ROM library and removes anything that does not match -- dry-run first, nothing deletes until you confirm
 - New: point NuArcade at your own EmuMovies Sync or Hyperspin bezel downloads (Settings > Paths > "Bezel Source Folder") and it will auto-install matching bezels for any MAME game that does not already have artwork -- existing artwork is never touched or overwritten
+- That local-folder install now goes further: RetroArch-style overlay bezels sitting in the same folder are automatically converted to native MAME format, and any game with no bezel available anywhere gets one of NuArcade's own bundled placeholder templates (correctly oriented vertical/horizontal via MAME's own driver data) so nothing is ever left blank
 - Fixed Sega Saturn bezel matching for setups running the YabaSanshiro core -- previously only Yabause and Beetle Saturn were recognized, so YabaSanshiro users got no bezels at all
 
 **Performance**
