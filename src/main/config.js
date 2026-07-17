@@ -19,6 +19,7 @@ const DEFAULTS = {
   switchGamesPath:    'C:\\SwitchGames\\',
   mamePath:           'C:\\MAME\\',
   mameGamesPath:      'C:\\MAME\\roms\\',
+  bezelSourcePath:    '',
   retroarchPath:      'C:\\RetroArch\\',
   retroarchGamesPath: 'C:\\RetroArchGames\\',
   project64Path:      'C:\\Project64\\',
