@@ -25,6 +25,13 @@ const SYSTEM_IDS = {
   cemu:        18,   // Wii U
 }
 
+// Checked before the extension-based fallback below -- Dreamcast and PS1
+// both commonly use .iso, which would otherwise misidentify RetroArch-routed
+// Dreamcast games as PS1 in the extension guess.
+const CORE_SYSTEM_IDS = {
+  dreamcast: 23,
+}
+
 const EXT_SYSTEM_IDS = {
   '.nes':  7,    // NES
   '.fds':  7,
@@ -70,8 +77,11 @@ export async function fetchScreenScraperArtwork(game, ssUser, ssPass) {
     // Determine system ID
     let systemId = SYSTEM_IDS[game.emulator]
     if (!systemId && game.emulator === 'retroarch') {
-      const ext = (game.path || '').toLowerCase().match(/\.[^.]+$/)?.[0]
-      systemId = ext ? EXT_SYSTEM_IDS[ext] : null
+      systemId = CORE_SYSTEM_IDS[game.core] || null
+      if (!systemId) {
+        const ext = (game.path || '').toLowerCase().match(/\.[^.]+$/)?.[0]
+        systemId = ext ? EXT_SYSTEM_IDS[ext] : null
+      }
     }
     if (!systemId) return null
 
