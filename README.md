@@ -42,6 +42,7 @@ The biggest stability pass NuArcade has had. Highlights:
 **Wheel & UI**
 - System logos now show in the category strip
 - Wheel navigation has a real spring/overshoot animation instead of a jarring instant snap
+- Fixed the overshoot animation briefly flashing a different game's hero art over the current selection during navigation -- hero background and logo now wait for the selection to actually settle before appearing
 - Player initials now display correctly at the top of the screen
 - CRT effect and theme color settings are now properly wired and persist across restarts
 - Category pill and bottom hint bar text bumped from barely-visible to actually readable
