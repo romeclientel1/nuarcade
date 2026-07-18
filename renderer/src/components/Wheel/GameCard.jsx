@@ -73,6 +73,20 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork,
   // Reset flip when card loses center position
   useEffect(() => { if (!isCenter) setFlipped(false) }, [isCenter])
 
+  // The wheel's navigation deliberately overshoots by one card then snaps
+  // back ~80ms later for the spring feel (see navigate() in Wheel.jsx) --
+  // which means a card briefly becomes "center" and un-becomes it again
+  // before the real target settles. Mounting the full hero background +
+  // logo immediately on isCenter would let that overshoot card's art flash
+  // on screen for that ~80ms window. Debouncing past it means hero art
+  // only appears once a selection has actually settled, not mid-correction.
+  const [heroReady, setHeroReady] = useState(false)
+  useEffect(() => {
+    if (!isCenter) { setHeroReady(false); return }
+    const t = setTimeout(() => setHeroReady(true), 100)
+    return () => clearTimeout(t)
+  }, [isCenter])
+
   // Tab key toggles flip on center card
   useEffect(() => {
     if (!isCenter) return
@@ -111,7 +125,7 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork,
 
 
 
-  const showHero    = isCenter && heroUrl
+  const showHero    = heroReady && heroUrl
   const showCapsule = capsuleUrl
   const showThumb   = tpThumb && !imgError && !showCapsule
 
@@ -187,7 +201,7 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork,
 
 
         {/* Logo overlay on capsule/hero */}
-        {isCenter && logoUrl && (
+        {heroReady && logoUrl && (
           <img src={logoUrl} alt="" className={styles.logoOverlay} />
         )}
       </div>
