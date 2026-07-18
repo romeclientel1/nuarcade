@@ -659,6 +659,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
         else if (emu === 'project64')   launchResult = await window.nuarcade.launchN64Game(gamePath)
         else if (emu === 'duckstation') launchResult = await window.nuarcade.launchPs1Game(gamePath)
         else if (emu === 'flycast')     launchResult = await window.nuarcade.launchFlycastGame(gamePath)
+        else if (emu === 'xemu')        launchResult = await window.nuarcade.launchXemuGame(gamePath)
+        else if (emu === 'cxbx')        launchResult = await window.nuarcade.launchCxbxGame(gamePath)
         else if (emu === 'model2')      launchResult = await window.nuarcade.launchModel2Game(gamePath)
         else if (emu === 'model3')      launchResult = await window.nuarcade.launchModel3Game(gamePath)
         else if (emu === 'ppsspp')      launchResult = await window.nuarcade.launchPspGame(gamePath)
