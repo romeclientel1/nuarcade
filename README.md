@@ -39,6 +39,7 @@ The biggest stability pass NuArcade has had. Highlights:
 - MAME games scanned via the RetroArch folder structure now resolve real titles instead of showing raw ROM shortnames like "whp"
 - MAME launch focus timing extended (third retry at 8s) and -nowindow forced explicitly, fixing occasional missed keyboard/controller focus on slower cold starts
 - Dreamcast games are now also recognized when organized under RetroArchGames\Dreamcast\ (GDI-in-subfolder included), not just the dedicated Flycast folder -- an existing toggle in Settings decides whether those games launch through standalone Flycast (default, best compatibility) or RetroArch's Flycast core (adds bezel support)
+- MAME ROMs MAME itself flags as "preliminary" (Not Working) are now excluded from both the standalone MAME scanner and MAME games found under RetroArchGames -- checked against MAME's own driver database, new toggle in Settings under MAME
 
 **Wheel & UI**
 - System logos now show in the category strip
