@@ -14,6 +14,7 @@ const RESTART_KEYS = new Set([
   'model2Path', 'model2GamesPath', 'model3Path', 'model3GamesPath',
   'retroarchPath', 'retroarchGamesPath', 'project64Path', 'n64GamesPath',
   'duckstationPath', 'ps1GamesPath', 'flycastPath', 'dreamcastGamesPath',
+  'xemuPath', 'cxbxPath', 'xboxGamesPath',
   'ppssppPath', 'pspGamesPath', 'pcsx2Path', 'ps2GamesPath',
   'rpcs3Path', 'ps3GamesPath', 'xeniaPath', 'xbox360GamesPath',
   'dolphinPath', 'gcWiiGamesPath', 'cemuPath', 'wiiUGamesPath',
@@ -34,6 +35,8 @@ const EMULATOR_EXE_KEYWORDS = {
   project64Path: 'project64',
   duckstationPath: 'duckstation',
   flycastPath: 'flycast',
+  xemuPath: 'xemu',
+  cxbxPath: 'cxbx',
   model2Path: 'model2',
   model3Path: 'supermodel',
   ppssppPath: 'ppsspp',
@@ -215,6 +218,7 @@ const handleRescan = async () => {
     await scan("Project64",   () => window.nuarcade.scanN64Games(cfg.n64GamesPath))
     await scan("DuckStation", () => window.nuarcade.scanPs1Games(cfg.ps1GamesPath))
     await scan("Flycast",     () => window.nuarcade.scanDreamcastGames(cfg.dreamcastGamesPath))
+    await scan("Xbox",         () => window.nuarcade.scanXboxGames(cfg.xboxGamesPath))
     await scan("PPSSPP",      () => window.nuarcade.scanPspGames(cfg.pspGamesPath))
     await scan("PCSX2",       () => window.nuarcade.scanPs2Games(cfg.ps2GamesPath))
     await scan("RPCS3",       () => window.nuarcade.scanPs3Games(cfg.ps3GamesPath))
@@ -282,6 +286,7 @@ const handleFindOrphans = async () => {
     await collect(() => window.nuarcade.scanN64Games(cfg.n64GamesPath))
     await collect(() => window.nuarcade.scanPs1Games(cfg.ps1GamesPath))
     await collect(() => window.nuarcade.scanDreamcastGames(cfg.dreamcastGamesPath))
+    await collect(() => window.nuarcade.scanXboxGames(cfg.xboxGamesPath))
     await collect(() => window.nuarcade.scanPspGames(cfg.pspGamesPath))
     await collect(() => window.nuarcade.scanPs2Games(cfg.ps2GamesPath))
     await collect(() => window.nuarcade.scanPs3Games(cfg.ps3GamesPath))
@@ -500,6 +505,8 @@ const handleSave = async () => {
             { name: 'Project64',           url: 'https://www.pj64-emu.com',                                             pathKey: 'project64Path' },
             { name: 'DuckStation',         url: 'https://www.duckstation.org',                                          pathKey: 'duckstationPath' },
             { name: 'Flycast',             url: 'https://github.com/flyinghead/flycast/releases',                       pathKey: 'flycastPath' },
+            { name: 'Xemu',                url: 'https://xemu.app',                                                     pathKey: 'xemuPath' },
+            { name: 'Cxbx-Reloaded',        url: 'https://github.com/Cxbx-Reloaded/Cxbx-Reloaded/releases',             pathKey: 'cxbxPath' },
             { name: 'Model 2 Emulator',    url: 'https://emulation.gametechwiki.com/index.php/Model_2_Emulator',        pathKey: 'model2Path' },
             { name: 'Supermodel (M3)',      url: 'https://github.com/trzy/Supermodel/releases',                        pathKey: 'model3Path' },
             { name: 'PPSSPP',              url: 'https://www.ppsspp.org',                                               pathKey: 'ppssppPath' },
@@ -545,6 +552,9 @@ const handleSave = async () => {
               { key: "ps1GamesPath",       label: "PS1 Games",            sub: "Folder containing .bin/.cue/.iso files" },
               { key: "flycastPath",        label: "Flycast",              sub: "Folder containing flycast.exe" },
               { key: "dreamcastGamesPath", label: "Dreamcast Games",      sub: "Folder containing .gdi/.cdi/.chd files" },
+              { key: "xemuPath",           label: "Xemu",                 sub: "Folder containing xemu.exe" },
+              { key: "cxbxPath",           label: "Cxbx-Reloaded",        sub: "Folder containing cxbxr-ldr.exe" },
+              { key: "xboxGamesPath",      label: "Xbox Games",           sub: ".iso files for Xemu, or extracted folders with a .xbe for Cxbx-Reloaded" },
               { key: "ppssppPath",         label: "PPSSPP",               sub: "Folder containing PPSSPPWindows64.exe" },
               { key: "pspGamesPath",       label: "PSP Games",            sub: "Folder containing .iso/.cso files" },
               { key: "pcsx2Path",          label: "PCSX2",                sub: "Folder containing pcsx2-qt.exe" },
@@ -939,6 +949,8 @@ const handleSave = async () => {
                 { id: 'project64',   label: 'Project64 (N64)' },
                 { id: 'duckstation', label: 'DuckStation (PS1)' },
                 { id: 'flycast',     label: 'Flycast (DC)' },
+                { id: 'xemu',        label: 'Xemu (Xbox)' },
+                { id: 'cxbx',        label: 'Cxbx-Reloaded (Xbox)' },
                 { id: 'model2',      label: 'Model 2 (Sega)' },
                 { id: 'model3',      label: 'Model 3 (Supermodel)' },
                 { id: 'ppsspp',      label: 'PPSSPP (PSP)' },
@@ -1261,6 +1273,7 @@ const handleSave = async () => {
                   { key: "pcsx2",      label: "PCSX2 (PS2)",      note: ".bin files in bios/" },
                   { key: "duckstation",label: "DuckStation (PS1)", note: "scph*.bin in bios/" },
                   { key: "flycast",    label: "Flycast (DC)",      note: "dc_boot.bin in data/" },
+                  { key: "xemu",       label: "Xemu (Xbox)",       note: "MCPX + BIOS .bin in Xemu folder" },
                   { key: "ryujinx",   label: "Ryujinx (Switch)",  note: "prod.keys in system/" },
                 ].map(({ key, label, note }) => {
                   const b = biosResult[key]
