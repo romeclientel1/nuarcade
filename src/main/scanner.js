@@ -1127,16 +1127,105 @@ function mameTitle(romName) {
 
 // -- MAME Scanner ------------------------------------------------------------
 // Scans a folder for .zip and .chd ROM files
+// -- MAME driver status (Working / Not Working) ------------------------------
+// MAME's own -listxml tags every machine with a driver status: "good",
+// "imperfect" (runs, minor glitches), or "preliminary" -- MAME's own label
+// for what its UI calls "Not Working" (crashes, no video, etc). It also
+// flags BIOS sets and non-game "device" entries that were never playable
+// games at all. Queried once per MAME build and cached to disk, since a
+// full driver dump can take real time to generate and must not run on
+// every scan.
+function mameStatusCachePath() {
+  const userDataDir = require('electron').app.getPath('userData')
+  return path.join(userDataDir, 'mame-driver-status.json')
+}
+
+function getMameDriverStatusMap(mameDir) {
+  if (!mameDir) return null
+  const mameExe = findMameExe(mameDir)
+  if (!mameExe) return null
+  let stat
+  try { stat = fs.statSync(mameExe) } catch (e) { return null }
+  const signature = mameExe + '|' + stat.size + '|' + stat.mtimeMs
+
+  const cachePath = mameStatusCachePath()
+  try {
+    const cached = JSON.parse(fs.readFileSync(cachePath, 'utf8'))
+    if (cached.signature === signature) return cached.machines
+  } catch (e) {
+    // No cache yet, or it's stale/invalid -- fall through and rebuild.
+  }
+
+  const { execFileSync } = require('child_process')
+  let xml
+  try {
+    xml = execFileSync(mameExe, ['-listxml'], {
+      cwd: mameDir, encoding: 'utf8', timeout: 180000, maxBuffer: 500 * 1024 * 1024,
+    })
+  } catch (e) {
+    return null
+  }
+
+  // Manual forward scan rather than a DOM parse or one giant regex --
+  // MAME's full driver list can be hundreds of MB across tens of thousands
+  // of machines, and this only needs two things per machine (name, driver
+  // status) rather than the full structure.
+  const machines = {}
+  let pos = 0
+  while (true) {
+    const start = xml.indexOf('<machine ', pos)
+    if (start < 0) break
+    const tagEnd = xml.indexOf('>', start)
+    if (tagEnd < 0) break
+    const blockEnd = xml.indexOf('</machine>', tagEnd)
+    if (blockEnd < 0) break
+    const openTag = xml.slice(start, tagEnd)
+    const block = xml.slice(tagEnd, blockEnd)
+    pos = blockEnd + '</machine>'.length
+
+    const nameMatch = openTag.match(/\bname="([^"]*)"/)
+    if (!nameMatch) continue
+    const driverMatch = block.match(/<driver\s+[^>]*\bstatus="([^"]*)"/)
+    machines[nameMatch[1]] = {
+      status: driverMatch ? driverMatch[1] : null,
+      isBios: /\bisbios="yes"/.test(openTag),
+      isDevice: /\bisdevice="yes"/.test(openTag),
+    }
+  }
+
+  try {
+    fs.mkdirSync(path.dirname(cachePath), { recursive: true })
+    fs.writeFileSync(cachePath, JSON.stringify({ signature: signature, generatedAt: Date.now(), machines: machines }))
+  } catch (e) {
+    // Non-fatal -- just means it rebuilds again next time too.
+  }
+
+  return machines
+}
+
+function isMameRomExcluded(statusMap, romName) {
+  if (!statusMap) return false
+  const info = statusMap[romName]
+  if (!info) return false
+  if (info.isBios || info.isDevice) return true
+  return info.status === 'preliminary'
+}
+
 async function scanMameGames(mameGamesPath) {
   const games = []
   if (!fs.existsSync(mameGamesPath)) {
     return { games, count: 0, path: mameGamesPath, error: 'Folder not found' }
   }
+  const cfg = config.load()
+  const hideNotWorking = cfg.hideNotWorkingMame !== false
+  const statusMap = hideNotWorking ? getMameDriverStatusMap(cfg.mamePath) : null
+
   const EXTS = ['.zip', '.chd']
   let entries
   try { entries = fs.readdirSync(mameGamesPath, { withFileTypes: true }) }
   catch (e) { return { games, count: 0, error: e.message } }
 
+  let excludedNotWorking = 0
   for (let i = 0; i < entries.length; i++) {
     if (i > 0 && i % 50 === 0) await yieldToEventLoop()
     const entry = entries[i]
@@ -1144,6 +1233,7 @@ async function scanMameGames(mameGamesPath) {
     const ext = path.extname(entry.name).toLowerCase()
     if (!EXTS.includes(ext)) continue
     const romName = entry.name.replace(/\.[^.]+$/, '')
+    if (hideNotWorking && isMameRomExcluded(statusMap, romName)) { excludedNotWorking++; continue }
     const title = mameTitle(romName)
     games.push({
       id: 'mame_' + romName,
@@ -1159,7 +1249,7 @@ async function scanMameGames(mameGamesPath) {
     })
   }
   games.sort((a, b) => a.title.localeCompare(b.title))
-  return { games, count: games.length, path: mameGamesPath }
+  return { games, count: games.length, path: mameGamesPath, excludedNotWorking }
 }
 
 module.exports = { ...module.exports, scanMameGames }
@@ -1298,6 +1388,8 @@ async function scanRetroArchGames(retroarchGamesPath) {
   }
 
   const cfg = config.load()
+  const hideNotWorkingMame = cfg.hideNotWorkingMame !== false
+  const mameStatusMap = hideNotWorkingMame ? getMameDriverStatusMap(cfg.mamePath) : null
 
   // Walk each subfolder as a system
   for (const entry of entries) {
@@ -1334,6 +1426,7 @@ async function scanRetroArchGames(retroarchGamesPath) {
       const ext = path.extname(rom.name).toLowerCase()
       if (!validExts.has(ext) && !RA_ROM_EXTS.has(ext)) continue
       const romName = rom.name.replace(/\.[^.]+$/, '')
+      if (canonicalKey === 'mame' && hideNotWorkingMame && isMameRomExcluded(mameStatusMap, romName)) continue
       // MAME games routed through the RetroArch folder structure get the
       // same dictionary/fallback title resolution as the dedicated MAME
       // scanner, instead of showing raw shortnames like "whp". id stays
