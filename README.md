@@ -2,7 +2,7 @@
 
 A modern arcade cabinet frontend built for serious collectors and venue operators. NuArcade replaces HyperSpin and LaunchBox with a clean, fast, AI-powered experience built on Electron + React.
 
-**Current version: v5.0.44**
+**Current version: v5.0.45**
 
 **New to NuArcade or just need a refresher?** See the [User Manual](USER_MANUAL.md) -- covers everything from a guest's quick start to full owner setup.
 
