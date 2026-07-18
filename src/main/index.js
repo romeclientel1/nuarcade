@@ -672,6 +672,7 @@ const SYSTEM_CORE_CANDIDATES = {
   saturn: ['yabause_libretro.dll', 'mednafen_saturn_libretro.dll', 'yabasanshiro_libretro.dll'],
   pcfx: ['mednafen_pcfx_libretro.dll'],
   atomiswave: ['reicast_libretro.dll', 'flycast_libretro.dll', 'redream_libretro.dll'],
+  dreamcast: ['flycast_libretro.dll', 'reicast_libretro.dll', 'redream_libretro.dll'],
   gba: ['mgba_libretro.dll', 'vba_next_libretro.dll', 'vbam_libretro.dll'],
   gbc: ['gambatte_libretro.dll', 'mgba_libretro.dll', 'gearboy_libretro.dll'],
   gb: ['gambatte_libretro.dll', 'mgba_libretro.dll', 'gearboy_libretro.dll', 'sameboy_libretro.dll'],
