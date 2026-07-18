@@ -61,6 +61,7 @@ F:\
   SwitchGames\          Ryubing (Ryujinx fork) games
   PS1Games\             DuckStation games
   DreamcastGames\       Flycast games
+  XboxGames\            Xemu / Cxbx-Reloaded games (.iso for Xemu, extracted folders with a .xbe for Cxbx-Reloaded)
   PSPGames\             PPSSPP games
   WiiUGames\            Cemu games
   Model2Games\          Model 2 games
@@ -165,6 +166,7 @@ Every scanner needs both pieces: where the *emulator* lives, and where the *game
 | Nintendo Switch | Ryubing (Ryujinx fork) |
 | PlayStation 1 | DuckStation |
 | Dreamcast / NAOMI | Flycast |
+| Original Xbox | Xemu / Cxbx-Reloaded |
 | PlayStation Portable | PPSSPP |
 | Wii U | Cemu |
 | Sega Model 2 | Model 2 Emulator |
