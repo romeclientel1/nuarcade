@@ -40,6 +40,8 @@ const EMULATOR_COLORS = {
   ryujinx:     { bg: '#0a0000', accent: '#e4000f', label: 'SWITCH',  badge: '#e4000f' },
   duckstation: { bg: '#00050f', accent: '#003791', label: 'PS1',     badge: '#003791' },
   flycast:     { bg: '#0d0600', accent: '#f5821f', label: 'DCAST',   badge: '#f5821f' },
+  xemu:        { bg: '#001a00', accent: '#107c10', label: 'XEMU',    badge: '#107c10' },
+  cxbx:        { bg: '#001a00', accent: '#5cb85c', label: 'CXBX',    badge: '#5cb85c' },
   ppsspp:      { bg: '#00050f', accent: '#00439c', label: 'PSP',     badge: '#00439c' },
   cemu:        { bg: '#050010', accent: '#009ac7', label: 'WII U',   badge: '#009ac7' },
   model2:      { bg: '#0d0600', accent: '#ff6a00', label: 'MDL2',    badge: '#ff6a00' },
