@@ -16,6 +16,8 @@ const SYSTEM_IDS = {
   project64:   14,   // Nintendo 64
   duckstation: 57,   // PlayStation
   flycast:     23,   // Dreamcast
+  xemu:        32,   // Original Xbox
+  cxbx:        32,   // Original Xbox
   ppsspp:      61,   // PSP
   dolphin:     13,   // GameCube (Wii is 16)
   pcsx2:       58,   // PlayStation 2
