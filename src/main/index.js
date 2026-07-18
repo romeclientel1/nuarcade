@@ -1009,6 +1009,51 @@ ipcMain.handle('scan-dreamcast-games', async (event, dreamcastGamesPath) => {
   return scanDreamcastGames(dreamcastGamesPath)
 })
 
+ipcMain.handle('launch-xemu-game', async (event, gamePath) => {
+  const cfg = config.load()
+  const xemuExe = path.join(cfg.xemuPath || 'F:\\Xemu\\', 'xemu.exe')
+  try {
+    await launchWithReturn(xemuExe, [gamePath])
+    return { success: true }
+  } catch (e) {
+    return { success: false, error: e.message }
+  }
+})
+
+// Cxbx-Reloaded's executable name has varied across releases (older builds
+// used Cxbx.exe, current ones use cxbxr-ldr.exe) -- scan for it defensively
+// rather than assuming one fixed filename, same pattern as findMameExe.
+function findCxbxExe(cxbxDir) {
+  const preferred = path.join(cxbxDir, 'cxbxr-ldr.exe')
+  if (fs.existsSync(preferred)) return preferred
+  try {
+    const entries = fs.readdirSync(cxbxDir)
+    const match = entries.find(function(f) {
+      return f.toLowerCase().startsWith('cxbx') && f.toLowerCase().endsWith('.exe')
+    })
+    if (match) return path.join(cxbxDir, match)
+  } catch (e) {}
+  return null
+}
+
+ipcMain.handle('launch-cxbx-game', async (event, gamePath) => {
+  const cfg = config.load()
+  const cxbxDir = cfg.cxbxPath || 'F:\\Cxbx-Reloaded\\'
+  const cxbxExe = findCxbxExe(cxbxDir)
+  if (!cxbxExe) return { success: false, error: 'Cxbx-Reloaded executable not found in ' + cxbxDir }
+  try {
+    await launchWithReturn(cxbxExe, ['/load', gamePath], { cwd: cxbxDir })
+    return { success: true }
+  } catch (e) {
+    return { success: false, error: e.message }
+  }
+})
+
+ipcMain.handle('scan-xbox-games', async (event, xboxGamesPath) => {
+  const { scanXboxGames } = require('./scanner')
+  return scanXboxGames(xboxGamesPath)
+})
+
 
 // -- BIOS file checker -------------------------------------------------------
 // Returns which BIOS files are present/missing for each emulator that needs them
@@ -1047,6 +1092,16 @@ ipcMain.handle('check-bios', async () => {
   const flycastData = path.join(cfg.flycastPath || 'F:\\Flycast\\', 'data')
   const dcBoot = path.join(flycastData, 'dc_boot.bin')
   results.flycast = { found: fs.existsSync(dcBoot), files: fs.existsSync(dcBoot) ? ['dc_boot.bin'] : [], folder: flycastData }
+
+  // Xemu - needs an MCPX boot ROM + BIOS flash file, both obtained from a
+  // real Xbox. Xemu lets these be named/placed anywhere via its own
+  // xemu.toml, so this checks its install folder for anything that looks
+  // right rather than one fixed filename like the checks above.
+  const xemuPath = cfg.xemuPath || 'F:\\Xemu\\'
+  let xemuFiles = []
+  try { xemuFiles = fs.readdirSync(xemuPath).filter(f => f.toLowerCase().endsWith('.bin')) } catch (e) {}
+  const hasMcpx = xemuFiles.some(f => f.toLowerCase().includes('mcpx'))
+  results.xemu = { found: hasMcpx && xemuFiles.length >= 2, files: xemuFiles, folder: xemuPath }
 
   return results
 })
