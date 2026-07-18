@@ -1082,6 +1082,21 @@ const handleSave = async () => {
             </div>
 
             <div className={styles.inputRow}>
+              <label className={styles.inputLabel}>Hide Not Working MAME ROMs</label>
+              <div className={styles.toggleGroup}>
+                {["yes", "no"].map(m => (
+                  <button key={m}
+                    className={styles.toggleBtn + ((config.hideNotWorkingMame !== false) === (m === "yes") ? " " + styles.toggleActive : "")}
+                    onClick={() => update("hideNotWorkingMame", m === "yes")}
+                  >{m.toUpperCase()}</button>
+                ))}
+              </div>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>
+                Excludes ROMs MAME itself flags as "preliminary" (crashes, no video, etc.) plus BIOS/device entries that were never real games -- checked against MAME's own driver database, cached until MAME is updated. Applies to both standalone MAME and MAME games found under RetroArchGames. "Imperfect" ROMs (playable with minor issues) are kept.
+              </div>
+            </div>
+
+            <div className={styles.inputRow}>
               <label className={styles.inputLabel}>MAME artwork cleanup</label>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button className={styles.exportBtn} onClick={() => handlePruneMameArtwork(true)} disabled={pruneFetching}>
