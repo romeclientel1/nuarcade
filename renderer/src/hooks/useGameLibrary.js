@@ -159,6 +159,14 @@ export function useGameLibrary() {
             } catch (e) { console.warn('Flycast scan error:', e) }
           }
 
+          // Xemu / Cxbx-Reloaded (Original Xbox)
+          if (cfg.mode !== 'pinball' && cfg.xboxGamesPath) {
+            try {
+              const xboxResult = await window.nuarcade.scanXboxGames(cfg.xboxGamesPath)
+              if (xboxResult.games?.length) allGames = [...allGames, ...xboxResult.games]
+            } catch (e) { console.warn('Xbox scan error:', e) }
+          }
+
           // Visual Pinball X
           if (cfg.mode !== 'arcade' && cfg.tablesPath) {
             try {
