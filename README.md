@@ -38,6 +38,7 @@ The biggest stability pass NuArcade has had. Highlights:
 - .zip/.7z support added across several scanners
 - MAME games scanned via the RetroArch folder structure now resolve real titles instead of showing raw ROM shortnames like "whp"
 - MAME launch focus timing extended (third retry at 8s) and -nowindow forced explicitly, fixing occasional missed keyboard/controller focus on slower cold starts
+- Dreamcast games are now also recognized when organized under RetroArchGames\Dreamcast\ (GDI-in-subfolder included), not just the dedicated Flycast folder -- an existing toggle in Settings decides whether those games launch through standalone Flycast (default, best compatibility) or RetroArch's Flycast core (adds bezel support)
 
 **Wheel & UI**
 - System logos now show in the category strip
