@@ -1616,6 +1616,82 @@ async function scanDreamcastGames(dreamcastGamesPath) {
 
 module.exports = { ...module.exports, scanDreamcastGames }
 
+// -- Xemu / Cxbx-Reloaded (Original Xbox) Scanner ----------------------------
+// Xemu and Cxbx-Reloaded expect genuinely different file layouts, not just
+// different launch commands for the same file: Xemu plays a disc image
+// directly (.iso/.xiso), Cxbx-Reloaded needs the game already extracted into
+// a folder with its .xbe exposed. The format present on disk IS the choice
+// of emulator here -- if a title exists as both, the ISO (Xemu, generally
+// the better-compatibility default) wins and the extracted-folder version is
+// skipped, so the same game never shows up twice in the wheel.
+async function scanXboxGames(xboxGamesPath) {
+  const games = []
+  if (!fs.existsSync(xboxGamesPath)) {
+    return { games, count: 0, path: xboxGamesPath, error: 'Folder not found' }
+  }
+  const ISO_EXTS = ['.iso', '.xiso']
+  let entries
+  try { entries = fs.readdirSync(xboxGamesPath, { withFileTypes: true }) }
+  catch (e) { return { games, count: 0, error: e.message } }
+
+  const isoTitles = new Set()
+  const isoEntries = []
+  const xbeEntries = []
+
+  for (const entry of entries) {
+    if (entry.isFile()) {
+      const ext = path.extname(entry.name).toLowerCase()
+      if (!ISO_EXTS.includes(ext)) continue
+      const title = entry.name.replace(/\.[^.]+$/, '').replace(/_/g, ' ').trim()
+      isoTitles.add(title.toLowerCase())
+      isoEntries.push({ title, path: path.join(xboxGamesPath, entry.name) })
+      continue
+    }
+    if (entry.isDirectory()) {
+      const subPath = path.join(xboxGamesPath, entry.name)
+      let subEntries
+      try { subEntries = fs.readdirSync(subPath, { withFileTypes: true }) }
+      catch (e) { continue }
+      const xbe = subEntries.find(function(f) { return f.isFile() && path.extname(f.name).toLowerCase() === '.xbe' })
+      if (!xbe) continue
+      const title = entry.name.replace(/_/g, ' ').trim()
+      xbeEntries.push({ title, path: path.join(subPath, xbe.name) })
+    }
+  }
+
+  for (const e of isoEntries) {
+    games.push({
+      id: 'xbox_' + e.title.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, ''),
+      title: e.title,
+      path: e.path,
+      emulator: 'xemu',
+      genre: 'Action',
+      system: 'Xbox',
+      status: 'Playable',
+      icon: 'XBX',
+      artwork: null,
+    })
+  }
+  for (const e of xbeEntries) {
+    if (isoTitles.has(e.title.toLowerCase())) continue
+    games.push({
+      id: 'xbox_' + e.title.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, ''),
+      title: e.title,
+      path: e.path,
+      emulator: 'cxbx',
+      genre: 'Action',
+      system: 'Xbox',
+      status: 'Playable',
+      icon: 'XBX',
+      artwork: null,
+    })
+  }
+  games.sort((a, b) => a.title.localeCompare(b.title))
+  return { games, count: games.length, path: xboxGamesPath }
+}
+
+module.exports = { ...module.exports, scanXboxGames }
+
 
 // -- PPSSPP / PSP Scanner ----------------------------------------------------
 async function scanPspGames(pspGamesPath) {
