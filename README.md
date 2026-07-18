@@ -36,6 +36,8 @@ The biggest stability pass NuArcade has had. Highlights:
 - RetroArch category added, and a systemic config-path bug fixed across 9 scanners (RetroArch, PS3, Switch, Xbox 360, GC/Wii, PS2, Dreamcast, Steam, TeknoParrot)
 - DuckStation and Ryujinx/Ryubing detection now uses fuzzy matching instead of exact filenames, so it survives version updates
 - .zip/.7z support added across several scanners
+- MAME games scanned via the RetroArch folder structure now resolve real titles instead of showing raw ROM shortnames like "whp"
+- MAME launch focus timing extended (third retry at 8s) and -nowindow forced explicitly, fixing occasional missed keyboard/controller focus on slower cold starts
 
 **Wheel & UI**
 - System logos now show in the category strip
