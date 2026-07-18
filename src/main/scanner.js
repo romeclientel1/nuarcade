@@ -1221,6 +1221,7 @@ const RA_SYSTEM_MAP = {
   'wonderswan':   { label: 'WonderSwan',         genre: 'Platformer', icon: 'WSW', exts: ['.ws','.wsc'] },
   '3do':          { label: '3DO',     genre: 'Classic',    icon: '3DO', exts: ['.iso','.cue','.chd','.bin'] },
   'atomiswave':   { label: 'Atomiswave', genre: 'Fighting',  icon: 'ATW', exts: ['.zip','.chd','.bin'] },
+  'dreamcast':    { label: 'Dreamcast',  genre: 'Dreamcast',  icon: 'DC',  exts: ['.gdi','.cdi','.chd','.lst','.m3u','.iso'] },
 }
 
 const RA_ROM_EXTS = new Set([
@@ -1278,6 +1279,7 @@ const RA_SYSTEM_ALIASES = {
   mameroms: 'mame',
   jaguar: 'atarijaguar',
   '3d0': '3do',
+  segadreamcast: 'dreamcast',
 }
 
 function normalizeRaFolder(s) {
@@ -1315,6 +1317,12 @@ async function scanRetroArchGames(retroarchGamesPath) {
       (canonicalKey === 'psx' || canonicalKey === 'ps1') && cfg.enabledEmulators && cfg.enabledEmulators.duckstation ? 'duckstation' :
       canonicalKey === 'ps2' && cfg.enabledEmulators && cfg.enabledEmulators.pcsx2 ? 'pcsx2' :
       canonicalKey === 'mame' && cfg.enabledEmulators && cfg.enabledEmulators.mame ? 'mame' :
+      // Dreamcast defaults to standalone Flycast (better compatibility) but
+      // stays user-choosable, same pattern as MAME above -- turning this
+      // toggle off routes these games through RetroArch's Flycast core
+      // instead, trading some compatibility for the bezel pipeline every
+      // other RetroArch system already gets.
+      canonicalKey === 'dreamcast' && cfg.enabledEmulators && cfg.enabledEmulators.flycast ? 'flycast' :
       'retroarch'
 
     const systemPath = path.join(retroarchGamesPath, entry.name)
@@ -1343,6 +1351,33 @@ async function scanRetroArchGames(retroarchGamesPath) {
         romPath: path.join(systemPath, rom.name),
         core: canonicalKey,
       })
+    }
+
+    // Dreamcast GDI images are commonly stored one-per-subfolder (a set of
+    // .bin/.raw track files alongside a single .gdi index file) rather than
+    // as one flat file like every other system mapped here -- the old
+    // dedicated Flycast scanner handled this; this mirrors that same
+    // convention, scoped to Dreamcast only so no other system's flat-file
+    // scanning behavior changes.
+    if (canonicalKey === 'dreamcast') {
+      for (const rom of romFiles) {
+        if (!rom.isDirectory()) continue
+        const subPath = path.join(systemPath, rom.name)
+        let subEntries = []
+        try { subEntries = fs.readdirSync(subPath, { withFileTypes: true }) } catch (e) { continue }
+        const gdi = subEntries.find(function(f) { return f.isFile() && path.extname(f.name).toLowerCase() === '.gdi' })
+        if (!gdi) continue
+        games.push({
+          id: 'ra_' + folderKey + '_' + rom.name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase(),
+          title: rom.name,
+          genre,
+          system: systemLabel,
+          icon,
+          emulator: dedicatedEmulator,
+          romPath: path.join(subPath, gdi.name),
+          core: canonicalKey,
+        })
+      }
     }
   }
 
