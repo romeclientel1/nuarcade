@@ -37,6 +37,8 @@ const EMULATORS = [
   { icon: '64', name: 'Project64',      systems: 'Nintendo 64 (GoldenEye, Zelda OOT, Smash Bros.)' },
   { icon: 'DS', name: 'DuckStation',    systems: 'PlayStation 1 (Crash, FFVII, Metal Gear Solid)' },
   { icon: 'DC', name: 'Flycast',        systems: 'Dreamcast / NAOMI arcade' },
+  { icon: 'XB', name: 'Xemu',            systems: 'Original Xbox (Halo, Fable, Jet Set Radio Future)' },
+  { icon: 'XB', name: 'Cxbx-Reloaded',   systems: 'Original Xbox (fallback for titles Xemu struggles with)' },
   { icon: 'PSP',name: 'PPSSPP',         systems: 'PlayStation Portable' },
   { icon: 'PS2',name: 'PCSX2',          systems: 'PlayStation 2' },
   { icon: 'PS3',name: 'RPCS3',          systems: 'PlayStation 3' },
