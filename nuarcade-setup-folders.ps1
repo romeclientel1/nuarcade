@@ -12,11 +12,11 @@ $folders = @(
     "F:\TeknoParrot", "F:\MAME", "F:\MAME\roms",
     "F:\Model2", "F:\Supermodel",
     "F:\RetroArch", "F:\RetroArch\system",
-    "F:\Project64", "F:\DuckStation", "F:\Flycast",
+    "F:\Project64", "F:\DuckStation", "F:\Flycast", "F:\Xemu", "F:\Cxbx-Reloaded",
     "F:\PPSSPP", "F:\PCSX2", "F:\RPCS3",
     "F:\Xenia", "F:\Dolphin", "F:\Cemu", "F:\Ryujinx", "F:\vPinball",
     "F:\ArcadeGames", "F:\RetroArchGames",
-    "F:\N64Games", "F:\PS1Games", "F:\DreamcastGames",
+    "F:\N64Games", "F:\PS1Games", "F:\DreamcastGames", "F:\XboxGames",
     "F:\PSPGames", "F:\PS2Games", "F:\PS3Games",
     "F:\Xbox360Games", "F:\GCWiiGames", "F:\WiiUGames",
     "F:\SwitchGames", "F:\Model2Games", "F:\Model3Games",
@@ -46,6 +46,8 @@ Write-Host "  RetroArch    https://www.retroarch.com/index.php?page=platforms"
 Write-Host "  Project64    https://www.pj64-emu.com"
 Write-Host "  DuckStation  https://github.com/stenzek/duckstation/releases"
 Write-Host "  Flycast      https://github.com/flyinghead/flycast/releases"
+Write-Host "  Xemu         https://xemu.app"
+Write-Host "  Cxbx-Reloaded https://github.com/Cxbx-Reloaded/Cxbx-Reloaded/releases"
 Write-Host "  PPSSPP       https://www.ppsspp.org/downloads.html"
 Write-Host "  PCSX2        https://pcsx2.net/downloads"
 Write-Host "  RPCS3        https://rpcs3.net/download"
