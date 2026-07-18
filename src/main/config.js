@@ -20,6 +20,7 @@ const DEFAULTS = {
   mamePath:           'C:\\MAME\\',
   mameGamesPath:      'C:\\MAME\\roms\\',
   bezelSourcePath:    '',
+  hideNotWorkingMame: true,
   retroarchPath:      'C:\\RetroArch\\',
   retroarchGamesPath: 'C:\\RetroArchGames\\',
   project64Path:      'C:\\Project64\\',
