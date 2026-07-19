@@ -277,7 +277,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const showVirtualKeyboardRef = useRef(false)
   const showSortRef            = useRef(false)
   const showCollectionsRef     = useRef(false)
-  const showStatsRef           = useRef(false)
   const showAchievementsRef    = useRef(false)
   const showCoachRef           = useRef(false)
   const showOperatorRef        = useRef(false)
@@ -333,7 +332,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const [showOperator,   setShowOperator  ] = useState(false)
   const [showSort, setShowSort] = useState(false)
   const [showCollections, setShowCollections] = useState(false)
-  const [showStats, setShowStats] = useState(false)
   const [showAchievements, setShowAchievements] = useState(false)
   const [showIntro, setShowIntro] = useState(false)
   const [showKonami, setShowKonami] = useState(false)
@@ -473,7 +471,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   showVirtualKeyboardRef.current = showVirtualKeyboard
     showSortRef.current            = showSort
     showCollectionsRef.current     = showCollections
-    showStatsRef.current           = showStats
     showAchievementsRef.current    = showAchievements
     showCoachRef.current           = showCoach
     showOperatorRef.current        = showOperator
@@ -608,20 +605,21 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
 
       if (e.key === "ArrowLeft")  { sounds.navigate(); navigate(-1) }
       if (e.key === "ArrowRight") { sounds.navigate(); navigate(1) }
-      if (e.key === "Enter") { if (!showDetail && currentDestination !== "help" && !showStats && !showAchievements && !showCollections && !showSettings && !showMediaManager && !showCoach) { sounds.select(); resetLaunching(); setShowDetail(true) } else if (showDetail) { if (current) launchGame() } }
-      if ((e.key === "c" || e.key === "C") && !showDetail && currentDestination !== "help" && !showStats && !showCoach && !showSettings && !showMediaManager) { sounds.select?.(); setShowCoach(true) }
-      if ((e.key === "o" || e.key === "O") && !showDetail && currentDestination !== "help" && !showStats && !showCoach && !showSettings && !showMediaManager) { sounds.select?.(); setShowOperator(true) }
+      if (e.key === "Enter") { if (!showDetail && currentDestination !== "help" && currentDestination !== "stats" && !showAchievements && !showCollections && !showSettings && !showMediaManager && !showCoach) { sounds.select(); resetLaunching(); setShowDetail(true) } else if (showDetail) { if (current) launchGame() } }
+      if ((e.key === "c" || e.key === "C") && !showDetail && currentDestination !== "help" && currentDestination !== "stats" && !showCoach && !showSettings && !showMediaManager) { sounds.select?.(); setShowCoach(true) }
+      if ((e.key === "o" || e.key === "O") && !showDetail && currentDestination !== "help" && currentDestination !== "stats" && !showCoach && !showSettings && !showMediaManager) { sounds.select?.(); setShowOperator(true) }
       if (e.key === "Escape") {
         sounds.back()
         setShowDetail(false)
         if (currentDestination === "help") back()
-        setShowSort(false); setShowStats(false)
+        if (currentDestination === "stats") back()
+        setShowSort(false)
         setShowAchievements(false); setShowCollections(false)
         // search removed
       }
 
       // Single-key shortcuts only fire when no overlay is open
-      const anyOverlay = showDetail || currentDestination === "help" || showStats || showAchievements || showCollections || showSettings || showMediaManager || showCoach || showOperator || !!needsControllerPrompt
+      const anyOverlay = showDetail || currentDestination === "help" || currentDestination === "stats" || showAchievements || showCollections || showSettings || showMediaManager || showCoach || showOperator || !!needsControllerPrompt
       if (anyOverlay) return
 
       // Konami code detector: UP UP DOWN DOWN LEFT RIGHT LEFT RIGHT b a
@@ -637,7 +635,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       if (e.key === "f" || e.key === "F") { if (current) toggleFavorite(current.id || current.profile) }
       if (e.key === "?") { if (currentDestination === "help") back(); else navigateTo("help") }
       if (e.key === "n" || e.key === "N") setShowCollections(c => !c)
-      if (e.key === "t" || e.key === "T") setShowStats(s => !s)
+      if (e.key === "t" || e.key === "T") { if (currentDestination === "stats") back(); else navigateTo("stats") }
       if (e.key === "a" || e.key === "A") setShowAchievements(s => !s)
       if (e.key === "s" || e.key === "S") setScreenshotMode(m => !m)
       if (e.key === "r" || e.key === "R") {
@@ -648,7 +646,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     }
     window.addEventListener("keydown", handler)
     return () => window.removeEventListener("keydown", handler)
-  }, [filteredGames, selectedIndex, showSearch, showVirtualKeyboard, showDetail, currentDestination, showStats, showAchievements, showCollections, showSettings, showMediaManager, showCoach, showOperator, current])
+  }, [filteredGames, selectedIndex, showSearch, showVirtualKeyboard, showDetail, currentDestination, showAchievements, showCollections, showSettings, showMediaManager, showCoach, showOperator, current])
 
   // search focus effect removed
 
@@ -661,7 +659,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     () => setShowSort(s => !s),                                  // 0 Sort
     () => { if (filteredGamesRef.current.length > 0) { setSelectedIndex(Math.floor(Math.random() * filteredGamesRef.current.length)); sounds.navigate() } }, // 2 RND
     () => setShowCollections(true),                              // 3 []
-    () => setShowStats(true),                                    // 4 #
+    () => navigateTo("stats"),                                   // 4 #
     () => setShowAchievements(true),                             // 5 *
     () => { if (onSwitchPlayer) onSwitchPlayer() },              // 6 Player
     () => setShowMediaManager(true),                             // 7 Media
@@ -693,7 +691,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     showVirtualKeyboardRef.current = showVirtualKeyboard
     showSortRef.current            = showSort
     showCollectionsRef.current     = showCollections
-    showStatsRef.current           = showStats
     showAchievementsRef.current    = showAchievements
     showCoachRef.current           = showCoach
     showOperatorRef.current        = showOperator
@@ -708,7 +705,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   })
 
   useGamepad({
-    enabled: !showDetailRef.current && !showMediaManagerRef.current && !showSettingsRef.current && currentDestinationRef.current !== "help" && !attractMode  && !showVirtualKeyboardRef.current && !showSortRef.current && !showCollectionsRef.current && !showStatsRef.current && !showAchievementsRef.current && !showCoachRef.current && !showOperatorRef.current ,
+    enabled: !showDetailRef.current && !showMediaManagerRef.current && !showSettingsRef.current && currentDestinationRef.current !== "help" && currentDestinationRef.current !== "stats" && !attractMode  && !showVirtualKeyboardRef.current && !showSortRef.current && !showCollectionsRef.current && !showAchievementsRef.current && !showCoachRef.current && !showOperatorRef.current ,
     left: () => {
       if (showRetroArchPopupRef.current) { setRetroArchChoice(0); return }
       if (showExitPopupRef.current) { setExitChoice(0); return }
@@ -995,7 +992,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
                 }
               }} title="Random game (R)">RND</button>
               <button className={styles.colBtn + (focusZone === 0 && topMenuIdx === 2 ? " " + styles.barFocused : "")} onClick={() => setShowCollections(true)} title="Collections (N)">Sets</button>
-              <button className={styles.statsBtn + (focusZone === 0 && topMenuIdx === 3 ? " " + styles.barFocused : "")} onClick={() => setShowStats(true)} title="My Stats (T)">Stats</button>
+              <button className={styles.statsBtn + (focusZone === 0 && topMenuIdx === 3 ? " " + styles.barFocused : "")} onClick={() => navigateTo("stats")} title="My Stats (T)">Stats</button>
               <button className={styles.achieveBtn + (focusZone === 0 && topMenuIdx === 4 ? " " + styles.barFocused : "")} onClick={() => setShowAchievements(true)} title="Achievements (A)">Ach.</button>
               {activeProfile && (
                 <button
@@ -1289,8 +1286,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
           onClose={handleCollectionsClose}
         />
       )}
-      {showStats && (
-        <Stats games={games} onClose={() => setShowStats(false)} />
+      {currentDestination === "stats" && (
+        <Stats games={games} onClose={back} />
       )}
       {showAchievements && (
         <Achievements games={games} onClose={() => setShowAchievements(false)} />
