@@ -19,6 +19,7 @@ import OperatorDashboard from "../OperatorDashboard/OperatorDashboard"
 import { useErrorToast, ErrorToastContainer } from "./ErrorToast"
 import SortMenu from "./SortMenu"
 import { useArcadeSounds } from "../../hooks/useArcadeSounds"
+import { useGameLauncher } from "../../hooks/useGameLauncher"
 import { useMusicPlayer  } from "../../hooks/useMusicPlayer"
 import { usePlaytime } from "../../hooks/usePlaytime"
 import { useSteamGridDB } from "../../hooks/useSteamGridDB"
@@ -320,10 +321,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
 
 
   const [activeCategory, setActiveCategory] = useState("All")
-  const [launching, setLaunching] = useState(false)
-  const [launchError, setLaunchError] = useState(null)
   const [showRetroArchPopup, setShowRetroArchPopup] = useState(false)
-  const [showControllerPrompt, setShowControllerPrompt] = useState(false)
   const [attractMode, setAttractMode] = useState(false)
   const [isSnapping, setIsSnapping] = useState(false)
   const [showMediaManager, setShowMediaManager] = useState(false)
@@ -542,154 +540,36 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
 
   // Auto-launch last played game if configured
 
+  const {
+    launch, confirmLaunch, dismissControllerPrompt, resetLaunching,
+    launching, launchError, needsControllerPrompt,
+  } = useGameLauncher({
+    addRecentlyPlayed,
+    startSession, endSession, recordLaunch,
+    showError,
+    playLaunchSound: sounds.launch,
+    artwork,
+    onLaunchStart: () => {
+      // The background gameplay video (and its audio) has no reason to
+      // keep playing once the actual game launches -- resumed in onReturn
+      // below once the emulator closes.
+      bgVideoARef.current?.pause()
+      bgVideoBRef.current?.pause()
+    },
+    onReturn: () => {
+      setAchievementStats(computeStats(games))
+      const activeRef = bgActive === 'a' ? bgVideoARef : bgVideoBRef
+      activeRef.current?.play().catch(() => {})
+    },
+  })
+
   const launchGame = () => {
     if (launching || !current) return
     if (current.isLauncher && current.id === 'retroarch-launcher') {
       setShowRetroArchPopup(true)
       return
     }
-    if (current.status === 'not-configured') {
-      setLaunchError('Open TeknoParrot and configure this game -- find it in the TP game list and set the exe path.')
-      setTimeout(() => setLaunchError(null), 5000)
-      return
-    }
-    if (current.status === 'path-missing') {
-      setLaunchError('Game exe not found. Check if the file has moved: ' + (current.gamePath || 'path unknown'))
-      setTimeout(() => setLaunchError(null), 5000)
-      return
-    }
-    const hint = getControllerHint(current)
-    if (hint) { setShowControllerPrompt(true) } else { handleLaunch() }
-  }
-
-  const handleLaunch = async () => {
-    if (launching || !current) return
-    if (current.gamePath && window.nuarcade?.checkPath) {
-      try {
-        const result = await window.nuarcade.checkPath(current.gamePath)
-        if (!result?.exists) {
-          setLaunchError('Game file not found. Drive may be offline or file moved: ' + current.gamePath)
-          setTimeout(() => setLaunchError(null), 6000)
-          return
-        }
-      } catch (e) { /* proceed -- checkPath unavailable */ }
-    }
-    sounds.launch()
-    setLaunching(true)
-    // The background gameplay video (and its audio) has no reason to keep
-    // playing once the actual game launches -- pause whichever of the A/B
-    // slots is currently active. Resumed below once the emulator closes.
-    bgVideoARef.current?.pause()
-    bgVideoBRef.current?.pause()
-    const gameId = current.id || current.profile
-    const sessionStart = startSession(gameId)
-    recordLaunch(gameId)
-    addRecentlyPlayed(current)
-
-    // When window regains focus, the user returned from the emulator -- save session
-    const handleFocusReturn = () => {
-      endSession(gameId, sessionStart)
-      setAchievementStats(computeStats(games))
-      const activeRef = bgActive === 'a' ? bgVideoARef : bgVideoBRef
-      activeRef.current?.play().catch(() => {})
-      window.removeEventListener("focus", handleFocusReturn)
-    }
-    window.addEventListener("focus", handleFocusReturn)
-
-    // Also save if NuArcade is closed before focus returns (visibilitychange)
-    const handleVisibility = () => {
-      if (document.visibilityState === "visible") {
-        endSession(gameId, sessionStart)
-        const activeRef2 = bgActive === 'a' ? bgVideoARef : bgVideoBRef
-        activeRef2.current?.play().catch(() => {})
-        document.removeEventListener("visibilitychange", handleVisibility)
-      }
-    }
-    document.addEventListener("visibilitychange", handleVisibility)
-
-    // Push "NOW PLAYING" state to marquee with full game info
-    if (window.nuarcade?.updateMarquee) {
-      const art = artwork?.[gameId]
-      window.nuarcade.updateMarquee({
-        title:      current.title,
-        system:     current.system || current.genre,
-        hero:       art?.hero    || null,
-        logo:       art?.logo    || null,
-        capsule:    art?.capsule || null,
-        nowPlaying: true,
-        genre:      current.genre,
-        emulator:   current.emulator,
-      }).catch(() => {})
-    }
-    // Fire LED/external game-launched event
-    window.nuarcade?.gameLaunched?.({
-      title: current.title, system: current.system,
-      genre: current.genre, emulator: current.emulator,
-      id: gameId,
-    }).catch?.(() => {})
-    // Pixelcade push on launch (with nowPlaying flag)
-    const launchArt = artwork?.[gameId]
-    window.nuarcade?.pixelcadePush?.({
-      title: current.title, system: current.system,
-      genre: current.genre, emulator: current.emulator,
-      hero: launchArt?.hero || null, capsule: launchArt?.capsule || null,
-      nowPlaying: true,
-    }).catch?.(() => {})
-    try {
-      const gp = navigator.getGamepads()[0]
-      if (gp && gp.vibrationActuator) {
-        gp.vibrationActuator.playEffect("dual-rumble", {
-          startDelay: 0, duration: 300,
-          weakMagnitude: 0.5, strongMagnitude: 1.0
-        })
-      }
-    } catch (e) {}
-    if (window.nuarcade) {
-      const emu = current.emulator || 'teknoparrot'
-      const gamePath = current.path || current.profilePath || current.profile || current.romPath
-      try {
-        let launchResult = null
-        if (emu === 'rpcs3')            launchResult = await window.nuarcade.launchPs3Game(gamePath)
-        else if (emu === 'xenia')       launchResult = await window.nuarcade.launchXbox360Game(gamePath)
-        else if (emu === 'dolphin')     launchResult = await window.nuarcade.launchGCWiiGame(gamePath)
-        else if (emu === 'pcsx2')       launchResult = await window.nuarcade.launchPs2Game(gamePath)
-        else if (emu === 'ryujinx')     launchResult = await window.nuarcade.launchSwitchGame(gamePath)
-        else if (emu === 'mame')        launchResult = await window.nuarcade.launchMameGame(gamePath)
-        else if (emu === 'retroarch')   launchResult = await window.nuarcade.launchRetroArchGame(gamePath, current.core)
-        else if (emu === 'project64')   launchResult = await window.nuarcade.launchN64Game(gamePath)
-        else if (emu === 'duckstation') launchResult = await window.nuarcade.launchPs1Game(gamePath)
-        else if (emu === 'flycast')     launchResult = await window.nuarcade.launchFlycastGame(gamePath)
-        else if (emu === 'xemu')        launchResult = await window.nuarcade.launchXemuGame(gamePath)
-        else if (emu === 'cxbx')        launchResult = await window.nuarcade.launchCxbxGame(gamePath)
-        else if (emu === 'model2')      launchResult = await window.nuarcade.launchModel2Game(gamePath)
-        else if (emu === 'model3')      launchResult = await window.nuarcade.launchModel3Game(gamePath)
-        else if (emu === 'ppsspp')      launchResult = await window.nuarcade.launchPspGame(gamePath)
-        else if (emu === 'cemu')        launchResult = await window.nuarcade.launchWiiUGame(gamePath)
-        else if (emu === 'vpx' || current.isPinball) launchResult = await window.nuarcade.launchVpxTable(gamePath)
-        else if (emu === 'steam')  launchResult = await window.nuarcade.launchSteamGame(current.steamAppId || gamePath)
-        else if (emu === 'pc')     launchResult = await window.nuarcade.launchPcGame(gamePath)
-        else launchResult = await window.nuarcade.launchGame(current.profilePath || current.profile)
-
-        // Several backend launch handlers resolve with a failure object
-        // rather than rejecting -- spawn errors surface asynchronously, not
-        // as a synchronous throw, so a resolved promise here doesn't
-        // guarantee the emulator actually started. Checking the result is
-        // what actually catches a missing/misconfigured emulator path
-        // instead of silently doing nothing.
-        if (launchResult && launchResult.success === false) {
-          showError("Failed to launch " + current.title + ": " + (launchResult.error || "unknown error"))
-          setLaunching(false)
-          return
-        }
-      } catch (e) {
-        showError("Failed to launch " + current.title + ": " + (e.message || "unknown error"))
-        setLaunching(false)
-        return
-      }
-    } else {
-      console.log("Dev mode would launch:", current.profile)
-    }
-    setTimeout(() => setLaunching(false), 3000)
+    launch(current)
   }
 
   // Clear any stale auto-launch state on mount -- prevents GameDetail showing on startup
@@ -727,7 +607,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
 
       if (e.key === "ArrowLeft")  { sounds.navigate(); navigate(-1) }
       if (e.key === "ArrowRight") { sounds.navigate(); navigate(1) }
-      if (e.key === "Enter") { if (!showDetail && !showHelp && !showStats && !showAchievements && !showCollections && !showSettings && !showMediaManager && !showCoach) { sounds.select(); setLaunching(false); setShowDetail(true) } else if (showDetail) { if (current) launchGame() } }
+      if (e.key === "Enter") { if (!showDetail && !showHelp && !showStats && !showAchievements && !showCollections && !showSettings && !showMediaManager && !showCoach) { sounds.select(); resetLaunching(); setShowDetail(true) } else if (showDetail) { if (current) launchGame() } }
       if ((e.key === "c" || e.key === "C") && !showDetail && !showHelp && !showStats && !showCoach && !showSettings && !showMediaManager) { sounds.select?.(); setShowCoach(true) }
       if ((e.key === "o" || e.key === "O") && !showDetail && !showHelp && !showStats && !showCoach && !showSettings && !showMediaManager) { sounds.select?.(); setShowOperator(true) }
       if (e.key === "Escape") {
@@ -739,7 +619,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       }
 
       // Single-key shortcuts only fire when no overlay is open
-      const anyOverlay = showDetail || showHelp || showStats || showAchievements || showCollections || showSettings || showMediaManager || showCoach || showOperator || showControllerPrompt
+      const anyOverlay = showDetail || showHelp || showStats || showAchievements || showCollections || showSettings || showMediaManager || showCoach || showOperator || !!needsControllerPrompt
       if (anyOverlay) return
 
       // Konami code detector: UP UP DOWN DOWN LEFT RIGHT LEFT RIGHT b a
@@ -766,7 +646,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     }
     window.addEventListener("keydown", handler)
     return () => window.removeEventListener("keydown", handler)
-  }, [filteredGames, selectedIndex, showSearch, showVirtualKeyboard, showDetail, showHelp, showStats, showAchievements, showCollections, showSettings, showMediaManager, showCoach, showOperator, current, handleLaunch])
+  }, [filteredGames, selectedIndex, showSearch, showVirtualKeyboard, showDetail, showHelp, showStats, showAchievements, showCollections, showSettings, showMediaManager, showCoach, showOperator, current])
 
   // search focus effect removed
 
@@ -884,7 +764,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
         if (tab) setActiveCategory(tab)
         setFocusZone(2); return
       }
-      if (z === 2) { if (!showDetailRef.current) { setLaunching(false); setShowDetail(true) } return }
+      if (z === 2) { if (!showDetailRef.current) { resetLaunching(); setShowDetail(true) } return }
       if (z === 3) { launchGame(); return }
       if (z === 4) { hintBarActions[barFocusIdxRef.current]?.(); return }
     },
@@ -1305,7 +1185,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
                       artPref={artPref}
                       artwork={artwork}
                       onClick={() => {
-                        if (index === selectedIndex) { sounds.select(); setLaunching(false); setShowDetail(true) }
+                        if (index === selectedIndex) { sounds.select(); resetLaunching(); setShowDetail(true) }
                         else setSelectedIndex(index)
                       }}
                     />
@@ -1394,10 +1274,10 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
         />
       )}
 
-      {showControllerPrompt && current && (
+      {needsControllerPrompt && (
         <ControllerPrompt
-          game={current}
-          onDone={() => { setShowControllerPrompt(false); handleLaunch() }}
+          game={needsControllerPrompt}
+          onDone={() => confirmLaunch(needsControllerPrompt)}
         />
       )}
       {showCollections && (
@@ -1435,7 +1315,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
           onSelectGame={(g) => {
             const idx = filteredGames.findIndex(fg => (fg.id && fg.id === g.id) || (fg.profile && fg.profile === g.profile))
             if (idx >= 0) setSelectedIndex(idx)
-            setLaunching(false)
+            resetLaunching()
             setShowDetail(false)
             setTimeout(() => setShowDetail(true), 50)
           }}
