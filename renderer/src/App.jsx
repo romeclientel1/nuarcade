@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef, Component } from "react"
 import Intro from "./components/Intro/Intro"
 import Wheel from "./components/Wheel/Wheel"
+import VesparaHome from "./components/VesparaHome/VesparaHome"
 import CRT from "./components/CRT/CRT"
 import PlayerSelect from "./components/PlayerSelect/PlayerSelect"
 import { useProfiles } from "./context/ProfileContext"
+import { useDestination } from "./hooks/useDestination"
 import CoinCounter from "./components/CoinCounter/CoinCounter"
 import { useTheme } from "./hooks/useTheme"
 import "./index.css"
@@ -44,6 +46,19 @@ class ErrorBoundary extends Component {
 export default function App() {
   const [phase, setPhase] = useState("intro")
   const { profiles, activeProfile, addProfile, selectProfile, selectGuest, deleteProfile } = useProfiles()
+  // App-level surface: Vespara Home <-> the existing Wheel/Library
+  // experience. A second, independent useDestination() instance --
+  // completely separate from Wheel's own internal one governing
+  // Help/Stats. null = Home, "library" = Wheel. Named locally so it's
+  // clear this instance has nothing to do with Wheel's destinations.
+  // back: backSurface is not yet wired to anything -- Wheel's own return
+  // path is pending confirmation (see report). Only what's actually used
+  // is destructured here to avoid dead code in the meantime.
+  const {
+    currentDestination: currentSurface,
+    navigate: navigateSurface,
+    goHome: goToSurfaceRoot,
+  } = useDestination()
   const { themeId, setTheme } = useTheme()
   // Settings already persists this to the backend config under crtEffect --
   // this just loads that saved value on launch and mirrors live changes so
@@ -74,8 +89,13 @@ export default function App() {
   }
 
   const handleReturnToPlayerSelect = () => {
+    // Reset the surface to Home so selecting a different player next
+    // cannot land them directly inside the previous player's Library view.
+    goToSurfaceRoot()
     setPhase("playerSelect")
   }
+
+  const handleEnterLibrary = () => navigateSurface("library")
 
   return (
     <ErrorBoundary>
@@ -96,14 +116,21 @@ export default function App() {
         )}
 
         {phase === "main" && (
-          <Wheel
-            activeProfile={activeProfile}
-            onSwitchPlayer={handleReturnToPlayerSelect}
-            crtEnabled={crtEnabled}
-            onCRTChange={setCrtEnabled}
-            themeId={themeId}
-            onThemeChange={setTheme}
-          />
+          currentSurface === "library" ? (
+            <Wheel
+              activeProfile={activeProfile}
+              onSwitchPlayer={handleReturnToPlayerSelect}
+              crtEnabled={crtEnabled}
+              onCRTChange={setCrtEnabled}
+              themeId={themeId}
+              onThemeChange={setTheme}
+            />
+          ) : (
+            <VesparaHome
+              onEnterLibrary={handleEnterLibrary}
+              onSwitchPlayer={handleReturnToPlayerSelect}
+            />
+          )
         )}
 
         <CRT enabled={crtEnabled} />
