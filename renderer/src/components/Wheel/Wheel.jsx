@@ -224,7 +224,7 @@ function KonamiCelebration({ onClose }) {
   )
 }
 
-export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange, activeProfile, onSwitchPlayer }) {
+export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange, activeProfile, onSwitchPlayer, onReturnHome }) {
   const {
     games, stats, loading, libraryEmpty, config,
   toggleFavorite, isFavorite,
@@ -661,13 +661,14 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     () => setShowCollections(true),                              // 3 []
     () => navigateTo("stats"),                                   // 4 #
     () => setShowAchievements(true),                             // 5 *
-    () => { if (onSwitchPlayer) onSwitchPlayer() },              // 6 Player
-    () => setShowMediaManager(true),                             // 7 Media
-    () => setShowSettings(true),                                 // 8 Settings
-    () => navigateTo("help"),                                    // 9 ?
-    () => setShowExitPopup(true), // 10 Exit -- show Yes/No popup
+    () => { if (onReturnHome) onReturnHome() },                  // 6 Home
+    () => { if (onSwitchPlayer) onSwitchPlayer() },              // 7 Player
+    () => setShowMediaManager(true),                             // 8 Media
+    () => setShowSettings(true),                                 // 9 Settings
+    () => navigateTo("help"),                                    // 10 ?
+    () => setShowExitPopup(true), // 11 Exit -- show Yes/No popup
   ]
-  const TOP_MENU_MAX = 9
+  const TOP_MENU_MAX = 10
 
   // Hint bar actions indexed 0-12
   const hintBarActions = [
@@ -994,6 +995,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
               <button className={styles.colBtn + (focusZone === 0 && topMenuIdx === 2 ? " " + styles.barFocused : "")} onClick={() => setShowCollections(true)} title="Collections (N)">Sets</button>
               <button className={styles.statsBtn + (focusZone === 0 && topMenuIdx === 3 ? " " + styles.barFocused : "")} onClick={() => navigateTo("stats")} title="My Stats (T)">Stats</button>
               <button className={styles.achieveBtn + (focusZone === 0 && topMenuIdx === 4 ? " " + styles.barFocused : "")} onClick={() => setShowAchievements(true)} title="Achievements (A)">Ach.</button>
+              <button className={styles.settingsBtn + (focusZone === 0 && topMenuIdx === 5 ? " " + styles.barFocused : "")} onClick={() => { if (onReturnHome) onReturnHome() }} title="Return to Vespara Home">Home</button>
               {activeProfile && (
                 <button
                   className={styles.settingsBtn}
@@ -1005,13 +1007,13 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
                 </button>
               )}
               {!activeProfile && onSwitchPlayer && (
-                <button className={styles.settingsBtn + (focusZone === 0 && topMenuIdx === 5 ? " " + styles.barFocused : "")} onClick={onSwitchPlayer} title="Select player">
+                <button className={styles.settingsBtn + (focusZone === 0 && topMenuIdx === 6 ? " " + styles.barFocused : "")} onClick={onSwitchPlayer} title="Select player">
                   GUEST
                 </button>
               )}
-              <button className={styles.mediaBtn + (focusZone === 0 && topMenuIdx === 6 ? " " + styles.barFocused : "")} onClick={() => setShowMediaManager(true)}>Media</button>
-              <button className={styles.settingsBtn + (focusZone === 0 && topMenuIdx === 7 ? " " + styles.barFocused : "")} onClick={() => setShowSettings(true)}>Settings</button>
-              <button className={styles.helpBtn + (focusZone === 0 && topMenuIdx === 8 ? " " + styles.barFocused : "")} onClick={() => navigateTo("help")}>?</button>
+              <button className={styles.mediaBtn + (focusZone === 0 && topMenuIdx === 7 ? " " + styles.barFocused : "")} onClick={() => setShowMediaManager(true)}>Media</button>
+              <button className={styles.settingsBtn + (focusZone === 0 && topMenuIdx === 8 ? " " + styles.barFocused : "")} onClick={() => setShowSettings(true)}>Settings</button>
+              <button className={styles.helpBtn + (focusZone === 0 && topMenuIdx === 9 ? " " + styles.barFocused : "")} onClick={() => navigateTo("help")}>?</button>
               {updateAvailable && (
                 <button
                   className={styles.settingsBtn}
@@ -1024,7 +1026,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
                 </button>
               )}
               <button
-                className={styles.exitBtn + (focusZone === 0 && topMenuIdx === 9 ? " " + styles.barFocused : "")}
+                className={styles.exitBtn + (focusZone === 0 && topMenuIdx === 10 ? " " + styles.barFocused : "")}
                 onClick={() => setShowExitPopup(true)}
                 title="Exit NuArcade"
               >
