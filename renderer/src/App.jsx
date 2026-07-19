@@ -3,7 +3,7 @@ import Intro from "./components/Intro/Intro"
 import Wheel from "./components/Wheel/Wheel"
 import CRT from "./components/CRT/CRT"
 import PlayerSelect from "./components/PlayerSelect/PlayerSelect"
-import { usePlayerProfiles } from "./hooks/usePlayerProfiles"
+import { useProfiles } from "./context/ProfileContext"
 import CoinCounter from "./components/CoinCounter/CoinCounter"
 import { useTheme } from "./hooks/useTheme"
 import "./index.css"
@@ -43,8 +43,7 @@ class ErrorBoundary extends Component {
 
 export default function App() {
   const [phase, setPhase] = useState("intro")
-  const [currentPlayer, setCurrentPlayer] = useState(null)
-  const { profiles, addProfile, deleteProfile } = usePlayerProfiles()
+  const { profiles, activeProfile, addProfile, selectProfile, selectGuest, deleteProfile } = useProfiles()
   const { themeId, setTheme } = useTheme()
   // Settings already persists this to the backend config under crtEffect --
   // this just loads that saved value on launch and mirrors live changes so
@@ -60,23 +59,21 @@ export default function App() {
   const handleIntroComplete = () => setPhase("playerSelect")
 
   const handlePlayerSelect = (player) => {
-    setCurrentPlayer(player)
+    selectProfile(player.id)
     setPhase("main")
   }
 
   const handleGuest = () => {
-    setCurrentPlayer({ name: 'Guest', id: 'guest' })
+    selectGuest()
     setPhase("main")
   }
 
   const handleAddProfile = (name) => {
-    const p = addProfile(name)
-    setCurrentPlayer(p)
+    addProfile(name)
     setPhase("main")
   }
 
   const handleReturnToPlayerSelect = () => {
-    setCurrentPlayer(null)
     setPhase("playerSelect")
   }
 
@@ -100,7 +97,7 @@ export default function App() {
 
         {phase === "main" && (
           <Wheel
-            activeProfile={currentPlayer}
+            activeProfile={activeProfile}
             onSwitchPlayer={handleReturnToPlayerSelect}
             crtEnabled={crtEnabled}
             onCRTChange={setCrtEnabled}
