@@ -20,6 +20,7 @@ import { useErrorToast, ErrorToastContainer } from "./ErrorToast"
 import SortMenu from "./SortMenu"
 import { useArcadeSounds } from "../../hooks/useArcadeSounds"
 import { useGameLauncher } from "../../hooks/useGameLauncher"
+import { useDestination } from "../../hooks/useDestination"
 import { useMusicPlayer  } from "../../hooks/useMusicPlayer"
 import { usePlaytime } from "../../hooks/usePlaytime"
 import { useSteamGridDB } from "../../hooks/useSteamGridDB"
@@ -271,7 +272,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const showDetailRef      = useRef(false)
   const showSettingsRef    = useRef(false)
   const showSearchRef      = useRef(false)
-  const showHelpRef        = useRef(false)
+  const currentDestinationRef = useRef(null)
   const showMediaManagerRef = useRef(false)
   const showVirtualKeyboardRef = useRef(false)
   const showSortRef            = useRef(false)
@@ -327,7 +328,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const [showMediaManager, setShowMediaManager] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [showDetail, setShowDetail] = useState(false)
-  const [showHelp, setShowHelp] = useState(false)
+  const { currentDestination, navigate: navigateTo, back } = useDestination()
   const [showCoach,      setShowCoach     ] = useState(false)
   const [showOperator,   setShowOperator  ] = useState(false)
   const [showSort, setShowSort] = useState(false)
@@ -467,7 +468,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   showDetailRef.current        = showDetail
   showSettingsRef.current      = showSettings
   showSearchRef.current        = showSearch
-  showHelpRef.current          = showHelp
+  currentDestinationRef.current = currentDestination
   showMediaManagerRef.current  = showMediaManager
   showVirtualKeyboardRef.current = showVirtualKeyboard
     showSortRef.current            = showSort
@@ -607,19 +608,20 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
 
       if (e.key === "ArrowLeft")  { sounds.navigate(); navigate(-1) }
       if (e.key === "ArrowRight") { sounds.navigate(); navigate(1) }
-      if (e.key === "Enter") { if (!showDetail && !showHelp && !showStats && !showAchievements && !showCollections && !showSettings && !showMediaManager && !showCoach) { sounds.select(); resetLaunching(); setShowDetail(true) } else if (showDetail) { if (current) launchGame() } }
-      if ((e.key === "c" || e.key === "C") && !showDetail && !showHelp && !showStats && !showCoach && !showSettings && !showMediaManager) { sounds.select?.(); setShowCoach(true) }
-      if ((e.key === "o" || e.key === "O") && !showDetail && !showHelp && !showStats && !showCoach && !showSettings && !showMediaManager) { sounds.select?.(); setShowOperator(true) }
+      if (e.key === "Enter") { if (!showDetail && currentDestination !== "help" && !showStats && !showAchievements && !showCollections && !showSettings && !showMediaManager && !showCoach) { sounds.select(); resetLaunching(); setShowDetail(true) } else if (showDetail) { if (current) launchGame() } }
+      if ((e.key === "c" || e.key === "C") && !showDetail && currentDestination !== "help" && !showStats && !showCoach && !showSettings && !showMediaManager) { sounds.select?.(); setShowCoach(true) }
+      if ((e.key === "o" || e.key === "O") && !showDetail && currentDestination !== "help" && !showStats && !showCoach && !showSettings && !showMediaManager) { sounds.select?.(); setShowOperator(true) }
       if (e.key === "Escape") {
         sounds.back()
         setShowDetail(false)
-        setShowHelp(false); setShowSort(false); setShowStats(false)
+        if (currentDestination === "help") back()
+        setShowSort(false); setShowStats(false)
         setShowAchievements(false); setShowCollections(false)
         // search removed
       }
 
       // Single-key shortcuts only fire when no overlay is open
-      const anyOverlay = showDetail || showHelp || showStats || showAchievements || showCollections || showSettings || showMediaManager || showCoach || showOperator || !!needsControllerPrompt
+      const anyOverlay = showDetail || currentDestination === "help" || showStats || showAchievements || showCollections || showSettings || showMediaManager || showCoach || showOperator || !!needsControllerPrompt
       if (anyOverlay) return
 
       // Konami code detector: UP UP DOWN DOWN LEFT RIGHT LEFT RIGHT b a
@@ -633,7 +635,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       }
 
       if (e.key === "f" || e.key === "F") { if (current) toggleFavorite(current.id || current.profile) }
-      if (e.key === "?") setShowHelp(h => !h)
+      if (e.key === "?") { if (currentDestination === "help") back(); else navigateTo("help") }
       if (e.key === "n" || e.key === "N") setShowCollections(c => !c)
       if (e.key === "t" || e.key === "T") setShowStats(s => !s)
       if (e.key === "a" || e.key === "A") setShowAchievements(s => !s)
@@ -646,7 +648,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     }
     window.addEventListener("keydown", handler)
     return () => window.removeEventListener("keydown", handler)
-  }, [filteredGames, selectedIndex, showSearch, showVirtualKeyboard, showDetail, showHelp, showStats, showAchievements, showCollections, showSettings, showMediaManager, showCoach, showOperator, current])
+  }, [filteredGames, selectedIndex, showSearch, showVirtualKeyboard, showDetail, currentDestination, showStats, showAchievements, showCollections, showSettings, showMediaManager, showCoach, showOperator, current])
 
   // search focus effect removed
 
@@ -664,7 +666,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     () => { if (onSwitchPlayer) onSwitchPlayer() },              // 6 Player
     () => setShowMediaManager(true),                             // 7 Media
     () => setShowSettings(true),                                 // 8 Settings
-    () => setShowHelp(true),                                     // 9 ?
+    () => navigateTo("help"),                                    // 9 ?
     () => setShowExitPopup(true), // 10 Exit -- show Yes/No popup
   ]
   const TOP_MENU_MAX = 9
@@ -686,7 +688,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     showDetailRef.current          = showDetail
     showSettingsRef.current        = showSettings
     showSearchRef.current          = showSearch
-    showHelpRef.current            = showHelp
+    currentDestinationRef.current  = currentDestination
     showMediaManagerRef.current    = showMediaManager
     showVirtualKeyboardRef.current = showVirtualKeyboard
     showSortRef.current            = showSort
@@ -706,7 +708,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   })
 
   useGamepad({
-    enabled: !showDetailRef.current && !showMediaManagerRef.current && !showSettingsRef.current && !showHelpRef.current && !attractMode  && !showVirtualKeyboardRef.current && !showSortRef.current && !showCollectionsRef.current && !showStatsRef.current && !showAchievementsRef.current && !showCoachRef.current && !showOperatorRef.current ,
+    enabled: !showDetailRef.current && !showMediaManagerRef.current && !showSettingsRef.current && currentDestinationRef.current !== "help" && !attractMode  && !showVirtualKeyboardRef.current && !showSortRef.current && !showCollectionsRef.current && !showStatsRef.current && !showAchievementsRef.current && !showCoachRef.current && !showOperatorRef.current ,
     left: () => {
       if (showRetroArchPopupRef.current) { setRetroArchChoice(0); return }
       if (showExitPopupRef.current) { setExitChoice(0); return }
@@ -775,7 +777,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       if (showDetailRef.current)      { setShowDetail(false); return }
       if (showSettingsRef.current)    { setShowSettings(false); return }
       if (showSearchRef.current)      { sounds.back(); setShowSearch(false); setShowVirtualKeyboard(false); setSearch(""); setDebouncedSearch(""); return }
-      if (showHelpRef.current)        { setShowHelp(false); return }
+      if (currentDestinationRef.current === "help") { back(); return }
       if (showMediaManagerRef.current){ setShowMediaManager(false); return }
       // If in any zone other than wheel, return to wheel
       if (focusZoneRef.current !== 2) { setFocusZone(2); return }
@@ -1012,7 +1014,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
               )}
               <button className={styles.mediaBtn + (focusZone === 0 && topMenuIdx === 6 ? " " + styles.barFocused : "")} onClick={() => setShowMediaManager(true)}>Media</button>
               <button className={styles.settingsBtn + (focusZone === 0 && topMenuIdx === 7 ? " " + styles.barFocused : "")} onClick={() => setShowSettings(true)}>Settings</button>
-              <button className={styles.helpBtn + (focusZone === 0 && topMenuIdx === 8 ? " " + styles.barFocused : "")} onClick={() => setShowHelp(true)}>?</button>
+              <button className={styles.helpBtn + (focusZone === 0 && topMenuIdx === 8 ? " " + styles.barFocused : "")} onClick={() => navigateTo("help")}>?</button>
               {updateAvailable && (
                 <button
                   className={styles.settingsBtn}
@@ -1258,7 +1260,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       )}
 
       {showSort && <SortMenu current={sortBy} onChange={setSortBy} onClose={() => setShowSort(false)} />}
-      {showHelp && <Help onClose={() => setShowHelp(false)} />}
+      {currentDestination === "help" && <Help onClose={back} />}
 
       {showCoach && current && (
         <GameCoach
