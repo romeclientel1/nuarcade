@@ -120,6 +120,7 @@ export default function App() {
             <Wheel
               activeProfile={activeProfile}
               onSwitchPlayer={handleReturnToPlayerSelect}
+              onReturnHome={goToSurfaceRoot}
               crtEnabled={crtEnabled}
               onCRTChange={setCrtEnabled}
               themeId={themeId}
