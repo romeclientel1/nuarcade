@@ -6,6 +6,13 @@ import { useGameLauncher } from "../../hooks/useGameLauncher"
 import { useOverlayGamepad } from "../../hooks/useOverlayGamepad"
 import { useErrorToast, ErrorToastContainer } from "../Wheel/ErrorToast"
 import ControllerPrompt from "../ControllerPrompt/ControllerPrompt"
+import {
+  selectProfileHistoryStatus,
+  selectInstallationReadiness,
+  selectValidRecentGames,
+  PROFILE_TAG_FIELD,
+} from "../../selectors/profileReadiness"
+import { selectInitialHomeFocus } from "../../selectors/homeEntry"
 import styles from "./VesparaHome.module.css"
 
 const RECENT_LIMIT = 8
@@ -20,21 +27,60 @@ const ACTION_LABELS = { library: "Library", switchPlayer: "Switch Player", depar
 // environmental design here, deliberately.
 export default function VesparaHome({ onEnterLibrary, onSwitchPlayer }) {
   const { activeProfile } = useProfiles()
-  const { recentGames, addRecentlyPlayed, loading } = useRecentGames(RECENT_LIMIT)
+  const { recentGamesRaw, games, addRecentlyPlayed, loading } = useRecentGames(RECENT_LIMIT)
   const { startSession, endSession, recordLaunch } = usePlaytime()
   const { toasts: errorToasts, showError, dismiss: dismissError } = useErrorToast()
+
+  const activeProfileId = activeProfile?.id ?? null
+
+  // Recently Played is not profile-scoped in storage -- see
+  // selectors/profileReadiness.js for the full limitation note. Tagging
+  // each new entry with the active profile's id at write time is what
+  // makes "established" and the displayed Recent row truthful per
+  // profile going forward. Entries written before this change (or by any
+  // call site that hasn't adopted the tag) are correctly unattributable
+  // and never count toward any profile.
+  const addRecentlyPlayedForProfile = useCallback((game) => {
+    addRecentlyPlayed({ ...game, [PROFILE_TAG_FIELD]: activeProfileId })
+  }, [addRecentlyPlayed, activeProfileId])
 
   const {
     launch, confirmLaunch, dismissControllerPrompt,
     launching, launchError, needsControllerPrompt,
   } = useGameLauncher({
-    addRecentlyPlayed,
+    addRecentlyPlayed: addRecentlyPlayedForProfile,
     startSession, endSession, recordLaunch,
     showError,
     // No background video in Home -- onLaunchStart/onReturn are optional
     // and Wheel-specific (pausing/resuming its own bg video refs). Home
     // has nothing equivalent, so both are simply omitted.
   })
+
+  // Profile-scoped, resolved history -- the single source both the
+  // visible Recent row and the initial-focus derivation use, so they can
+  // never disagree with each other.
+  const validRecentGames = useMemo(
+    () => selectValidRecentGames(activeProfileId, recentGamesRaw, games),
+    [activeProfileId, recentGamesRaw, games]
+  )
+  const displayedRecentGames = useMemo(
+    () => validRecentGames.slice(0, RECENT_LIMIT),
+    [validRecentGames]
+  )
+  const profileHistoryStatus = useMemo(
+    () => selectProfileHistoryStatus(activeProfile, recentGamesRaw, games),
+    [activeProfile, recentGamesRaw, games]
+  )
+  const installationReadiness = useMemo(
+    () => selectInstallationReadiness(games, recentGamesRaw),
+    [games, recentGamesRaw]
+  )
+  const initialFocus = useMemo(() => selectInitialHomeFocus({
+    profileHistoryStatus,
+    installationReadiness,
+    recentGames: validRecentGames,
+    availableGames: games,
+  }), [profileHistoryStatus, installationReadiness, validRecentGames, games])
 
   // Artwork: read the same cache Wheel's own artwork state initializes
   // from, once, on mount. No scraping, no live subscription -- if a
@@ -47,10 +93,44 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer }) {
   // and the action row (Library / Switch Player / Depart). Left/Right
   // moves within a zone, Up/Down switches zones, Confirm activates
   // whatever's focused.
-  const hasRecents = recentGames.length > 0
+  const hasRecents = displayedRecentGames.length > 0
   const [focusZone, setFocusZone] = useState(hasRecents ? "recents" : "actions")
   const [recentIndex, setRecentIndex] = useState(0)
   const [actionIndex, setActionIndex] = useState(0)
+
+  // Tracks whether the player has manually moved focus at least once.
+  // Until then, background data settling (the async library load
+  // finishing, artwork resolving, etc.) is allowed to apply the derived
+  // initial focus. Once true, nothing here overrides the player's own
+  // navigation again -- see the "Focus lifecycle" requirement.
+  const [hasAcceptedInitialFocus, setHasAcceptedInitialFocus] = useState(false)
+  const acceptManualFocus = useCallback(() => setHasAcceptedInitialFocus(true), [])
+
+  // Re-derive and reset when the active profile changes. In the current
+  // app, VesparaHome only ever mounts fresh per profile session (Home
+  // and Wheel are mutually exclusive, and switching players tears down
+  // and remounts Home) -- so this realistically only fires once, on
+  // mount, per session. Included for correctness if that mounting
+  // strategy ever changes (e.g. Home becomes persistently mounted).
+  useEffect(() => {
+    setHasAcceptedInitialFocus(false)
+  }, [activeProfileId])
+
+  useEffect(() => {
+    if (hasAcceptedInitialFocus) return
+    if (loading) return // wait for the async library load to settle first
+    if (initialFocus.type === "recent-game") {
+      const idx = displayedRecentGames.findIndex(g => (g.id || g.profile) === initialFocus.gameId)
+      if (idx >= 0) { setFocusZone("recents"); setRecentIndex(idx); return }
+    }
+    // 'library' | 'setup-connection' | 'first-game' (not produced today,
+    // see selectInitialHomeFocus) | 'none' all currently resolve to
+    // focusing the Library action slot -- see the render section for how
+    // 'setup-connection' relabels that same button rather than adding a
+    // new one.
+    setFocusZone("actions")
+    setActionIndex(0)
+  }, [hasAcceptedInitialFocus, loading, initialFocus, displayedRecentGames])
 
   useEffect(() => {
     if (!hasRecents && focusZone === "recents") setFocusZone("actions")
@@ -66,12 +146,12 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer }) {
   }, [onEnterLibrary, onSwitchPlayer])
 
   const launchFocused = useCallback(() => {
-    if (focusZone === "recents" && recentGames[recentIndex]) {
-      launch(recentGames[recentIndex])
+    if (focusZone === "recents" && displayedRecentGames[recentIndex]) {
+      launch(displayedRecentGames[recentIndex])
     } else if (focusZone === "actions") {
       runAction(ACTIONS[actionIndex])
     }
-  }, [focusZone, recentGames, recentIndex, actionIndex, launch, runAction])
+  }, [focusZone, displayedRecentGames, recentIndex, actionIndex, launch, runAction])
 
   // Main Home controller handling -- disabled while the Depart
   // confirmation or a controller hint prompt is showing, matching the
@@ -80,20 +160,22 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer }) {
   useOverlayGamepad({
     enabled: !showDepartConfirm && !needsControllerPrompt,
     onLeft: () => {
+      acceptManualFocus()
       if (focusZone === "recents") setRecentIndex(i => Math.max(0, i - 1))
       else setActionIndex(i => Math.max(0, i - 1))
     },
     onRight: () => {
-      if (focusZone === "recents") setRecentIndex(i => Math.min(recentGames.length - 1, i + 1))
+      acceptManualFocus()
+      if (focusZone === "recents") setRecentIndex(i => Math.min(displayedRecentGames.length - 1, i + 1))
       else setActionIndex(i => Math.min(ACTIONS.length - 1, i + 1))
     },
-    onUp: () => { if (hasRecents) setFocusZone("recents") },
-    onDown: () => { if (focusZone === "recents") setFocusZone("actions") },
+    onUp: () => { acceptManualFocus(); if (hasRecents) setFocusZone("recents") },
+    onDown: () => { acceptManualFocus(); if (focusZone === "recents") setFocusZone("actions") },
     onConfirm: launchFocused,
     // Back must not unexpectedly quit or leave Home. A safe, deterministic
     // default: return focus to the action row's first entry (Library).
     // Depart stays an explicit, separate action -- never triggered by Back.
-    onClose: () => { setFocusZone("actions"); setActionIndex(0) },
+    onClose: () => { acceptManualFocus(); setFocusZone("actions"); setActionIndex(0) },
   })
 
   // Depart confirmation's own small Left/Right/Confirm/Back handling,
@@ -124,21 +206,28 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer }) {
       }
       if (needsControllerPrompt) return
       if (e.key === "ArrowLeft") {
+        acceptManualFocus()
         if (focusZone === "recents") setRecentIndex(i => Math.max(0, i - 1))
         else setActionIndex(i => Math.max(0, i - 1))
       }
       if (e.key === "ArrowRight") {
-        if (focusZone === "recents") setRecentIndex(i => Math.min(recentGames.length - 1, i + 1))
+        acceptManualFocus()
+        if (focusZone === "recents") setRecentIndex(i => Math.min(displayedRecentGames.length - 1, i + 1))
         else setActionIndex(i => Math.min(ACTIONS.length - 1, i + 1))
       }
-      if (e.key === "ArrowUp")   { if (hasRecents) setFocusZone("recents") }
-      if (e.key === "ArrowDown") { if (focusZone === "recents") setFocusZone("actions") }
+      if (e.key === "ArrowUp")   { acceptManualFocus(); if (hasRecents) setFocusZone("recents") }
+      if (e.key === "ArrowDown") { acceptManualFocus(); if (focusZone === "recents") setFocusZone("actions") }
       if (e.key === "Enter") launchFocused()
-      if (e.key === "Escape") { setFocusZone("actions"); setActionIndex(0) }
+      if (e.key === "Escape") { acceptManualFocus(); setFocusZone("actions"); setActionIndex(0) }
     }
     window.addEventListener("keydown", handler)
     return () => window.removeEventListener("keydown", handler)
-  }, [focusZone, recentIndex, actionIndex, recentGames.length, hasRecents, showDepartConfirm, departChoice, needsControllerPrompt, launchFocused])
+  }, [focusZone, recentIndex, actionIndex, displayedRecentGames.length, hasRecents, showDepartConfirm, departChoice, needsControllerPrompt, launchFocused, acceptManualFocus])
+
+  const isSetupFocus = installationReadiness === "unconfigured"
+  const emptyStateText = isSetupFocus
+    ? "No games configured yet -- head into the Library to set up a connection."
+    : "No recent games yet -- head into the Library to get started."
 
   return (
     <div className={styles.home}>
@@ -153,10 +242,10 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer }) {
         {loading ? (
           <div className={styles.empty}>Loading...</div>
         ) : !hasRecents ? (
-          <div className={styles.empty}>No recent games yet -- head into the Library to get started.</div>
+          <div className={styles.empty}>{emptyStateText}</div>
         ) : (
           <div className={styles.recentRow}>
-            {recentGames.map((g, i) => {
+            {displayedRecentGames.map((g, i) => {
               const id = g.id || g.profile
               const art = artwork?.[id]
               const focused = focusZone === "recents" && i === recentIndex
@@ -164,7 +253,7 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer }) {
                 <button
                   key={id}
                   className={styles.recentCard + (focused ? " " + styles.focused : "")}
-                  onClick={() => { setFocusZone("recents"); setRecentIndex(i); launch(g) }}
+                  onClick={() => { acceptManualFocus(); setFocusZone("recents"); setRecentIndex(i); launch(g) }}
                   disabled={launching}
                 >
                   {art?.capsule || art?.hero ? (
@@ -191,9 +280,9 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer }) {
             <button
               key={action}
               className={styles.actionBtn + (focusZone === "actions" && i === actionIndex ? " " + styles.focused : "")}
-              onClick={() => { setFocusZone("actions"); setActionIndex(i); runAction(action) }}
+              onClick={() => { acceptManualFocus(); setFocusZone("actions"); setActionIndex(i); runAction(action) }}
             >
-              {ACTION_LABELS[action]}
+              {action === "library" && isSetupFocus ? "Set Up" : ACTION_LABELS[action]}
             </button>
           ))}
         </div>
