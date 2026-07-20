@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from "react"
 import { getControllerHint } from "../data/controllerHints"
+import { PROFILE_TAG_FIELD } from "../selectors/profileReadiness"
 
 // useGameLauncher -------------------------------------------------------
 // The single place a game actually gets launched, extracted out of
@@ -24,6 +25,7 @@ import { getControllerHint } from "../data/controllerHints"
 // shortcut into a different picker UI, and stays in Wheel.
 export function useGameLauncher({
   addRecentlyPlayed,
+  activeProfileId,
   startSession,
   endSession,
   recordLaunch,
@@ -45,7 +47,7 @@ export function useGameLauncher({
   // injected functions are never stale.
   const depsRef = useRef({})
   depsRef.current = {
-    addRecentlyPlayed, startSession, endSession, recordLaunch,
+    addRecentlyPlayed, activeProfileId, startSession, endSession, recordLaunch,
     showError, playLaunchSound, artwork, onLaunchStart, onReturn,
   }
 
@@ -100,7 +102,10 @@ export function useGameLauncher({
     const gameId = game.id || game.profile
     const sessionStart = deps.startSession?.(gameId)
     deps.recordLaunch?.(gameId)
-    deps.addRecentlyPlayed?.(game)
+    // Bound to whoever was active when THIS launch started, not whichever
+    // profile happens to be active by the time the launch resolves --
+    // captured once, here, not re-read from deps at write time below.
+    const launchedProfileId = deps.activeProfileId ?? null
 
     // Self-removing listeners, created fresh per launch call so each one
     // closes over exactly this call's gameId/sessionStart -- not shared
@@ -199,12 +204,32 @@ export function useGameLauncher({
           failCleanup()
           return
         }
+        // Recently Played is written here, once, on confirmed return --
+        // not at dispatch time. For the 18 emulator paths that route
+        // through the main process's launchWithReturn helper, `success:
+        // true` here already means the process ran past its own
+        // immediate-crash window (or exited cleanly) -- the strongest
+        // process-lifecycle evidence this app currently has, not a
+        // threshold invented in the renderer. Three paths (VPX/pinball,
+        // Steam, direct PC launch) are fire-and-forget in the main
+        // process and resolve with `{ ok: true }` instead of `{ success
+        // }` -- requiring strict `=== true` here means those never
+        // write, by construction, rather than by an emulator-type list
+        // that could drift out of sync. Documented limitation: games
+        // launched through those three paths cannot establish a profile
+        // today. See selectors/profileReadiness.js for the read side of
+        // this contract.
+        if (launchResult && launchResult.success === true) {
+          deps.addRecentlyPlayed?.({ ...game, [PROFILE_TAG_FIELD]: launchedProfileId })
+        }
       } catch (e) {
         deps.showError?.("Failed to launch " + game.title + ": " + (e.message || "unknown error"))
         failCleanup()
         return
       }
     } else {
+      // Dev mode (no window.nuarcade) -- no real process to confirm
+      // against, so this also counts as an uncertain launch. No write.
       console.log("Dev mode would launch:", game.profile)
     }
     setTimeout(() => {
