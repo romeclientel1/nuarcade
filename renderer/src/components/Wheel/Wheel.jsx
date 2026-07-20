@@ -21,6 +21,7 @@ import SortMenu from "./SortMenu"
 import { useArcadeSounds } from "../../hooks/useArcadeSounds"
 import { useGameLauncher } from "../../hooks/useGameLauncher"
 import { useDestination } from "../../hooks/useDestination"
+import { PROFILE_TAG_FIELD } from "../../selectors/profileReadiness"
 import { useMusicPlayer  } from "../../hooks/useMusicPlayer"
 import { usePlaytime } from "../../hooks/usePlaytime"
 import { useSteamGridDB } from "../../hooks/useSteamGridDB"
@@ -538,11 +539,22 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
 
   // Auto-launch last played game if configured
 
+  // Recently Played is not profile-scoped in storage -- tagging each new
+  // entry with the active profile's id at write time is what makes
+  // profile-history status truthful. See selectors/profileReadiness.js
+  // for the full limitation note. Wheel needs this too, not just Home:
+  // it's the primary place games actually get launched, so without this
+  // tag here a profile could never become "established" through normal
+  // Library play, only through Home's own Recent row.
+  const addRecentlyPlayedForProfile = (game) => {
+    addRecentlyPlayed({ ...game, [PROFILE_TAG_FIELD]: activeProfile?.id ?? null })
+  }
+
   const {
     launch, confirmLaunch, dismissControllerPrompt, resetLaunching,
     launching, launchError, needsControllerPrompt,
   } = useGameLauncher({
-    addRecentlyPlayed,
+    addRecentlyPlayed: addRecentlyPlayedForProfile,
     startSession, endSession, recordLaunch,
     showError,
     playLaunchSound: sounds.launch,
