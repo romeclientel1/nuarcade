@@ -10,7 +10,6 @@ import {
   selectProfileHistoryStatus,
   selectInstallationReadiness,
   selectValidRecentGames,
-  PROFILE_TAG_FIELD,
 } from "../../selectors/profileReadiness"
 import { selectInitialHomeFocus } from "../../selectors/homeEntry"
 import styles from "./VesparaHome.module.css"
@@ -33,27 +32,21 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer }) {
 
   const activeProfileId = activeProfile?.id ?? null
 
-  // Recently Played is not profile-scoped in storage -- see
-  // selectors/profileReadiness.js for the full limitation note. Tagging
-  // each new entry with the active profile's id at write time is what
-  // makes "established" and the displayed Recent row truthful per
-  // profile going forward. Entries written before this change (or by any
-  // call site that hasn't adopted the tag) are correctly unattributable
-  // and never count toward any profile.
-  const addRecentlyPlayedForProfile = useCallback((game) => {
-    addRecentlyPlayed({ ...game, [PROFILE_TAG_FIELD]: activeProfileId })
-  }, [addRecentlyPlayed, activeProfileId])
-
   const {
     launch, confirmLaunch, dismissControllerPrompt,
     launching, launchError, needsControllerPrompt,
   } = useGameLauncher({
-    addRecentlyPlayed: addRecentlyPlayedForProfile,
+    addRecentlyPlayed,
+    activeProfileId,
     startSession, endSession, recordLaunch,
     showError,
     // No background video in Home -- onLaunchStart/onReturn are optional
     // and Wheel-specific (pausing/resuming its own bg video refs). Home
     // has nothing equivalent, so both are simply omitted.
+    // Recently Played is no longer tagged/written here -- useGameLauncher
+    // itself is now the single write authority, writing once on
+    // confirmed return. See useGameLauncher.js and
+    // selectors/profileReadiness.js for the full contract.
   })
 
   // Profile-scoped, resolved history -- the single source both the
