@@ -121,11 +121,29 @@ export function reconcilePreDispatchFailure({ session, trackedToExit, error, cur
 // sessionStore.createSession's own documented launch guard; resolving a
 // genuinely stale nonterminal session left over from a crash/reload is
 // startup recovery's job (App.jsx), not this hook's.
+//
+// originContext.focusedGameId always mirrors gameId -- the game actually
+// being launched -- regardless of whatever the caller passed. This is a
+// deliberate, minimal adaptation: a caller derives its own origin metadata
+// (section/category, a secondary index, etc.) from component state that
+// can briefly lag behind a just-clicked game (e.g. a click handler that
+// updates focus state and calls launch() in the same tick, before React
+// re-renders with the new state). gameId itself never has that problem --
+// it's the exact game runLaunch/beginLaunchSession were called with -- so
+// letting the caller's own value win here would risk silently capturing
+// the PREVIOUS focus target instead of the one actually launched. Any
+// other fields the caller supplies (sectionId, selectedIndex, etc.) pass
+// through unchanged.
 export function beginLaunchSession({ profileId, gameId, originDestination, originContext }) {
   if (hasNonterminalSession()) {
     return { ok: false, reason: "already-active" }
   }
-  const session = createSession({ profileId, gameId, originDestination, originContext })
+  const session = createSession({
+    profileId,
+    gameId,
+    originDestination,
+    originContext: { ...(originContext || {}), focusedGameId: gameId },
+  })
   return { ok: true, session }
 }
 

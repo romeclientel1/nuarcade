@@ -12,6 +12,7 @@ import {
   selectValidRecentGames,
 } from "../../selectors/profileReadiness"
 import { selectInitialHomeFocus } from "../../selectors/homeEntry"
+import { buildHomeOriginContext } from "./homeLaunchOrigin.js"
 import styles from "./VesparaHome.module.css"
 
 const RECENT_LIMIT = 8
@@ -47,6 +48,8 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer }) {
     // itself is now the single write authority, writing once on
     // confirmed return. See useGameLauncher.js and
     // selectors/profileReadiness.js for the full contract.
+    originDestination: "home",
+    originContext: buildHomeOriginContext(),
   })
 
   // Profile-scoped, resolved history -- the single source both the

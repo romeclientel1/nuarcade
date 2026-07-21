@@ -88,6 +88,28 @@ test("session persisted before launch dispatch, guarded against a second concurr
   assert.equal(getActiveSession().gameId, "g1")
 })
 
+test("beginLaunchSession always sets originContext.focusedGameId to the launched gameId, even when no originContext is supplied", () => {
+  const begun = beginLaunchSession({ profileId: "p1", gameId: "g1", originDestination: "library" })
+  assert.equal(begun.session.originContext.focusedGameId, "g1")
+})
+
+test("beginLaunchSession overrides a caller-supplied focusedGameId that doesn't match the actual launched game (defends against stale caller state), while preserving other supplied context fields", () => {
+  const begun = beginLaunchSession({
+    profileId: "p1", gameId: "g1", originDestination: "library",
+    originContext: { focusedGameId: "some-other-stale-game", sectionId: "Racing", selectedIndex: 4 },
+  })
+  assert.equal(begun.session.originContext.focusedGameId, "g1")
+  assert.equal(begun.session.originContext.sectionId, "Racing")
+  assert.equal(begun.session.originContext.selectedIndex, 4)
+})
+
+test("beginLaunchSession is safe when gameId itself is missing (stale/malformed game)", () => {
+  const begun = beginLaunchSession({ profileId: "p1", gameId: undefined, originDestination: "library" })
+  assert.equal(begun.ok, true)
+  assert.equal(begun.session.gameId, undefined)
+  assert.equal(begun.session.originContext.focusedGameId, undefined)
+})
+
 test("stable sessionId: the id returned by beginLaunchSession is the same id the dispatch layer would send and the same id later reconciliation looks up by", () => {
   const begun = beginLaunchSession({ profileId: "p1", gameId: "g1", originDestination: "library" })
   const sessionId = begun.session.id
