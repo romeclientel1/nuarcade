@@ -3,15 +3,114 @@ const path = require('path')
 const { exec, spawn } = require('child_process')
 const config = require('./config')
 const { scanMedia } = require('./mediaScanner')
+const launchRegistry = require('./launchRegistry')
 
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged
 
 let mainWin = null
 
-// Shared launcher -- minimizes NuArcade while a game runs, restores on exit
+// -- Launch lifecycle registry integration -----------------------------------
+// Wires the in-memory main-process launch registry (launchRegistry.js) into
+// the real child_process lifecycle. The registry is the single source of
+// truth for whether a process actually started, whether it's tracked to
+// exit, and its raw exit facts -- no 4000ms trust policy lives here; that
+// stays in the renderer's launchEvidence.js, which decides whether the raw
+// evidence this module reports is trustworthy.
+
+function emitLaunchLifecycleTerminal(status) {
+  if (mainWin && !mainWin.isDestroyed()) {
+    mainWin.webContents.send('launch-lifecycle-terminal', status)
+  }
+}
+
+function registerLaunchSession(sessionId, trackedToExit) {
+  if (!sessionId) return null
+  return launchRegistry.registerLaunch({ sessionId: sessionId, trackedToExit: trackedToExit === true })
+}
+
+// Attaches spawn/error/exit listeners that record raw lifecycle facts onto
+// an already-registered session, and emits exactly one terminal push the
+// moment (and only the moment) the session actually becomes terminal.
+// Safe against duplicate/delayed 'exit' or 'error' events because
+// launchRegistry's recordExit/recordSpawnFailure are themselves idempotent
+// (first terminal write wins) -- reportTerminal only pushes when this
+// specific call is the one that flipped exitedAt from null.
+//
+// The 'error' listener is attached UNCONDITIONALLY, sessionId or not: for
+// the fire-and-forget (detached) launchers this is the only 'error'
+// listener a child ever gets, and Node's EventEmitter throws on an 'error'
+// event with zero listeners -- bailing out here entirely for a legacy
+// (no-sessionId) call would silently reintroduce that crash risk. Only the
+// registry bookkeeping itself is conditional on sessionId being present.
+function trackLaunchLifecycle(child, sessionId, trackedToExit) {
+  function reportTerminal(mutate) {
+    if (!sessionId) return
+    var before = launchRegistry.getStatus(sessionId)
+    mutate()
+    var after = launchRegistry.getStatus(sessionId)
+    if (before.exitedAt == null && after.exitedAt != null) emitLaunchLifecycleTerminal(after)
+  }
+
+  child.on('spawn', function() {
+    if (!sessionId) return
+    launchRegistry.recordProcessStarted(sessionId, { startedAt: Date.now() })
+  })
+  child.on('error', function(err) {
+    reportTerminal(function() {
+      launchRegistry.recordSpawnFailure(sessionId, { error: err && err.message, exitedAt: Date.now() })
+    })
+  })
+  if (trackedToExit) {
+    child.on('exit', function(code, signal) {
+      reportTerminal(function() {
+        launchRegistry.recordExit(sessionId, { exitCode: code, signal: signal || null, exitedAt: Date.now() })
+      })
+    })
+  }
+}
+
+// Fire-and-forget launchers (VPX, Steam, direct PC) can never report an
+// exit -- registered trackedToExit: false, so they remain 'uncertain' by
+// construction (see launchRegistry.js) no matter what happens after spawn.
+// spawnImpl is an optional test-only seam (defaults to the real spawn);
+// production call sites never pass it.
+function launchDetachedFireAndForget(exe, args, spawnOptions, sessionId, spawnImpl) {
+  registerLaunchSession(sessionId, false)
+  var doSpawn = spawnImpl || spawn
+  var child = doSpawn(exe, args, spawnOptions)
+  trackLaunchLifecycle(child, sessionId, false)
+  child.unref()
+  return child
+}
+
+// execImpl is an optional test-only seam (defaults to the real exec);
+// production call sites never pass it.
+function launchViaShellCommand(command, sessionId, execImpl) {
+  registerLaunchSession(sessionId, false)
+  var doExec = execImpl || exec
+  doExec(command, function(error) {
+    if (!sessionId) return
+    if (error) {
+      var before = launchRegistry.getStatus(sessionId)
+      launchRegistry.recordSpawnFailure(sessionId, { error: error.message, exitedAt: Date.now() })
+      var after = launchRegistry.getStatus(sessionId)
+      if (before.exitedAt == null && after.exitedAt != null) emitLaunchLifecycleTerminal(after)
+    } else {
+      launchRegistry.recordProcessStarted(sessionId, { startedAt: Date.now() })
+    }
+  })
+}
+
+// Shared launcher -- minimizes NuArcade while a game runs, restores on exit.
+// options.spawnImpl is an optional test-only seam (defaults to the real
+// spawn); production call sites (all 18 tracked launch handlers) never
+// pass it.
 function launchWithReturn(exe, args, options) {
   args = args || []
   options = options || {}
+  var sessionId = options.sessionId || null
+  var doSpawn = options.spawnImpl || spawn
+  registerLaunchSession(sessionId, true)
   return new Promise(function(resolve, reject) {
     if (mainWin && !options.keepVisible) {
       mainWin.setFullScreen(false)
@@ -19,11 +118,12 @@ function launchWithReturn(exe, args, options) {
     }
     var startedAt = Date.now()
     var stderrBuf = ''
-    var child = spawn(exe, args, Object.assign({
+    var child = doSpawn(exe, args, Object.assign({
       cwd: options.cwd || path.dirname(exe),
       stdio: ['ignore', 'ignore', 'pipe'],
       detached: false,
     }, options.spawnOpts || {}))
+    trackLaunchLifecycle(child, sessionId, true)
     if (child.stderr) {
       child.stderr.on('data', function(chunk) {
         stderrBuf += chunk.toString()
@@ -134,13 +234,13 @@ ipcMain.handle('browse-folder', async () => {
 })
 
 // -- Launch TeknoParrot game -------------------------------------------------
-ipcMain.handle('launch-game', async (event, profilePath) => {
+ipcMain.handle('launch-game', async (event, profilePath, sessionId) => {
   const cfg = config.load()
   const teknoParrotExe = path.join(cfg.teknoParrotPath, 'TeknoParrotUi.exe')
   const profileName = path.basename(profilePath)
   const args = ['--profile=' + profileName, '--startGame']
   try {
-    await launchWithReturn(teknoParrotExe, args, { spawnOpts: { cwd: cfg.teknoParrotPath } })
+    await launchWithReturn(teknoParrotExe, args, { spawnOpts: { cwd: cfg.teknoParrotPath }, sessionId })
     return { success: true }
   } catch (e) {
     return { success: false, error: e.message }
@@ -148,11 +248,11 @@ ipcMain.handle('launch-game', async (event, profilePath) => {
 })
 
 // -- Launch RPCS3 game -------------------------------------------------------
-ipcMain.handle('launch-ps3-game', async (event, gamePath) => {
+ipcMain.handle('launch-ps3-game', async (event, gamePath, sessionId) => {
   const cfg = config.load()
   const rpcs3Exe = path.join(cfg.rpcs3Path || 'F:\\RPCS3\\', 'rpcs3.exe')
   try {
-    await launchWithReturn(rpcs3Exe, ['--no-gui', gamePath])
+    await launchWithReturn(rpcs3Exe, ['--no-gui', gamePath], { sessionId })
     return { success: true }
   } catch (e) {
     return { success: false, error: e.message }
@@ -193,27 +293,26 @@ ipcMain.handle('scan-pinball', async (event, tablesPath) => {
 })
 
 // -- VPX launch --------------------------------------------------------------
-ipcMain.handle('launch-vpx-table', async (event, tablePath) => {
+ipcMain.handle('launch-vpx-table', async (event, tablePath, sessionId) => {
   const cfg = config.load()
   const vpxDir  = cfg.pinballPath || 'F:\\vPinball\\'
   const vpxExe  = require('path').join(vpxDir, 'VPinballX64.exe')
-  const { spawn } = require('child_process')
   try {
-    spawn(vpxExe, ['-play', tablePath], {
+    launchDetachedFireAndForget(vpxExe, ['-play', tablePath], {
       detached: true, stdio: 'ignore',
       cwd: vpxDir,
-    }).unref()
+    }, sessionId)
     return { ok: true }
   } catch (e) {
     return { ok: false, error: e.message }
   }
 })
 
-ipcMain.handle('launch-xbox360-game', async (event, gamePath) => {
+ipcMain.handle('launch-xbox360-game', async (event, gamePath, sessionId) => {
   const cfg = config.load()
   const xeniaExe = path.join(cfg.xeniaPath || 'F:\\Xenia\\', 'xenia.exe')
   try {
-    await launchWithReturn(xeniaExe, [gamePath])
+    await launchWithReturn(xeniaExe, [gamePath], { sessionId })
     return { success: true }
   } catch (e) {
     return { success: false, error: e.message }
@@ -221,11 +320,11 @@ ipcMain.handle('launch-xbox360-game', async (event, gamePath) => {
 })
 
 // -- Launch Dolphin / GC+Wii -------------------------------------------------
-ipcMain.handle('launch-gcwii-game', async (event, gamePath) => {
+ipcMain.handle('launch-gcwii-game', async (event, gamePath, sessionId) => {
   const cfg = config.load()
   const dolphinExe = path.join(cfg.dolphinPath || 'F:\\Dolphin\\', 'Dolphin.exe')
   try {
-    await launchWithReturn(dolphinExe, ['-e', gamePath, '--batch'])
+    await launchWithReturn(dolphinExe, ['-e', gamePath, '--batch'], { sessionId })
     return { success: true }
   } catch (e) {
     return { success: false, error: e.message }
@@ -233,11 +332,11 @@ ipcMain.handle('launch-gcwii-game', async (event, gamePath) => {
 })
 
 // -- Launch PCSX2 / PS2 ------------------------------------------------------
-ipcMain.handle('launch-ps2-game', async (event, gamePath) => {
+ipcMain.handle('launch-ps2-game', async (event, gamePath, sessionId) => {
   const cfg = config.load()
   const pcsx2Exe = path.join(cfg.pcsx2Path || 'F:\\PCSX2\\', 'pcsx2-qt.exe')
   try {
-    await launchWithReturn(pcsx2Exe, ['-nogui', '--', gamePath])
+    await launchWithReturn(pcsx2Exe, ['-nogui', '--', gamePath], { sessionId })
     return { success: true }
   } catch (e) {
     return { success: false, error: e.message }
@@ -265,11 +364,11 @@ ipcMain.handle('scan-ps2-games', async (event, ps2GamesPath) => {
 
 
 // -- Launch Ryujinx / Switch --------------------------------------------------
-ipcMain.handle('launch-switch-game', async (event, gamePath) => {
+ipcMain.handle('launch-switch-game', async (event, gamePath, sessionId) => {
   const cfg = config.load()
   const ryujinxExe = path.join(cfg.ryujinxPath || 'F:\\Ryujinx\\', 'Ryujinx.exe')
   try {
-    await launchWithReturn(ryujinxExe, [gamePath])
+    await launchWithReturn(ryujinxExe, [gamePath], { sessionId })
     return { success: true }
   } catch (e) {
     return { success: false, error: e.message }
@@ -612,7 +711,7 @@ app.whenReady().then(() => {
 })
 
 // -- MAME --------------------------------------------------------------------
-ipcMain.handle('launch-mame-game', async (event, gamePath) => {
+ipcMain.handle('launch-mame-game', async (event, gamePath, sessionId) => {
   const fs = require('fs')
   const cfg = config.load()
   const mameDir = cfg.mamePath || 'F:\\MAME\\'
@@ -632,7 +731,7 @@ ipcMain.handle('launch-mame-game', async (event, gamePath) => {
   const romFile = path.basename(gamePath, path.extname(gamePath))
   const romsDir = path.dirname(gamePath)
   try {
-    await launchWithReturn(mameExe, [romFile, '-rompath', romsDir, '-nowindow'], { cwd: mameDir })
+    await launchWithReturn(mameExe, [romFile, '-rompath', romsDir, '-nowindow'], { cwd: mameDir, sessionId })
     return { success: true }
   } catch (e) {
     return { success: false, error: e.message }
@@ -645,12 +744,12 @@ ipcMain.handle('scan-mame-games', async (event, mameGamesPath) => {
 })
 
 // -- RetroArch ---------------------------------------------------------------
-ipcMain.handle('launch-retroarch', async () => {
+ipcMain.handle('launch-retroarch', async (event, sessionId) => {
   const cfg = config.load()
   const retroDir = cfg.retroarchPath || 'F:\\RetroArch\\'
   const retroExe = path.join(retroDir, 'retroarch.exe')
   if (!require('fs').existsSync(retroExe)) return { success: false, error: 'RetroArch not found at: ' + retroExe }
-  try { await launchWithReturn(retroExe, [], { spawnOpts: { cwd: retroDir } }); return { success: true } }
+  try { await launchWithReturn(retroExe, [], { spawnOpts: { cwd: retroDir }, sessionId }); return { success: true } }
   catch (e) { return { success: false, error: e.message } }
 })
 
@@ -785,7 +884,7 @@ const BEZEL_CORE_FOLDER_MAP = {
   'vecx_libretro.dll': 'VecX',
 }
 
-ipcMain.handle('launch-retroarch-game', async (event, gamePath, system) => {
+ipcMain.handle('launch-retroarch-game', async (event, gamePath, system, sessionId) => {
   const fs = require('fs')
   const cfg = config.load()
   const retroDir = cfg.retroarchPath || 'F:\\RetroArch\\'
@@ -847,7 +946,7 @@ ipcMain.handle('launch-retroarch-game', async (event, gamePath, system) => {
   }
 
   try {
-    await launchWithReturn(retroExe, args)
+    await launchWithReturn(retroExe, args, { sessionId })
     return { success: true, core: coreName || 'auto' }
   } catch (e) {
     return { success: false, error: e.message }
@@ -959,11 +1058,11 @@ ipcMain.handle('scan-retroarch-games', async (event, retroarchGamesPath) => {
 })
 
 // -- Project64 / N64 ---------------------------------------------------------
-ipcMain.handle('launch-n64-game', async (event, gamePath) => {
+ipcMain.handle('launch-n64-game', async (event, gamePath, sessionId) => {
   const cfg = config.load()
   const p64Exe = path.join(cfg.project64Path || 'F:\\Project64\\', 'Project64.exe')
   try {
-    await launchWithReturn(p64Exe, [gamePath])
+    await launchWithReturn(p64Exe, [gamePath], { sessionId })
     return { success: true }
   } catch (e) {
     return { success: false, error: e.message }
@@ -976,11 +1075,11 @@ ipcMain.handle('scan-n64-games', async (event, n64GamesPath) => {
 })
 
 // -- DuckStation / PS1 -------------------------------------------------------
-ipcMain.handle('launch-ps1-game', async (event, gamePath) => {
+ipcMain.handle('launch-ps1-game', async (event, gamePath, sessionId) => {
   const cfg = config.load()
   const dsExe = path.join(cfg.duckstationPath || 'F:\\DuckStation\\', 'duckstation-qt-x64-ReleaseLTCG.exe')
   try {
-    await launchWithReturn(dsExe, [gamePath])
+    await launchWithReturn(dsExe, [gamePath], { sessionId })
     return { success: true }
   } catch (e) {
     return { success: false, error: e.message }
@@ -993,11 +1092,11 @@ ipcMain.handle('scan-ps1-games', async (event, ps1GamesPath) => {
 })
 
 // -- Flycast / Dreamcast -----------------------------------------------------
-ipcMain.handle('launch-flycast-game', async (event, gamePath) => {
+ipcMain.handle('launch-flycast-game', async (event, gamePath, sessionId) => {
   const cfg = config.load()
   const flyExe = path.join(cfg.flycastPath || 'F:\\Flycast\\', 'flycast.exe')
   try {
-    await launchWithReturn(flyExe, [gamePath])
+    await launchWithReturn(flyExe, [gamePath], { sessionId })
     return { success: true }
   } catch (e) {
     return { success: false, error: e.message }
@@ -1009,11 +1108,11 @@ ipcMain.handle('scan-dreamcast-games', async (event, dreamcastGamesPath) => {
   return scanDreamcastGames(dreamcastGamesPath)
 })
 
-ipcMain.handle('launch-xemu-game', async (event, gamePath) => {
+ipcMain.handle('launch-xemu-game', async (event, gamePath, sessionId) => {
   const cfg = config.load()
   const xemuExe = path.join(cfg.xemuPath || 'F:\\Xemu\\', 'xemu.exe')
   try {
-    await launchWithReturn(xemuExe, [gamePath])
+    await launchWithReturn(xemuExe, [gamePath], { sessionId })
     return { success: true }
   } catch (e) {
     return { success: false, error: e.message }
@@ -1036,13 +1135,13 @@ function findCxbxExe(cxbxDir) {
   return null
 }
 
-ipcMain.handle('launch-cxbx-game', async (event, gamePath) => {
+ipcMain.handle('launch-cxbx-game', async (event, gamePath, sessionId) => {
   const cfg = config.load()
   const cxbxDir = cfg.cxbxPath || 'F:\\Cxbx-Reloaded\\'
   const cxbxExe = findCxbxExe(cxbxDir)
   if (!cxbxExe) return { success: false, error: 'Cxbx-Reloaded executable not found in ' + cxbxDir }
   try {
-    await launchWithReturn(cxbxExe, ['/load', gamePath], { cwd: cxbxDir })
+    await launchWithReturn(cxbxExe, ['/load', gamePath], { cwd: cxbxDir, sessionId })
     return { success: true }
   } catch (e) {
     return { success: false, error: e.message }
@@ -1108,12 +1207,12 @@ ipcMain.handle('check-bios', async () => {
 
 
 // -- Model 2 Emulator --------------------------------------------------------
-ipcMain.handle('launch-model2-game', async (event, gamePath) => {
+ipcMain.handle('launch-model2-game', async (event, gamePath, sessionId) => {
   const cfg = config.load()
   const m2Exe = path.join(cfg.model2Path || 'F:\\Model2\\', 'emulator_multicpu.exe')
   const romName = path.basename(gamePath, path.extname(gamePath))
   try {
-    await launchWithReturn(m2Exe, [romName], { cwd: path.dirname(m2Exe) })
+    await launchWithReturn(m2Exe, [romName], { cwd: path.dirname(m2Exe), sessionId })
     return { success: true }
   } catch (e) {
     return { success: false, error: e.message }
@@ -1126,11 +1225,11 @@ ipcMain.handle('scan-model2-games', async (event, model2GamesPath) => {
 })
 
 // -- Model 3 / Supermodel ----------------------------------------------------
-ipcMain.handle('launch-model3-game', async (event, gamePath) => {
+ipcMain.handle('launch-model3-game', async (event, gamePath, sessionId) => {
   const cfg = config.load()
   const m3Exe = path.join(cfg.model3Path || 'F:\\Supermodel\\', 'Supermodel.exe')
   try {
-    await launchWithReturn(m3Exe, [gamePath, '-fullscreen'])
+    await launchWithReturn(m3Exe, [gamePath, '-fullscreen'], { sessionId })
     return { success: true }
   } catch (e) {
     return { success: false, error: e.message }
@@ -1157,11 +1256,11 @@ ipcMain.handle('save-txt', async (event, { content, defaultName }) => {
 
 
 // -- PPSSPP / PSP ------------------------------------------------------------
-ipcMain.handle('launch-psp-game', async (event, gamePath) => {
+ipcMain.handle('launch-psp-game', async (event, gamePath, sessionId) => {
   const cfg = config.load()
   const ppssppExe = path.join(cfg.ppssppPath || 'F:\\PPSSPP\\', 'PPSSPPWindows64.exe')
   try {
-    await launchWithReturn(ppssppExe, [gamePath])
+    await launchWithReturn(ppssppExe, [gamePath], { sessionId })
     return { success: true }
   } catch (e) {
     return { success: false, error: e.message }
@@ -1174,11 +1273,11 @@ ipcMain.handle('scan-psp-games', async (event, pspGamesPath) => {
 })
 
 // -- Cemu / Wii U ------------------------------------------------------------
-ipcMain.handle('launch-wiiu-game', async (event, gamePath) => {
+ipcMain.handle('launch-wiiu-game', async (event, gamePath, sessionId) => {
   const cfg = config.load()
   const cemuExe = path.join(cfg.cemuPath || 'F:\\Cemu\\', 'Cemu.exe')
   try {
-    await launchWithReturn(cemuExe, ['-f', '-g', gamePath])
+    await launchWithReturn(cemuExe, ['-f', '-g', gamePath], { sessionId })
     return { success: true }
   } catch (e) {
     return { success: false, error: e.message }
@@ -1290,9 +1389,8 @@ ipcMain.handle('scan-steam-games', async (event, steamPath) => {
   const { scanSteamGames } = require('./scanner')
   return scanSteamGames(steamPath)
 })
-ipcMain.handle('launch-steam-game', async (event, appId) => {
-  const { exec } = require('child_process')
-  exec('start steam://rungameid/' + appId)
+ipcMain.handle('launch-steam-game', async (event, appId, sessionId) => {
+  launchViaShellCommand('start steam://rungameid/' + appId, sessionId)
   return { ok: true }
 })
 
@@ -1301,13 +1399,20 @@ ipcMain.handle('scan-pc-games', async (event, pcGamesPath) => {
   const { scanPcGames } = require('./scanner')
   return scanPcGames(pcGamesPath)
 })
-ipcMain.handle('launch-pc-game', async (event, exePath) => {
+ipcMain.handle('launch-pc-game', async (event, exePath, sessionId) => {
   const path = require('path')
-  const { spawn } = require('child_process')
   try {
-    spawn(exePath, [], { detached: true, stdio: 'ignore', cwd: path.dirname(exePath) }).unref()
+    launchDetachedFireAndForget(exePath, [], { detached: true, stdio: 'ignore', cwd: path.dirname(exePath) }, sessionId)
     return { ok: true }
   } catch (e) { return { ok: false, error: e.message } }
+})
+
+// -- Launch lifecycle status query --------------------------------------------
+// Single source of truth query: the same normalized 11-key shape the
+// 'launch-lifecycle-terminal' push event carries. Unknown/evicted sessions
+// normalize conservatively (see launchRegistry.js) rather than throwing.
+ipcMain.handle('get-launch-lifecycle-status', (event, sessionId) => {
+  return launchRegistry.getStatus(sessionId)
 })
 
 
@@ -2450,3 +2555,17 @@ ipcMain.handle('rename-folder', async (event, { gamesFolder, from, to }) => {
     return false
   }
 })
+
+// Exported for focused tests only -- Electron itself never reads
+// module.exports from its main entry point, so this is purely additive.
+module.exports = {
+  launchWithReturn,
+  launchDetachedFireAndForget,
+  launchViaShellCommand,
+  registerLaunchSession,
+  trackLaunchLifecycle,
+  emitLaunchLifecycleTerminal,
+  _internal: {
+    setMainWindowForTest: (win) => { mainWin = win },
+  },
+}

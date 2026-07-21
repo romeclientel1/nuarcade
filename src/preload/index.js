@@ -1,5 +1,41 @@
 const { contextBridge, ipcRenderer } = require('electron')
 
+// -- Launch lifecycle bridge --------------------------------------------------
+// Factored out as a plain function (dependency-injected on ipcRenderer)
+// so it's testable under Node's built-in test runner without contextBridge
+// or a real Electron process -- see preload/index.test.js.
+function createLaunchLifecycleBridge(ipc) {
+  const listeners = new Map() // callback -> wrapped ipcRenderer listener
+
+  function getLaunchLifecycleStatus(sessionId) {
+    return ipc.invoke('get-launch-lifecycle-status', sessionId)
+  }
+
+  function onLaunchLifecycleTerminal(callback) {
+    if (listeners.has(callback)) {
+      // Already subscribed with this exact callback -- don't register a
+      // second underlying listener; return an unsubscribe that still
+      // correctly tears down the one shared listener.
+      const existing = listeners.get(callback)
+      return () => {
+        ipc.removeListener('launch-lifecycle-terminal', existing)
+        listeners.delete(callback)
+      }
+    }
+    const listener = (_event, status) => callback(status)
+    listeners.set(callback, listener)
+    ipc.on('launch-lifecycle-terminal', listener)
+    return () => {
+      ipc.removeListener('launch-lifecycle-terminal', listener)
+      listeners.delete(callback)
+    }
+  }
+
+  return { getLaunchLifecycleStatus, onLaunchLifecycleTerminal }
+}
+
+const launchLifecycle = createLaunchLifecycleBridge(ipcRenderer)
+
 contextBridge.exposeInMainWorld('nuarcade', {
   platform: process.platform,
 
@@ -24,25 +60,31 @@ contextBridge.exposeInMainWorld('nuarcade', {
   scanEmuMoviesMedia: (opts) => ipcRenderer.invoke('scan-emumovies-media', opts),
   importEmuMoviesFile: (opts) => ipcRenderer.invoke('import-emumovies-file', opts),
 
-  // Game launch
-  launchGame:          (profilePath)  => ipcRenderer.invoke('launch-game', profilePath),
-  launchPs3Game:       (gamePath)     => ipcRenderer.invoke('launch-ps3-game', gamePath),
-  launchXbox360Game:   (gamePath)     => ipcRenderer.invoke('launch-xbox360-game', gamePath),
-  launchGCWiiGame:     (gamePath)     => ipcRenderer.invoke('launch-gcwii-game', gamePath),
-  launchPs2Game:       (gamePath)     => ipcRenderer.invoke('launch-ps2-game', gamePath),
-  launchSwitchGame:    (gamePath)     => ipcRenderer.invoke('launch-switch-game', gamePath),
-  launchMameGame:      (gamePath)     => ipcRenderer.invoke('launch-mame-game', gamePath),
-  launchRetroArch:     ()             => ipcRenderer.invoke('launch-retroarch'),
-  launchRetroArchGame: (gamePath, system) => ipcRenderer.invoke('launch-retroarch-game', gamePath, system),
-  launchN64Game:       (gamePath)     => ipcRenderer.invoke('launch-n64-game', gamePath),
-  launchPs1Game:       (gamePath)     => ipcRenderer.invoke('launch-ps1-game', gamePath),
-  launchFlycastGame:   (gamePath)     => ipcRenderer.invoke('launch-flycast-game', gamePath),
-  launchXemuGame:      (gamePath)     => ipcRenderer.invoke('launch-xemu-game', gamePath),
-  launchCxbxGame:      (gamePath)     => ipcRenderer.invoke('launch-cxbx-game', gamePath),
-  launchModel2Game:    (gamePath)     => ipcRenderer.invoke('launch-model2-game', gamePath),
-  launchModel3Game:    (gamePath)     => ipcRenderer.invoke('launch-model3-game', gamePath),
-  launchPspGame:       (gamePath)     => ipcRenderer.invoke('launch-psp-game', gamePath),
-  launchWiiUGame:      (gamePath)     => ipcRenderer.invoke('launch-wiiu-game', gamePath),
+  // Game launch -- sessionId is an optional trailing arg, renderer-created
+  // and forwarded verbatim to the matching main-process launch handler so
+  // it can register/track this launch in the main-process launch registry.
+  launchGame:          (profilePath, sessionId)  => ipcRenderer.invoke('launch-game', profilePath, sessionId),
+  launchPs3Game:       (gamePath, sessionId)     => ipcRenderer.invoke('launch-ps3-game', gamePath, sessionId),
+  launchXbox360Game:   (gamePath, sessionId)     => ipcRenderer.invoke('launch-xbox360-game', gamePath, sessionId),
+  launchGCWiiGame:     (gamePath, sessionId)     => ipcRenderer.invoke('launch-gcwii-game', gamePath, sessionId),
+  launchPs2Game:       (gamePath, sessionId)     => ipcRenderer.invoke('launch-ps2-game', gamePath, sessionId),
+  launchSwitchGame:    (gamePath, sessionId)     => ipcRenderer.invoke('launch-switch-game', gamePath, sessionId),
+  launchMameGame:      (gamePath, sessionId)     => ipcRenderer.invoke('launch-mame-game', gamePath, sessionId),
+  launchRetroArch:     (sessionId)               => ipcRenderer.invoke('launch-retroarch', sessionId),
+  launchRetroArchGame: (gamePath, system, sessionId) => ipcRenderer.invoke('launch-retroarch-game', gamePath, system, sessionId),
+  launchN64Game:       (gamePath, sessionId)     => ipcRenderer.invoke('launch-n64-game', gamePath, sessionId),
+  launchPs1Game:       (gamePath, sessionId)     => ipcRenderer.invoke('launch-ps1-game', gamePath, sessionId),
+  launchFlycastGame:   (gamePath, sessionId)     => ipcRenderer.invoke('launch-flycast-game', gamePath, sessionId),
+  launchXemuGame:      (gamePath, sessionId)     => ipcRenderer.invoke('launch-xemu-game', gamePath, sessionId),
+  launchCxbxGame:      (gamePath, sessionId)     => ipcRenderer.invoke('launch-cxbx-game', gamePath, sessionId),
+  launchModel2Game:    (gamePath, sessionId)     => ipcRenderer.invoke('launch-model2-game', gamePath, sessionId),
+  launchModel3Game:    (gamePath, sessionId)     => ipcRenderer.invoke('launch-model3-game', gamePath, sessionId),
+  launchPspGame:       (gamePath, sessionId)     => ipcRenderer.invoke('launch-psp-game', gamePath, sessionId),
+  launchWiiUGame:      (gamePath, sessionId)     => ipcRenderer.invoke('launch-wiiu-game', gamePath, sessionId),
+
+  // Launch lifecycle -- normalized main-process registry status/events.
+  getLaunchLifecycleStatus: launchLifecycle.getLaunchLifecycleStatus,
+  onLaunchLifecycleTerminal: launchLifecycle.onLaunchLifecycleTerminal,
 
   // Scanning
   scanGames:            (opts)                => ipcRenderer.invoke('scan-games', opts),
@@ -114,7 +156,7 @@ contextBridge.exposeInMainWorld('nuarcade', {
   saveTxt: (opts) => ipcRenderer.invoke('save-txt', opts),
 
   // VPX pinball launch
-  launchVpxTable: (tablePath) => ipcRenderer.invoke('launch-vpx-table', tablePath),
+  launchVpxTable: (tablePath, sessionId) => ipcRenderer.invoke('launch-vpx-table', tablePath, sessionId),
 
   // Path verification
   checkPath: (folderPath) => ipcRenderer.invoke('check-path', folderPath),
@@ -131,9 +173,9 @@ contextBridge.exposeInMainWorld('nuarcade', {
 
   // Steam + PC games
   scanSteamGames:  (p) => ipcRenderer.invoke('scan-steam-games', p),
-  launchSteamGame: (id) => ipcRenderer.invoke('launch-steam-game', id),
+  launchSteamGame: (id, sessionId) => ipcRenderer.invoke('launch-steam-game', id, sessionId),
   scanPcGames:  (p) => ipcRenderer.invoke('scan-pc-games', p),
-  launchPcGame: (p) => ipcRenderer.invoke('launch-pc-game', p),
+  launchPcGame: (p, sessionId) => ipcRenderer.invoke('launch-pc-game', p, sessionId),
 
   // BIOS checker
   checkBios: () => ipcRenderer.invoke('check-bios'),
@@ -155,3 +197,7 @@ contextBridge.exposeInMainWorld('nuarcade', {
   // App version -- sync call so it's available immediately
   version: ipcRenderer.sendSync('get-version'),
 })
+
+// Exported for focused tests only -- contextBridge/exposeInMainWorld above
+// is the real runtime path; this is purely additive.
+module.exports = { createLaunchLifecycleBridge }
