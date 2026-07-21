@@ -35,6 +35,9 @@ jobs:
         working-directory: renderer
         run: npm install
 
+      - name: Run launch session tests
+        run: npm test
+
       - name: Build renderer
         run: npm run build:renderer
 
