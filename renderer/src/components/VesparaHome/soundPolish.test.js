@@ -21,7 +21,22 @@ import { fileURLToPath } from "node:url"
 import { dirname, join } from "node:path"
 
 const HERE = dirname(fileURLToPath(import.meta.url))
-const jsx = readFileSync(join(HERE, "VesparaHome.jsx"), "utf8")
+// Normalized to LF: on the windows-latest CI runner, git checks this file
+// out as CRLF, which would silently break any indexOf/slice anchor further
+// down that (incorrectly) embedded a literal "\n".
+const jsx = readFileSync(join(HERE, "VesparaHome.jsx"), "utf8").replace(/\r\n/g, "\n")
+
+// Extracts the substring between two anchors, throwing a descriptive error
+// instead of silently returning "" when an anchor is missing -- a missing
+// anchor is a broken test, not an empty (and therefore vacuously
+// assert.doesNotMatch-passing) block.
+function sliceBetween(src, startAnchor, endAnchor, label) {
+  const start = src.indexOf(startAnchor)
+  if (start === -1) throw new Error(`sliceBetween(${label}): start anchor not found: ${JSON.stringify(startAnchor)}`)
+  const end = src.indexOf(endAnchor, start)
+  if (end === -1) throw new Error(`sliceBetween(${label}): end anchor not found: ${JSON.stringify(endAnchor)}`)
+  return src.slice(start, end)
+}
 
 // -- sound hook wiring, config normalization -----------------------------------
 
@@ -53,11 +68,18 @@ test("launchFocused's action branch (Library/Switch Player/open Depart dialog) p
 // -- navigation: boundary-gated, only sounds on a real index/zone change ------
 
 test("recent-row Left/Right only sound when the index is not already at the boundary (gamepad handler)", () => {
-  const block = jsx.slice(jsx.indexOf("onLeft: () => {\n      acceptManualFocus()"), jsx.indexOf("onUp: () => {"))
+  // "onLeft: () => {" (single space before "()") is unique to the main
+  // handler -- the depart-dialog's onLeft uses "onLeft:  () => {" (double
+  // space), so this anchor cannot accidentally match that block instead.
+  const block = sliceBetween(jsx, "onLeft: () => {", "onUp: () => {", "Home main gamepad onLeft/onRight block")
   assert.match(block, /if \(recentIndex > 0\) \{ sounds\.navigate\(\)/)
   assert.match(block, /if \(recentIndex < displayedRecentGames\.length - 1\) \{ sounds\.navigate\(\)/)
   assert.match(block, /else if \(actionIndex > 0\) \{\s*sounds\.navigate\(\)/)
   assert.match(block, /else if \(actionIndex < ACTIONS\.length - 1\) \{\s*sounds\.navigate\(\)/)
+  // Boundary condition + index update must both be inside the same guarded
+  // branch as the sound cue -- not merely present somewhere in the block.
+  assert.match(block, /if \(recentIndex > 0\) \{ sounds\.navigate\(\); setRecentIndex\(/)
+  assert.match(block, /if \(recentIndex < displayedRecentGames\.length - 1\) \{ sounds\.navigate\(\); setRecentIndex\(/)
 })
 
 test("Up/Down zone switches only sound when the zone actually changes", () => {
@@ -67,9 +89,12 @@ test("Up/Down zone switches only sound when the zone actually changes", () => {
 })
 
 test("keyboard handler mirrors the same boundary-gated navigate() guards as the gamepad handler", () => {
-  const kb = jsx.slice(jsx.indexOf('if (e.key === "ArrowLeft") {\n        acceptManualFocus()'), jsx.indexOf('if (e.key === "Enter") launchFocused()'))
-  assert.match(kb, /if \(recentIndex > 0\) \{ sounds\.navigate\(\)/)
-  assert.match(kb, /else if \(actionIndex > 0\) \{\s*sounds\.navigate\(\)/)
+  // 'if (e.key === "ArrowLeft") {' (bare, no "&&") is unique to the main
+  // keydown handler -- the depart-dialog branch uses
+  // 'e.key === "ArrowLeft" && departChoice !== 0', a different string.
+  const kb = sliceBetween(jsx, 'if (e.key === "ArrowLeft") {', 'if (e.key === "Enter") launchFocused()', "Home keyboard handler block")
+  assert.match(kb, /if \(recentIndex > 0\) \{ sounds\.navigate\(\); setRecentIndex\(/)
+  assert.match(kb, /else if \(actionIndex > 0\) \{\s*sounds\.navigate\(\); setActionIndex\(/)
   assert.match(kb, /if \(hasRecents && focusZone !== "recents"\) \{ sounds\.navigate\(\)/)
 })
 
@@ -96,7 +121,7 @@ test("depart dialog close (B button) plays exactly one back() cue", () => {
 // -- restoration / initial focus / mount stay silent ---------------------------
 
 test("the initial-focus derivation effect never calls any sound function", () => {
-  const effect = jsx.slice(jsx.indexOf("useEffect(() => {\n    if (hasAcceptedInitialFocus) return"), jsx.indexOf("useEffect(() => {\n    if (!hasRecents"))
+  const effect = sliceBetween(jsx, "if (hasAcceptedInitialFocus) return", "if (!hasRecents && focusZone", "initial-focus derivation effect")
   assert.doesNotMatch(effect, /sounds\./)
 })
 
@@ -148,4 +173,17 @@ test("the action-button click handler plays exactly one select() cue, matching t
 test("depart dialog mouse click handlers use select() for quit and back() for cancel, matching the gamepad/keyboard paths", () => {
   assert.match(jsx, /onClick=\{\(\) => \{ sounds\.select\(\); window\.nuarcade\?\.quit\?\.\(\) \}\}/)
   assert.match(jsx, /onClick=\{\(\) => \{ sounds\.back\(\); setShowDepartConfirm\(false\) \}\}/)
+})
+
+// -- extraction-helper safety net -----------------------------------------------
+
+test("sliceBetween fails loudly (not with a silent empty string) when an anchor is missing", () => {
+  assert.throws(
+    () => sliceBetween(jsx, "onLeft: () => {", "TOTALLY_MISSING_END", "bogus end anchor"),
+    /end anchor not found/
+  )
+  assert.throws(
+    () => sliceBetween(jsx, "TOTALLY_MISSING_START", "onUp: () => {", "bogus start anchor"),
+    /start anchor not found/
+  )
 })

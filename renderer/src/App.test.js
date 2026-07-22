@@ -19,7 +19,22 @@ import { fileURLToPath } from "node:url"
 import { dirname, join } from "node:path"
 
 const HERE = dirname(fileURLToPath(import.meta.url))
-const jsx = readFileSync(join(HERE, "App.jsx"), "utf8")
+// Normalized to LF: on the windows-latest CI runner, git checks this file
+// out as CRLF, which would silently break any indexOf/slice anchor further
+// down that (incorrectly) embedded a literal "\n".
+const jsx = readFileSync(join(HERE, "App.jsx"), "utf8").replace(/\r\n/g, "\n")
+
+// Extracts the substring between two anchors, throwing a descriptive error
+// instead of silently returning "" when an anchor is missing -- a missing
+// anchor is a broken test, not an empty (and therefore vacuously
+// assert.doesNotMatch-passing) block.
+function sliceBetween(src, startAnchor, endAnchor, label) {
+  const start = src.indexOf(startAnchor)
+  if (start === -1) throw new Error(`sliceBetween(${label}): start anchor not found: ${JSON.stringify(startAnchor)}`)
+  const end = src.indexOf(endAnchor, start)
+  if (end === -1) throw new Error(`sliceBetween(${label}): end anchor not found: ${JSON.stringify(endAnchor)}`)
+  return src.slice(start, end)
+}
 
 test("UI-sound config state defaults to the normalization module's own defaults, not a locally re-declared value", () => {
   assert.match(jsx, /useState\(DEFAULT_UI_SOUNDS_ENABLED\)/)
@@ -39,8 +54,12 @@ test("loaded config values are normalized through the same shared helpers Settin
 })
 
 test("both Wheel and VesparaHome receive the live uiSoundsEnabled/uiSoundVolume values", () => {
-  const wheelBlock = jsx.slice(jsx.indexOf("<Wheel\n"), jsx.indexOf("/>", jsx.indexOf("<Wheel\n")))
-  const homeBlock = jsx.slice(jsx.indexOf("<VesparaHome"), jsx.indexOf("/>", jsx.indexOf("<VesparaHome")))
+  const wheelBlock = sliceBetween(jsx, "<Wheel", "/>", "<Wheel ... /> render block")
+  const homeBlock = sliceBetween(jsx, "<VesparaHome", "/>", "<VesparaHome ... /> render block")
+  // Each block must not contain the other component's tag -- proves the
+  // anchors can't have accidentally spanned into the wrong component.
+  assert.doesNotMatch(wheelBlock, /<VesparaHome/)
+  assert.doesNotMatch(homeBlock, /<Wheel\b/)
   assert.match(wheelBlock, /uiSoundsEnabled=\{uiSoundsEnabled\}/)
   assert.match(wheelBlock, /uiSoundVolume=\{uiSoundVolume\}/)
   assert.match(homeBlock, /uiSoundsEnabled=\{uiSoundsEnabled\}/)
@@ -48,11 +67,22 @@ test("both Wheel and VesparaHome receive the live uiSoundsEnabled/uiSoundVolume 
 })
 
 test("only Wheel (which renders Settings) receives the setters -- Home does not, since it never renders Settings", () => {
-  const wheelBlock = jsx.slice(jsx.indexOf("<Wheel\n"), jsx.indexOf("/>", jsx.indexOf("<Wheel\n")))
-  const homeBlock = jsx.slice(jsx.indexOf("<VesparaHome"), jsx.indexOf("/>", jsx.indexOf("<VesparaHome")))
+  const wheelBlock = sliceBetween(jsx, "<Wheel", "/>", "<Wheel ... /> render block")
+  const homeBlock = sliceBetween(jsx, "<VesparaHome", "/>", "<VesparaHome ... /> render block")
   assert.match(wheelBlock, /onUiSoundsChange=\{setUiSoundsEnabled\}/)
   assert.match(wheelBlock, /onUiSoundVolumeChange=\{setUiSoundVolume\}/)
   assert.doesNotMatch(homeBlock, /onUiSoundsChange|onUiSoundVolumeChange/)
+})
+
+test("sliceBetween fails loudly (not with a silent empty string) when an anchor is missing", () => {
+  assert.throws(
+    () => sliceBetween(jsx, "<TotallyMissingTag", "/>", "bogus start anchor"),
+    /start anchor not found/
+  )
+  assert.throws(
+    () => sliceBetween(jsx, "<Wheel", "TOTALLY_MISSING_END", "bogus end anchor"),
+    /end anchor not found/
+  )
 })
 
 test("this wiring introduces no new main-process/preload API -- getConfig/setConfig are the only IPC surface touched, and setConfig is untouched here (Settings.jsx owns writes)", () => {
