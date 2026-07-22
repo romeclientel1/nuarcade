@@ -134,6 +134,8 @@ export default {
   "playerSelect.namePlaceholder": "Escribe un nombre...",
   "playerSelect.confirm": "Aceptar",
   "playerSelect.cancel": "Cancelar",
+  "playerSelect.exit": "SALIR",
+  "playerSelect.confirmExit": "CONFIRMAR SALIDA",
 
   "home.recentlyPlayed": "Jugados recientemente",
   "home.library": "Biblioteca",

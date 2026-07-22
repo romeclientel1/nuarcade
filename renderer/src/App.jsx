@@ -210,6 +210,8 @@ export default function App() {
             onGuest={handleGuest}
             onAdd={handleAddProfile}
             onDelete={deleteProfile}
+            uiSoundsEnabled={uiSoundsEnabled}
+            uiSoundVolume={uiSoundVolume}
           />
         )}
 

@@ -65,7 +65,10 @@
 .exitBtn:hover { color: rgba(255,80,80,0.8); border-color: rgba(255,80,80,0.4); }
 .exitConfirm   { color: rgba(255,80,80,0.9) !important; border-color: rgba(255,80,80,0.6) !important; }
 
-/* Main content */
+/* Main content -- a short, restrained entrance (opacity+translate, CSS
+   only) local to Player Select. Runs alongside .overlay's own fade, does
+   not gate or delay input in any way (no JS timer involved), and is
+   removed entirely under reduced motion (see the media query below). */
 .content {
   position: relative;
   z-index: 2;
@@ -76,6 +79,11 @@
   width: 100%;
   max-width: 700px;
   padding: 32px 24px;
+  animation: contentEnter 0.4s ease;
+}
+@keyframes contentEnter {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* NuArcade wordmark */
@@ -126,7 +134,7 @@
 /* Subtitle */
 .sub {
   font-family: 'Share Tech Mono', monospace;
-  font-size: 12px;
+  font-size: 13px;
   letter-spacing: 0.25em;
   color: rgba(255,255,255,0.4);
   text-transform: uppercase;
@@ -145,8 +153,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 12px 20px;
+  gap: 8px;
+  padding: 14px 22px;
   border: 1px solid rgba(255,255,255,0.12);
   background: rgba(255,255,255,0.04);
   color: rgba(255,255,255,0.7);
@@ -156,24 +164,58 @@
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
-  min-width: 80px;
+  min-width: 88px;
+  max-width: 140px;
 }
+/* Hover: a visibly weaker cue than keyboard/controller focus below --
+   tint only, no outline, no scale, matching the milestone's requirement
+   that mouse hover never outrank a real focus target. */
 .profileBtn:hover { border-color: rgba(0,200,255,0.4); background: rgba(0,200,255,0.08); color: #fff; }
-.profileBtnActive { border-color: rgba(0,200,255,0.7); background: rgba(0,200,255,0.12); color: #fff; }
+
+/* Keyboard/controller focus (profileBtnActive, driven by focusIdx) and
+   native Tab focus (:focus-visible, now kept in sync with focusIdx --
+   see PlayerSelect.jsx) resolve to the identical strong treatment, so
+   there is exactly one visual "this is the target" state regardless of
+   which input method produced it. Scoped through the real .profileRow
+   ancestor (not a synthetic hack) so this is genuinely higher specificity
+   than .profileBtn:hover above, rather than depending on declaration
+   order to win the tie. */
+.profileRow .profileBtn.profileBtnActive,
+.profileRow .profileBtn:focus-visible {
+  border-color: rgba(0,200,255,0.9);
+  background: rgba(0,200,255,0.14);
+  color: #fff;
+  outline: 2px solid rgba(255,255,255,0.8);
+  outline-offset: 3px;
+  transform: scale(1.04);
+}
 .profileIcon {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   background: linear-gradient(135deg, #00c8ff, #a855f7);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
   color: #fff;
   font-family: 'Orbitron', sans-serif;
+  flex-shrink: 0;
 }
-.profileName { font-size: 10px; letter-spacing: 0.06em; }
+/* Safe overflow: creation is capped at 12 characters (MAX_NAME_LEN), but
+   this keeps any longer name (imported/legacy data) from stretching the
+   card layout instead of truncating in place. 96px = the card's own
+   140px max-width minus its 22px horizontal padding on each side -- the
+   actual available inner width, not a rounder approximation of it. */
+.profileName {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  max-width: 96px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 /* Action buttons row */
 .actionRow {
@@ -504,8 +546,17 @@
    GAMEPAD FOCUS STATES
    ============================================================ */
 
-/* Generic focus ring -- bright white outline + scale */
-.focused {
+/* Generic focus ring -- bright white outline + scale. Applies identically
+   whether the target is React's own focusIdx-driven .focused class
+   (keyboard arrows, controller) or the browser's native :focus-visible
+   (Tab) -- PlayerSelect.jsx keeps real DOM focus synchronized to
+   focusIdx for both, so in practice these two selectors are almost
+   always the same element at the same time; both are still styled
+   explicitly so neither path is ever silently unstyled. */
+.focused,
+.exitBtn:focus-visible,
+.btnNewPlayer:focus-visible,
+.btnGuest:focus-visible {
   outline: 2px solid rgba(255,255,255,0.8) !important;
   outline-offset: 3px;
   transform: scale(1.04) !important;
@@ -513,7 +564,8 @@
 }
 
 /* New Player focused -- brighter cyan */
-.btnNewPlayer.focused {
+.btnNewPlayer.focused,
+.btnNewPlayer:focus-visible {
   border-color: rgba(0,240,255,1) !important;
   box-shadow:
     0 0 0 3px rgba(0,200,255,0.3),
@@ -523,7 +575,8 @@
 }
 
 /* Play as Guest focused -- brighter amber */
-.btnGuest.focused {
+.btnGuest.focused,
+.btnGuest:focus-visible {
   border-color: rgba(255,220,0,1) !important;
   box-shadow:
     0 0 0 3px rgba(255,180,0,0.3),
@@ -533,7 +586,8 @@
 }
 
 /* EXIT focused -- red tint */
-.exitBtn.focused {
+.exitBtn.focused,
+.exitBtn:focus-visible {
   color: rgba(255,100,100,0.9) !important;
   border-color: rgba(255,80,80,0.6) !important;
   box-shadow: 0 0 12px rgba(255,60,60,0.3) !important;
@@ -543,4 +597,47 @@
 .wizardFocused {
   color: rgba(255,255,255,0.7) !important;
   text-shadow: 0 0 8px rgba(255,255,255,0.4);
+}
+
+/* ============================================================
+   REDUCED MOTION -- scoped to Player Select only
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  /* Purely decorative (aria-hidden) background motifs -- removed
+     entirely rather than frozen mid-pose, which would read as a visual
+     glitch rather than a calm screen. */
+  .coin, .runner { display: none; }
+
+  /* Real content: keep visible, just stop the continuous shimmer/pulse.
+     coinPulse's "from" text-shadow becomes the static resting state. */
+  .brand { animation: none; background-position: 0% center; }
+  .headline {
+    animation: none;
+    text-shadow:
+      0 0 30px rgba(0,180,255,0.7),
+      0 0 60px rgba(0,140,255,0.4),
+      0 0 2px rgba(255,255,255,0.8);
+  }
+
+  /* The overlay's own mount fade and the restrained content-entrance
+     below are both short, one-shot, non-repeating -- but still removed
+     under reduced motion for consistency with the rest of the app. */
+  .overlay { animation: none; }
+  .content { animation: none; opacity: 1; transform: none; }
+
+  /* Focus/hover state changes stay obvious (outline, glow, color, and
+     border-color are untouched) -- only the scale emphasis and the
+     transition that eases into it are removed, matching the Wheel/
+     VesparaHome reduced-motion pattern. */
+  .focused,
+  .exitBtn:focus-visible,
+  .btnNewPlayer:focus-visible,
+  .btnGuest:focus-visible,
+  .profileBtn.profileBtnActive,
+  .profileBtn:focus-visible {
+    transform: none !important;
+    transition: none !important;
+  }
+  .profileBtn, .btnNewPlayer, .btnGuest, .exitBtn { transition: none; }
 }
