@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useOverlayGamepad } from '../../hooks/useOverlayGamepad'
 import styles from './HighScoreBoard.module.css'
+import { useI18n } from '../../i18n/I18nContext.js'
 
 const SCORES_KEY = (gameId) => 'nuarcade_scores_' + gameId
 const MAX_PER_GAME = 10
@@ -33,6 +34,7 @@ export function getAllScores(games) {
 }
 
 export default function HighScoreBoard({ games, onClose, activeProfile }) {
+  const { t } = useI18n()
   const scrollRef = useRef(null)
   const [tab,       setTab      ] = useState('all')
   const [gameId,    setGameId   ] = useState(null)
@@ -79,11 +81,11 @@ export default function HighScoreBoard({ games, onClose, activeProfile }) {
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.panel} onClick={e => e.stopPropagation()}>
         <div className={styles.header}>
-          <div className={styles.badge}>HIGH SCORES</div>
+          <div className={styles.badge}>{t("highScores.title")}</div>
           <div className={styles.tabs}>
-            <button className={styles.tab + (tab === 'all'    ? ' ' + styles.tabActive : '')} onClick={() => setTab('all')}>All time</button>
+            <button className={styles.tab + (tab === 'all'    ? ' ' + styles.tabActive : '')} onClick={() => setTab('all')}>{t("highScores.allTime")}</button>
             <button className={styles.tab + (tab === 'player' ? ' ' + styles.tabActive : '')} onClick={() => setTab('player')} disabled={!activeProfile}>
-              {activeProfile ? activeProfile.name : 'My scores'}
+              {activeProfile ? activeProfile.name : t("highScores.myScores")}
             </button>
           </div>
           <button className={styles.closeBtn} onClick={onClose}>ESC</button>
@@ -94,38 +96,38 @@ export default function HighScoreBoard({ games, onClose, activeProfile }) {
             value={gameId || ''}
             onChange={e => { setGameId(e.target.value || null); if (e.target.value) setTab('game') }}
           >
-            <option value="">-- Filter by game --</option>
+            <option value="">{t("highScores.filterByGame")}</option>
             {games.filter(g => getScores(g.id || g.profile).length > 0).map(g => (
               <option key={g.id || g.profile} value={g.id || g.profile}>{g.title || g.id || g.profile}</option>
             ))}
           </select>
-          {gameId && <button className={styles.addScoreBtn} onClick={() => setEntering(true)}>+ Add score</button>}
+          {gameId && <button className={styles.addScoreBtn} onClick={() => setEntering(true)}>{t("highScores.addScore")}</button>}
         </div>
         {entering && (
           <div className={styles.entryRow}>
-            <span className={styles.entryLabel}>Your score:</span>
+            <span className={styles.entryLabel}>{t("highScores.yourScore")}</span>
             <input className={styles.scoreInput} type="number" value={newScore}
               onChange={e => setNewScore(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleSaveScore() }}
               placeholder="000000" autoFocus />
-            <button className={styles.saveBtn} onClick={handleSaveScore}>SAVE</button>
-            <button className={styles.cancelBtn} onClick={() => { setEntering(false); setNewScore('') }}>CANCEL</button>
+            <button className={styles.saveBtn} style={{ textTransform: 'uppercase' }} onClick={handleSaveScore}>{t("common.save")}</button>
+            <button className={styles.cancelBtn} style={{ textTransform: 'uppercase' }} onClick={() => { setEntering(false); setNewScore('') }}>{t("common.cancel")}</button>
           </div>
         )}
         <div className={styles.board} ref={scrollRef}>
           {filtered.length === 0 ? (
             <div className={styles.empty}>
-              {gameId ? 'No scores yet for this game.' : 'No scores recorded yet. Select a game and add your first score!'}
+              {gameId ? t("highScores.noScoresForGame") : t("highScores.noScoresYet")}
             </div>
           ) : (
             <table className={styles.table}>
               <thead>
                 <tr>
                   <th className={styles.rank}>#</th>
-                  <th className={styles.playerCol}>Player</th>
-                  {tab !== 'game' && <th className={styles.gameCol}>Game</th>}
-                  <th className={styles.scoreCol}>Score</th>
-                  <th className={styles.dateCol}>Date</th>
+                  <th className={styles.playerCol}>{t("highScores.player")}</th>
+                  {tab !== 'game' && <th className={styles.gameCol}>{t("highScores.game")}</th>}
+                  <th className={styles.scoreCol}>{t("highScores.score")}</th>
+                  <th className={styles.dateCol}>{t("highScores.date")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -142,7 +144,7 @@ export default function HighScoreBoard({ games, onClose, activeProfile }) {
             </table>
           )}
         </div>
-        <div className={styles.footer}>Press H or ESC to close -- Left/Right: switch tabs</div>
+        <div className={styles.footer}>{t("highScores.footer")}</div>
       </div>
     </div>
   )

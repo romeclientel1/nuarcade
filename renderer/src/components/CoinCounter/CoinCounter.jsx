@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 import styles from './CoinCounter.module.css'
+import { useI18n } from '../../i18n/I18nContext.js'
 
 const COIN_KEY = 'nuarcade_total_launches'
 
 export default function CoinCounter({ lastLaunch }) {
+  const { t } = useI18n()
   const [total, setTotal] = useState(() => {
     try { return parseInt(localStorage.getItem(COIN_KEY) || '0') } catch { return 0 }
   })
@@ -22,9 +24,9 @@ export default function CoinCounter({ lastLaunch }) {
 
   return (
     <div className={`${styles.counter} ${flash ? styles.flash : ''}`}>
-      <span className={styles.icon}>coin</span>
+      <span className={styles.icon}>{t("coinCounter.coin")}</span>
       <span className={styles.num}>{total.toLocaleString()}</span>
-      <span className={styles.label}>plays</span>
+      <span className={styles.label}>{t("coinCounter.plays")}</span>
     </div>
   )
 }

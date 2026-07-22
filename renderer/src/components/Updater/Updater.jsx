@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import styles from './Updater.module.css'
+import { useI18n } from '../../i18n/I18nContext.js'
 
 export default function Updater({ onDismiss }) {
+  const { t } = useI18n()
   const [phase, setPhase] = useState('checking')
   const [newGames, setNewGames] = useState([])
 
@@ -55,7 +57,7 @@ export default function Updater({ onDismiss }) {
     return (
       <div className={styles.banner}>
         <div className={styles.spinner} />
-        <div className={styles.text}>Checking for new games...</div>
+        <div className={styles.text}>{t("updater.checking")}</div>
       </div>
     )
   }
@@ -63,10 +65,12 @@ export default function Updater({ onDismiss }) {
   if (phase === 'newgames') {
     return (
       <div className={styles.banner} style={{ borderColor: 'rgba(0,200,255,0.4)', background: 'rgba(0,200,255,0.06)' }}>
-        <div className={styles.icon}>NEW</div>
+        <div className={styles.icon}>{t("updater.newBadge")}</div>
         <div className={styles.content}>
-          <div className={styles.title}>{newGames.length} new game{newGames.length > 1 ? 's' : ''} added to TeknoParrot!</div>
-          <div className={styles.sub}>{newGames[0]}{newGames.length > 1 ? ` and ${newGames.length - 1} more` : ''}</div>
+          <div className={styles.title}>
+            {t("updater.newGamesTitle", { count: newGames.length, unit: newGames.length > 1 ? t("common.games") : t("common.game") })}
+          </div>
+          <div className={styles.sub}>{newGames[0]}{newGames.length > 1 ? " " + t("updater.newGamesMore", { count: newGames.length - 1 }) : ""}</div>
         </div>
         <button className={styles.dismissBtn} onClick={onDismiss}>X</button>
       </div>

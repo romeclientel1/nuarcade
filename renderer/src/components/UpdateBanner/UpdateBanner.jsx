@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import styles from './UpdateBanner.module.css'
+import { useI18n } from '../../i18n/I18nContext.js'
 
 // States: idle -> downloading -> ready -> installing
 export default function UpdateBanner({ newVersion, releaseUrl, downloadUrl, releaseNotes, onDismiss }) {
+  const { t } = useI18n()
   const [phase,    setPhase   ] = useState('idle')
   const [progress, setProgress] = useState(0)
   const [error,    setError   ] = useState(null)
@@ -28,11 +30,11 @@ export default function UpdateBanner({ newVersion, releaseUrl, downloadUrl, rele
       if (result.success) {
         setPhase('ready')
       } else {
-        setError(result.error || 'Download failed')
+        setError(result.error || t("updateBanner.downloadFailed"))
         setPhase('error')
       }
     } catch (e) {
-      setError(e.message || 'Download failed')
+      setError(e.message || t("updateBanner.downloadFailed"))
       setPhase('error')
     }
   }
@@ -46,7 +48,7 @@ export default function UpdateBanner({ newVersion, releaseUrl, downloadUrl, rele
       await window.nuarcade.installUpdate({ installerPath })
       // app will quit itself after spawning installer
     } catch (e) {
-      setError(e.message || 'Install failed')
+      setError(e.message || t("updateBanner.installFailed"))
       setPhase('error')
     }
   }
@@ -54,26 +56,26 @@ export default function UpdateBanner({ newVersion, releaseUrl, downloadUrl, rele
   return (
     <div className={styles.banner}>
       <div className={styles.left}>
-        <div className={styles.badge}>UPDATE</div>
+        <div className={styles.badge}>{t("updateBanner.badge")}</div>
         <div className={styles.text}>
-          <span className={styles.title}>NuArcade v{newVersion} is available</span>
+          <span className={styles.title}>{t("updateBanner.available", { version: newVersion })}</span>
           {phase === 'idle' && (
-            <span className={styles.notes}>{releaseNotes || 'A new version is ready to download'}</span>
+            <span className={styles.notes}>{releaseNotes || t("updateBanner.readyToDownload")}</span>
           )}
           {phase === 'downloading' && (
             <div className={styles.progressWrap}>
               <div className={styles.progressBar} style={{ width: progress + '%' }} />
-              <span className={styles.progressLabel}>{progress}% downloading...</span>
+              <span className={styles.progressLabel}>{t("updateBanner.downloadingPct", { progress })}</span>
             </div>
           )}
           {phase === 'ready' && (
-            <span className={styles.notes}>Downloaded -- ready to install. NuArcade will restart.</span>
+            <span className={styles.notes}>{t("updateBanner.readyToInstall")}</span>
           )}
           {phase === 'installing' && (
-            <span className={styles.notes}>Installing... NuArcade will restart automatically.</span>
+            <span className={styles.notes}>{t("updateBanner.installingRestart")}</span>
           )}
           {phase === 'error' && (
-            <span className={styles.notes} style={{ color: '#ff5555' }}>Error: {error}</span>
+            <span className={styles.notes} style={{ color: '#ff5555' }}>{t("updateBanner.errorPrefix")} {error}</span>
           )}
         </div>
       </div>
@@ -81,30 +83,30 @@ export default function UpdateBanner({ newVersion, releaseUrl, downloadUrl, rele
         {phase === 'idle' && (
           <>
             <button className={styles.downloadBtn} onClick={handleDownload}>
-              {downloadUrl ? 'Download' : 'View release'}
+              {downloadUrl ? t("updateBanner.download") : t("updateBanner.viewRelease")}
             </button>
-            <button className={styles.dismissBtn} onClick={onDismiss}>Later</button>
+            <button className={styles.dismissBtn} onClick={onDismiss}>{t("updateBanner.later")}</button>
           </>
         )}
         {phase === 'downloading' && (
-          <button className={styles.dismissBtn} disabled>Downloading...</button>
+          <button className={styles.dismissBtn} disabled>{t("updateBanner.downloadingEllipsis")}</button>
         )}
         {phase === 'ready' && (
           <>
-            <button className={styles.downloadBtn} onClick={handleInstall}>Install now</button>
-            <button className={styles.dismissBtn} onClick={onDismiss}>Later</button>
+            <button className={styles.downloadBtn} onClick={handleInstall}>{t("updateBanner.installNow")}</button>
+            <button className={styles.dismissBtn} onClick={onDismiss}>{t("updateBanner.later")}</button>
           </>
         )}
         {phase === 'error' && (
           <>
             <button className={styles.downloadBtn} onClick={() => window.open(releaseUrl, '_blank')}>
-              Manual download
+              {t("updateBanner.manualDownload")}
             </button>
-            <button className={styles.dismissBtn} onClick={onDismiss}>Dismiss</button>
+            <button className={styles.dismissBtn} onClick={onDismiss}>{t("updateBanner.dismiss")}</button>
           </>
         )}
         {phase === 'installing' && (
-          <button className={styles.dismissBtn} disabled>Restarting...</button>
+          <button className={styles.dismissBtn} disabled>{t("updateBanner.restarting")}</button>
         )}
       </div>
     </div>

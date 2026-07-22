@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import styles from './VolumeOverlay.module.css'
+import { useI18n } from '../../i18n/I18nContext.js'
 
 export default function VolumeOverlay() {
+  const { t } = useI18n()
   const [volume, setVolume] = useState(80)
   const [visible, setVisible] = useState(false)
   const hideTimer = useRef(null)
@@ -26,7 +28,7 @@ export default function VolumeOverlay() {
 
   return (
     <div className={styles.overlay}>
-      <div className={styles.icon}>{volume === 0 ? 'MUTE' : volume < 40 ? 'LOW' : 'VOL'}</div>
+      <div className={styles.icon}>{volume === 0 ? t("volumeOverlay.mute") : volume < 40 ? t("volumeOverlay.low") : t("volumeOverlay.volume")}</div>
       <div className={styles.track}>
         <div className={styles.fill} style={{ width: `${volume}%` }} />
       </div>

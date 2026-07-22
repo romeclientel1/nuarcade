@@ -492,7 +492,7 @@ const handleSave = async () => {
             <div className={styles.section}>
         <div className={styles.sectionTitle}>{t("settings.sectionEmulators")}</div>
         <div className={styles.pathsNote}>
-          Download and install emulators, then set their paths in the Paths section below.
+          {t("settings.emulatorsNote")}
         </div>
         <div className={styles.emulatorGrid}>
           {[
@@ -521,7 +521,7 @@ const handleSave = async () => {
                 key={e.name}
                 className={styles.emulatorBtn + (installed ? '' : ' ' + styles.emulatorBtnDim)}
                 onClick={() => window.open(e.url, '_blank')}
-                title={installed ? 'Detected -- exe found at this path' : 'Not detected yet -- install and set its path below'}
+                title={installed ? t("settings.emulatorDetected") : t("settings.emulatorNotDetected")}
               >
                 {installed && <span style={{ color: '#00ff88', marginRight: 6 }}>&#10003;</span>}
                 {e.name}
@@ -534,7 +534,7 @@ const handleSave = async () => {
 
       <div className={styles.sectionTitle}>{t("settings.sectionPaths")}</div>
             <div className={styles.pathsNote}>
-              All paths default to F: drive. Browse or type to update, then Save Settings.
+              {t("settings.pathsNote")}
             </div>
             {[
               { key: "teknoParrotPath",    label: "TeknoParrot",         sub: "Folder containing TeknoParrotUi.exe" },
@@ -591,7 +591,7 @@ const handleSave = async () => {
                 <button className={styles.browseBtn} onClick={async () => {
                   const result = await window.nuarcade?.browseFolder()
                   if (result) update(p.key, result)
-                }}>Browse</button>
+                }}>{t("settings.browse")}</button>
               </div>
             ))}
           </div>
@@ -599,8 +599,7 @@ const handleSave = async () => {
           <div className={styles.section}>
             <div className={styles.sectionTitle}>{t("settings.sectionTpFolderRenamer")}</div>
         <div className={styles.pathsNote}>
-          Some game folders don't match TeknoParrot's expected names, so they never show up in your library.
-          Scan below to find likely matches and rename them -- nothing is renamed without your confirmation.
+          {t("settings.tpRenamerNote")}
         </div>
 
         <button
@@ -609,7 +608,7 @@ const handleSave = async () => {
           disabled={scanningFolders || !config.teknoParrotPath || !config.gamesFolderPath}
           style={{ marginBottom: 12 }}
         >
-          {scanningFolders ? 'Scanning...' : 'Scan for unmatched folders'}
+          {scanningFolders ? t("common.scanning") : t("settings.scanUnmatchedFolders")}
         </button>
 
         {folderScan?.error && (
@@ -619,8 +618,8 @@ const handleSave = async () => {
         {folderScan && !folderScan.error && (
           <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginBottom: 10 }}>
             {folderScan.suggestions.length === 0
-              ? 'All folders match a known TeknoParrot profile already -- nothing to rename.'
-              : folderScan.suggestions.length + ' folder(s) out of ' + folderScan.totalFolders + ' need attention.'}
+              ? t("settings.tpRenamerAllMatched")
+              : t("settings.tpRenamerNeedAttention", { count: folderScan.suggestions.length, total: folderScan.totalFolders })}
           </div>
         )}
 
@@ -636,9 +635,9 @@ const handleSave = async () => {
                 {s.folderName}
               </div>
               {renameState === 'done' ? (
-                <div style={{ color: '#00ff88', fontSize: 12 }}>Renamed to {chosen} -- restart to apply.</div>
+                <div style={{ color: '#00ff88', fontSize: 12 }}>{t("settings.tpRenamedTo", { name: chosen })}</div>
               ) : renameState === 'error' ? (
-                <div style={{ color: '#ff4444', fontSize: 12 }}>Rename failed -- target folder may already exist.</div>
+                <div style={{ color: '#ff4444', fontSize: 12 }}>{t("settings.tpRenameFailed")}</div>
               ) : (
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                   {(s.topMatch || s.alternates?.length) ? (
@@ -660,14 +659,14 @@ const handleSave = async () => {
                       ))}
                     </select>
                   ) : (
-                    <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, flex: 1 }}>No likely match found.</div>
+                    <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, flex: 1 }}>{t("settings.tpNoMatch")}</div>
                   )}
                   <button
                     className={styles.exportBtn}
                     disabled={!chosen}
                     onClick={() => handleRenameFolder(s.folderName, chosen)}
                   >
-                    Rename
+                    {t("settings.tpRename")}
                   </button>
                 </div>
               )}
@@ -677,7 +676,7 @@ const handleSave = async () => {
 
         <div className={styles.sectionTitle}>{t("settings.sectionDisplay")}</div>
             <div className={styles.inputRow}>
-              <label className={styles.inputLabel}>Mode</label>
+              <label className={styles.inputLabel}>{t("settings.mode")}</label>
               <div className={styles.toggleGroup}>
                 {["fullscreen", "windowed"].map(m => (
                   <button
@@ -685,35 +684,37 @@ const handleSave = async () => {
                     className={styles.toggleBtn + (config.displayMode === m ? " " + styles.toggleActive : "")}
                     onClick={() => update("displayMode", m)}
                   >
-                    {m.charAt(0).toUpperCase() + m.slice(1)}
+                    {m === "fullscreen" ? t("settings.fullscreen") : t("settings.windowed")}
                   </button>
                 ))}
               </div>
             </div>
             <div className={styles.inputRow}>
-              <label className={styles.inputLabel}>CRT effect</label>
+              <label className={styles.inputLabel}>{t("settings.crtEffect")}</label>
               <div className={styles.toggleGroup}>
                 {["off", "on"].map(m => (
                   <button
                     key={m}
                     className={styles.toggleBtn + (!!config.crtEffect === (m === "on") ? " " + styles.toggleActive : "")}
                     onClick={() => update("crtEffect", m === "on")}
+                    style={{ textTransform: 'uppercase' }}
                   >
-                    {m.toUpperCase()}
+                    {m === "on" ? t("common.on") : t("common.off")}
                   </button>
                 ))}
               </div>
             </div>
             <div className={styles.inputRow}>
-              <label className={styles.inputLabel}>Auto-launch last</label>
+              <label className={styles.inputLabel}>{t("settings.autoLaunchLast")}</label>
               <div className={styles.toggleGroup}>
                 {["off", "on"].map(m => (
                   <button
                     key={m}
                     className={styles.toggleBtn + (!!config.autoLaunchLast === (m === "on") ? " " + styles.toggleActive : "")}
                     onClick={() => update("autoLaunchLast", m === "on")}
+                    style={{ textTransform: 'uppercase' }}
                   >
-                    {m.toUpperCase()}
+                    {m === "on" ? t("common.on") : t("common.off")}
                   </button>
                 ))}
               </div>
@@ -755,7 +756,7 @@ const handleSave = async () => {
           <div className={styles.section}>
             <div className={styles.sectionTitle}>{t("settings.sectionAudio")}</div>
             <div className={styles.inputRow}>
-              <label className={styles.inputLabel}>Gameplay video volume</label>
+              <label className={styles.inputLabel}>{t("settings.videoVolume")}</label>
               <div className={styles.sliderWrap}>
                 <input
                   type="range"
@@ -774,7 +775,7 @@ const handleSave = async () => {
           <div className={styles.section}>
             <div className={styles.sectionTitle}>{t("settings.sectionCardArt")}</div>
             <div className={styles.inputRow}>
-              <label className={styles.inputLabel}>What shows on wheel cards</label>
+              <label className={styles.inputLabel}>{t("settings.cardArtLabel")}</label>
               <div className={styles.toggleGroup}>
                 {['snap','boxart','sgdb','none'].map(opt => (
                   <button
@@ -792,19 +793,20 @@ const handleSave = async () => {
           <div className={styles.section}>
             <div className={styles.sectionTitle}>{t("settings.sectionMusic")}</div>
             <div className={styles.inputRow}>
-              <label className={styles.inputLabel}>Music</label>
+              <label className={styles.inputLabel}>{t("settings.music")}</label>
               <div className={styles.toggleRow}>
                 {["on","off"].map(m => (
                   <button
                     key={m}
                     className={styles.toggleBtn + (((config.musicEnabled !== false) === (m === "on")) ? " " + styles.toggleActive : "")}
                     onClick={() => update("musicEnabled", m === "on")}
-                  >{m.toUpperCase()}</button>
+                    style={{ textTransform: 'uppercase' }}
+                  >{m === "on" ? t("common.on") : t("common.off")}</button>
                 ))}
               </div>
             </div>
             <div className={styles.inputRow}>
-              <label className={styles.inputLabel}>Music volume</label>
+              <label className={styles.inputLabel}>{t("settings.musicVolume")}</label>
               <div className={styles.sliderWrap}>
                 <input
                   type="range"
@@ -819,14 +821,14 @@ const handleSave = async () => {
               </div>
             </div>
             <div className={styles.emuNote}>
-              Drop .mp3 files into F:/Media/Music/ -- NuArcade shuffles and plays them while you browse. Music fades when gameplay video is active. Click the Now Playing badge to skip tracks.
+              {t("settings.musicNote")}
             </div>
           </div>
 
           <div className={styles.section}>
             <div className={styles.sectionTitle}>{t("settings.sectionAttract")}</div>
             <div className={styles.inputRow}>
-              <label className={styles.inputLabel}>Idle timeout</label>
+              <label className={styles.inputLabel}>{t("settings.idleTimeout")}</label>
               <div className={styles.sliderWrap}>
                 <input
                   type="range" min="30" max="600" step="30"
@@ -838,7 +840,7 @@ const handleSave = async () => {
               </div>
             </div>
             <div className={styles.inputRow}>
-              <label className={styles.inputLabel}>Cycle speed</label>
+              <label className={styles.inputLabel}>{t("settings.cycleSpeed")}</label>
               <div className={styles.sliderWrap}>
                 <input
                   type="range" min="2" max="15" step="1"
@@ -850,13 +852,14 @@ const handleSave = async () => {
               </div>
             </div>
             <div className={styles.inputRow}>
-              <label className={styles.inputLabel}>Prefer artwork</label>
+              <label className={styles.inputLabel}>{t("settings.preferArtwork")}</label>
               <div className={styles.toggleGroup}>
                 {["yes", "no"].map(m => (
                   <button key={m}
                     className={styles.toggleBtn + ((config.attractPreferArt !== false) === (m === "yes") ? " " + styles.toggleActive : "")}
                     onClick={() => update("attractPreferArt", m === "yes")}
-                  >{m.toUpperCase()}</button>
+                    style={{ textTransform: 'uppercase' }}
+                  >{m === "yes" ? t("common.yes") : t("common.no")}</button>
                 ))}
               </div>
             </div>
@@ -865,18 +868,19 @@ const handleSave = async () => {
           <div className={styles.section}>
             <div className={styles.sectionTitle}>{t("settings.sectionPixelcade")}</div>
             <div className={styles.inputRow}>
-              <label className={styles.inputLabel}>Enable</label>
+              <label className={styles.inputLabel}>{t("settings.enable")}</label>
               <div className={styles.toggleGroup}>
                 {["off", "on"].map(m => (
                   <button key={m}
                     className={styles.toggleBtn + (!!config.pixelcade?.enabled === (m === "on") ? " " + styles.toggleActive : "")}
                     onClick={() => update("pixelcade", { ...config.pixelcade, enabled: m === "on" })}
-                  >{m.toUpperCase()}</button>
+                    style={{ textTransform: 'uppercase' }}
+                  >{m === "on" ? t("common.on") : t("common.off")}</button>
                 ))}
               </div>
             </div>
             <div className={styles.inputRow}>
-              <label className={styles.inputLabel}>IP address</label>
+              <label className={styles.inputLabel}>{t("settings.ipAddress")}</label>
               <input
                 className={styles.input}
                 value={config.pixelcade?.ip || "192.168.1.100"}
@@ -886,7 +890,7 @@ const handleSave = async () => {
               />
             </div>
             <div className={styles.inputRow}>
-              <label className={styles.inputLabel}>Port</label>
+              <label className={styles.inputLabel}>{t("settings.port")}</label>
               <input
                 className={styles.input}
                 value={config.pixelcade?.port || 8080}
@@ -896,8 +900,7 @@ const handleSave = async () => {
               />
             </div>
             <div className={styles.emuNote}>
-              Pixelcade receives game art automatically on navigation and launch.
-              Find your device IP in the Pixelcade app settings.
+              {t("settings.pixelcadeNote")}
             </div>
           </div>
 
@@ -910,13 +913,13 @@ const handleSave = async () => {
               </button>
             </div>
             <div className={styles.inputRow}>
-              <label className={styles.inputLabel}>Website</label>
+              <label className={styles.inputLabel}>{t("settings.website")}</label>
               <button className={styles.communityLink} onClick={() => window.open('https://romeclientel1.github.io/nuarcade/', '_blank')}>
                 romeclientel1.github.io/nuarcade
               </button>
             </div>
             <div className={styles.inputRow}>
-              <label className={styles.inputLabel}>Report a bug</label>
+              <label className={styles.inputLabel}>{t("settings.reportBug")}</label>
               <button className={styles.communityLink} onClick={() => window.open('https://github.com/romeclientel1/nuarcade/issues', '_blank')}>
                 GitHub Issues
               </button>
@@ -927,7 +930,7 @@ const handleSave = async () => {
             <div className={styles.sectionTitle}>{t("settings.sectionEmulators")}</div>
             
             <div className={styles.inputRow}>
-              <label className={styles.inputLabel}>Auto-configure TeknoParrot</label>
+              <label className={styles.inputLabel}>{t("settings.autoConfigureTp")}</label>
               <button
                 className={styles.exportBtn}
                 disabled={tpConfiguring}
@@ -943,7 +946,7 @@ const handleSave = async () => {
                   setTpConfiguring(false)
                 }}
               >
-                {tpConfiguring ? 'Scanning...' : 'Find & Wire Games'}
+                {tpConfiguring ? t("common.scanning") : t("settings.findWireGames")}
               </button>
             </div>
             {tpResult && (
@@ -952,8 +955,8 @@ const handleSave = async () => {
                   <div style={{ color: '#ef4444', fontSize: 11 }}>{tpResult.error}</div>
                 ) : (
                   <div className={styles.rescanTotal}>
-                    {tpResult.configured} game{tpResult.configured !== 1 ? 's' : ''} configured
-                    {tpResult.notFound > 0 ? ` (${tpResult.notFound} not found -- check F:\\ArcadeGames\\)` : ' -- hit Rescan to load them'}
+                    {t("settings.gamesConfigured", { count: tpResult.configured })}
+                    {tpResult.notFound > 0 ? " " + t("settings.notFoundCheckPath", { count: tpResult.notFound, path: "F:\\ArcadeGames\\" }) : " " + t("settings.hitRescanToLoad")}
                   </div>
                 )}
               </div>
@@ -998,7 +1001,7 @@ const handleSave = async () => {
               })}
             </div>
             <div className={styles.emuNote}>
-              Disabled emulators are hidden from the wheel. Re-enable anytime.
+              {t("settings.disabledEmulatorsNote")}
             </div>
           </div>
 
@@ -1019,7 +1022,7 @@ const handleSave = async () => {
               />
             </div>
             <div className={styles.inputRow}>
-              <label className={styles.inputLabel}>yt-dlp status</label>
+              <label className={styles.inputLabel}>{t("settings.ytdlpStatus")}</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <span style={{
                   fontSize: 10,
@@ -1030,7 +1033,7 @@ const handleSave = async () => {
                   color: ytdlpStatus === 'present' ? '#00ff88' : ytdlpStatus === 'installing' ? '#00c8ff' : '#ffaa00',
                   background: ytdlpStatus === 'present' ? 'rgba(0,255,136,0.08)' : ytdlpStatus === 'installing' ? 'rgba(0,200,255,0.08)' : 'rgba(255,170,0,0.08)',
                 }}>
-                  {ytdlpStatus === 'present' ? 'Installed' : ytdlpStatus === 'installing' ? 'Downloading...' : ytdlpStatus === 'error' ? 'Error' : ytdlpStatus === 'missing' ? 'Not installed' : 'Checking...'}
+                  {ytdlpStatus === 'present' ? t("settings.installed") : ytdlpStatus === 'installing' ? t("settings.downloadingEllipsis") : ytdlpStatus === 'error' ? t("common.error") : ytdlpStatus === 'missing' ? t("settings.notInstalled") : t("common.checking")}
                 </span>
                 <button
                   className={styles.exportBtn}
@@ -1041,19 +1044,19 @@ const handleSave = async () => {
                     try {
                       const r = await window.nuarcade.ensureYtdlp()
                       setYtdlpStatus(r.success ? 'present' : 'error')
-                      if (!r.success) setYtdlpError(r.error || 'Unknown error')
+                      if (!r.success) setYtdlpError(r.error || t("settings.unknownError"))
                     } catch (e) { setYtdlpStatus('error'); setYtdlpError(e.message || String(e)) }
                   }}
                 >
-                  {ytdlpStatus === 'present' ? 'Re-download' : 'Install now'}
+                  {ytdlpStatus === 'present' ? t("settings.redownload") : t("settings.installNow")}
                 </button>
               </div>
             </div>
             {ytdlpError && (
-              <div style={{ fontSize: 11, color: '#ff8888', marginTop: -4, marginBottom: 8 }}>Error: {ytdlpError}</div>
+              <div style={{ fontSize: 11, color: '#ff8888', marginTop: -4, marginBottom: 8 }}>{t("common.error")}: {ytdlpError}</div>
             )}
             <div className={styles.emuNote}>
-              YouTube video fallback -- auto-installs on first use. Videos are trimmed to 40s and saved to F:/Media/Videos/.
+              {t("settings.ytdlpNote")}
             </div>
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>Anthropic API key</label>
@@ -1066,19 +1069,19 @@ const handleSave = async () => {
               />
             </div>
             <div className={styles.emuNote}>
-              Optional -- enables AI-powered YouTube search query refinement. The AI Game Coach (press C) works without a key. Get one at console.anthropic.com.
+              {t("settings.apiKeyNote")}
             </div>
             <div className={styles.inputRow}>
-              <label className={styles.inputLabel}>Bulk fetch</label>
+              <label className={styles.inputLabel}>{t("settings.bulkFetch")}</label>
               <button className={styles.exportBtn} onClick={() => setShowArtworkMgr(true)}>
-                Open Artwork Manager
+                {t("settings.openArtworkManager")}
               </button>
               <button
                 className={styles.exportBtn}
                 style={{ marginTop: 8 }}
                 onClick={() => window.open('https://www.emumovies.com', '_blank')}
               >
-                Open EmuMovies
+                {t("settings.openEmuMovies")}
               </button>
             </div>
           </div>
@@ -1095,29 +1098,30 @@ const handleSave = async () => {
           <div className={styles.section}>
             <div className={styles.sectionTitle}>{t("settings.sectionLibrary")}</div>
             <div className={styles.inputRow}>
-              <label className={styles.inputLabel}>Rescan games</label>
+              <label className={styles.inputLabel}>{t("settings.rescanGames")}</label>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button className={styles.exportBtn} onClick={handleRescan} disabled={rescanning}>
-                  {rescanning ? "Scanning..." : "Rescan all emulators"}
+                  {rescanning ? t("common.scanning") : t("settings.rescanAllEmulators")}
                 </button>
                 <button className={styles.exportBtn} style={{ borderColor: 'rgba(255,170,0,0.4)', color: '#ffaa00' }} onClick={() => {
                   localStorage.removeItem('nuarcade_game_cache')
                   localStorage.removeItem('nuarcade_game_cache_ts')
-                  alert('Cache cleared -- close Settings and reopen NuArcade to fresh scan')
+                  alert(t("settings.cacheClearedAlert"))
                 }}>
-                  Clear cache
+                  {t("settings.clearCache")}
                 </button>
               </div>
             </div>
 
             <div className={styles.inputRow}>
-              <label className={styles.inputLabel}>Hide Not Working MAME ROMs</label>
+              <label className={styles.inputLabel}>{t("settings.hideNotWorkingMame")}</label>
               <div className={styles.toggleGroup}>
                 {["yes", "no"].map(m => (
                   <button key={m}
                     className={styles.toggleBtn + ((config.hideNotWorkingMame !== false) === (m === "yes") ? " " + styles.toggleActive : "")}
                     onClick={() => update("hideNotWorkingMame", m === "yes")}
-                  >{m.toUpperCase()}</button>
+                    style={{ textTransform: 'uppercase' }}
+                  >{m === "yes" ? t("common.yes") : t("common.no")}</button>
                 ))}
               </div>
               <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>
@@ -1251,21 +1255,21 @@ const handleSave = async () => {
               </div>
             )}
             <div className={styles.inputRow}>
-              <label className={styles.inputLabel}>Backup</label>
+              <label className={styles.inputLabel}>{t("settings.backup")}</label>
               <button className={styles.exportBtn} onClick={handleBackup} disabled={backingUp}>
-                {backingUp ? "Saving..." : "Save full backup"}
+                {backingUp ? t("settings.saving") : t("settings.saveFullBackup")}
               </button>
             </div>
             <div className={styles.inputRow}>
-              <label className={styles.inputLabel}>Restore</label>
+              <label className={styles.inputLabel}>{t("settings.restore")}</label>
               <button className={styles.exportBtn} onClick={handleRestore} disabled={restoring}>
-                {restoring ? "Restoring..." : "Restore from backup"}
+                {restoring ? t("settings.restoring") : t("settings.restoreFromBackup")}
               </button>
             </div>
             <div className={styles.inputRow}>
-              <label className={styles.inputLabel}>Export game list</label>
+              <label className={styles.inputLabel}>{t("settings.exportGameList")}</label>
               <button className={styles.exportBtn} onClick={handleExport} disabled={exporting}>
-                {exporting ? "Exporting..." : "Export to .txt"}
+                {exporting ? t("settings.exporting") : t("settings.exportToTxt")}
               </button>
             </div>
           </div>
@@ -1273,7 +1277,7 @@ const handleSave = async () => {
           <div className={styles.section}>
             <div className={styles.sectionTitle}>{t("settings.sectionBios")}</div>
             <div className={styles.inputRow}>
-              <label className={styles.inputLabel}>Check BIOS files</label>
+              <label className={styles.inputLabel}>{t("settings.checkBiosFiles")}</label>
               <button className={styles.exportBtn} onClick={async () => {
                 setCheckingBios(true)
                 setBiosResult(null)
@@ -1281,7 +1285,7 @@ const handleSave = async () => {
                 catch (e) { setBiosResult({ error: e.message }) }
                 setCheckingBios(false)
               }} disabled={checkingBios}>
-                {checkingBios ? "Checking..." : "Check BIOS"}
+                {checkingBios ? t("common.checking") : t("settings.checkBios")}
               </button>
             </div>
             {biosResult && !biosResult.error && (
@@ -1299,7 +1303,7 @@ const handleSave = async () => {
                     <div key={key} className={styles.biosRow}>
                       <div className={styles.biosLeft}>
                         <span className={b.found ? styles.biosOk : styles.biosMissing}>
-                          {b.found ? "OK" : "MISSING"}
+                          {b.found ? t("common.ok") : t("settings.missing")}
                         </span>
                         <span className={styles.biosLabel}>{label}</span>
                       </div>
@@ -1315,7 +1319,7 @@ const handleSave = async () => {
               </div>
             )}
             {biosResult?.error && (
-              <div style={{ fontSize: 10, color: "#ef4444", marginTop: 6 }}>Error: {biosResult.error}</div>
+              <div style={{ fontSize: 10, color: "#ef4444", marginTop: 6 }}>{t("common.error")}: {biosResult.error}</div>
             )}
           </div>
 
@@ -1324,15 +1328,15 @@ const handleSave = async () => {
 
             <div className={styles.aboutGrid}>
               <div className={styles.aboutRow}>
-                <span className={styles.aboutLabel}>Version</span>
-                <span className={styles.aboutVal}>{window.nuarcade?.version || 'v4.0.7'} {updateAvailable ? '(v' + remoteVersion + ' available)' : '(latest)'}</span>
+                <span className={styles.aboutLabel}>{t("settings.version")}</span>
+                <span className={styles.aboutVal}>{window.nuarcade?.version || 'v4.0.7'} {updateAvailable ? '(v' + remoteVersion + ' ' + t("settings.available") + ')' : '(' + t("settings.latest") + ')'}</span>
               </div>
               <div className={styles.aboutRow}>
-                <span className={styles.aboutLabel}>Platform</span>
+                <span className={styles.aboutLabel}>{t("settings.platform")}</span>
                 <span className={styles.aboutVal}>{window.nuarcade?.platform || "mac (dev)"}</span>
               </div>
               <div className={styles.aboutRow}>
-                <span className={styles.aboutLabel}>Built by</span>
+                <span className={styles.aboutLabel}>{t("settings.builtBy")}</span>
                 <span className={styles.aboutVal}>Rome Clientel</span>
               </div>
               <div className={styles.aboutRow}>

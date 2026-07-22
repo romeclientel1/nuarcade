@@ -5,6 +5,7 @@ import { useGameNotes } from "../../hooks/useGameNotes"
 import { useCollections } from "../Collections/Collections"
 import ControllerBadge from "../ControllerBadge/ControllerBadge"
 import styles from "./GameDetail.module.css"
+import { useI18n } from "../../i18n/I18nContext.js"
 
 const GENRE_COLORS = {
   Racing:    { bg: "#001a33", accent: "#0066cc" },
@@ -129,6 +130,7 @@ const EXE_LABELS = {
 }
 
 export default function GameDetail({ game, onClose, onLaunch, launching, artwork, games = [], onSelectGame }) {
+  const { t } = useI18n()
   const [imgError, setImgError] = useState(false)
   const [controllerOverride, setControllerOverride] = useState("auto")
   const [savingController, setSavingController] = useState(false)
@@ -205,7 +207,7 @@ export default function GameDetail({ game, onClose, onLaunch, launching, artwork
       >
         <div className={styles.bgGlow} style={{ background: "radial-gradient(ellipse 60% 60% at 30% 50%, " + colors.accent + "18 0%, transparent 70%)" }} />
 
-        <button className={styles.backBtn} onClick={onClose}>Back</button>
+        <button className={styles.backBtn} onClick={onClose}>{t("common.back")}</button>
 
         <div className={styles.content}>
           <div className={styles.artSide}>
@@ -243,7 +245,7 @@ export default function GameDetail({ game, onClose, onLaunch, launching, artwork
               onClick={onLaunch}
               disabled={launching}
             >
-              {launching ? "Launching..." : game.isPinball ? "Launch Table" : game.emulator === "retroarch" ? "Launch RetroArch to Play" : "Launch Game"}
+              {launching ? t("wheel.launching") : game.isPinball ? t("wheel.launchTable") : game.emulator === "retroarch" ? t("wheel.launchRetroArch") : t("wheel.launchGame")}
             </button>
             {lc.count > 0 && (
               <button
@@ -295,43 +297,43 @@ export default function GameDetail({ game, onClose, onLaunch, launching, artwork
 
             <div className={styles.metaGrid}>
               <div className={styles.metaItem}>
-                <div className={styles.metaLabel}>System</div>
+                <div className={styles.metaLabel}>{t("gameDetail.system")}</div>
                 <div className={styles.metaVal}>{game.system || "-"}</div>
               </div>
               <div className={styles.metaItem}>
-                <div className={styles.metaLabel}>Genre</div>
+                <div className={styles.metaLabel}>{t("gameDetail.genre")}</div>
                 <div className={styles.metaVal}>{game.genre || "-"}</div>
               </div>
               <div className={styles.metaItem}>
-                <div className={styles.metaLabel}>Profile</div>
+                <div className={styles.metaLabel}>{t("gameDetail.profile")}</div>
                 <div className={styles.metaVal}>{game.profile || "-"}</div>
               </div>
               <div className={styles.metaItem}>
-                <div className={styles.metaLabel}>Status</div>
+                <div className={styles.metaLabel}>{t("gameDetail.status")}</div>
                 <div className={styles.metaVal} style={{ color: statusColor }}>{game.status || "-"}</div>
               </div>
               {game.year && (
                 <div className={styles.metaItem}>
-                  <div className={styles.metaLabel}>Year</div>
+                  <div className={styles.metaLabel}>{t("gameDetail.year")}</div>
                   <div className={styles.metaVal}>{game.year}</div>
                 </div>
               )}
               {game.manufacturer && (
                 <div className={styles.metaItem}>
-                  <div className={styles.metaLabel}>Manufacturer</div>
+                  <div className={styles.metaLabel}>{t("gameDetail.manufacturer")}</div>
                   <div className={styles.metaVal}>{game.manufacturer}</div>
                 </div>
               )}
               {game.players && (
                 <div className={styles.metaItem}>
-                  <div className={styles.metaLabel}>Players</div>
+                  <div className={styles.metaLabel}>{t("gameDetail.players")}</div>
                   <div className={styles.metaVal}>{game.players}P</div>
                 </div>
               )}
             </div>
 
             <div className={styles.exeSection}>
-              <div className={styles.exeLabel}>Launch command</div>
+              <div className={styles.exeLabel}>{t("gameDetail.launchCommand")}</div>
               <div className={styles.exeBox}>
                 {game.isPinball ? "VPX: " : (EXE_LABELS[game.emulator] ?? "TeknoParrotUi.exe --profile=")}
                 <span style={{ color: colors.accent }}>{game.path || game.profilePath || game.profile}</span>
@@ -363,7 +365,7 @@ export default function GameDetail({ game, onClose, onLaunch, launching, artwork
             )}
 
             <div className={styles.controlsSection}>
-              <div className={styles.exeLabel}>Default controls</div>
+              <div className={styles.exeLabel}>{t("gameDetail.defaultControls")}</div>
               <div className={styles.controlsGrid}>
                 {getControls(game.genre).map((c, i) => (
                   <div key={i} className={styles.controlItem}>
@@ -374,7 +376,7 @@ export default function GameDetail({ game, onClose, onLaunch, launching, artwork
               </div>
             </div>
             <div className={styles.exeSection}>
-              <div className={styles.exeLabel}>Your rating</div>
+              <div className={styles.exeLabel}>{t("gameDetail.yourRating")}</div>
               <div className={styles.starRow}>
                 {[1, 2, 3, 4, 5].map(star => (
                   <button
@@ -394,7 +396,7 @@ export default function GameDetail({ game, onClose, onLaunch, launching, artwork
               </div>
             </div>
             <div className={styles.exeSection}>
-              <div className={styles.exeLabel}>Collections</div>
+              <div className={styles.exeLabel}>{t("collections.title")}</div>
               {Object.values(collections).length === 0 ? (
                 <div className={styles.collectionsEmpty}>No collections yet -- create one in the Collections panel (N)</div>
               ) : (
@@ -419,12 +421,12 @@ export default function GameDetail({ game, onClose, onLaunch, launching, artwork
               )}
             </div>
             <div className={styles.exeSection}>
-              <div className={styles.exeLabel}>Personal notes <span style={{color:"rgba(255,255,255,0.2)",fontSize:9}}>(auto-saved)</span></div>
+              <div className={styles.exeLabel}>{t("gameDetail.personalNotes")} <span style={{color:"rgba(255,255,255,0.2)",fontSize:9}}>{t("gameDetail.autoSaved")}</span></div>
               <textarea
                 className={styles.noteArea}
                 value={note}
                 onChange={e => handleNoteChange(e.target.value)}
-                placeholder="Add notes about this game..."
+                placeholder={t("gameDetail.notesPlaceholder")}
                 rows={3}
               />
             </div>
@@ -442,7 +444,7 @@ export default function GameDetail({ game, onClose, onLaunch, launching, artwork
               if (similar.length === 0) return null
               return (
                 <div className={styles.exeSection}>
-                  <div className={styles.exeLabel}>Similar games</div>
+                  <div className={styles.exeLabel}>{t("gameDetail.similarGames")}</div>
                   <div className={styles.similarList}>
                     {similar.map(g => {
                       const gArt = artwork?.[g.id || g.profile] || null

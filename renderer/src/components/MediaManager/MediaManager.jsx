@@ -3,6 +3,7 @@ import { useOverlayGamepad } from '../../hooks/useOverlayGamepad'
 import styles from "./MediaManager.module.css"
 import ArtworkManager from "../ArtworkManager/ArtworkManager"
 import { useSteamGridDB } from "../../hooks/useSteamGridDB"
+import { useI18n } from "../../i18n/I18nContext.js"
 
 const THUMBNAIL_BASE = "https://raw.githubusercontent.com/teknogods/TeknoParrotUIThumbnails/master/Icons/"
 
@@ -18,6 +19,7 @@ const SAMPLE_GAMES = [
 const TABS = ['library', 'artwork', 'bezels', 'emumovies', 'about']
 
 export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdated }) {
+  const { t } = useI18n()
   const scrollRef = useRef(null)
   const [games, setGames] = useState([])
   const [loading, setLoading] = useState(true)
@@ -699,18 +701,18 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
       <div className={styles.panel}>
         <div className={styles.header}>
           <div className={styles.headerLeft}>
-            <div className={styles.title}>Media Manager</div>
+            <div className={styles.title}>{t("mediaManager.title")}</div>
             <div className={styles.sub}>Artwork and video previews for your game library</div>
           </div>
           <button className={styles.closeBtn} onClick={onClose} title="Close (B)">X</button>
         </div>
 
         <div className={styles.tabs}>
-          <button className={styles.tab + (tab === "library" ? " " + styles.tabActive : "")} onClick={() => setTab("library")}>Library</button>
-          <button className={styles.tab + (tab === "artwork" ? " " + styles.tabActive : "")} onClick={() => setTab("artwork")}>Artwork</button>
-          <button className={styles.tab + (tab === "bezels" ? " " + styles.tabActive : "")} onClick={() => setTab("bezels")}>Bezels</button>
+          <button className={styles.tab + (tab === "library" ? " " + styles.tabActive : "")} onClick={() => setTab("library")}>{t("home.library")}</button>
+          <button className={styles.tab + (tab === "artwork" ? " " + styles.tabActive : "")} onClick={() => setTab("artwork")}>{t("settings.sectionArtwork")}</button>
+          <button className={styles.tab + (tab === "bezels" ? " " + styles.tabActive : "")} onClick={() => setTab("bezels")}>{t("mediaManager.bezels")}</button>
           <button className={styles.tab + (tab === "emumovies" ? " " + styles.tabActive : "")} onClick={() => setTab("emumovies")}>EmuMovies</button>
-          <button className={styles.tab + (tab === "about" ? " " + styles.tabActive : "")} onClick={() => setTab("about")}>About</button>
+          <button className={styles.tab + (tab === "about" ? " " + styles.tabActive : "")} onClick={() => setTab("about")}>{t("settings.sectionAbout")}</button>
         </div>
 
         {restartNeeded && (
@@ -1163,7 +1165,7 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
               </div>
               <div className={styles.pathDisplay}>
                 <div className={styles.pathRow}>
-                  <span className={styles.pathLabel}>Videos</span>
+                  <span className={styles.pathLabel}>{t("mediaManager.videos")}</span>
                   <span className={styles.pathValue}>F:/Media/Videos/</span>
                 </div>
                 <div className={styles.pathRow}>

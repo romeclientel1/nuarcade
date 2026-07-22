@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import styles from "./VirtualKeyboard.module.css"
 import { useGamepad } from "../../hooks/useGamepad"
+import { useI18n } from "../../i18n/I18nContext.js"
 
 const ROWS = [
   ["1","2","3","4","5","6","7","8","9","0"],
@@ -11,8 +12,12 @@ const ROWS = [
 ]
 
 const KEY_W = { SPACE: 3, BACKSPACE: 2, CLEAR: 2, DONE: 2 }
+// Special-key ids stay stable (ROWS/press()/KEY_W all key off these) --
+// only the rendered label is locale-aware, resolved via t() at render time.
+const KEY_LABEL_KEYS = { SPACE: "virtualKeyboard.space", CLEAR: "virtualKeyboard.clear", DONE: "virtualKeyboard.done" }
 
 export default function VirtualKeyboard({ value, onChange, onDone, onClose, resultCount }) {
+  const { t } = useI18n()
   const [row, setRow] = useState(1)
   const [col, setCol] = useState(0)
   const [xFocused, setXFocused] = useState(false)  // true when X/Cancel button is focused
@@ -128,22 +133,22 @@ export default function VirtualKeyboard({ value, onChange, onDone, onClose, resu
         {/* Search display */}
         <div className={styles.searchBar}>
           <div className={styles.searchText}>
-            {value || <span className={styles.placeholder}>Search games, systems, ROM names...</span>}
+            {value || <span className={styles.placeholder}>{t("wheel.searchPlaceholder")}</span>}
             <span className={styles.cursor}>|</span>
           </div>
           {value && (
             <div className={styles.resultBadge}>
-              {resultCount} result{resultCount !== 1 ? "s" : ""}
+              {resultCount !== 1 ? t("virtualKeyboard.results", { count: resultCount }) : t("virtualKeyboard.result", { count: resultCount })}
             </div>
           )}
         </div>
 
         {/* Gamepad hints */}
         <div className={styles.hints}>
-          <span><kbd>A</kbd> Type</span>
-          <span><kbd>B</kbd> Delete</span>
-          <span><kbd>Y</kbd> Clear</span>
-          <span><kbd>X</kbd> / <kbd>Start</kbd> Done</span>
+          <span><kbd>A</kbd> {t("virtualKeyboard.hintType")}</span>
+          <span><kbd>B</kbd> {t("virtualKeyboard.hintDelete")}</span>
+          <span><kbd>Y</kbd> {t("virtualKeyboard.hintClear")}</span>
+          <span><kbd>X</kbd> / <kbd>Start</kbd> {t("virtualKeyboard.hintDone")}</span>
         </div>
 
         {/* Keys */}
@@ -166,7 +171,7 @@ export default function VirtualKeyboard({ value, onChange, onDone, onClose, resu
                     style={w ? { flex: w } : {}}
                     onClick={() => press(key)}
                   >
-                    {key === "BACKSPACE" ? "<" : key === "SPACE" ? "SPACE" : key}
+                    {key === "BACKSPACE" ? "<" : KEY_LABEL_KEYS[key] ? t(KEY_LABEL_KEYS[key]) : key}
                   </button>
                 )
               })}

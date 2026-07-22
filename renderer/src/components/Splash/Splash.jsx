@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import styles from './Splash.module.css'
+import { useI18n } from '../../i18n/I18nContext.js'
 
 export default function Splash({ onComplete }) {
+  const { t } = useI18n()
   const [phase, setPhase] = useState('logo')
 
   useEffect(() => {
@@ -20,7 +22,7 @@ export default function Splash({ onComplete }) {
           <span className={styles.arcade}>Arcade</span>
         </div>
         <div className={`${styles.tagline} ${phase === 'tagline' || phase === 'fade' ? styles.taglineIn : ''}`}>
-          INSERT COIN TO CONTINUE
+          {t("splash.tagline")}
         </div>
         <div className={`${styles.version} ${phase === 'tagline' || phase === 'fade' ? styles.versionIn : ''}`}>
           v1.3.0

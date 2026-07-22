@@ -1,8 +1,17 @@
 import { useState, useEffect, useRef } from 'react'
 import { useOverlayGamepad } from '../../hooks/useOverlayGamepad'
 import styles from './GameCoach.module.css'
+import { useI18n } from '../../i18n/I18nContext.js'
+
+// Sentinels stored in `error` state instead of pre-translated text, so the
+// displayed message is resolved via t() at render time and stays reactive
+// to a locale change even though the error itself was set once,
+// asynchronously, well before any later render.
+const NO_RESPONSE = "__no_response__"
+const CONNECT_FAILED = "__connect_failed__"
 
 export default function GameCoach({ game, onClose }) {
+  const { t } = useI18n()
   const [text,    setText   ] = useState('')
   const [loading, setLoading] = useState(true)
   const [error,   setError  ] = useState(null)
@@ -33,12 +42,12 @@ export default function GameCoach({ game, onClose }) {
       } else if (result?.text) {
         setText(result.text)
       } else {
-        setError('No response received')
+        setError(NO_RESPONSE)
       }
     }).catch(e => {
       console.log('[COACH UI] catch:', e.message)
       setLoading(false)
-      setError(e.message || 'Failed to connect to AI coach')
+      setError(e.message || CONNECT_FAILED)
     })
 
     // Also listen for chunk events as fallback
@@ -76,14 +85,14 @@ export default function GameCoach({ game, onClose }) {
     })
   }
 
-  const gameTitle = game?.title || game?.id || game?.profile || 'Unknown Game'
+  const gameTitle = game?.title || game?.id || game?.profile || t("coach.unknownGame")
 
   return (
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.panel} onClick={e => e.stopPropagation()}>
         <div className={styles.header}>
           <div className={styles.headerLeft}>
-            <div className={styles.badge}>AI COACH</div>
+            <div className={styles.badge}>{t("coach.title")}</div>
             <div className={styles.gameTitle}>{gameTitle}</div>
           </div>
           <button className={styles.closeBtn} onClick={onClose}>ESC</button>
@@ -93,15 +102,16 @@ export default function GameCoach({ game, onClose }) {
           {loading && (
             <div className={styles.thinking}>
               <div className={styles.dot} /><div className={styles.dot} /><div className={styles.dot} />
-              <span>Analyzing {gameTitle}...</span>
+              <span>{t("coach.analyzing", { game: gameTitle })}</span>
             </div>
           )}
 
           {error && (
             <div className={styles.error}>
-              {error.includes('API key') ? (
-                <>No Anthropic API key set. Add it in Settings.</>
-              ) : error}
+              {error === NO_RESPONSE ? t("coach.noResponse")
+                : error === CONNECT_FAILED ? t("coach.connectionFailed")
+                : error.includes('API key') ? t("coach.noApiKey")
+                : error}
             </div>
           )}
 
@@ -113,7 +123,7 @@ export default function GameCoach({ game, onClose }) {
         </div>
 
         <div className={styles.footer}>
-          Press C or ESC to close
+          {t("coach.footer")}
         </div>
       </div>
     </div>

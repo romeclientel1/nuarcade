@@ -331,16 +331,18 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
 
       {showDepartConfirm && (
         <div className={styles.departOverlay}>
-          <div className={styles.departTitle}>EXIT NUARCADE?</div>
+          <div className={styles.departTitle}>{t("home.confirmDepartTitle")}</div>
           <div className={styles.departChoices}>
             <button
               className={styles.departBtn + (departChoice === 0 ? " " + styles.departBtnActive : "")}
+              style={{ textTransform: 'uppercase' }}
               onClick={() => window.nuarcade?.quit?.()}
-            >YES</button>
+            >{t("common.yes")}</button>
             <button
               className={styles.departBtn + (departChoice === 1 ? " " + styles.departBtnActive : "")}
+              style={{ textTransform: 'uppercase' }}
               onClick={() => setShowDepartConfirm(false)}
-            >NO</button>
+            >{t("common.no")}</button>
           </div>
         </div>
       )}
