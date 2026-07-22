@@ -33,6 +33,8 @@ import styles from "./Wheel.module.css"
 import { useMediaFolders } from "../../hooks/useMediaFolders"
 import { buildLibraryOriginContext } from "./libraryLaunchOrigin.js"
 import { applyPendingRecentlyPlayedCredit } from "../../launchSession/startupRecovery.js"
+import { consumeRestorationRequest } from "../../launchSession/restorationRequest.js"
+import { shouldConsumeRestoration, resolveLibraryRestoration } from "../../launchSession/restorationResolution.js"
 
 const CATEGORIES = ["All", "Favorites", "Recent", "Arcade", "MAME", "Retro", "Racing", "Fighting", "Shooter", "Rhythm", "Flying", "Sports", "N64", "PS1", "PSP", "Dreamcast", "Model2", "Model3", "PS3", "Xbox360", "GCWii", "WiiU", "PS2", "Switch", "Pinball", "PC"]
 const ATTRACT_TIMEOUT = 120000
@@ -226,7 +228,7 @@ function KonamiCelebration({ onClose }) {
   )
 }
 
-export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange, activeProfile, onSwitchPlayer, onReturnHome }) {
+export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange, activeProfile, onSwitchPlayer, onReturnHome, restorationRequest }) {
   const {
     games, stats, loading, libraryEmpty, config,
   toggleFavorite, isFavorite,
@@ -434,20 +436,24 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const [screenshotMode, setScreenshotMode] = useState(false)
   const idleTimer = useRef(null)
 
-  const getFilteredGames = () => {
+  // categoryOverride lets launch-origin restoration resolve an arbitrary
+  // category's list with this exact same filtering -- omitted everywhere
+  // else, so existing callers behave identically.
+  const getFilteredGames = (categoryOverride) => {
+    const category = categoryOverride ?? activeCategory
     // If AI search returned results, use those directly
     if (aiResults && aiResults.length > 0) return aiResults
 
     let list = games
-    if (activeCategory === "Favorites") {
+    if (category === "Favorites") {
       list = games.filter(g => isFavorite(g.id || g.profile))
-    } else if (activeCategory === "Recent") {
+    } else if (category === "Recent") {
       list = recentlyPlayed
-    } else if (activeCategory.startsWith("col_")) {
-      const col = collections[activeCategory]
+    } else if (category.startsWith("col_")) {
+      const col = collections[category]
       list = col ? games.filter(g => col.games.includes(g.id || g.profile)) : []
-    } else if (activeCategory !== "All") {
-      list = games.filter(g => g.genre === activeCategory || g.system === activeCategory || g.emulator === activeCategory.toLowerCase())
+    } else if (category !== "All") {
+      list = games.filter(g => g.genre === category || g.system === category || g.emulator === category.toLowerCase())
     }
     if (debouncedSearch.trim()) {
       const q = debouncedSearch.toLowerCase().trim()
@@ -495,7 +501,17 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const current = filteredGames[selectedIndex] || filteredGames[0]
   currentRef.current = current
 
-  useEffect(() => { setSelectedIndex(0); setAiResults(null); setAiSearching(false) }, [activeCategory, debouncedSearch, sortBy])
+  // One-shot suppression: launch-origin restoration sets category and index
+  // together in the same update -- without this, the reset below (which is
+  // correct for every player-driven category change) would immediately wipe
+  // the restored index back to 0 when the restored category differs.
+  const suppressSelectedIndexResetRef = useRef(false)
+  useEffect(() => {
+    setAiResults(null)
+    setAiSearching(false)
+    if (suppressSelectedIndexResetRef.current) { suppressSelectedIndexResetRef.current = false; return }
+    setSelectedIndex(0)
+  }, [activeCategory, debouncedSearch, sortBy])
 
   // Background video crossfade when center game changes
   useEffect(() => {
@@ -600,6 +616,36 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     setShowDetail(false)
     setSelectedIndex(0)
   }, [])
+
+  // Launch-origin restoration -- consumes App's restoration request exactly
+  // once, at the first moment the catalog is genuinely ready. While
+  // `loading` is true this whole component renders the "Scanning game
+  // library..." screen (below), so there is no window for the player to
+  // navigate the wheel before this applies -- no timeout heuristics needed.
+  // Resolution priority lives in resolveLibraryRestoration (game id
+  // outranks section, section outranks saved index, everything clamps and
+  // degrades safely); the lists it resolves against come from this
+  // component's own real getFilteredGames, so category semantics can never
+  // drift. Profile validation already happened in App when the request was
+  // built -- a request only reaches this surface for the matching profile.
+  useEffect(() => {
+    if (!shouldConsumeRestoration(restorationRequest, { catalogReady: !loading })) return
+    if (!consumeRestorationRequest(restorationRequest)) return
+    const savedSectionId = restorationRequest.sectionId
+    const sectionExists = !!savedSectionId && visibleTabsRef.current.includes(savedSectionId)
+    const resolution = resolveLibraryRestoration(restorationRequest, {
+      sectionExists,
+      sectionGames: sectionExists ? getFilteredGames(savedSectionId) : [],
+      allGames: getFilteredGames("All"),
+    })
+    if (resolution.category !== activeCategoryRef.current) {
+      suppressSelectedIndexResetRef.current = true
+      setActiveCategory(resolution.category)
+      const tabIdx = visibleTabsRef.current.indexOf(resolution.category)
+      if (tabIdx >= 0) setTabFocusIdx(tabIdx)
+    }
+    setSelectedIndex(resolution.index)
+  }, [restorationRequest, loading, games])
 
   const resetIdleTimer = useCallback(() => {
     setAttractMode(false)

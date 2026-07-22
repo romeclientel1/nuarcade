@@ -248,6 +248,10 @@ function subscribeUntilTerminal(session, { onLaunchLifecycleTerminal, deps }) {
  */
 export function buildPendingRestoration(session) {
   return {
+    // The session's own stable id -- carried through so the eventual
+    // restoration request's identity is derived from it (stable across
+    // rebuilds/remounts), never from a random value minted at build time.
+    launchSessionId: session.id,
     profileId: session.profileId,
     originDestination: session.originDestination,
     originContext: session.originContext,

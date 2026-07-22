@@ -8,7 +8,8 @@ import { useProfiles } from "./context/ProfileContext"
 import { useDestination } from "./hooks/useDestination"
 import CoinCounter from "./components/CoinCounter/CoinCounter"
 import { useTheme } from "./hooks/useTheme"
-import { recoverLaunchSession, resolvePendingRestoration } from "./launchSession/startupRecovery.js"
+import { recoverLaunchSession } from "./launchSession/startupRecovery.js"
+import { buildRestorationForProfile, invalidateRestorationRequest } from "./launchSession/restorationRequest.js"
 import "./index.css"
 
 // Controller debug overlay -- press D to toggle
@@ -108,23 +109,41 @@ export default function App() {
 
   // Applies the pending restoration exactly once, only once a real profile
   // has actually been resolved this session (phase === "main", reached via
-  // handlePlayerSelect/handleGuest/handleAddProfile below). Restores the
-  // captured origin only if the selected profile matches the one the
-  // session was captured for (and that profile still exists) -- otherwise
-  // falls back to Home, never exposing another profile's Library position.
+  // handlePlayerSelect/handleGuest/handleAddProfile below).
+  // buildRestorationForProfile turns the captured facts into a
+  // serializable request: full origin + focus fields when the selected
+  // profile matches the captured one (and it still exists), a bare Home
+  // fallback otherwise -- never another player's Library position. The
+  // request is handed to the owning surface below, which resolves the
+  // focus/section against its own real catalog and consumes the request
+  // exactly once; any newer intentional navigation (the handlers further
+  // down) invalidates it first.
+  const [restorationRequest, setRestorationRequest] = useState(null)
   const appliedRestorationRef = useRef(false)
   useEffect(() => {
     if (!pendingRestoration) return
     if (phase !== "main") return
     if (appliedRestorationRef.current) return
     if (!activeProfile) return
-    appliedRestorationRef.current = true
-    const restoration = resolvePendingRestoration(pendingRestoration, {
+    const request = buildRestorationForProfile(pendingRestoration, {
       selectedProfileId: activeProfile.id, profiles,
     })
-    if (restoration.destination === "library") navigateSurface("library")
+    if (!request) return // unresolved -- stay pending, do not consume
+    appliedRestorationRef.current = true
+    setRestorationRequest(request)
+    if (request.destination === "library") navigateSurface("library")
     else goToSurfaceRoot()
   }, [pendingRestoration, phase, activeProfile, profiles, navigateSurface, goToSurfaceRoot])
+
+  // Newer intentional navigation wins over any stale, not-yet-consumed
+  // restoration -- once the player deliberately goes somewhere themselves,
+  // the old request is dead (module-level invalidation, so even an
+  // already-passed prop can no longer be consumed by a mounted surface).
+  const clearPendingRestoration = () => {
+    if (restorationRequest) invalidateRestorationRequest(restorationRequest)
+    setRestorationRequest(null)
+    setPendingRestoration(null)
+  }
 
   const handleIntroComplete = () => setPhase("playerSelect")
 
@@ -146,11 +165,20 @@ export default function App() {
   const handleReturnToPlayerSelect = () => {
     // Reset the surface to Home so selecting a different player next
     // cannot land them directly inside the previous player's Library view.
+    clearPendingRestoration()
     goToSurfaceRoot()
     setPhase("playerSelect")
   }
 
-  const handleEnterLibrary = () => navigateSurface("library")
+  const handleEnterLibrary = () => {
+    clearPendingRestoration()
+    navigateSurface("library")
+  }
+
+  const handleReturnHomeFromWheel = () => {
+    clearPendingRestoration()
+    goToSurfaceRoot()
+  }
 
   return (
     <ErrorBoundary>
@@ -175,16 +203,18 @@ export default function App() {
             <Wheel
               activeProfile={activeProfile}
               onSwitchPlayer={handleReturnToPlayerSelect}
-              onReturnHome={goToSurfaceRoot}
+              onReturnHome={handleReturnHomeFromWheel}
               crtEnabled={crtEnabled}
               onCRTChange={setCrtEnabled}
               themeId={themeId}
               onThemeChange={setTheme}
+              restorationRequest={restorationRequest?.destination === "library" ? restorationRequest : null}
             />
           ) : (
             <VesparaHome
               onEnterLibrary={handleEnterLibrary}
               onSwitchPlayer={handleReturnToPlayerSelect}
+              restorationRequest={restorationRequest?.destination === "home" ? restorationRequest : null}
             />
           )
         )}

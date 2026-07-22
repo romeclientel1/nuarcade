@@ -14,6 +14,8 @@ import {
 import { selectInitialHomeFocus } from "../../selectors/homeEntry"
 import { buildHomeOriginContext } from "./homeLaunchOrigin.js"
 import { applyPendingRecentlyPlayedCredit } from "../../launchSession/startupRecovery.js"
+import { consumeRestorationRequest } from "../../launchSession/restorationRequest.js"
+import { shouldConsumeRestoration, resolveHomeFocus } from "../../launchSession/restorationResolution.js"
 import styles from "./VesparaHome.module.css"
 
 const RECENT_LIMIT = 8
@@ -26,7 +28,7 @@ const ACTION_LABELS = { library: "Library", switchPlayer: "Switch Player", depar
 // one directly, or enter the existing Wheel/Library experience. Not the
 // final Vespara world -- no cinematic transitions, camera movement, or
 // environmental design here, deliberately.
-export default function VesparaHome({ onEnterLibrary, onSwitchPlayer }) {
+export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restorationRequest }) {
   const { activeProfile } = useProfiles()
   const { recentGamesRaw, games, addRecentlyPlayed, loading } = useRecentGames(RECENT_LIMIT)
   const { startSession, endSession, recordLaunch } = usePlaytime()
@@ -145,6 +147,26 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer }) {
   useEffect(() => {
     if (!hasRecents && focusZone === "recents") setFocusZone("actions")
   }, [hasRecents, focusZone])
+
+  // Launch-origin restoration -- consumes App's restoration request exactly
+  // once, at the first moment the recent-games data is genuinely ready.
+  // Focuses the Recently Played tile with the exact saved game id when it
+  // still exists in THIS profile's resolved list (displayedRecentGames is
+  // already profile-scoped); when it doesn't, the request is consumed and
+  // Home simply keeps its normal derived initial focus -- no fabricated
+  // entry, no invalid selection. Declared after the initial-focus effects
+  // above so a restored focus wins within the same commit, and marked as
+  // accepted so later data settling can't override it.
+  useEffect(() => {
+    if (!shouldConsumeRestoration(restorationRequest, { catalogReady: !loading })) return
+    if (!consumeRestorationRequest(restorationRequest)) return
+    const focus = resolveHomeFocus(restorationRequest, { recentGames: displayedRecentGames })
+    if (focus) {
+      setFocusZone("recents")
+      setRecentIndex(focus.recentIndex)
+      setHasAcceptedInitialFocus(true)
+    }
+  }, [restorationRequest, loading, displayedRecentGames])
 
   const [showDepartConfirm, setShowDepartConfirm] = useState(false)
   const [departChoice, setDepartChoice] = useState(1) // 0 = Yes, 1 = No (default safe)
