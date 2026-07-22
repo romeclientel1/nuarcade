@@ -1,4 +1,9 @@
-import { createContext, useContext, useState, useCallback, useEffect, useMemo } from "react"
+// I18nProvider.jsx -- the JSX provider component. Kept separate from
+// I18nContext.js so plain hook modules can depend on the context/useI18n
+// without pulling JSX into a native `node --test` import chain. See
+// I18nContext.js for why that split exists.
+import { useState, useCallback, useEffect, useMemo } from "react"
+import { I18nContext } from "./I18nContext.js"
 import {
   SUPPORTED_LOCALES,
   normalizeLocale,
@@ -8,8 +13,6 @@ import {
   getDirection,
   applyDocumentMetadata,
 } from "./locale.js"
-
-const I18nContext = createContext(null)
 
 export function I18nProvider({ children }) {
   const [locale, setLocaleState] = useState(() => resolveInitialLocale({
@@ -46,12 +49,4 @@ export function I18nProvider({ children }) {
       {children}
     </I18nContext.Provider>
   )
-}
-
-export function useI18n() {
-  const ctx = useContext(I18nContext)
-  if (!ctx) {
-    throw new Error("useI18n() must be called within an <I18nProvider>. Did you forget to wrap the app root in main.jsx?")
-  }
-  return ctx
 }

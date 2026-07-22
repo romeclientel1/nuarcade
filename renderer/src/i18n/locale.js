@@ -2,7 +2,7 @@
 // direct component access to localStorage/document elsewhere in the app --
 // everything about locale resolution, persistence, translation and
 // document metadata lives here so it can be unit tested with node --test
-// and reused identically by I18nContext.jsx.
+// and reused identically by I18nProvider.jsx/I18nContext.js.
 import en from "./en.js"
 import es from "./es.js"
 

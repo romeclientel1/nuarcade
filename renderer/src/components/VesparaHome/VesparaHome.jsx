@@ -16,7 +16,7 @@ import { buildHomeOriginContext } from "./homeLaunchOrigin.js"
 import { applyPendingRecentlyPlayedCredit } from "../../launchSession/startupRecovery.js"
 import { consumeRestorationRequest } from "../../launchSession/restorationRequest.js"
 import { shouldConsumeRestoration, resolveHomeFocus } from "../../launchSession/restorationResolution.js"
-import { useI18n } from "../../i18n/I18nContext.jsx"
+import { useI18n } from "../../i18n/I18nContext.js"
 import styles from "./VesparaHome.module.css"
 
 const RECENT_LIMIT = 8

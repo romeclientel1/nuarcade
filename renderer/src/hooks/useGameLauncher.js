@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react"
 import { getControllerHint } from "../data/controllerHints.js"
 import { createSession, hasNonterminalSession, findSession } from "../launchSession/sessionStore.js"
 import { reconcileLaunchSession } from "../launchSession/reconciliation.js"
-import { useI18n } from "../i18n/I18nContext.jsx"
+import { useI18n } from "../i18n/I18nContext.js"
 
 // useGameLauncher -------------------------------------------------------
 // The single place a game actually gets launched, extracted out of

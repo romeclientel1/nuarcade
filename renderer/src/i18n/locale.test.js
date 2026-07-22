@@ -4,14 +4,16 @@
 // real production helpers and dictionaries from locale.js/en.js/es.js
 // directly -- nothing here is a restated/duplicated translation table.
 //
-// I18nContext.jsx itself cannot be exercised here (it's JSX, and this
+// I18nProvider.jsx itself cannot be exercised here (it's JSX, and this
 // project has no jsdom/@testing-library/react harness -- see
 // useGameLauncher.test.js for the same limitation applied to hooks). Its
 // entire behavior is a thin wrapper over the plain functions below though:
 // setLocale() is normalizeLocale() + writeSavedLocale(), the initial value
 // is resolveInitialLocale(), t() is translate(), and the lang/dir effect is
 // applyDocumentMetadata(). Testing those functions directly exercises the
-// exact logic the context calls, never a copy of it.
+// exact logic the provider calls, never a copy of it. I18nContext.js (the
+// JSX-free context + useI18n hook) IS importable here and gets a direct
+// coverage test below.
 
 import { test, beforeEach } from "node:test"
 import assert from "node:assert/strict"

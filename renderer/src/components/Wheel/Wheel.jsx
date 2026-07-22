@@ -27,7 +27,7 @@ import { useSteamGridDB } from "../../hooks/useSteamGridDB"
 import { useVersionCheck } from "../../hooks/useVersionCheck"
 import { getControllerHint } from "../../data/controllerHints"
 import ControllerPrompt from "../ControllerPrompt/ControllerPrompt"
-import { useI18n } from "../../i18n/I18nContext.jsx"
+import { useI18n } from "../../i18n/I18nContext.js"
 
 
 import styles from "./Wheel.module.css"

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useOverlayGamepad } from '../../hooks/useOverlayGamepad'
 import { useArcadeSounds } from '../../hooks/useArcadeSounds'
-import { useI18n } from '../../i18n/I18nContext.jsx'
+import { useI18n } from '../../i18n/I18nContext.js'
 import styles from './PlayerSelect.module.css'
 
 const MAX_NAME_LEN = 12

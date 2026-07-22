@@ -6,7 +6,7 @@ import ArtworkManager from "../ArtworkManager/ArtworkManager"
 import styles from "./Settings.module.css"
 import { useVersionCheck } from "../../hooks/useVersionCheck"
 import { THEMES } from "../../hooks/useTheme"
-import { useI18n } from "../../i18n/I18nContext.jsx"
+import { useI18n } from "../../i18n/I18nContext.js"
 
 // Path/emulator config keys that require an app restart to take effect
 // (game library only re-scans on next launch, per the cache design)

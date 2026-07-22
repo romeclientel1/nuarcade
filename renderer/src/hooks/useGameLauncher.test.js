@@ -15,6 +15,15 @@
 // that take no window/document/React dependency at all -- these are what
 // get exercised directly and thoroughly below. See the limitations note in
 // the completion report for exactly what this does and doesn't cover.
+//
+// The `await import("./useGameLauncher.js")` below is itself load-bearing:
+// useGameLauncher.js imports useI18n from ../i18n/I18nContext.js (a
+// deliberately JSX-free module -- see renderer/src/i18n/context.test.js)
+// specifically so this real, un-transformed native `node --test` import
+// succeeds with React installed. If useGameLauncher.js ever grows a
+// transitive import of a .jsx file again, this import throws and every
+// test in this file fails immediately, exactly as it did before that
+// module was split out.
 
 import { test, beforeEach } from "node:test"
 import assert from "node:assert/strict"
@@ -39,6 +48,12 @@ const { getActiveSession, hasNonterminalSession, findSession } = await import(".
 const { getProfileGameState } = await import("../launchSession/profileGameState.js")
 
 beforeEach(() => { global.localStorage.clear() })
+
+test("useGameLauncher.js loads successfully under native node --test (proves its import chain, including useI18n, is JSX-free)", () => {
+  assert.equal(typeof isTrackedEmulator, "function")
+  assert.equal(typeof beginLaunchSession, "function")
+  assert.equal(typeof reconcilePreDispatchFailure, "function")
+})
 
 function makeSpy() {
   const calls = []
