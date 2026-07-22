@@ -32,6 +32,7 @@ import ControllerPrompt from "../ControllerPrompt/ControllerPrompt"
 import styles from "./Wheel.module.css"
 import { useMediaFolders } from "../../hooks/useMediaFolders"
 import { buildLibraryOriginContext } from "./libraryLaunchOrigin.js"
+import { applyPendingRecentlyPlayedCredit } from "../../launchSession/startupRecovery.js"
 
 const CATEGORIES = ["All", "Favorites", "Recent", "Arcade", "MAME", "Retro", "Racing", "Fighting", "Shooter", "Rhythm", "Flying", "Sports", "N64", "PS1", "PSP", "Dreamcast", "Model2", "Model3", "PS3", "Xbox360", "GCWii", "WiiU", "PS2", "Switch", "Pinball", "PC"]
 const ATTRACT_TIMEOUT = 120000
@@ -233,6 +234,20 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     newGameCount,
     refreshVideoPaths,
   } = useGameLibrary()
+
+  // Completes any Recently Played credit a startup-recovered launch session
+  // left pending (see launchSession/startupRecovery.js) -- recovery itself
+  // can't resolve the real game/addRecentlyPlayed (it runs before this
+  // catalog exists), so it durably records the credit instead of losing
+  // it. Cheap and safe to call on every games-list change: a no-op once
+  // the pending queue is empty, and idempotent even if Wheel and Home both
+  // end up attempting it (whichever runs first wins; the entry is removed
+  // the instant it's applied).
+  useEffect(() => {
+    if (loading) return
+    applyPendingRecentlyPlayedCredit({ games, addRecentlyPlayed })
+  }, [loading, games, addRecentlyPlayed])
+
   useMediaFolders()
   const [artPref, setArtPref] = useState(() => localStorage.getItem('nuarcade_art_pref') || 'sgdb')
 

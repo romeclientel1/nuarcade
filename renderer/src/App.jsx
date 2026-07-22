@@ -8,6 +8,7 @@ import { useProfiles } from "./context/ProfileContext"
 import { useDestination } from "./hooks/useDestination"
 import CoinCounter from "./components/CoinCounter/CoinCounter"
 import { useTheme } from "./hooks/useTheme"
+import { recoverLaunchSession, resolvePendingRestoration } from "./launchSession/startupRecovery.js"
 import "./index.css"
 
 // Controller debug overlay -- press D to toggle
@@ -70,6 +71,60 @@ export default function App() {
       if (cfg && typeof cfg.crtEffect === 'boolean') setCrtEnabled(cfg.crtEffect)
     }).catch(() => {})
   }, [])
+
+  // Startup launch-session recovery -- runs once, before Player Select, so
+  // a stale nonterminal session from a previous crash/reload/restart never
+  // blocks a new launch (sessionStore's own launch guard would otherwise
+  // refuse every launch attempt until this resolves). Lifecycle
+  // reconciliation (outcome, Recently Played, LIVING) happens immediately
+  // here, using the session's own captured profileId -- never gated on
+  // whatever profile happens to be active right now. Destination/focus
+  // restoration is deliberately DEFERRED to the separate effect below:
+  // activeProfileId is reliably null at this point (ProfileContext always
+  // starts a fresh session at null until Player Select runs), and null is
+  // an unresolved state, not evidence the session belongs to someone else
+  // -- so it must not be treated as a profile mismatch here. See
+  // startupRecovery.js for the full separation.
+  const [pendingRestoration, setPendingRestoration] = useState(null)
+  useEffect(() => {
+    let cancelled = false
+    let unsubscribe = null
+    recoverLaunchSession({
+      getLaunchLifecycleStatus: window.nuarcade?.getLaunchLifecycleStatus,
+      onLaunchLifecycleTerminal: window.nuarcade?.onLaunchLifecycleTerminal,
+    }).then((outcome) => {
+      if (cancelled) {
+        if (typeof outcome.unsubscribe === "function") outcome.unsubscribe()
+        return
+      }
+      unsubscribe = outcome.unsubscribe || null
+      if (outcome.pendingRestoration) setPendingRestoration(outcome.pendingRestoration)
+    }).catch(() => {})
+    return () => {
+      cancelled = true
+      if (typeof unsubscribe === "function") unsubscribe()
+    }
+  }, [])
+
+  // Applies the pending restoration exactly once, only once a real profile
+  // has actually been resolved this session (phase === "main", reached via
+  // handlePlayerSelect/handleGuest/handleAddProfile below). Restores the
+  // captured origin only if the selected profile matches the one the
+  // session was captured for (and that profile still exists) -- otherwise
+  // falls back to Home, never exposing another profile's Library position.
+  const appliedRestorationRef = useRef(false)
+  useEffect(() => {
+    if (!pendingRestoration) return
+    if (phase !== "main") return
+    if (appliedRestorationRef.current) return
+    if (!activeProfile) return
+    appliedRestorationRef.current = true
+    const restoration = resolvePendingRestoration(pendingRestoration, {
+      selectedProfileId: activeProfile.id, profiles,
+    })
+    if (restoration.destination === "library") navigateSurface("library")
+    else goToSurfaceRoot()
+  }, [pendingRestoration, phase, activeProfile, profiles, navigateSurface, goToSurfaceRoot])
 
   const handleIntroComplete = () => setPhase("playerSelect")
 

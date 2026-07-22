@@ -13,6 +13,7 @@ import {
 } from "../../selectors/profileReadiness"
 import { selectInitialHomeFocus } from "../../selectors/homeEntry"
 import { buildHomeOriginContext } from "./homeLaunchOrigin.js"
+import { applyPendingRecentlyPlayedCredit } from "../../launchSession/startupRecovery.js"
 import styles from "./VesparaHome.module.css"
 
 const RECENT_LIMIT = 8
@@ -51,6 +52,19 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer }) {
     originDestination: "home",
     originContext: buildHomeOriginContext(),
   })
+
+  // Completes any Recently Played credit a startup-recovered launch session
+  // left pending (see launchSession/startupRecovery.js) -- recovery itself
+  // can't resolve the real game/addRecentlyPlayed (it runs before this
+  // catalog exists), so it durably records the credit instead of losing
+  // it. Cheap and safe to call on every games-list change: a no-op once
+  // the pending queue is empty, and idempotent even if Wheel and Home both
+  // end up attempting it (whichever runs first wins; the entry is removed
+  // the instant it's applied).
+  useEffect(() => {
+    if (loading) return
+    applyPendingRecentlyPlayedCredit({ games, addRecentlyPlayed })
+  }, [loading, games, addRecentlyPlayed])
 
   // Profile-scoped, resolved history -- the single source both the
   // visible Recent row and the initial-focus derivation use, so they can
