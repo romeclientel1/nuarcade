@@ -245,7 +245,7 @@ export default function GameDetail({ game, onClose, onLaunch, launching, artwork
               onClick={onLaunch}
               disabled={launching}
             >
-              {launching ? t("wheel.launching") : game.isPinball ? t("wheel.launchTable") : game.emulator === "retroarch" ? t("wheel.launchRetroArch") : t("wheel.launchGame")}
+              {launching ? t("wheel.launching") : game.isPinball ? t("wheel.launchTable") : t("wheel.launchGame")}
             </button>
             {lc.count > 0 && (
               <button

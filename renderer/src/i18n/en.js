@@ -171,7 +171,6 @@ export default {
   "wheel.cannotLaunchTitle": "CANNOT LAUNCH",
   "wheel.launching": "Launching...",
   "wheel.launchTable": "Launch Table",
-  "wheel.launchRetroArch": "Launch RetroArch to Play",
   "wheel.launchGame": "Launch Game",
   "wheel.libraryEmptyTitle": "Your library is empty",
   "wheel.libraryEmptySub": "NuArcade is ready -- you just need to add games.",
