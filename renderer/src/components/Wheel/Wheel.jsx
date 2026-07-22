@@ -27,6 +27,7 @@ import { useSteamGridDB } from "../../hooks/useSteamGridDB"
 import { useVersionCheck } from "../../hooks/useVersionCheck"
 import { getControllerHint } from "../../data/controllerHints"
 import ControllerPrompt from "../ControllerPrompt/ControllerPrompt"
+import { useI18n } from "../../i18n/I18nContext.jsx"
 
 
 import styles from "./Wheel.module.css"
@@ -229,6 +230,7 @@ function KonamiCelebration({ onClose }) {
 }
 
 export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange, activeProfile, onSwitchPlayer, onReturnHome, restorationRequest }) {
+  const { t } = useI18n()
   const {
     games, stats, loading, libraryEmpty, config,
   toggleFavorite, isFavorite,
@@ -934,10 +936,10 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     }
   }
 
-  if (loading) return <div style={{ width:"100vw", height:"100vh", background:"#000", display:"flex", alignItems:"center", justifyContent:"center", color:"#888", fontFamily:"monospace", fontSize:14 }}>Scanning game library...</div>
+  if (loading) return <div style={{ width:"100vw", height:"100vh", background:"#000", display:"flex", alignItems:"center", justifyContent:"center", color:"#888", fontFamily:"monospace", fontSize:14 }}>{t("wheel.scanning")}</div>
 
   // Also wait if games haven't populated yet (async cache + video patch still running)
-  if (!libraryEmpty && games.length === 0) return <div style={{ width:"100vw", height:"100vh", background:"#000", display:"flex", alignItems:"center", justifyContent:"center", color:"#888", fontFamily:"monospace", fontSize:14 }}>Loading...</div>
+  if (!libraryEmpty && games.length === 0) return <div style={{ width:"100vw", height:"100vh", background:"#000", display:"flex", alignItems:"center", justifyContent:"center", color:"#888", fontFamily:"monospace", fontSize:14 }}>{t("common.loading")}</div>
 
   return (
     <div className={styles.stage + (cabinetMode ? " " + styles.cabinetMode : "") + (screenshotMode ? " " + styles.screenshotMode : "")}>
@@ -998,7 +1000,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
                 className={styles.searchInput}
                 value={search}
                 onChange={e => handleSearchChange(e.target.value)}
-                placeholder="Search games, systems, ROM names..."
+                placeholder={t("wheel.searchPlaceholder")}
                 onKeyDown={e => {
                   if (e.key === "Escape") { setShowSearch(false); setSearch(""); setDebouncedSearch(""); setAiResults(null); setAiSearching(false); setShowVirtualKeyboard(false) }
                   if (e.key === "Enter" && debouncedSearch.trim() && window.nuarcade?.aiSearch) {
@@ -1065,7 +1067,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
               <button className={styles.colBtn + (focusZone === 0 && topMenuIdx === 2 ? " " + styles.barFocused : "")} onClick={() => setShowCollections(true)} title="Collections (N)">Sets</button>
               <button className={styles.statsBtn + (focusZone === 0 && topMenuIdx === 3 ? " " + styles.barFocused : "")} onClick={() => navigateTo("stats")} title="My Stats (T)">Stats</button>
               <button className={styles.achieveBtn + (focusZone === 0 && topMenuIdx === 4 ? " " + styles.barFocused : "")} onClick={() => setShowAchievements(true)} title="Achievements (A)">Ach.</button>
-              <button className={styles.settingsBtn + (focusZone === 0 && topMenuIdx === 5 ? " " + styles.barFocused : "")} onClick={() => { if (onReturnHome) onReturnHome() }} title="Return to Vespara Home">Home</button>
+              <button className={styles.settingsBtn + (focusZone === 0 && topMenuIdx === 5 ? " " + styles.barFocused : "")} onClick={() => { if (onReturnHome) onReturnHome() }} title="Return to Vespara Home">{t("wheel.navHome")}</button>
               {activeProfile && (
                 <button
                   className={styles.settingsBtn}
@@ -1081,8 +1083,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
                   GUEST
                 </button>
               )}
-              <button className={styles.mediaBtn + (focusZone === 0 && topMenuIdx === 7 ? " " + styles.barFocused : "")} onClick={() => setShowMediaManager(true)}>Media</button>
-              <button className={styles.settingsBtn + (focusZone === 0 && topMenuIdx === 8 ? " " + styles.barFocused : "")} onClick={() => setShowSettings(true)}>Settings</button>
+              <button className={styles.mediaBtn + (focusZone === 0 && topMenuIdx === 7 ? " " + styles.barFocused : "")} onClick={() => setShowMediaManager(true)}>{t("wheel.navMedia")}</button>
+              <button className={styles.settingsBtn + (focusZone === 0 && topMenuIdx === 8 ? " " + styles.barFocused : "")} onClick={() => setShowSettings(true)}>{t("wheel.navSettings")}</button>
               <button className={styles.helpBtn + (focusZone === 0 && topMenuIdx === 9 ? " " + styles.barFocused : "")} onClick={() => navigateTo("help")}>?</button>
               {updateAvailable && (
                 <button
@@ -1110,7 +1112,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       <div className={styles.categoryStrip}>
         {_visibleTabs.map((cat, tabIdx) => {
           const col = collections[cat]
-          const label = col ? col.name : (cat === "Favorites" ? "Favorites" : cat === "Recent" ? "Recent" : cat)
+          const label = col ? col.name : (cat === "Favorites" ? "Favorites" : cat === "Recent" ? "Recent" : cat === "All" ? t("wheel.categoryAll") : cat)
           const count = col ? col.games.length : (cat === "Recent" ? recentlyPlayed.length : cat === "All" ? games.length : games.filter(g => g.genre === cat || g.system === cat || g.emulator === cat.toLowerCase()).length)
           return (
             <button

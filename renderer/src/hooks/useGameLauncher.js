@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react"
 import { getControllerHint } from "../data/controllerHints.js"
 import { createSession, hasNonterminalSession, findSession } from "../launchSession/sessionStore.js"
 import { reconcileLaunchSession } from "../launchSession/reconciliation.js"
+import { useI18n } from "../i18n/I18nContext.jsx"
 
 // useGameLauncher -------------------------------------------------------
 // The single place a game actually gets launched, extracted out of
@@ -216,6 +217,7 @@ export function useGameLauncher({
   originDestination,
   originContext,
 } = {}) {
+  const { t } = useI18n()
   const [launching, setLaunching] = useState(false)
   const [launchError, setLaunchError] = useState(null)
   const [needsControllerPrompt, setNeedsControllerPrompt] = useState(null)
@@ -229,7 +231,7 @@ export function useGameLauncher({
   const depsRef = useRef({})
   depsRef.current = {
     addRecentlyPlayed, activeProfileId, startSession, endSession, recordLaunch,
-    showError, playLaunchSound, artwork, onLaunchStart, onReturn,
+    showError, playLaunchSound, artwork, onLaunchStart, onReturn, t,
     originDestination, originContext,
   }
 
@@ -427,7 +429,7 @@ export function useGameLauncher({
             session, trackedToExit: trackedToExitForThisLaunch, error: launchResult.error,
             currentActiveProfileId: depsRef.current.activeProfileId ?? null, deps: reconcileDeps,
           })
-          deps.showError?.("Failed to launch " + game.title + ": " + (launchResult.error || "unknown error"))
+          deps.showError?.(deps.t("errors.launchFailed", { game: game.title }) + ": " + (launchResult.error || "unknown error"))
           failCleanup()
           return
         }
@@ -466,7 +468,7 @@ export function useGameLauncher({
           session, trackedToExit: trackedToExitForThisLaunch, error: e.message,
           currentActiveProfileId: depsRef.current.activeProfileId ?? null, deps: reconcileDeps,
         })
-        deps.showError?.("Failed to launch " + game.title + ": " + (e.message || "unknown error"))
+        deps.showError?.(deps.t("errors.launchFailed", { game: game.title }) + ": " + (e.message || "unknown error"))
         failCleanup()
         return
       }

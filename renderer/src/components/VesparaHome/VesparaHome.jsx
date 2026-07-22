@@ -16,11 +16,11 @@ import { buildHomeOriginContext } from "./homeLaunchOrigin.js"
 import { applyPendingRecentlyPlayedCredit } from "../../launchSession/startupRecovery.js"
 import { consumeRestorationRequest } from "../../launchSession/restorationRequest.js"
 import { shouldConsumeRestoration, resolveHomeFocus } from "../../launchSession/restorationResolution.js"
+import { useI18n } from "../../i18n/I18nContext.jsx"
 import styles from "./VesparaHome.module.css"
 
 const RECENT_LIMIT = 8
 const ACTIONS = ["library", "switchPlayer", "depart"]
-const ACTION_LABELS = { library: "Library", switchPlayer: "Switch Player", depart: "Depart" }
 
 // VesparaHome -------------------------------------------------------------
 // The neutral, temporary Vespara Home shell. Proves the app can exist
@@ -29,6 +29,8 @@ const ACTION_LABELS = { library: "Library", switchPlayer: "Switch Player", depar
 // final Vespara world -- no cinematic transitions, camera movement, or
 // environmental design here, deliberately.
 export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restorationRequest }) {
+  const { t } = useI18n()
+  const ACTION_LABELS = { library: t("home.library"), switchPlayer: t("home.switchPlayer"), depart: t("home.depart") }
   const { activeProfile } = useProfiles()
   const { recentGamesRaw, games, addRecentlyPlayed, loading } = useRecentGames(RECENT_LIMIT)
   const { startSession, endSession, recordLaunch } = usePlaytime()
@@ -258,21 +260,21 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
 
   const isSetupFocus = installationReadiness === "unconfigured"
   const emptyStateText = isSetupFocus
-    ? "No games configured yet -- head into the Library to set up a connection."
-    : "No recent games yet -- head into the Library to get started."
+    ? t("home.emptyUnconfigured")
+    : t("home.emptyNoRecent")
 
   return (
     <div className={styles.home}>
       <div className={styles.header}>
         <div className={styles.profileName}>
-          {activeProfile ? activeProfile.name : "Guest"}
+          {activeProfile ? activeProfile.name : t("common.guest")}
         </div>
       </div>
 
       <div className={styles.body}>
-        <div className={styles.sectionTitle}>Recently Played</div>
+        <div className={styles.sectionTitle}>{t("home.recentlyPlayed")}</div>
         {loading ? (
-          <div className={styles.empty}>Loading...</div>
+          <div className={styles.empty}>{t("common.loading")}</div>
         ) : !hasRecents ? (
           <div className={styles.empty}>{emptyStateText}</div>
         ) : (
@@ -314,7 +316,7 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
               className={styles.actionBtn + (focusZone === "actions" && i === actionIndex ? " " + styles.focused : "")}
               onClick={() => { acceptManualFocus(); setFocusZone("actions"); setActionIndex(i); runAction(action) }}
             >
-              {action === "library" && isSetupFocus ? "Set Up" : ACTION_LABELS[action]}
+              {action === "library" && isSetupFocus ? t("home.setUp") : ACTION_LABELS[action]}
             </button>
           ))}
         </div>

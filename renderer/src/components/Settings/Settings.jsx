@@ -6,6 +6,7 @@ import ArtworkManager from "../ArtworkManager/ArtworkManager"
 import styles from "./Settings.module.css"
 import { useVersionCheck } from "../../hooks/useVersionCheck"
 import { THEMES } from "../../hooks/useTheme"
+import { useI18n } from "../../i18n/I18nContext.jsx"
 
 // Path/emulator config keys that require an app restart to take effect
 // (game library only re-scans on next launch, per the cache design)
@@ -45,6 +46,7 @@ const EMULATOR_EXE_KEYWORDS = {
 }
 
 export default function Settings({ games = [], onClose, onCRTChange, crtEnabled, themeId, onThemeChange }) {
+  const { t, locale, setLocale, supportedLocales } = useI18n()
   const scrollRef = useRef(null)
   const saveRef    = useRef(null)
   useOverlayGamepad({
@@ -456,10 +458,10 @@ const handleSave = async () => {
       <div className={styles.panel}>
         <div className={styles.header}>
           <div className={styles.headerLeft}>
-            <div className={styles.title}>Settings</div>
-            <div className={styles.sub}>NuArcade configuration</div>
+            <div className={styles.title}>{t("settings.title")}</div>
+            <div className={styles.sub}>{t("settings.subtitle")}</div>
           </div>
-          <button className={styles.closeBtn} onClick={onClose} title="Close (B)">X</button>
+          <button className={styles.closeBtn} onClick={onClose} title={t("common.close") + " (B)"}>X</button>
         </div>
 
         <div className={styles.body} ref={scrollRef}>
@@ -715,6 +717,21 @@ const handleSave = async () => {
                   </button>
                 ))}
               </div>
+            </div>
+          </div>
+
+          <div className={styles.section}>
+            <div className={styles.sectionTitle}>{t("settings.language")}</div>
+            <div className={styles.toggleGroup}>
+              {supportedLocales.map(l => (
+                <button
+                  key={l}
+                  className={styles.toggleBtn + (locale === l ? " " + styles.toggleActive : "")}
+                  onClick={() => setLocale(l)}
+                >
+                  {l === "en" ? t("settings.languageEnglish") : t("settings.languageSpanish")}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -1334,7 +1351,7 @@ const handleSave = async () => {
             Reset to defaults
           </button>
           <button className={styles.saveBtn} ref={saveRef} onClick={handleSave}>
-            {saved ? "Saved!" : "Save settings"}
+            {saved ? t("settings.saved") : t("settings.save")}
           </button>
         </div>
 
