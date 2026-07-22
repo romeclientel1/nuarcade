@@ -10,6 +10,10 @@ import CoinCounter from "./components/CoinCounter/CoinCounter"
 import { useTheme } from "./hooks/useTheme"
 import { recoverLaunchSession } from "./launchSession/startupRecovery.js"
 import { buildRestorationForProfile, invalidateRestorationRequest } from "./launchSession/restorationRequest.js"
+import {
+  DEFAULT_UI_SOUNDS_ENABLED, DEFAULT_UI_SOUND_VOLUME,
+  normalizeUiSoundsEnabled, normalizeUiSoundVolume,
+} from "./hooks/uiSoundConfig.js"
 import "./index.css"
 
 // Controller debug overlay -- press D to toggle
@@ -67,9 +71,20 @@ export default function App() {
   // the CRT overlay actually reflects what's configured instead of being
   // permanently hardcoded on.
   const [crtEnabled, setCrtEnabled] = useState(true)
+  // Same pattern for the UI-sound settings (Settings persists these under
+  // uiSoundsEnabled/uiSoundVolume) -- loaded once here, mirrored live via
+  // the same onXChange callbacks Settings already uses for crtEffect, and
+  // passed down to both Home and Wheel so sound stays in sync across
+  // surfaces without a restart. Defaults reproduce today's original
+  // always-on, unscaled sound behavior exactly.
+  const [uiSoundsEnabled, setUiSoundsEnabled] = useState(DEFAULT_UI_SOUNDS_ENABLED)
+  const [uiSoundVolume, setUiSoundVolume] = useState(DEFAULT_UI_SOUND_VOLUME)
   useEffect(() => {
     window.nuarcade?.getConfig?.().then(cfg => {
-      if (cfg && typeof cfg.crtEffect === 'boolean') setCrtEnabled(cfg.crtEffect)
+      if (!cfg) return
+      if (typeof cfg.crtEffect === 'boolean') setCrtEnabled(cfg.crtEffect)
+      setUiSoundsEnabled(normalizeUiSoundsEnabled(cfg.uiSoundsEnabled))
+      setUiSoundVolume(normalizeUiSoundVolume(cfg.uiSoundVolume))
     }).catch(() => {})
   }, [])
 
@@ -208,12 +223,18 @@ export default function App() {
               onCRTChange={setCrtEnabled}
               themeId={themeId}
               onThemeChange={setTheme}
+              uiSoundsEnabled={uiSoundsEnabled}
+              onUiSoundsChange={setUiSoundsEnabled}
+              uiSoundVolume={uiSoundVolume}
+              onUiSoundVolumeChange={setUiSoundVolume}
               restorationRequest={restorationRequest?.destination === "library" ? restorationRequest : null}
             />
           ) : (
             <VesparaHome
               onEnterLibrary={handleEnterLibrary}
               onSwitchPlayer={handleReturnToPlayerSelect}
+              uiSoundsEnabled={uiSoundsEnabled}
+              uiSoundVolume={uiSoundVolume}
               restorationRequest={restorationRequest?.destination === "home" ? restorationRequest : null}
             />
           )

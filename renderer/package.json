@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node --test src/launchSession/*.test.js src/hooks/*.test.js src/components/VesparaHome/*.test.js src/components/Wheel/*.test.js src/i18n/*.test.js"
+    "test": "node --test src/*.test.js src/launchSession/*.test.js src/hooks/*.test.js src/components/VesparaHome/*.test.js src/components/Wheel/*.test.js src/components/Settings/*.test.js src/i18n/*.test.js"
   },
   "dependencies": {
     "@fontsource/orbitron": "^5.0.0",

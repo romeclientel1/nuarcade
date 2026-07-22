@@ -72,6 +72,8 @@ export default {
   "settings.crtEffect": "CRT effect",
   "settings.autoLaunchLast": "Auto-launch last",
   "settings.videoVolume": "Gameplay video volume",
+  "settings.uiSounds": "UI sounds",
+  "settings.uiSoundVolume": "UI sound volume",
   "settings.cardArtLabel": "What shows on wheel cards",
   "settings.music": "Music",
   "settings.musicVolume": "Music volume",

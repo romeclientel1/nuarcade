@@ -7,6 +7,7 @@ import styles from "./Settings.module.css"
 import { useVersionCheck } from "../../hooks/useVersionCheck"
 import { THEMES } from "../../hooks/useTheme"
 import { useI18n } from "../../i18n/I18nContext.js"
+import { normalizeUiSoundsEnabled, normalizeUiSoundVolume } from "../../hooks/uiSoundConfig.js"
 
 // Path/emulator config keys that require an app restart to take effect
 // (game library only re-scans on next launch, per the cache design)
@@ -45,7 +46,7 @@ const EMULATOR_EXE_KEYWORDS = {
   pinballPath: 'vpinball',
 }
 
-export default function Settings({ games = [], onClose, onCRTChange, crtEnabled, themeId, onThemeChange }) {
+export default function Settings({ games = [], onClose, onCRTChange, crtEnabled, themeId, onThemeChange, uiSoundsEnabled, onUiSoundsChange, uiSoundVolume, onUiSoundVolumeChange }) {
   const { t, locale, setLocale, supportedLocales } = useI18n()
   const scrollRef = useRef(null)
   const saveRef    = useRef(null)
@@ -448,6 +449,8 @@ const handleSave = async () => {
   const update = (key, val) => {
     setConfig(c => ({ ...c, [key]: val }))
     if (key === "crtEffect") onCRTChange?.(val)
+    if (key === "uiSoundsEnabled") onUiSoundsChange?.(val)
+    if (key === "uiSoundVolume") onUiSoundVolumeChange?.(val)
     if (RESTART_KEYS.has(key)) changedPathKeysRef.current.add(key)
   }
 
@@ -768,6 +771,36 @@ const handleSave = async () => {
                   className={styles.slider}
                 />
                 <span className={styles.sliderVal}>{config.ambientVolume ?? 35}%</span>
+              </div>
+            </div>
+            <div className={styles.inputRow}>
+              <label className={styles.inputLabel}>{t("settings.uiSounds")}</label>
+              <div className={styles.toggleGroup}>
+                {["off", "on"].map(m => (
+                  <button
+                    key={m}
+                    className={styles.toggleBtn + (normalizeUiSoundsEnabled(config.uiSoundsEnabled) === (m === "on") ? " " + styles.toggleActive : "")}
+                    onClick={() => update("uiSoundsEnabled", m === "on")}
+                    style={{ textTransform: 'uppercase' }}
+                  >
+                    {m === "on" ? t("common.on") : t("common.off")}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className={styles.inputRow}>
+              <label className={styles.inputLabel}>{t("settings.uiSoundVolume")}</label>
+              <div className={styles.sliderWrap}>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="5"
+                  value={normalizeUiSoundVolume(config.uiSoundVolume)}
+                  onChange={e => update("uiSoundVolume", parseInt(e.target.value))}
+                  className={styles.slider}
+                />
+                <span className={styles.sliderVal}>{normalizeUiSoundVolume(config.uiSoundVolume)}%</span>
               </div>
             </div>
           </div>

@@ -220,6 +220,17 @@ export function useGameLauncher({
   const { t } = useI18n()
   const [launching, setLaunching] = useState(false)
   const [launchError, setLaunchError] = useState(null)
+  // A monotonic occurrence counter, incremented exactly once per
+  // showLaunchError() call -- i.e. once per newly-set failure, regardless
+  // of what the (translated, locale-dependent) message text says. Exists
+  // specifically so a consumer that wants to play a sound/animation once
+  // per NEW failure has a locale-safe identity to key off instead of the
+  // display string itself: the string can legitimately be identical for
+  // two unrelated failures, and is never a safe "this is the same
+  // occurrence" signal across a locale change. Purely presentational
+  // bookkeeping -- does not affect launchError's own value/timing,
+  // session/launch payloads, or lifecycle reconciliation.
+  const [launchErrorSeq, setLaunchErrorSeq] = useState(0)
   const [needsControllerPrompt, setNeedsControllerPrompt] = useState(null)
 
   // Latest-ref pattern: launch/confirmLaunch/runLaunch are created once
@@ -277,6 +288,7 @@ export function useGameLauncher({
 
   const showLaunchError = useCallback((message, durationMs) => {
     setLaunchError(message)
+    setLaunchErrorSeq(s => s + 1)
     setTimeout(() => setLaunchError(null), durationMs || 5000)
   }, [])
 
@@ -522,6 +534,7 @@ export function useGameLauncher({
     resetLaunching,
     launching,
     launchError,
+    launchErrorSeq,
     needsControllerPrompt,
   }
 }

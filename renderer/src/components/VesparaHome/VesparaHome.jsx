@@ -4,6 +4,8 @@ import { useRecentGames } from "../../hooks/useRecentGames"
 import { usePlaytime } from "../../hooks/usePlaytime"
 import { useGameLauncher } from "../../hooks/useGameLauncher"
 import { useOverlayGamepad } from "../../hooks/useOverlayGamepad"
+import { useArcadeSounds } from "../../hooks/useArcadeSounds"
+import { shouldPlayLaunchErrorCue } from "../../hooks/launchErrorSoundGuard.js"
 import { useErrorToast, ErrorToastContainer } from "../Wheel/ErrorToast"
 import ControllerPrompt from "../ControllerPrompt/ControllerPrompt"
 import {
@@ -28,24 +30,29 @@ const ACTIONS = ["library", "switchPlayer", "depart"]
 // one directly, or enter the existing Wheel/Library experience. Not the
 // final Vespara world -- no cinematic transitions, camera movement, or
 // environmental design here, deliberately.
-export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restorationRequest }) {
+export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restorationRequest, uiSoundsEnabled, uiSoundVolume }) {
   const { t } = useI18n()
   const ACTION_LABELS = { library: t("home.library"), switchPlayer: t("home.switchPlayer"), depart: t("home.depart") }
   const { activeProfile } = useProfiles()
   const { recentGamesRaw, games, addRecentlyPlayed, loading } = useRecentGames(RECENT_LIMIT)
   const { startSession, endSession, recordLaunch } = usePlaytime()
   const { toasts: errorToasts, showError, dismiss: dismissError } = useErrorToast()
+  // Pass the raw config values straight through -- useArcadeSounds is the
+  // single normalization/conversion boundary (0-100 percent -> 0-1 gain
+  // scale); pre-converting here would be a second, redundant conversion.
+  const sounds = useArcadeSounds({ enabled: uiSoundsEnabled, volume: uiSoundVolume })
 
   const activeProfileId = activeProfile?.id ?? null
 
   const {
     launch, confirmLaunch, dismissControllerPrompt,
-    launching, launchError, needsControllerPrompt,
+    launching, launchError, launchErrorSeq, needsControllerPrompt,
   } = useGameLauncher({
     addRecentlyPlayed,
     activeProfileId,
     startSession, endSession, recordLaunch,
     showError,
+    playLaunchSound: sounds.launch,
     // No background video in Home -- onLaunchStart/onReturn are optional
     // and Wheel-specific (pausing/resuming its own bg video refs). Home
     // has nothing equivalent, so both are simply omitted.
@@ -56,6 +63,28 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
     originDestination: "home",
     originContext: buildHomeOriginContext(),
   })
+
+  // Surface-scoped launch-error sound: plays sounds.error() once when a
+  // genuinely new, non-empty launchError appears -- never on an ordinary
+  // rerender while the same message is still showing, and never merely
+  // because the display text changed (e.g. a locale switch retranslating
+  // an already-visible message). Keyed off launchErrorSeq -- a monotonic
+  // occurrence counter useGameLauncher increments once per showLaunchError()
+  // call, entirely independent of the (translated, locale-dependent)
+  // message text -- rather than comparing launchError's string value,
+  // which is not a safe identity across a locale change and could
+  // coincidentally collide between two unrelated failures. Resets the
+  // instant the error clears, so a later, separate failure (even with an
+  // identical message) is treated as new and sounds again. Plain ref +
+  // effect, no timers, no new React state beyond the seq already exposed
+  // by useGameLauncher, and deliberately not wired through
+  // useErrorToast/ErrorToast (untouched this milestone).
+  const lastPlayedLaunchErrorSeqRef = useRef(null)
+  useEffect(() => {
+    const { play, nextLastPlayedSeq } = shouldPlayLaunchErrorCue(launchError, launchErrorSeq, lastPlayedLaunchErrorSeqRef.current)
+    if (play) sounds.error()
+    lastPlayedLaunchErrorSeqRef.current = nextLastPlayedSeq
+  }, [launchError, launchErrorSeq])
 
   // Completes any Recently Played credit a startup-recovered launch session
   // left pending (see launchSession/startupRecovery.js) -- recovery itself
@@ -202,11 +231,18 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
 
   const launchFocused = useCallback(() => {
     if (focusZone === "recents" && displayedRecentGames[recentIndex]) {
+      // No confirm sound here -- a recent-game launch gets its one sound
+      // exclusively through useGameLauncher's playLaunchSound, once the
+      // launch is actually accepted (see the wiring above). Playing
+      // select() first would stack a second cue on the same action.
       launch(displayedRecentGames[recentIndex])
     } else if (focusZone === "actions") {
+      // Opening Library/Switch Player, or opening the Depart confirmation
+      // dialog, is an ordinary menu-action activation -- one select() cue.
+      sounds.select()
       runAction(ACTIONS[actionIndex])
     }
-  }, [focusZone, displayedRecentGames, recentIndex, actionIndex, launch, runAction])
+  }, [focusZone, displayedRecentGames, recentIndex, actionIndex, launch, runAction, sounds])
 
   // Main Home controller handling -- disabled while the Depart
   // confirmation or a controller hint prompt is showing, matching the
@@ -216,16 +252,22 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
     enabled: !showDepartConfirm && !needsControllerPrompt,
     onLeft: () => {
       acceptManualFocus()
-      if (focusZone === "recents") setRecentIndex(i => Math.max(0, i - 1))
-      else setActionIndex(i => Math.max(0, i - 1))
+      if (focusZone === "recents") {
+        if (recentIndex > 0) { sounds.navigate(); setRecentIndex(i => Math.max(0, i - 1)) }
+      } else if (actionIndex > 0) {
+        sounds.navigate(); setActionIndex(i => Math.max(0, i - 1))
+      }
     },
     onRight: () => {
       acceptManualFocus()
-      if (focusZone === "recents") setRecentIndex(i => Math.min(displayedRecentGames.length - 1, i + 1))
-      else setActionIndex(i => Math.min(ACTIONS.length - 1, i + 1))
+      if (focusZone === "recents") {
+        if (recentIndex < displayedRecentGames.length - 1) { sounds.navigate(); setRecentIndex(i => Math.min(displayedRecentGames.length - 1, i + 1)) }
+      } else if (actionIndex < ACTIONS.length - 1) {
+        sounds.navigate(); setActionIndex(i => Math.min(ACTIONS.length - 1, i + 1))
+      }
     },
-    onUp: () => { acceptManualFocus(); if (hasRecents) setFocusZone("recents") },
-    onDown: () => { acceptManualFocus(); if (focusZone === "recents") setFocusZone("actions") },
+    onUp: () => { acceptManualFocus(); if (hasRecents && focusZone !== "recents") { sounds.navigate(); setFocusZone("recents") } },
+    onDown: () => { acceptManualFocus(); if (focusZone === "recents") { sounds.navigate(); setFocusZone("actions") } },
     onConfirm: launchFocused,
     // Back must not unexpectedly quit or leave Home. A safe, deterministic
     // default: return focus to the action row's first entry (Library).
@@ -238,13 +280,13 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
   // for its own inline Exit confirmation.
   useOverlayGamepad({
     enabled: showDepartConfirm,
-    onLeft:  () => setDepartChoice(0),
-    onRight: () => setDepartChoice(1),
+    onLeft:  () => { if (departChoice !== 0) { sounds.navigate(); setDepartChoice(0) } },
+    onRight: () => { if (departChoice !== 1) { sounds.navigate(); setDepartChoice(1) } },
     onConfirm: () => {
-      if (departChoice === 0) window.nuarcade?.quit?.()
-      else setShowDepartConfirm(false)
+      if (departChoice === 0) { sounds.select(); window.nuarcade?.quit?.() }
+      else { sounds.back(); setShowDepartConfirm(false) }
     },
-    onClose: () => setShowDepartConfirm(false),
+    onClose: () => { sounds.back(); setShowDepartConfirm(false) },
   })
 
   // Keyboard parity -- mouse and keyboard must remain functional
@@ -253,31 +295,40 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
     const handler = (e) => {
       if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return
       if (showDepartConfirm) {
-        if (e.key === "ArrowLeft")  setDepartChoice(0)
-        if (e.key === "ArrowRight") setDepartChoice(1)
-        if (e.key === "Enter") { if (departChoice === 0) window.nuarcade?.quit?.(); else setShowDepartConfirm(false) }
-        if (e.key === "Escape") setShowDepartConfirm(false)
+        if (e.key === "ArrowLeft" && departChoice !== 0)  { sounds.navigate(); setDepartChoice(0) }
+        if (e.key === "ArrowRight" && departChoice !== 1) { sounds.navigate(); setDepartChoice(1) }
+        if (e.key === "Enter") {
+          if (departChoice === 0) { sounds.select(); window.nuarcade?.quit?.() }
+          else { sounds.back(); setShowDepartConfirm(false) }
+        }
+        if (e.key === "Escape") { sounds.back(); setShowDepartConfirm(false) }
         return
       }
       if (needsControllerPrompt) return
       if (e.key === "ArrowLeft") {
         acceptManualFocus()
-        if (focusZone === "recents") setRecentIndex(i => Math.max(0, i - 1))
-        else setActionIndex(i => Math.max(0, i - 1))
+        if (focusZone === "recents") {
+          if (recentIndex > 0) { sounds.navigate(); setRecentIndex(i => Math.max(0, i - 1)) }
+        } else if (actionIndex > 0) {
+          sounds.navigate(); setActionIndex(i => Math.max(0, i - 1))
+        }
       }
       if (e.key === "ArrowRight") {
         acceptManualFocus()
-        if (focusZone === "recents") setRecentIndex(i => Math.min(displayedRecentGames.length - 1, i + 1))
-        else setActionIndex(i => Math.min(ACTIONS.length - 1, i + 1))
+        if (focusZone === "recents") {
+          if (recentIndex < displayedRecentGames.length - 1) { sounds.navigate(); setRecentIndex(i => Math.min(displayedRecentGames.length - 1, i + 1)) }
+        } else if (actionIndex < ACTIONS.length - 1) {
+          sounds.navigate(); setActionIndex(i => Math.min(ACTIONS.length - 1, i + 1))
+        }
       }
-      if (e.key === "ArrowUp")   { acceptManualFocus(); if (hasRecents) setFocusZone("recents") }
-      if (e.key === "ArrowDown") { acceptManualFocus(); if (focusZone === "recents") setFocusZone("actions") }
+      if (e.key === "ArrowUp")   { acceptManualFocus(); if (hasRecents && focusZone !== "recents") { sounds.navigate(); setFocusZone("recents") } }
+      if (e.key === "ArrowDown") { acceptManualFocus(); if (focusZone === "recents") { sounds.navigate(); setFocusZone("actions") } }
       if (e.key === "Enter") launchFocused()
       if (e.key === "Escape") { acceptManualFocus(); setFocusZone("actions"); setActionIndex(0) }
     }
     window.addEventListener("keydown", handler)
     return () => window.removeEventListener("keydown", handler)
-  }, [focusZone, recentIndex, actionIndex, displayedRecentGames.length, hasRecents, showDepartConfirm, departChoice, needsControllerPrompt, launchFocused, acceptManualFocus])
+  }, [focusZone, recentIndex, actionIndex, displayedRecentGames.length, hasRecents, showDepartConfirm, departChoice, needsControllerPrompt, launchFocused, acceptManualFocus, sounds])
 
   const isSetupFocus = installationReadiness === "unconfigured"
   const emptyStateText = isSetupFocus
@@ -336,7 +387,7 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
             <button
               key={action}
               className={styles.actionBtn + (focusZone === "actions" && i === actionIndex ? " " + styles.focused : "")}
-              onClick={() => { acceptManualFocus(); setFocusZone("actions"); setActionIndex(i); runAction(action) }}
+              onClick={() => { acceptManualFocus(); setFocusZone("actions"); setActionIndex(i); sounds.select(); runAction(action) }}
             >
               {action === "library" && isSetupFocus ? t("home.setUp") : ACTION_LABELS[action]}
             </button>
@@ -358,12 +409,12 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
             <button
               className={styles.departBtn + (departChoice === 0 ? " " + styles.departBtnActive : "")}
               style={{ textTransform: 'uppercase' }}
-              onClick={() => window.nuarcade?.quit?.()}
+              onClick={() => { sounds.select(); window.nuarcade?.quit?.() }}
             >{t("common.yes")}</button>
             <button
               className={styles.departBtn + (departChoice === 1 ? " " + styles.departBtnActive : "")}
               style={{ textTransform: 'uppercase' }}
-              onClick={() => setShowDepartConfirm(false)}
+              onClick={() => { sounds.back(); setShowDepartConfirm(false) }}
             >{t("common.no")}</button>
           </div>
         </div>

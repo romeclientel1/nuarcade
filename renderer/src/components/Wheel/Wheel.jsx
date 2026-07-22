@@ -19,6 +19,7 @@ import OperatorDashboard from "../OperatorDashboard/OperatorDashboard"
 import { useErrorToast, ErrorToastContainer } from "./ErrorToast"
 import SortMenu from "./SortMenu"
 import { useArcadeSounds } from "../../hooks/useArcadeSounds"
+import { shouldPlayLaunchErrorCue } from "../../hooks/launchErrorSoundGuard.js"
 import { useGameLauncher } from "../../hooks/useGameLauncher"
 import { useDestination } from "../../hooks/useDestination"
 import { useMusicPlayer  } from "../../hooks/useMusicPlayer"
@@ -229,7 +230,7 @@ function KonamiCelebration({ onClose }) {
   )
 }
 
-export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange, activeProfile, onSwitchPlayer, onReturnHome, restorationRequest }) {
+export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange, activeProfile, onSwitchPlayer, onReturnHome, restorationRequest, uiSoundsEnabled, onUiSoundsChange, uiSoundVolume, onUiSoundVolumeChange }) {
   const { t } = useI18n()
   const {
     games, stats, loading, libraryEmpty, config,
@@ -399,7 +400,10 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     clearTimeout(searchDebounce.current)
     searchDebounce.current = setTimeout(() => setDebouncedSearch(val), 120)
   }
-  const sounds = useArcadeSounds()
+  // Pass the raw config values straight through -- useArcadeSounds is the
+  // single normalization/conversion boundary (0-100 percent -> 0-1 gain
+  // scale); pre-converting here would be a second, redundant conversion.
+  const sounds = useArcadeSounds({ enabled: uiSoundsEnabled, volume: uiSoundVolume })
 
   // Background music
   const hasBgVideo = !!(bgVideoA || bgVideoB)
@@ -574,7 +578,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
 
   const {
     launch, confirmLaunch, dismissControllerPrompt, resetLaunching,
-    launching, launchError, needsControllerPrompt,
+    launching, launchError, launchErrorSeq, needsControllerPrompt,
   } = useGameLauncher({
     addRecentlyPlayed,
     // Recently Played is no longer tagged/written here -- useGameLauncher
@@ -602,6 +606,29 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     originDestination: "library",
     originContext: buildLibraryOriginContext({ activeCategory, selectedIndex }),
   })
+
+  // Surface-scoped launch-error sound: plays sounds.error() once when a
+  // genuinely new, non-empty launchError appears -- never on an ordinary
+  // rerender while the same message is still showing, and never merely
+  // because the display text changed (e.g. a locale switch retranslating
+  // an already-visible message). Keyed off launchErrorSeq -- a monotonic
+  // occurrence counter useGameLauncher increments once per showLaunchError()
+  // call, entirely independent of the (translated, locale-dependent)
+  // message text -- rather than comparing launchError's string value,
+  // which is not a safe identity across a locale change and could
+  // coincidentally collide between two unrelated failures. The ref resets
+  // to null the instant the error clears, so a later, separate failure
+  // (even with an identical message) is treated as new and sounds again.
+  // Deliberately not wired through useErrorToast/ErrorToast (that shared
+  // component stays untouched this milestone) -- this only covers Wheel's
+  // own local launchError state. Plain ref + effect, no timers, no new
+  // React state beyond the seq already exposed by useGameLauncher.
+  const lastPlayedLaunchErrorSeqRef = useRef(null)
+  useEffect(() => {
+    const { play, nextLastPlayedSeq } = shouldPlayLaunchErrorCue(launchError, launchErrorSeq, lastPlayedLaunchErrorSeqRef.current)
+    if (play) sounds.error()
+    lastPlayedLaunchErrorSeqRef.current = nextLastPlayedSeq
+  }, [launchError, launchErrorSeq])
 
   const launchGame = () => {
     if (launching || !current) return
@@ -780,8 +807,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   useGamepad({
     enabled: !showDetailRef.current && !showMediaManagerRef.current && !showSettingsRef.current && currentDestinationRef.current !== "help" && currentDestinationRef.current !== "stats" && !attractMode  && !showVirtualKeyboardRef.current && !showSortRef.current && !showCollectionsRef.current && !showAchievementsRef.current && !showCoachRef.current && !showOperatorRef.current ,
     left: () => {
-      if (showRetroArchPopupRef.current) { setRetroArchChoice(0); return }
-      if (showExitPopupRef.current) { setExitChoice(0); return }
+      if (showRetroArchPopupRef.current) { if (retroArchChoiceRef.current !== 0) { sounds.navigate(); setRetroArchChoice(0) } return }
+      if (showExitPopupRef.current) { if (exitChoiceRef.current !== 0) { sounds.navigate(); setExitChoice(0) } return }
       const z = focusZoneRef.current
       if (z === 0) { setTopMenuIdx(i => Math.max(0, i - 1)); sounds.navigate(); return }
       if (z === 1) { const tabs = visibleTabsRef.current; const newIdx = tabFocusIdxRef.current <= 0 ? tabs.length - 1 : tabFocusIdxRef.current - 1; setTabFocusIdx(newIdx); setActiveCategory(tabs[newIdx]); sounds.navigate(); return }
@@ -790,8 +817,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       if (z === 4) { setBarFocusIdx(i => Math.max(0, i - 1)); sounds.navigate(); return }
     },
     right: () => {
-      if (showRetroArchPopupRef.current) { setRetroArchChoice(1); return }
-      if (showExitPopupRef.current) { setExitChoice(1); return }
+      if (showRetroArchPopupRef.current) { if (retroArchChoiceRef.current !== 1) { sounds.navigate(); setRetroArchChoice(1) } return }
+      if (showExitPopupRef.current) { if (exitChoiceRef.current !== 1) { sounds.navigate(); setExitChoice(1) } return }
       const z = focusZoneRef.current
       if (z === 0) { setTopMenuIdx(i => Math.min(TOP_MENU_MAX, i + 1)); sounds.navigate(); return }
       if (z === 1) { const tabs = visibleTabsRef.current; const newIdx = tabFocusIdxRef.current >= tabs.length - 1 ? 0 : tabFocusIdxRef.current + 1; setTabFocusIdx(newIdx); setActiveCategory(tabs[newIdx]); sounds.navigate(); return }
@@ -817,14 +844,19 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     },
     confirm: () => {
       if (showRetroArchPopupRef.current) {
-        if (retroArchChoiceRef.current === 0) { window.nuarcade?.launchRetroArch?.() }
+        // Choosing Yes here commits an external-app launch (bypasses the
+        // useGameLauncher pipeline entirely -- see launchRetroArch), so it
+        // gets the launch cue directly, never select() first (one action,
+        // one cue). Choosing No is a cancellation -- back().
+        if (retroArchChoiceRef.current === 0) { sounds.launch(); window.nuarcade?.launchRetroArch?.() }
+        else { sounds.back() }
         setShowRetroArchPopup(false)
         setRetroArchChoice(1)
         return
       }
       if (showExitPopupRef.current) {
-        if (exitChoiceRef.current === 0) { window.nuarcade?.quit?.() }
-        else { setShowExitPopup(false); setExitChoice(1) }
+        if (exitChoiceRef.current === 0) { sounds.select(); window.nuarcade?.quit?.() }
+        else { sounds.back(); setShowExitPopup(false); setExitChoice(1) }
         return
       }
       const z = focusZoneRef.current
@@ -842,8 +874,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     },
     settings: () => { if (!showSettingsRef.current) setShowSettings(true) },
     back: () => {
-      if (showRetroArchPopupRef.current) { setShowRetroArchPopup(false); setRetroArchChoice(1); return }
-      if (showExitPopupRef.current)   { setShowExitPopup(false); setExitChoice(1); return }
+      if (showRetroArchPopupRef.current) { sounds.back(); setShowRetroArchPopup(false); setRetroArchChoice(1); return }
+      if (showExitPopupRef.current)   { sounds.back(); setShowExitPopup(false); setExitChoice(1); return }
       if (showDetailRef.current)      { setShowDetail(false); return }
       if (showSettingsRef.current)    { setShowSettings(false); return }
       if (showSearchRef.current)      { sounds.back(); setShowSearch(false); setShowVirtualKeyboard(false); setSearch(""); setDebouncedSearch(""); return }
@@ -1376,7 +1408,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
         />
       )}
       {showMediaManager && <MediaManager onClose={() => setShowMediaManager(false)} onVideosUpdated={refreshVideoPaths} onArtworkUpdated={refreshArtwork} />}
-      {showSettings && <Settings games={games} onClose={() => setShowSettings(false)} onCRTChange={onCRTChange} crtEnabled={crtEnabled} themeId={themeId} onThemeChange={onThemeChange} />}
+      {showSettings && <Settings games={games} onClose={() => setShowSettings(false)} onCRTChange={onCRTChange} crtEnabled={crtEnabled} themeId={themeId} onThemeChange={onThemeChange} uiSoundsEnabled={uiSoundsEnabled} onUiSoundsChange={onUiSoundsChange} uiSoundVolume={uiSoundVolume} onUiSoundVolumeChange={onUiSoundVolumeChange} />}
       {showDetail && current && (
         <GameDetail
           game={current}
@@ -1425,7 +1457,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
                 color: retroArchChoice === 0 ? '#c88cff' : '#fff',
                 boxShadow: retroArchChoice === 0 ? '0 0 16px rgba(153,51,255,0.5)' : 'none',
               }}
-              onClick={() => { window.nuarcade?.launchRetroArch?.(); setShowRetroArchPopup(false); setRetroArchChoice(1) }}>{t("common.yes")}</button>
+              onClick={() => { sounds.launch(); window.nuarcade?.launchRetroArch?.(); setShowRetroArchPopup(false); setRetroArchChoice(1) }}>{t("common.yes")}</button>
             <button style={{
                 padding: '10px 32px', borderRadius: 6, fontFamily: 'Orbitron, monospace', fontSize: 14, cursor: 'pointer', textTransform: 'uppercase',
                 background: retroArchChoice === 1 ? 'rgba(153,51,255,0.25)' : 'rgba(255,255,255,0.05)',
@@ -1433,7 +1465,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
                 color: retroArchChoice === 1 ? '#c88cff' : '#fff',
                 boxShadow: retroArchChoice === 1 ? '0 0 16px rgba(153,51,255,0.5)' : 'none',
               }}
-              onClick={() => { setShowRetroArchPopup(false); setRetroArchChoice(1) }}>{t("common.no")}</button>
+              onClick={() => { sounds.back(); setShowRetroArchPopup(false); setRetroArchChoice(1) }}>{t("common.no")}</button>
           </div>
         </div>
       )}
@@ -1462,7 +1494,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
           </div>
           <div style={{ display: 'flex', gap: 20 }}>
             <button
-              onClick={() => window.nuarcade?.quit?.()}
+              onClick={() => { sounds.select(); window.nuarcade?.quit?.() }}
               style={{
                 padding: '12px 36px', fontFamily: 'Orbitron, monospace', fontSize: 16, textTransform: 'uppercase',
                 background: exitChoice === 0 ? 'rgba(0,255,255,0.2)' : 'rgba(255,255,255,0.05)',
@@ -1472,7 +1504,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
               }}
             >{t("common.yes")}</button>
             <button
-              onClick={() => { setShowExitPopup(false); setExitChoice(0) }}
+              onClick={() => { sounds.back(); setShowExitPopup(false); setExitChoice(0) }}
               style={{
                 padding: '12px 36px', fontFamily: 'Orbitron, monospace', fontSize: 16, textTransform: 'uppercase',
                 background: exitChoice === 1 ? 'rgba(0,255,255,0.2)' : 'rgba(255,255,255,0.05)',
