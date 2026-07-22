@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react"
 import styles from "./BootScreen.module.css"
+import { useI18n } from "../../i18n/I18nContext.js"
 
 const BOOT_DURATION = 3500  // total ms before auto-dismiss
 const CYCLE_MS      = 700   // ms per game card
 
 export default function BootScreen({ games, artwork, onComplete }) {
+  const { t } = useI18n()
   const [idx, setIdx] = useState(0)
   const [fade, setFade] = useState(true)
 
@@ -53,7 +55,7 @@ export default function BootScreen({ games, artwork, onComplete }) {
       )}
       <div className={styles.content}>
         <div className={styles.brand}>NuArcade</div>
-        <div className={styles.label}>Your Library</div>
+        <div className={styles.label}>{t("bootScreen.label")}</div>
         <div className={styles.gameRow} style={{ opacity: fade ? 1 : 0, transition: "opacity 0.15s" }}>
           {topGames.map((g, i) => {
             const gArt = artwork?.[g.id || g.profile]
@@ -73,7 +75,7 @@ export default function BootScreen({ games, artwork, onComplete }) {
           {game?.title}
         </div>
         <div className={styles.gameSystem}>{game?.system}</div>
-        <div className={styles.hint}>Press any button to continue</div>
+        <div className={styles.hint}>{t("bootScreen.hint")}</div>
       </div>
       <div className={styles.scanlines} />
     </div>

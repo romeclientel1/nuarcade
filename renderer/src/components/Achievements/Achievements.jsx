@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import { useOverlayGamepad } from '../../hooks/useOverlayGamepad'
 import styles from "./Achievements.module.css"
 import { computeStats } from "./computeStats"
+import { useI18n } from "../../i18n/I18nContext.js"
 
 const ACHIEVEMENTS = [
   // Playtime
@@ -40,6 +41,7 @@ const ACHIEVEMENTS = [
 ]
 
 export default function Achievements({ games, onClose }) {
+  const { t } = useI18n()
   const bodyRef = useRef(null)
   useOverlayGamepad({
     onClose,
@@ -63,7 +65,7 @@ export default function Achievements({ games, onClose }) {
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.panel} onClick={e => e.stopPropagation()}>
         <div className={styles.header}>
-          <div className={styles.title}>Achievements</div>
+          <div className={styles.title}>{t("achievements.title")}</div>
           <div className={styles.progress}>
             <div className={styles.progressBar}>
               <div className={styles.progressFill} style={{ width: pct + "%" }} />
@@ -75,7 +77,7 @@ export default function Achievements({ games, onClose }) {
         <div className={styles.body} ref={bodyRef}>
           {unlocked.length > 0 && (
             <div className={styles.section}>
-              <div className={styles.sectionTitle}>Unlocked ({unlocked.length})</div>
+              <div className={styles.sectionTitle}>{t("achievements.unlocked", { count: unlocked.length })}</div>
               <div className={styles.grid}>
                 {unlocked.map(a => (
                   <div key={a.id} className={styles.card + " " + styles.cardUnlocked}>
@@ -88,7 +90,7 @@ export default function Achievements({ games, onClose }) {
             </div>
           )}
           <div className={styles.section}>
-            <div className={styles.sectionTitle}>Locked ({locked.length})</div>
+            <div className={styles.sectionTitle}>{t("achievements.locked", { count: locked.length })}</div>
             <div className={styles.grid}>
               {locked.map(a => (
                 <div key={a.id} className={styles.card + " " + styles.cardLocked}>
@@ -100,7 +102,7 @@ export default function Achievements({ games, onClose }) {
             </div>
           </div>
           {unlocked.length === 0 && (
-            <div className={styles.empty}>No achievements yet -- launch some games to get started!</div>
+            <div className={styles.empty}>{t("achievements.empty")}</div>
           )}
         </div>
       </div>

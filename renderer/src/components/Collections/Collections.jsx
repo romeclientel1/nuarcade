@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useLayoutEffect } from "react"
 import { useGamepad } from "../../hooks/useGamepad"
 import styles from "./Collections.module.css"
+import { useI18n } from "../../i18n/I18nContext.js"
 
 const COLLECTIONS_KEY = "nuarcade_collections"
 
@@ -56,6 +57,7 @@ export function useCollections() {
 }
 
 export default function Collections({ games, currentGame, onClose }) {
+  const { t } = useI18n()
   const { getCollections, createCollection, deleteCollection, addToCollection, removeFromCollection, renameCollection } = useCollections()
 
   // -- All state hooks in one block ------------------------------------------
@@ -180,7 +182,7 @@ export default function Collections({ games, currentGame, onClose }) {
     <div className={styles.overlay} onClick={onClose} ref={sideRef}>
       <div className={styles.panel} onClick={e => e.stopPropagation()}>
         <div className={styles.header}>
-          <div className={styles.title}>Collections</div>
+          <div className={styles.title}>{t("collections.title")}</div>
           <button className={styles.closeBtn} onClick={onClose}>X</button>
         </div>
 
@@ -192,13 +194,13 @@ export default function Collections({ games, currentGame, onClose }) {
                 value={newName}
                 onChange={e => setNewName(e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter") handleCreate() }}
-                placeholder="New collection..."
+                placeholder={t("collections.newPlaceholder")}
               />
               <button className={styles.createBtn} onClick={handleCreate}>+</button>
             </div>
             <div className={styles.colList} ref={sideRef}>
               {colList.length === 0 && (
-                <div className={styles.emptyHint}>No collections yet.</div>
+                <div className={styles.emptyHint}>{t("collections.empty")}</div>
               )}
               {colList.map((col, ci) => (
                 <div
@@ -244,10 +246,10 @@ export default function Collections({ games, currentGame, onClose }) {
             {!activeCol ? (
               <div className={styles.mainEmpty}>
                 <div className={styles.mainEmptyIcon}>[]</div>
-                <div className={styles.mainEmptyText}>Select a collection to manage its games</div>
+                <div className={styles.mainEmptyText}>{t("collections.selectPrompt")}</div>
                 {currentGame && colList.length > 0 && (
                   <div className={styles.quickAdd}>
-                    <div className={styles.quickAddLabel}>Quick-add "{currentGame.title}":</div>
+                    <div className={styles.quickAddLabel}>{t("collections.quickAdd", { game: currentGame.title })}</div>
                     {colList.map((col, qi) => {
                       const inCol = col.games.includes(currentGame.id || currentGame.profile)
                       return (
@@ -281,8 +283,8 @@ export default function Collections({ games, currentGame, onClose }) {
                     onClick={() => handleToggleGame(activeCol, currentGame)}
                   >
                     {activeColData?.games?.includes(currentGame.id || currentGame.profile)
-                      ? "Remove \"" + currentGame.title + "\" from collection"
-                      : "Add \"" + currentGame.title + "\" to collection"}
+                      ? t("collections.removeFromCollection", { game: currentGame.title })
+                      : t("collections.addToCollection", { game: currentGame.title })}
                   </button>
                 )}
                 <div className={styles.gameList}>

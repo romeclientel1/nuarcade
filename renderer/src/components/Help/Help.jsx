@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import { useOverlayGamepad } from '../../hooks/useOverlayGamepad'
 import styles from './Help.module.css'
+import { useI18n } from '../../i18n/I18nContext.js'
 
 const SHORTCUTS = [
   { key: 'Arrow Left / Right', desc: 'Navigate the game wheel' },
@@ -50,6 +51,7 @@ const EMULATORS = [
 ]
 
 export default function Help({ onClose }) {
+  const { t } = useI18n()
   const bodyRef = useRef(null)
   useOverlayGamepad({
     onClose,
@@ -60,13 +62,13 @@ export default function Help({ onClose }) {
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.panel} onClick={e => e.stopPropagation()} ref={bodyRef}>
         <div className={styles.header}>
-          <div className={styles.title}>NuArcade Help</div>
+          <div className={styles.title}>{t("help.title")}</div>
           <button className={styles.closeBtn} onClick={onClose}>X</button>
         </div>
 
         <div className={styles.body} ref={bodyRef}>
           <div className={styles.section}>
-            <div className={styles.sectionTitle}>Keyboard Shortcuts</div>
+            <div className={styles.sectionTitle}>{t("help.sectionKeyboard")}</div>
             <div className={styles.list}>
               {SHORTCUTS.map((s, i) => (
                 <div key={i} className={styles.row}>
@@ -78,7 +80,7 @@ export default function Help({ onClose }) {
           </div>
 
           <div className={styles.section}>
-            <div className={styles.sectionTitle}>Gamepad / Controller</div>
+            <div className={styles.sectionTitle}>{t("help.sectionGamepad")}</div>
             <div className={styles.list}>
               {GAMEPAD.map((s, i) => (
                 <div key={i} className={styles.row}>
@@ -90,7 +92,7 @@ export default function Help({ onClose }) {
           </div>
 
           <div className={styles.section}>
-            <div className={styles.sectionTitle}>Supported Emulators (16)</div>
+            <div className={styles.sectionTitle}>{t("help.sectionEmulators", { count: EMULATORS.length })}</div>
             <div className={styles.emuGrid}>
               {EMULATORS.map((e, i) => (
                 <div key={i} className={styles.emuRow}>
@@ -105,7 +107,7 @@ export default function Help({ onClose }) {
           </div>
         </div>
 
-        <div className={styles.footer}>Press ? or click anywhere to close</div>
+        <div className={styles.footer}>{t("help.footer")}</div>
       </div>
     </div>
   )

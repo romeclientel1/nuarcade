@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import styles from "./GameCard.module.css"
 import { generatePlaceholderSvg } from "../../hooks/generatePlaceholder"
 import { useGameNotes } from "../../hooks/useGameNotes"
+import { useI18n } from "../../i18n/I18nContext.js"
 
 const THUMBNAIL_BASE = "https://raw.githubusercontent.com/teknogods/TeknoParrotUIThumbnails/master/Icons/"
 
@@ -65,6 +66,7 @@ const STATUS_COLORS = {
 }
 
 export default function GameCard({ game, isCenter, onClick, isFavorite, artwork, artPref }) {
+  const { t } = useI18n()
   const [imgLoaded,   setImgLoaded  ] = useState(false)
   const [imgError,    setImgError   ] = useState(false)
   const [heroLoaded,  setHeroLoaded ] = useState(false)
@@ -247,7 +249,7 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork,
       {isCenter && (
         <div className={styles.playOverlay}>
           <div className={styles.playBtn} style={{ borderColor: colors.accent, color: colors.accent }}>
-            {game.isPinball ? "LAUNCH" : "PLAY"}
+            {game.isPinball ? t("gameCard.launch") : t("gameCard.play")}
           </div>
         </div>
       )}

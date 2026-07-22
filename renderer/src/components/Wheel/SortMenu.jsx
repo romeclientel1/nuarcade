@@ -1,19 +1,25 @@
 import { useState } from "react"
 import { useGamepad } from "../../hooks/useGamepad"
 import styles from "./SortMenu.module.css"
+import { useI18n } from "../../i18n/I18nContext.js"
 
-const SORT_OPTIONS = [
-  { id: "default",        label: "Default",         icon: "D" },
-  { id: "most_played",    label: "Most Played",      icon: "P" },
-  { id: "most_launched",  label: "Most Launched",    icon: "L" },
-  { id: "top_rated",      label: "Top Rated",        icon: "*" },
-  { id: "recently_added", label: "Recently Added",   icon: "N" },
-  { id: "name",           label: "Name A-Z",         icon: "A" },
-  { id: "system",         label: "System",           icon: "S" },
-  { id: "status",         label: "Status",           icon: "!" },
+// icon/id pairs only -- labels are locale-aware, built inside the
+// component via t() so they react to a runtime language change instead of
+// being frozen at module-load time.
+const SORT_OPTION_DEFS = [
+  { id: "default",        labelKey: "sortMenu.default",        icon: "D" },
+  { id: "most_played",    labelKey: "sortMenu.mostPlayed",      icon: "P" },
+  { id: "most_launched",  labelKey: "sortMenu.mostLaunched",    icon: "L" },
+  { id: "top_rated",      labelKey: "sortMenu.topRated",        icon: "*" },
+  { id: "recently_added", labelKey: "sortMenu.recentlyAdded",   icon: "N" },
+  { id: "name",           labelKey: "sortMenu.nameAZ",          icon: "A" },
+  { id: "system",         labelKey: "sortMenu.system",          icon: "S" },
+  { id: "status",         labelKey: "sortMenu.status",          icon: "!" },
 ]
 
 export default function SortMenu({ current, onChange, onClose }) {
+  const { t } = useI18n()
+  const SORT_OPTIONS = SORT_OPTION_DEFS.map(o => ({ ...o, label: t(o.labelKey) }))
   // Start focus on the currently active sort option, fall back to 0
   const startIdx = Math.max(0, SORT_OPTIONS.findIndex(o => o.id === current))
   const [focusIdx, setFocusIdx] = useState(startIdx)
@@ -29,7 +35,7 @@ export default function SortMenu({ current, onChange, onClose }) {
   return (
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.menu} onClick={e => e.stopPropagation()}>
-        <div className={styles.title}>Sort by</div>
+        <div className={styles.title}>{t("sortMenu.title")}</div>
         {SORT_OPTIONS.map((opt, i) => (
           <button
             key={opt.id}

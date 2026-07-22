@@ -1063,24 +1063,24 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
                   setSelectedIndex(Math.floor(Math.random() * filteredGames.length))
                   sounds.navigate()
                 }
-              }} title="Random game (R)">RND</button>
-              <button className={styles.colBtn + (focusZone === 0 && topMenuIdx === 2 ? " " + styles.barFocused : "")} onClick={() => setShowCollections(true)} title="Collections (N)">Sets</button>
-              <button className={styles.statsBtn + (focusZone === 0 && topMenuIdx === 3 ? " " + styles.barFocused : "")} onClick={() => navigateTo("stats")} title="My Stats (T)">Stats</button>
-              <button className={styles.achieveBtn + (focusZone === 0 && topMenuIdx === 4 ? " " + styles.barFocused : "")} onClick={() => setShowAchievements(true)} title="Achievements (A)">Ach.</button>
+              }} title={t("wheel.randomTitle")}>RND</button>
+              <button className={styles.colBtn + (focusZone === 0 && topMenuIdx === 2 ? " " + styles.barFocused : "")} onClick={() => setShowCollections(true)} title={t("wheel.collectionsTitle")}>Sets</button>
+              <button className={styles.statsBtn + (focusZone === 0 && topMenuIdx === 3 ? " " + styles.barFocused : "")} onClick={() => navigateTo("stats")} title={t("wheel.statsTitle")}>Stats</button>
+              <button className={styles.achieveBtn + (focusZone === 0 && topMenuIdx === 4 ? " " + styles.barFocused : "")} onClick={() => setShowAchievements(true)} title={t("wheel.achievementsTitle")}>Ach.</button>
               <button className={styles.settingsBtn + (focusZone === 0 && topMenuIdx === 5 ? " " + styles.barFocused : "")} onClick={() => { if (onReturnHome) onReturnHome() }} title="Return to Vespara Home">{t("wheel.navHome")}</button>
               {activeProfile && (
                 <button
                   className={styles.settingsBtn}
                   style={{ borderColor: activeProfile.color + '44', color: activeProfile.color }}
                   onClick={onSwitchPlayer}
-                  title="Switch player"
+                  title={t("wheel.switchPlayerTitle")}
                 >
                   {activeProfile.name[0]} {activeProfile.name}
                 </button>
               )}
               {!activeProfile && onSwitchPlayer && (
-                <button className={styles.settingsBtn + (focusZone === 0 && topMenuIdx === 6 ? " " + styles.barFocused : "")} onClick={onSwitchPlayer} title="Select player">
-                  GUEST
+                <button className={styles.settingsBtn + (focusZone === 0 && topMenuIdx === 6 ? " " + styles.barFocused : "")} onClick={onSwitchPlayer} title={t("wheel.selectPlayerTitle")}>
+                  {t("wheel.guestCta")}
                 </button>
               )}
               <button className={styles.mediaBtn + (focusZone === 0 && topMenuIdx === 7 ? " " + styles.barFocused : "")} onClick={() => setShowMediaManager(true)}>{t("wheel.navMedia")}</button>
@@ -1092,17 +1092,17 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
                   style={{ borderColor: 'rgba(255,170,0,0.5)', color: '#ffaa00' }}
                   onClick={handleUpdateNow}
                   disabled={installing}
-                  title={installing ? "Installing update..." : ("NuArcade " + remoteVersion + " is available -- click to install")}
+                  title={installing ? t("settings.installingEllipsis") : t("settings.updateAvailableTooltip", { version: remoteVersion })}
                 >
-                  {installing ? (progress != null ? ("UPDATING " + progress + "%") : "UPDATING...") : "UPDATE"}
+                  {installing ? (progress != null ? t("settings.installing", { progress }) : t("settings.installingEllipsis")) : t("settings.updateNow")}
                 </button>
               )}
               <button
                 className={styles.exitBtn + (focusZone === 0 && topMenuIdx === 10 ? " " + styles.barFocused : "")}
                 onClick={() => setShowExitPopup(true)}
-                title="Exit NuArcade"
+                title={t("wheel.exitTitle")}
               >
-                EXIT
+                {t("wheel.exit")}
               </button>
             </div>
           )}
@@ -1175,9 +1175,9 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       {libraryEmpty ? (
         <div className={styles.libraryEmpty}>
           <div className={styles.emptyBigIcon}>[ ]</div>
-          <div className={styles.emptyBigTitle}>Your library is empty</div>
+          <div className={styles.emptyBigTitle}>{t("wheel.libraryEmptyTitle")}</div>
           <div className={styles.emptyBigSub}>
-            NuArcade is ready -- you just need to add games.
+            {t("wheel.libraryEmptySub")}
           </div>
           <div className={styles.emptySteps}>
             <div className={styles.emptyStep}>
@@ -1216,18 +1216,18 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
             {activeCategory === "Favorites" ? "<3" : activeCategory === "Recent" ? "[]" : activeCategory === "Pinball" ? "PIN" : activeCategory === "PS3" ? "PS3" : activeCategory === "Xbox360" ? "360" : activeCategory === "GCWii" ? "GCN" : activeCategory === "PS2" ? "PS2" : "?"}
           </div>
           <div className={styles.emptyTitle}>
-            {activeCategory === "Favorites" ? "No favorites yet" :
-             activeCategory === "Recent" ? "No recently played games" :
-             activeCategory === "Pinball" ? "No pinball tables found" :
-             search ? "No results for " + search :
-             "No games in this category"}
+            {activeCategory === "Favorites" ? t("wheel.noFavorites") :
+             activeCategory === "Recent" ? t("wheel.noRecent") :
+             activeCategory === "Pinball" ? t("wheel.noPinball") :
+             search ? t("wheel.noResultsFor", { search }) :
+             t("wheel.noGamesInCategory")}
           </div>
           <div className={styles.emptySub}>
-            {activeCategory === "Favorites" ? "Press F on any game to add it" :
-             activeCategory === "Recent" ? "Launch a game to see it here" :
-             activeCategory === "Pinball" ? ("Add .vpx files to " + (config?.tablesPath || "your Pinball tables folder")) :
-             activeCategory === "PC" ? ("Add game folders to " + (config?.pcGamesPath || "your PC games folder")) :
-             "Try selecting a different category"}
+            {activeCategory === "Favorites" ? t("wheel.tipFavorite") :
+             activeCategory === "Recent" ? t("wheel.tipRecent") :
+             activeCategory === "Pinball" ? t("wheel.tipPinball", { path: config?.tablesPath || "your Pinball tables folder" }) :
+             activeCategory === "PC" ? t("wheel.tipPc", { path: config?.pcGamesPath || "your PC games folder" }) :
+             t("wheel.tipOther")}
           </div>
         </div>
       ) : (
@@ -1292,7 +1292,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
               <button
                 className={styles.favBtn + (isFavorite(current.id || current.profile) ? " " + styles.favActive : "") + (focusZone === 4 && barFocusIdx === 0 ? " " + styles.barFocused : "")}
                 onClick={() => toggleFavorite(current.id || current.profile)}
-                title="Toggle favorite (F)"
+                title={t("wheel.favoriteTitle")}
               >
                 {isFavorite(current.id || current.profile) ? "<3" : "+"}
               </button>
@@ -1312,7 +1312,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
           </div>
           <div className={styles.infoRight}>
             <button className={styles.launchBtn + (focusZone === 3 ? " " + styles.barFocused : "")} onClick={launchGame} disabled={launching}>
-              {launching ? "Launching..." : current.isPinball ? "Launch Table" : current.emulator === "retroarch" ? "Launch RetroArch to Play" : "Launch Game"}
+              {launching ? t("wheel.launching") : current.isPinball ? t("wheel.launchTable") : current.emulator === "retroarch" ? t("wheel.launchRetroArch") : t("wheel.launchGame")}
             </button>
             {launchError && (
               <div style={{
@@ -1322,7 +1322,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
                 fontFamily: 'Share Tech Mono, monospace', fontSize: 13,
                 zIndex: 9999, textAlign: 'center', lineHeight: 1.6,
               }}>
-                <div style={{ color: '#ff4444', fontSize: 11, marginBottom: 8, letterSpacing: 2 }}>CANNOT LAUNCH</div>
+                <div style={{ color: '#ff4444', fontSize: 11, marginBottom: 8, letterSpacing: 2 }}>{t("wheel.cannotLaunchTitle")}</div>
                 {launchError}
               </div>
             )}
@@ -1398,10 +1398,10 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       {/* Keyboard hint bar -- hidden in cabinet/screenshot mode */}
       {!cabinetMode && !screenshotMode && !attractMode && (
         <div className={styles.hintBar}>
-              <span className={styles.hint + (focusZone === 4 && barFocusIdx === 0 ? " " + styles.barFocused : "")}><kbd>F</kbd> Favorite</span>
+              <span className={styles.hint + (focusZone === 4 && barFocusIdx === 0 ? " " + styles.barFocused : "")}><kbd>F</kbd> {t("wheel.hintFavorite")}</span>
               {/* Search removed from hint bar -- already in top menu zone 0 */}
-          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 1 ? " " + styles.barFocused : "")}><kbd>C</kbd> Coach</span>
-          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 2 ? " " + styles.barFocused : "")}><kbd>O</kbd> Operator</span>
+          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 1 ? " " + styles.barFocused : "")}><kbd>C</kbd> {t("wheel.hintCoach")}</span>
+          <span className={styles.hint + (focusZone === 4 && barFocusIdx === 2 ? " " + styles.barFocused : "")}><kbd>O</kbd> {t("wheel.hintOperator")}</span>
               </div>
       )}
       
@@ -1413,27 +1413,27 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
           zIndex: 9999, flexDirection: 'column', gap: 20,
         }}>
           <div style={{ color: '#9933ff', fontFamily: 'Orbitron, monospace', fontSize: 11, letterSpacing: 3 }}>RETROARCH</div>
-          <div style={{ color: '#fff', fontFamily: 'Orbitron, monospace', fontSize: 20, letterSpacing: 2 }}>Open RetroArch?</div>
+          <div style={{ color: '#fff', fontFamily: 'Orbitron, monospace', fontSize: 20, letterSpacing: 2 }}>{t("wheel.confirmRetroArchTitle")}</div>
           <div style={{ color: '#aaa', fontFamily: 'Share Tech Mono, monospace', fontSize: 12, textAlign: 'center', maxWidth: 360 }}>
-            Controller is configured inside RetroArch. Exit RA to return here.
+            {t("wheel.confirmRetroArchBody")}
           </div>
           <div style={{ display: 'flex', gap: 20, marginTop: 8 }}>
             <button style={{
-                padding: '10px 32px', borderRadius: 6, fontFamily: 'Orbitron, monospace', fontSize: 14, cursor: 'pointer',
+                padding: '10px 32px', borderRadius: 6, fontFamily: 'Orbitron, monospace', fontSize: 14, cursor: 'pointer', textTransform: 'uppercase',
                 background: retroArchChoice === 0 ? 'rgba(153,51,255,0.25)' : 'rgba(255,255,255,0.05)',
                 border: retroArchChoice === 0 ? '2px solid #9933ff' : '2px solid rgba(255,255,255,0.2)',
                 color: retroArchChoice === 0 ? '#c88cff' : '#fff',
                 boxShadow: retroArchChoice === 0 ? '0 0 16px rgba(153,51,255,0.5)' : 'none',
               }}
-              onClick={() => { window.nuarcade?.launchRetroArch?.(); setShowRetroArchPopup(false); setRetroArchChoice(1) }}>YES</button>
+              onClick={() => { window.nuarcade?.launchRetroArch?.(); setShowRetroArchPopup(false); setRetroArchChoice(1) }}>{t("common.yes")}</button>
             <button style={{
-                padding: '10px 32px', borderRadius: 6, fontFamily: 'Orbitron, monospace', fontSize: 14, cursor: 'pointer',
+                padding: '10px 32px', borderRadius: 6, fontFamily: 'Orbitron, monospace', fontSize: 14, cursor: 'pointer', textTransform: 'uppercase',
                 background: retroArchChoice === 1 ? 'rgba(153,51,255,0.25)' : 'rgba(255,255,255,0.05)',
                 border: retroArchChoice === 1 ? '2px solid #9933ff' : '2px solid rgba(255,255,255,0.2)',
                 color: retroArchChoice === 1 ? '#c88cff' : '#fff',
                 boxShadow: retroArchChoice === 1 ? '0 0 16px rgba(153,51,255,0.5)' : 'none',
               }}
-              onClick={() => { setShowRetroArchPopup(false); setRetroArchChoice(1) }}>NO</button>
+              onClick={() => { setShowRetroArchPopup(false); setRetroArchChoice(1) }}>{t("common.no")}</button>
           </div>
         </div>
       )}
@@ -1446,7 +1446,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
           fontFamily: 'Share Tech Mono, monospace', fontSize: 13,
           zIndex: 9999, textAlign: 'center', lineHeight: 1.6,
         }}>
-          <div style={{ color: '#ff4444', fontSize: 11, marginBottom: 8, letterSpacing: 2 }}>CANNOT LAUNCH</div>
+          <div style={{ color: '#ff4444', fontSize: 11, marginBottom: 8, letterSpacing: 2 }}>{t("wheel.cannotLaunchTitle")}</div>
           {launchError}
         </div>
       )}
@@ -1458,32 +1458,32 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
           zIndex: 9999, flexDirection: 'column', gap: 24,
         }}>
           <div style={{ color: '#fff', fontFamily: 'Orbitron, monospace', fontSize: 22, letterSpacing: 2 }}>
-            EXIT NUARCADE?
+            {t("wheel.confirmExitTitle")}
           </div>
           <div style={{ display: 'flex', gap: 20 }}>
             <button
               onClick={() => window.nuarcade?.quit?.()}
               style={{
-                padding: '12px 36px', fontFamily: 'Orbitron, monospace', fontSize: 16,
+                padding: '12px 36px', fontFamily: 'Orbitron, monospace', fontSize: 16, textTransform: 'uppercase',
                 background: exitChoice === 0 ? 'rgba(0,255,255,0.2)' : 'rgba(255,255,255,0.05)',
                 border: exitChoice === 0 ? '2px solid #0ff' : '2px solid rgba(255,255,255,0.2)',
                 color: exitChoice === 0 ? '#0ff' : '#fff', cursor: 'pointer', borderRadius: 6,
                 boxShadow: exitChoice === 0 ? '0 0 16px rgba(0,255,255,0.5)' : 'none',
               }}
-            >YES</button>
+            >{t("common.yes")}</button>
             <button
               onClick={() => { setShowExitPopup(false); setExitChoice(0) }}
               style={{
-                padding: '12px 36px', fontFamily: 'Orbitron, monospace', fontSize: 16,
+                padding: '12px 36px', fontFamily: 'Orbitron, monospace', fontSize: 16, textTransform: 'uppercase',
                 background: exitChoice === 1 ? 'rgba(0,255,255,0.2)' : 'rgba(255,255,255,0.05)',
                 border: exitChoice === 1 ? '2px solid #0ff' : '2px solid rgba(255,255,255,0.2)',
                 color: exitChoice === 1 ? '#0ff' : '#fff', cursor: 'pointer', borderRadius: 6,
                 boxShadow: exitChoice === 1 ? '0 0 16px rgba(0,255,255,0.5)' : 'none',
               }}
-            >NO</button>
+            >{t("common.no")}</button>
           </div>
           <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11, fontFamily: 'monospace' }}>
-            Left/Right to choose   A to confirm   B to cancel
+            {t("wheel.confirmExitHint")}
           </div>
         </div>
       )}

@@ -291,7 +291,7 @@ export function useGameLauncher({
       try {
         const result = await window.nuarcade.checkPath(game.gamePath)
         if (!result?.exists) {
-          showLaunchError("Game file not found. Drive may be offline or file moved: " + game.gamePath, 6000)
+          showLaunchError(deps.t("errors.gameFileNotFound", { path: game.gamePath }), 6000)
           launchingRef.current = false
           setLaunching(false)
           return
@@ -500,11 +500,11 @@ export function useGameLauncher({
   const launch = useCallback((game) => {
     if (launchingRef.current || !game) return
     if (game.status === "not-configured") {
-      showLaunchError("Open TeknoParrot and configure this game -- find it in the TP game list and set the exe path.")
+      showLaunchError(depsRef.current.t("errors.notConfigured"))
       return
     }
     if (game.status === "path-missing") {
-      showLaunchError("Game exe not found. Check if the file has moved: " + (game.gamePath || "path unknown"))
+      showLaunchError(depsRef.current.t("errors.pathMissing", { path: game.gamePath || "path unknown" }))
       return
     }
     const hint = getControllerHint(game)

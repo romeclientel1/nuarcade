@@ -472,25 +472,25 @@ const handleSave = async () => {
               position: 'sticky', top: 0, zIndex: 50,
               boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
             }}>
-              <span>Restart required to apply your changes.</span>
+              <span>{t("settings.restartRequired")}</span>
               <button className={styles.updateBtn} style={{ background: '#ffaa00' }} onClick={() => setShowRestartConfirm(true)}>
-                Restart Now
+                {t("settings.restartNow")}
               </button>
             </div>
           )}
 
           {updateAvailable && (
             <div className={styles.updateBanner}>
-              <span>NuArcade {remoteVersion} is available!</span>
+              <span>{t("settings.updateAvailable", { version: remoteVersion })}</span>
               <button className={styles.updateLink} onClick={handleUpdateNow} disabled={installing}>
-                {installing ? (progress != null ? ("Installing... " + progress + "%") : "Installing...") : "Update Now"}
+                {installing ? (progress != null ? t("settings.installing", { progress }) : t("settings.installingEllipsis")) : t("settings.updateNow")}
               </button>
             </div>
           )}
 
           <div className={styles.section}>
             <div className={styles.section}>
-        <div className={styles.sectionTitle}>Emulators</div>
+        <div className={styles.sectionTitle}>{t("settings.sectionEmulators")}</div>
         <div className={styles.pathsNote}>
           Download and install emulators, then set their paths in the Paths section below.
         </div>
@@ -532,7 +532,7 @@ const handleSave = async () => {
         </div>
       </div>
 
-      <div className={styles.sectionTitle}>Paths</div>
+      <div className={styles.sectionTitle}>{t("settings.sectionPaths")}</div>
             <div className={styles.pathsNote}>
               All paths default to F: drive. Browse or type to update, then Save Settings.
             </div>
@@ -597,7 +597,7 @@ const handleSave = async () => {
           </div>
 
           <div className={styles.section}>
-            <div className={styles.sectionTitle}>TeknoParrot Folder Renamer</div>
+            <div className={styles.sectionTitle}>{t("settings.sectionTpFolderRenamer")}</div>
         <div className={styles.pathsNote}>
           Some game folders don't match TeknoParrot's expected names, so they never show up in your library.
           Scan below to find likely matches and rename them -- nothing is renamed without your confirmation.
@@ -675,7 +675,7 @@ const handleSave = async () => {
           )
         })}
 
-        <div className={styles.sectionTitle}>Display</div>
+        <div className={styles.sectionTitle}>{t("settings.sectionDisplay")}</div>
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>Mode</label>
               <div className={styles.toggleGroup}>
@@ -736,7 +736,7 @@ const handleSave = async () => {
           </div>
 
           <div className={styles.section}>
-            <div className={styles.sectionTitle}>Theme color</div>
+            <div className={styles.sectionTitle}>{t("settings.sectionTheme")}</div>
             <div className={styles.themeGrid}>
               {Object.entries(THEMES).map(([id, t]) => (
                 <button
@@ -753,7 +753,7 @@ const handleSave = async () => {
           </div>
 
           <div className={styles.section}>
-            <div className={styles.sectionTitle}>Audio</div>
+            <div className={styles.sectionTitle}>{t("settings.sectionAudio")}</div>
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>Gameplay video volume</label>
               <div className={styles.sliderWrap}>
@@ -772,7 +772,7 @@ const handleSave = async () => {
           </div>
 
           <div className={styles.section}>
-            <div className={styles.sectionTitle}>Card art type</div>
+            <div className={styles.sectionTitle}>{t("settings.sectionCardArt")}</div>
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>What shows on wheel cards</label>
               <div className={styles.toggleGroup}>
@@ -790,7 +790,7 @@ const handleSave = async () => {
           </div>
 
           <div className={styles.section}>
-            <div className={styles.sectionTitle}>Background music</div>
+            <div className={styles.sectionTitle}>{t("settings.sectionMusic")}</div>
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>Music</label>
               <div className={styles.toggleRow}>
@@ -824,7 +824,7 @@ const handleSave = async () => {
           </div>
 
           <div className={styles.section}>
-            <div className={styles.sectionTitle}>Attract mode</div>
+            <div className={styles.sectionTitle}>{t("settings.sectionAttract")}</div>
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>Idle timeout</label>
               <div className={styles.sliderWrap}>
@@ -863,7 +863,7 @@ const handleSave = async () => {
           </div>
 
           <div className={styles.section}>
-            <div className={styles.sectionTitle}>Pixelcade</div>
+            <div className={styles.sectionTitle}>{t("settings.sectionPixelcade")}</div>
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>Enable</label>
               <div className={styles.toggleGroup}>
@@ -902,7 +902,7 @@ const handleSave = async () => {
           </div>
 
           <div className={styles.section}>
-            <div className={styles.sectionTitle}>Links</div>
+            <div className={styles.sectionTitle}>{t("settings.sectionLinks")}</div>
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>GitHub</label>
               <button className={styles.communityLink} onClick={() => window.open('https://github.com/romeclientel1/nuarcade', '_blank')}>
@@ -924,7 +924,7 @@ const handleSave = async () => {
           </div>
 
           <div className={styles.section}>
-            <div className={styles.sectionTitle}>Emulators</div>
+            <div className={styles.sectionTitle}>{t("settings.sectionEmulators")}</div>
             
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>Auto-configure TeknoParrot</label>
@@ -1003,7 +1003,7 @@ const handleSave = async () => {
           </div>
 
           <div className={styles.section}>
-            <div className={styles.sectionTitle}>Artwork</div>
+            <div className={styles.sectionTitle}>{t("settings.sectionArtwork")}</div>
             <div className={styles.pathsNote} style={{ marginBottom: 8 }}>
               This section configures box art/video sources. To find or download a video for a specific game,
               close Settings and open <strong>Media</strong> from the main menu -- the Library tab there has
@@ -1093,7 +1093,7 @@ const handleSave = async () => {
           )}
 
           <div className={styles.section}>
-            <div className={styles.sectionTitle}>Library</div>
+            <div className={styles.sectionTitle}>{t("settings.sectionLibrary")}</div>
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>Rescan games</label>
               <div style={{ display: 'flex', gap: 8 }}>
@@ -1271,7 +1271,7 @@ const handleSave = async () => {
           </div>
 
           <div className={styles.section}>
-            <div className={styles.sectionTitle}>BIOS Status</div>
+            <div className={styles.sectionTitle}>{t("settings.sectionBios")}</div>
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>Check BIOS files</label>
               <button className={styles.exportBtn} onClick={async () => {
@@ -1320,7 +1320,7 @@ const handleSave = async () => {
           </div>
 
           <div className={styles.section}>
-            <div className={styles.sectionTitle}>About</div>
+            <div className={styles.sectionTitle}>{t("settings.sectionAbout")}</div>
 
             <div className={styles.aboutGrid}>
               <div className={styles.aboutRow}>
@@ -1346,9 +1346,9 @@ const handleSave = async () => {
 
         <div className={styles.footer}>
           <button className={styles.resetBtn} onClick={() => {
-            if (window.confirm("Reset all settings to defaults?")) loadConfig()
+            if (window.confirm(t("settings.resetConfirm"))) loadConfig()
           }}>
-            Reset to defaults
+            {t("settings.resetToDefaults")}
           </button>
           <button className={styles.saveBtn} ref={saveRef} onClick={handleSave}>
             {saved ? t("settings.saved") : t("settings.save")}
@@ -1364,15 +1364,15 @@ const handleSave = async () => {
           zIndex: 10000, flexDirection: 'column', gap: 20,
         }}>
           <div style={{ color: '#ffaa00', fontFamily: 'Orbitron, monospace', fontSize: 11, letterSpacing: 3 }}>NUARCADE</div>
-          <div style={{ color: '#fff', fontFamily: 'Orbitron, monospace', fontSize: 20, letterSpacing: 2 }}>Restart Now?</div>
+          <div style={{ color: '#fff', fontFamily: 'Orbitron, monospace', fontSize: 20, letterSpacing: 2 }}>{t("settings.restartConfirmTitle")}</div>
           <div style={{ color: '#aaa', fontFamily: 'Share Tech Mono, monospace', fontSize: 12, textAlign: 'center', maxWidth: 360 }}>
-            NuArcade needs to restart to apply your changes and rescan the library.
+            {t("settings.restartConfirmBody")}
           </div>
           <div style={{ display: 'flex', gap: 20, marginTop: 8 }}>
-            <button style={{ padding: '10px 32px', background: '#ffaa00', color: '#000', border: 'none', borderRadius: 6, fontFamily: 'Orbitron, monospace', fontSize: 14, cursor: 'pointer', fontWeight: 'bold' }}
-              onClick={() => window.nuarcade?.restartApp?.()}>YES</button>
-            <button style={{ padding: '10px 32px', background: '#222', color: '#aaa', border: '1px solid #444', borderRadius: 6, fontFamily: 'Orbitron, monospace', fontSize: 14, cursor: 'pointer' }}
-              onClick={() => setShowRestartConfirm(false)}>NO</button>
+            <button style={{ padding: '10px 32px', background: '#ffaa00', color: '#000', border: 'none', borderRadius: 6, fontFamily: 'Orbitron, monospace', fontSize: 14, cursor: 'pointer', fontWeight: 'bold', textTransform: 'uppercase' }}
+              onClick={() => window.nuarcade?.restartApp?.()}>{t("common.yes")}</button>
+            <button style={{ padding: '10px 32px', background: '#222', color: '#aaa', border: '1px solid #444', borderRadius: 6, fontFamily: 'Orbitron, monospace', fontSize: 14, cursor: 'pointer', textTransform: 'uppercase' }}
+              onClick={() => setShowRestartConfirm(false)}>{t("common.no")}</button>
           </div>
         </div>
       )}

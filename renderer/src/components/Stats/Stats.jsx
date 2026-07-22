@@ -2,6 +2,7 @@ import { useMemo, useRef, useState, useEffect } from "react"
 import { useOverlayGamepad } from "../../hooks/useOverlayGamepad"
 import { usePlaytime } from "../../hooks/usePlaytime"
 import styles from "./Stats.module.css"
+import { useI18n } from "../../i18n/I18nContext.js"
 
 const SYSTEM_COLORS = {
   MAME: "#ff6600", TeknoParrot: "#00ff88", RetroArch: "#9933ff",
@@ -15,6 +16,7 @@ const SYSTEM_COLORS = {
 }
 
 export default function Stats({ games, onClose }) {
+  const { t } = useI18n()
   const { getAllPlaytime, getAllLaunches, formatTime } = usePlaytime()
   const bodyRef = useRef(null)
   const [tick, setTick] = useState(0)
@@ -79,7 +81,7 @@ export default function Stats({ games, onClose }) {
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.panel} onClick={e => e.stopPropagation()}>
         <div className={styles.header}>
-          <div className={styles.title}>My Stats</div>
+          <div className={styles.title}>{t("stats.title")}</div>
           <button className={styles.closeBtn} onClick={onClose}>X</button>
         </div>
 
@@ -89,19 +91,19 @@ export default function Stats({ games, onClose }) {
           <div className={styles.heroRow}>
             <div className={styles.heroStat}>
               <div className={styles.heroVal}>{formatTime(totalTime)}</div>
-              <div className={styles.heroLabel}>Total playtime</div>
+              <div className={styles.heroLabel}>{t("stats.totalPlaytime")}</div>
             </div>
             <div className={styles.heroStat}>
               <div className={styles.heroVal}>{totalLaunches}</div>
-              <div className={styles.heroLabel}>Total launches</div>
+              <div className={styles.heroLabel}>{t("stats.totalLaunches")}</div>
             </div>
             <div className={styles.heroStat}>
               <div className={styles.heroVal}>{playedGames}</div>
-              <div className={styles.heroLabel}>Games played</div>
+              <div className={styles.heroLabel}>{t("stats.gamesPlayed")}</div>
             </div>
             <div className={styles.heroStat}>
               <div className={styles.heroVal}>{totalGames}</div>
-              <div className={styles.heroLabel}>Library size</div>
+              <div className={styles.heroLabel}>{t("stats.librarySize")}</div>
             </div>
           </div>
 
@@ -112,7 +114,7 @@ export default function Stats({ games, onClose }) {
               {/* Most played */}
               {topPlayed.length > 0 && (
                 <div className={styles.section}>
-                  <div className={styles.sectionTitle}>Most Played</div>
+                  <div className={styles.sectionTitle}>{t("stats.mostPlayed")}</div>
                   {topPlayed.map((g, i) => (
                     <div key={g.id||g.profile} className={styles.gameRow}>
                       <span className={styles.rank}>{i+1}</span>
@@ -129,7 +131,7 @@ export default function Stats({ games, onClose }) {
               {/* Top rated */}
               {topRated.length > 0 && (
                 <div className={styles.section}>
-                  <div className={styles.sectionTitle}>Top Rated</div>
+                  <div className={styles.sectionTitle}>{t("stats.topRated")}</div>
                   {topRated.map((g, i) => (
                     <div key={g.id||g.profile} className={styles.gameRow}>
                       <span className={styles.rank}>{i+1}</span>
@@ -151,7 +153,7 @@ export default function Stats({ games, onClose }) {
               {/* Most launched */}
               {topLaunched.length > 0 && (
                 <div className={styles.section}>
-                  <div className={styles.sectionTitle}>Most Launched</div>
+                  <div className={styles.sectionTitle}>{t("stats.mostLaunched")}</div>
                   {topLaunched.map((g, i) => (
                     <div key={g.id||g.profile} className={styles.gameRow}>
                       <span className={styles.rank}>{i+1}</span>
@@ -168,7 +170,7 @@ export default function Stats({ games, onClose }) {
               {/* By system */}
               {systemStats.length > 0 && (
                 <div className={styles.section}>
-                  <div className={styles.sectionTitle}>By System</div>
+                  <div className={styles.sectionTitle}>{t("stats.bySystem")}</div>
                   {systemStats.map(s => {
                     const pct = totalTime > 0 ? Math.round((s.totalTime / totalTime) * 100) : 0
                     const color = SYSTEM_COLORS[s.system] || "#00ff88"
@@ -193,7 +195,7 @@ export default function Stats({ games, onClose }) {
 
           {totalTime === 0 && totalLaunches === 0 && (
             <div className={styles.empty}>
-              No stats yet -- launch some games and come back!
+              {t("stats.empty")}
             </div>
           )}
 

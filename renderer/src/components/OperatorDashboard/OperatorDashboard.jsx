@@ -2,6 +2,7 @@ import { useMemo, useRef, useState, useEffect } from "react"
 import { usePlaytime } from "../../hooks/usePlaytime"
 import { useOverlayGamepad } from "../../hooks/useOverlayGamepad"
 import styles from "./OperatorDashboard.module.css"
+import { useI18n } from "../../i18n/I18nContext.js"
 
 const SYSTEM_COLORS = {
   MAME: "#ff6600", TeknoParrot: "#00ff88", RetroArch: "#9933ff",
@@ -50,6 +51,7 @@ function getActivityGrid(launches, days) {
 }
 
 export default function OperatorDashboard({ games, onClose }) {
+  const { t } = useI18n()
   const { getAllPlaytime, getAllLaunches } = usePlaytime()
   const bodyRef = useRef(null)
   const [tab, setTab] = useState("overview")
@@ -140,7 +142,7 @@ export default function OperatorDashboard({ games, onClose }) {
         <div className={styles.header}>
           <div className={styles.headerLeft}>
             <div className={styles.badge}>OPS</div>
-            <div className={styles.title}>OPERATOR DASHBOARD</div>
+            <div className={styles.title}>{t("operatorDashboard.title")}</div>
           </div>
           <div className={styles.tabs}>
             <button className={styles.tab + (tab === "overview" ? " " + styles.tabActive : "")} onClick={() => setTab("overview")}>Overview</button>

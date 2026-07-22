@@ -67,6 +67,14 @@ test("useGameLauncher.js and every i18n-consuming component import useI18n from 
     "components/PlayerSelect/PlayerSelect.jsx",
     "components/VesparaHome/VesparaHome.jsx",
     "components/Wheel/Wheel.jsx",
+    "components/Wheel/GameCard.jsx",
+    "components/Wheel/SortMenu.jsx",
+    "components/Wheel/BootScreen.jsx",
+    "components/Achievements/Achievements.jsx",
+    "components/Stats/Stats.jsx",
+    "components/Collections/Collections.jsx",
+    "components/Help/Help.jsx",
+    "components/OperatorDashboard/OperatorDashboard.jsx",
   ]
   for (const file of consumers) {
     const src = read(file)
