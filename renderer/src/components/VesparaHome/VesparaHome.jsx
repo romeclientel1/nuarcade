@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react"
+import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { useProfiles } from "../../context/ProfileContext"
 import { useRecentGames } from "../../hooks/useRecentGames"
 import { usePlaytime } from "../../hooks/usePlaytime"
@@ -170,6 +170,27 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
     }
   }, [restorationRequest, loading, displayedRecentGames])
 
+  // Visual-only correction: if the focused recent-game tile lies outside
+  // the row's currently visible horizontal bounds (row is overflow-x:auto),
+  // nudge it into view without any smooth-scroll animation. Purely a
+  // bounding-rect comparison -- never touches recentIndex, restoration
+  // selection, or any focus/navigation state. No-ops safely whenever the
+  // Recent row isn't the active zone or either ref isn't mounted yet.
+  const recentRowRef = useRef(null)
+  const focusedRecentCardRef = useRef(null)
+  useEffect(() => {
+    if (focusZone !== "recents") return
+    const row = recentRowRef.current
+    const card = focusedRecentCardRef.current
+    if (!row || !card) return
+    const rowRect = row.getBoundingClientRect()
+    const cardRect = card.getBoundingClientRect()
+    const outOfView = cardRect.left < rowRect.left || cardRect.right > rowRect.right
+    if (outOfView) {
+      card.scrollIntoView({ behavior: "auto", block: "nearest", inline: "nearest" })
+    }
+  }, [focusZone, recentIndex])
+
   const [showDepartConfirm, setShowDepartConfirm] = useState(false)
   const [departChoice, setDepartChoice] = useState(1) // 0 = Yes, 1 = No (default safe)
 
@@ -278,7 +299,7 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
         ) : !hasRecents ? (
           <div className={styles.empty}>{emptyStateText}</div>
         ) : (
-          <div className={styles.recentRow}>
+          <div className={styles.recentRow} ref={recentRowRef}>
             {displayedRecentGames.map((g, i) => {
               const id = g.id || g.profile
               const art = artwork?.[id]
@@ -286,6 +307,7 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
               return (
                 <button
                   key={id}
+                  ref={focused ? focusedRecentCardRef : null}
                   className={styles.recentCard + (focused ? " " + styles.focused : "")}
                   onClick={() => { acceptManualFocus(); setFocusZone("recents"); setRecentIndex(i); launch(g) }}
                   disabled={launching}

@@ -1315,7 +1315,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
               {launching ? t("wheel.launching") : current.isPinball ? t("wheel.launchTable") : current.emulator === "retroarch" ? t("wheel.launchRetroArch") : t("wheel.launchGame")}
             </button>
             {launchError && (
-              <div style={{
+              <div className={styles.dialogFadeOnly} style={{
                 position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
                 background: 'rgba(0,0,0,0.93)', border: '1px solid #ff4444',
                 color: '#ff8888', padding: '16px 24px', borderRadius: 8, maxWidth: 420,
@@ -1407,7 +1407,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       
       {/* Exit confirmation popup */}
       {showRetroArchPopup && (
-        <div style={{
+        <div className={styles.dialogOverlay} style={{
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           zIndex: 9999, flexDirection: 'column', gap: 20,
@@ -1439,7 +1439,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       )}
 
       {launchError && (
-        <div style={{
+        <div className={styles.dialogFadeOnly} style={{
           position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
           background: 'rgba(0,0,0,0.93)', border: '1px solid #ff4444',
           color: '#ff8888', padding: '16px 24px', borderRadius: 8, maxWidth: 420,
@@ -1452,7 +1452,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       )}
 
       {showExitPopup && (
-        <div style={{
+        <div className={styles.dialogOverlay} style={{
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           zIndex: 9999, flexDirection: 'column', gap: 24,

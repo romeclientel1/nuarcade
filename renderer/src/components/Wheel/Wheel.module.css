@@ -5,6 +5,51 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  /* Visual-only mount fade for Home<->Wheel continuity -- opacity alone,
+     so input/focus are live from the first frame (nothing here gates
+     mounting, navigation, or selection). */
+  animation: stageMountFade var(--motion-atmosphere) var(--ease-standard);
+}
+
+@keyframes stageMountFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage { animation: none; }
+}
+
+/* Restrained entrance for the fullscreen confirm dialogs (Exit,
+   RetroArch) -- brings them in line with GameDetail's own fade/slide
+   pattern instead of popping in instantly. Transform+opacity only. */
+.dialogOverlay {
+  animation: dialogEnter var(--motion-panel) var(--ease-standard);
+}
+
+@keyframes dialogEnter {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialogOverlay { animation: none; }
+}
+
+/* Same entrance intent, but opacity-only -- these elements already carry
+   their own inline transform (translate(-50%,-50%) centering) that an
+   animated transform would fight with. */
+.dialogFadeOnly {
+  animation: dialogFadeOnlyEnter var(--motion-panel) var(--ease-standard);
+}
+
+@keyframes dialogFadeOnlyEnter {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialogFadeOnly { animation: none; }
 }
 
 .bgGrid {
@@ -145,7 +190,7 @@
   font-size: 28px;
   cursor: pointer;
   z-index: 20;
-  transition: all 0.15s;
+  transition: border-color 0.15s, color 0.15s, background-color 0.15s, box-shadow 0.15s;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -437,7 +482,7 @@
   letter-spacing: 0.18em;
   cursor: pointer;
   border-radius: 3px;
-  transition: all 0.2s;
+  transition: border-color 0.2s, color 0.2s, background-color 0.2s, box-shadow 0.2s;
   text-transform: uppercase;
 }
 
@@ -494,7 +539,7 @@
   font-size: 10px;
   cursor: pointer;
   border-radius: 2px;
-  transition: all 0.15s;
+  transition: border-color 0.15s, color 0.15s, background-color 0.15s, box-shadow 0.15s;
   font-family: 'Share Tech Mono', monospace;
   letter-spacing: 0.08em;
 }
@@ -522,7 +567,7 @@
   font-size: 10px;
   cursor: pointer;
   border-radius: 2px;
-  transition: all 0.15s;
+  transition: border-color 0.15s, color 0.15s, background-color 0.15s, box-shadow 0.15s;
   font-family: 'Share Tech Mono', monospace;
   letter-spacing: 0.08em;
 }
@@ -541,7 +586,7 @@
   font-size: 10px;
   cursor: pointer;
   border-radius: 2px;
-  transition: all 0.15s;
+  transition: border-color 0.15s, color 0.15s, background-color 0.15s, box-shadow 0.15s;
   font-family: 'Share Tech Mono', monospace;
   letter-spacing: 0.08em;
 }
@@ -592,7 +637,7 @@
   border-radius: 3px;
   cursor: pointer;
   font-size: 12px;
-  transition: all 0.15s;
+  transition: border-color 0.15s, color 0.15s, background-color 0.15s, box-shadow 0.15s;
 }
 
 .searchClose:hover { color: #fff; border-color: rgba(255,255,255,0.3); }
@@ -605,7 +650,7 @@
   font-size: 10px;
   cursor: pointer;
   border-radius: 2px;
-  transition: all 0.15s;
+  transition: border-color 0.15s, color 0.15s, background-color 0.15s, box-shadow 0.15s;
   font-family: 'Share Tech Mono', monospace;
   letter-spacing: 0.08em;
 }
@@ -619,7 +664,7 @@
   cursor: pointer;
   color: rgba(255,255,255,0.25);
   padding: 0 4px;
-  transition: all 0.15s;
+  transition: border-color 0.15s, color 0.15s, background-color 0.15s, box-shadow 0.15s;
   line-height: 1;
 }
 
@@ -666,7 +711,7 @@
   font-size: 10px;
   cursor: pointer;
   border-radius: 2px;
-  transition: all 0.15s;
+  transition: border-color 0.15s, color 0.15s, background-color 0.15s, box-shadow 0.15s;
   font-family: Share Tech Mono, monospace;
   letter-spacing: 0.08em;
 }
@@ -688,7 +733,7 @@
   background: transparent; color: rgba(255,255,255,0.8);
   font-weight: 700;
   font-size: 13px; cursor: pointer; border-radius: 50%;
-  transition: all 0.15s; display: flex;
+  transition: border-color 0.15s, color 0.15s, background-color 0.15s, box-shadow 0.15s; display: flex;
   align-items: center; justify-content: center;
   font-family: Orbitron, sans-serif; font-weight: 700;
 }
@@ -699,7 +744,7 @@
   background: transparent; color: rgba(255,255,255,0.8);
   font-weight: 700;
   font-size: 13px; cursor: pointer; border-radius: 4px;
-  transition: all 0.15s; display: flex; align-items: center;
+  transition: border-color 0.15s, color 0.15s, background-color 0.15s, box-shadow 0.15s; display: flex; align-items: center;
 }
 .randBtn:hover { border-color: rgba(250,204,21,0.4); color: #facc15; }
 .colBtn {
@@ -708,7 +753,7 @@
   background: transparent; color: rgba(255,255,255,0.8);
   font-weight: 700;
   font-size: 11px; cursor: pointer; border-radius: 4px;
-  transition: all 0.15s; font-family: monospace;
+  transition: border-color 0.15s, color 0.15s, background-color 0.15s, box-shadow 0.15s; font-family: monospace;
 }
 .colBtn:hover { border-color: rgba(0,255,136,0.4); color: #00ff88; }
 .statsBtn {
@@ -716,7 +761,7 @@
   border: 1px solid rgba(255,255,255,0.25);
   background: transparent; color: rgba(255,255,255,0.8);
   font-size: 13px; cursor: pointer; border-radius: 4px;
-  transition: all 0.15s; font-family: monospace; font-weight: 700;
+  transition: border-color 0.15s, color 0.15s, background-color 0.15s, box-shadow 0.15s; font-family: monospace; font-weight: 700;
 }
 .statsBtn:hover { border-color: rgba(250,204,21,0.4); color: #facc15; }
 
@@ -878,7 +923,7 @@
   background: transparent; color: rgba(255,255,255,0.8);
   font-weight: 700;
   font-size: 14px; cursor: pointer; border-radius: 4px;
-  transition: all 0.15s;
+  transition: border-color 0.15s, color 0.15s, background-color 0.15s, box-shadow 0.15s;
 }
 .achieveBtn:hover { border-color: rgba(250,204,21,0.4); color: #facc15; }
 
@@ -946,6 +991,57 @@
   outline-offset: 3px;
   box-shadow: 0 0 12px rgba(0, 255, 255, 0.7), 0 0 24px rgba(0, 255, 255, 0.4) !important;
   transform: scale(1.05) !important;
+}
+
+/* Native keyboard-Tab focus (distinct from the gamepad/arrow-key "virtual
+   focus" above, which is index-state-driven via .catFocused/.barFocused).
+   Reuses the same cyan outline+glow language instead of the browser
+   default outline, so Tab users get an equally obvious ring rather than a
+   removed one. */
+.catPill:focus-visible,
+.navBtn:focus-visible,
+.launchBtn:focus-visible,
+.mediaBtn:focus-visible,
+.settingsBtn:focus-visible,
+.exitBtn:focus-visible,
+.searchBtn:focus-visible,
+.favBtn:focus-visible,
+.sortBtn:focus-visible,
+.helpBtn:focus-visible,
+.randBtn:focus-visible,
+.colBtn:focus-visible,
+.statsBtn:focus-visible,
+.achieveBtn:focus-visible {
+  outline: 2px solid #00ffff;
+  outline-offset: 2px;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.6), 0 0 20px rgba(0, 255, 255, 0.3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Outline/glow stay -- they're the actual focus indicator and must not
+     be weakened. Only the scale emphasis and the transition that animates
+     into these focus/hover states are removed, so the state change is
+     still obvious but immediate rather than eased. */
+  .catFocused,
+  .barFocused {
+    transform: none !important;
+  }
+  .catPill,
+  .navBtn,
+  .launchBtn,
+  .mediaBtn,
+  .settingsBtn,
+  .exitBtn,
+  .searchBtn,
+  .favBtn,
+  .sortBtn,
+  .helpBtn,
+  .randBtn,
+  .colBtn,
+  .statsBtn,
+  .achieveBtn {
+    transition: none;
+  }
 }
 
 

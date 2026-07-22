@@ -9,6 +9,19 @@
   padding: 48px;
   box-sizing: border-box;
   overflow: hidden;
+  /* Visual-only mount fade for Home<->Wheel continuity -- opacity alone,
+     so input/focus are live from the first frame (nothing here gates
+     mounting, navigation, or selection). */
+  animation: homeMountFade var(--motion-atmosphere) var(--ease-standard);
+}
+
+@keyframes homeMountFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home { animation: none; }
 }
 
 .header {
@@ -62,7 +75,7 @@
   color: #fff;
   font-family: inherit;
   text-align: left;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color var(--motion-focus) ease, box-shadow var(--motion-focus) ease, transform var(--motion-focus) ease;
 }
 
 .recentCard:disabled {
@@ -70,9 +83,30 @@
   cursor: default;
 }
 
-.recentCard.focused {
+/* Mouse hover is deliberately a much subtler cue than controller/keyboard
+   focus (border tint only, no glow, no scale) so it can never be mistaken
+   for the real focus ring -- see .focused / :focus-visible below. */
+.recentCard:hover:not(:disabled) {
+  border-color: rgba(0, 255, 255, 0.3);
+}
+
+.recentCard.focused,
+.recentCard:focus-visible {
   border-color: #0ff;
+  outline: 2px solid #0ff;
+  outline-offset: 2px;
   box-shadow: 0 0 16px rgba(0, 255, 255, 0.4);
+  transform: scale(1.03);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recentCard {
+    transition: none;
+  }
+  .recentCard.focused,
+  .recentCard:focus-visible {
+    transform: none;
+  }
 }
 
 .recentArt {
@@ -121,6 +155,16 @@
   border: 1px solid rgba(239, 68, 68, 0.3);
   border-radius: 6px;
   padding: 10px 16px;
+  animation: errorEnter var(--motion-panel) var(--ease-standard);
+}
+
+@keyframes errorEnter {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .launchError { animation: none; }
 }
 
 .actionRow {
@@ -139,13 +183,31 @@
   border-radius: 6px;
   color: #fff;
   cursor: pointer;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color var(--motion-focus) ease, box-shadow var(--motion-focus) ease, transform var(--motion-focus) ease;
 }
 
-.actionBtn.focused {
+.actionBtn:hover:not(.focused) {
+  border-color: rgba(0, 255, 255, 0.3);
+}
+
+.actionBtn.focused,
+.actionBtn:focus-visible {
   border-color: #0ff;
+  outline: 2px solid #0ff;
+  outline-offset: 2px;
   color: #0ff;
   box-shadow: 0 0 16px rgba(0, 255, 255, 0.5);
+  transform: scale(1.03);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .actionBtn {
+    transition: none;
+  }
+  .actionBtn.focused,
+  .actionBtn:focus-visible {
+    transform: none;
+  }
 }
 
 .departOverlay {
@@ -158,6 +220,16 @@
   flex-direction: column;
   gap: 24px;
   z-index: 9999;
+  animation: departFadeIn var(--motion-panel) var(--ease-standard);
+}
+
+@keyframes departFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .departOverlay { animation: none; }
 }
 
 .departTitle {
@@ -179,6 +251,12 @@
   color: #fff;
   cursor: pointer;
   border-radius: 6px;
+  transition: border-color var(--motion-focus) ease, box-shadow var(--motion-focus) ease;
+}
+
+.departBtn:focus-visible {
+  outline: 2px solid #0ff;
+  outline-offset: 2px;
 }
 
 .departBtnActive {
@@ -186,4 +264,8 @@
   border: 2px solid #0ff;
   color: #0ff;
   box-shadow: 0 0 16px rgba(0, 255, 255, 0.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .departBtn { transition: none; }
 }

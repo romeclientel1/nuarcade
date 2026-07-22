@@ -5,10 +5,20 @@
   border-radius: 6px;
   overflow: hidden;
   cursor: pointer;
-  transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  /* An explicit property list here (never a blanket catch-all) -- only
+     what actually changes when .center toggles or the inline background
+     swaps: border color, glow, and background tint. Position/scale/
+     opacity are governed separately by the wrapping .cardSlot's own
+     inline transition (see Wheel.jsx getCardStyle) and are deliberately
+     not duplicated here. */
+  transition: border-color var(--motion-panel, 250ms) var(--ease-standard, ease), box-shadow var(--motion-panel, 250ms) var(--ease-standard, ease), background-color var(--motion-panel, 250ms) var(--ease-standard, ease);
   border: 1px solid rgba(255,255,255,0.06);
   display: flex;
   flex-direction: column;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card { transition: none; }
 }
 
 .center {
