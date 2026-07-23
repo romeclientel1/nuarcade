@@ -340,7 +340,8 @@ export function useGameLibrary() {
 
   const addRecentlyPlayed = (game) => {
     setRecentlyPlayed(prev => {
-      const filtered = prev.filter(g => g.profile !== game.profile)
+      const gameKey = game.id || game.profile
+      const filtered = prev.filter(g => (g.id || g.profile) !== gameKey)
       const next = [game, ...filtered].slice(0, 10)
       localStorage.setItem(RECENT_KEY, JSON.stringify(next))
       return next
