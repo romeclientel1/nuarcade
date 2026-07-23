@@ -83,9 +83,7 @@ const resolveCinematicMediaPath = async (fileName, configuredMediaPath) => {
 export default function App() {
   const [phase, setPhase] = useState("videoCheck")
   const [startupConfig, setStartupConfig] = useState(undefined)
-  const [introMediaPath, setIntroMediaPath] = useState(null)
-  const [sanctuaryEntryMediaPath, setSanctuaryEntryMediaPath] = useState(null)
-  const sanctuaryEntryPlayedRef = useRef(false)
+  const [launchVideo, setLaunchVideo] = useState(null)
   const { profiles, activeProfile, addProfile, selectProfile, selectGuest, deleteProfile } = useProfiles()
   // App-level surface: Vespara Home <-> the existing Wheel/Library
   // experience. A second, independent useDestination() instance --
@@ -124,9 +122,10 @@ export default function App() {
     }).catch(() => setStartupConfig(null))
   }, [])
 
-  // Resolve the startup cinematic before the built-in Vespara arrival.
-  // A configured Media-folder file overrides the bundled product default.
-  // Missing files, IPC errors, or a slow lookup all fail open into arrival.
+  // The full sanctuary-entry film is Vespara's primary opening.
+  // A configured Media-folder file can override the bundled product default.
+  // intro.mp4 remains a legacy fallback; if neither video resolves, startup
+  // continues into the reliable built-in arrival.
   useEffect(() => {
     if (phase !== "videoCheck") return
 
@@ -141,14 +140,44 @@ export default function App() {
     const mediaPath = startupConfig?.mediaPath || "C:\\Media\\"
     let cancelled = false
 
-    resolveCinematicMediaPath("intro.mp4", mediaPath)
-      .then(resolvedMediaPath => {
+    const resolveLaunchVideo = async () => {
+      const sanctuaryPath = await resolveCinematicMediaPath(
+        "sanctuary-entry.mp4",
+        mediaPath
+      )
+
+      if (sanctuaryPath) {
+        return {
+          mediaPath: sanctuaryPath,
+          fileName: "sanctuary-entry.mp4",
+          isFullArrival: true,
+        }
+      }
+
+      const introPath = await resolveCinematicMediaPath(
+        "intro.mp4",
+        mediaPath
+      )
+
+      if (introPath) {
+        return {
+          mediaPath: introPath,
+          fileName: "intro.mp4",
+          isFullArrival: false,
+        }
+      }
+
+      return null
+    }
+
+    resolveLaunchVideo()
+      .then(video => {
         if (cancelled) return
         clearTimeout(fallback)
 
-        if (resolvedMediaPath) {
-          setIntroMediaPath(resolvedMediaPath)
-          setPhase("introVideo")
+        if (video) {
+          setLaunchVideo(video)
+          setPhase("launchVideo")
         } else {
           setPhase("intro")
         }
@@ -238,71 +267,29 @@ export default function App() {
     setPendingRestoration(null)
   }
 
-  const handleIntroVideoComplete = () => setPhase("intro")
-  const handleIntroComplete = () => setPhase("playerSelect")
-  const handleSanctuaryEntryComplete = () => setPhase("main")
-
-  const beginMainEntry = () => {
-    if (sanctuaryEntryPlayedRef.current) {
-      setPhase("main")
-      return
+  const handleLaunchVideoComplete = () => {
+    if (launchVideo?.isFullArrival) {
+      setPhase("playerSelect")
+    } else {
+      setPhase("intro")
     }
-
-    sanctuaryEntryPlayedRef.current = true
-
-    const reducedMotion =
-      window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true
-
-    if (reducedMotion) {
-      setPhase("main")
-      return
-    }
-
-    setPhase("sanctuaryEntryCheck")
-
-    const mediaPath = startupConfig?.mediaPath || "C:\\Media\\"
-    let settled = false
-
-    const fallback = setTimeout(() => {
-      if (settled) return
-      settled = true
-      setPhase("main")
-    }, 1500)
-
-    resolveCinematicMediaPath("sanctuary-entry.mp4", mediaPath)
-      .then(resolvedMediaPath => {
-        if (settled) return
-        settled = true
-        clearTimeout(fallback)
-
-        if (resolvedMediaPath) {
-          setSanctuaryEntryMediaPath(resolvedMediaPath)
-          setPhase("sanctuaryEntry")
-        } else {
-          setPhase("main")
-        }
-      })
-      .catch(() => {
-        if (settled) return
-        settled = true
-        clearTimeout(fallback)
-        setPhase("main")
-      })
   }
+
+  const handleIntroComplete = () => setPhase("playerSelect")
 
   const handlePlayerSelect = (player) => {
     selectProfile(player.id)
-    beginMainEntry()
+    setPhase("main")
   }
 
   const handleGuest = () => {
     selectGuest()
-    beginMainEntry()
+    setPhase("main")
   }
 
   const handleAddProfile = (name) => {
     addProfile(name)
-    beginMainEntry()
+    setPhase("main")
   }
 
   const handleReturnToPlayerSelect = () => {
@@ -327,23 +314,16 @@ export default function App() {
     <ErrorBoundary>
       <div style={{ position: 'relative', width: '100vw', height: '100vh', background: '#000', overflow: 'hidden' }}>
 
-        {phase === "introVideo" && (
+        {phase === "launchVideo" && launchVideo && (
           <IntroVideo
-            mediaPath={introMediaPath}
-            onComplete={handleIntroVideoComplete}
+            mediaPath={launchVideo.mediaPath}
+            fileName={launchVideo.fileName}
+            onComplete={handleLaunchVideoComplete}
           />
         )}
 
         {phase === "intro" && (
           <Intro onComplete={handleIntroComplete} />
-        )}
-
-        {phase === "sanctuaryEntry" && (
-          <IntroVideo
-            mediaPath={sanctuaryEntryMediaPath}
-            fileName="sanctuary-entry.mp4"
-            onComplete={handleSanctuaryEntryComplete}
-          />
         )}
 
         {phase === "playerSelect" && (
