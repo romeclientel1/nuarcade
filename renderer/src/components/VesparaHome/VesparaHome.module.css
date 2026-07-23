@@ -269,6 +269,34 @@
   scrollbar-color: rgba(116, 191, 188, 0.32) transparent;
 }
 
+.multiRecentRow {
+  align-items: center;
+  padding-top: clamp(12px, 2vh, 24px);
+  padding-bottom: clamp(16px, 2.6vh, 30px);
+  scroll-padding-inline: 12px;
+}
+
+.multiRecentRow .recentCard {
+  width: clamp(180px, 16vw, 230px);
+  min-height: 205px;
+  padding: 12px;
+}
+
+.multiRecentRow .recentArt,
+.multiRecentRow .recentArtFallback {
+  height: clamp(112px, 11vw, 150px);
+  margin-bottom: 12px;
+}
+
+.multiRecentRow .recentTitle {
+  font-size: clamp(12px, 1vw, 15px);
+}
+
+.multiRecentRow .recentSystem {
+  margin-top: 5px;
+  letter-spacing: 1.2px;
+}
+
 .singleRecentRow {
   justify-content: center;
   align-items: center;

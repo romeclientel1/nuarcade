@@ -386,6 +386,7 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
                   className={
                     styles.recentRow
                     + (displayedRecentGames.length === 1 ? " " + styles.singleRecentRow : "")
+                    + (displayedRecentGames.length > 1 ? " " + styles.multiRecentRow : "")
                   }
                   ref={recentRowRef}
                 >
