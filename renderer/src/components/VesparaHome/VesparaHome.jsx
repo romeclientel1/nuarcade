@@ -32,7 +32,7 @@ const ACTIONS = ["library", "switchPlayer", "depart"]
 // environmental design here, deliberately.
 export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restorationRequest, uiSoundsEnabled, uiSoundVolume }) {
   const { t } = useI18n()
-  const ACTION_LABELS = { library: t("home.library"), switchPlayer: t("home.switchPlayer"), depart: t("home.depart") }
+  const ACTION_LABELS = { library: t("home.libraryDestination"), switchPlayer: t("home.switchPlayer"), depart: t("home.depart") }
   const { activeProfile } = useProfiles()
   const { recentGamesRaw, games, addRecentlyPlayed, loading } = useRecentGames(RECENT_LIMIT)
   const { startSession, endSession, recordLaunch } = usePlaytime()
@@ -335,65 +335,125 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
     ? t("home.emptyUnconfigured")
     : t("home.emptyNoRecent")
 
+  const playerName = activeProfile ? activeProfile.name : t("common.guest")
+  const welcomeText = activeProfile
+    ? t("home.welcomeBack", { name: playerName })
+    : t("home.welcomeGuest")
+
   return (
     <div className={styles.home}>
-      <div className={styles.header}>
-        <div className={styles.profileName}>
-          {activeProfile ? activeProfile.name : t("common.guest")}
-        </div>
+      <div className={styles.worldLayer} aria-hidden="true">
+        <div className={styles.deepField} />
+        <div className={styles.distantCrown} />
+        <div className={styles.horizonGlow} />
+        <div className={styles.lightShafts} />
+        <div className={styles.atmosphere} />
+        <div className={styles.foregroundFrame} />
       </div>
 
-      <div className={styles.body}>
-        <div className={styles.sectionTitle}>{t("home.recentlyPlayed")}</div>
-        {loading ? (
-          <div className={styles.empty}>{t("common.loading")}</div>
-        ) : !hasRecents ? (
-          <div className={styles.empty}>{emptyStateText}</div>
-        ) : (
-          <div className={styles.recentRow} ref={recentRowRef}>
-            {displayedRecentGames.map((g, i) => {
-              const id = g.id || g.profile
-              const art = artwork?.[id]
-              const focused = focusZone === "recents" && i === recentIndex
-              return (
-                <button
-                  key={id}
-                  ref={focused ? focusedRecentCardRef : null}
-                  className={styles.recentCard + (focused ? " " + styles.focused : "")}
-                  onClick={() => { acceptManualFocus(); setFocusZone("recents"); setRecentIndex(i); launch(g) }}
-                  disabled={launching}
-                >
-                  {art?.capsule || art?.hero ? (
-                    <img className={styles.recentArt} src={art.capsule || art.hero} alt="" />
-                  ) : (
-                    <div className={styles.recentArtFallback} aria-hidden="true">
-                      <span className={styles.recentArtFallbackGlyph}>{g.system ? g.system[0] : "?"}</span>
-                    </div>
-                  )}
-                  <div className={styles.recentTitle}>{g.title}</div>
-                  <div className={styles.recentSystem}>{g.system}</div>
-                </button>
-              )
-            })}
+      <main className={styles.sanctuary}>
+        <header className={styles.header}>
+          <div className={styles.worldIdentity}>
+            <div className={styles.worldName}>{t("home.worldName")}</div>
+            <div className={styles.worldPlace}>{t("home.sanctuary")}</div>
           </div>
-        )}
+          <div className={styles.playerIdentity}>
+            <div className={styles.returnSignal} aria-hidden="true" />
+            <div>
+              <div className={styles.welcome}>{welcomeText}</div>
+              <div className={styles.profileName}>{playerName}</div>
+            </div>
+          </div>
+        </header>
 
-        {launchError && (
-          <div className={styles.launchError}>{launchError}</div>
-        )}
+        <div className={styles.body}>
+          <section className={styles.memoryShelf} aria-labelledby="vespara-recent-title">
+            <div className={styles.sectionHeading}>
+              <div>
+                <div id="vespara-recent-title" className={styles.sectionTitle}>{t("home.recentlyPlayed")}</div>
+                <div className={styles.sectionSubtitle}>{t("home.memorySubtitle")}</div>
+              </div>
+              <div className={styles.memoryLine} aria-hidden="true" />
+            </div>
 
-        <div className={styles.actionRow}>
-          {ACTIONS.map((action, i) => (
-            <button
-              key={action}
-              className={styles.actionBtn + (focusZone === "actions" && i === actionIndex ? " " + styles.focused : "")}
-              onClick={() => { acceptManualFocus(); setFocusZone("actions"); setActionIndex(i); sounds.select(); runAction(action) }}
-            >
-              {action === "library" && isSetupFocus ? t("home.setUp") : ACTION_LABELS[action]}
-            </button>
-          ))}
+            <div className={styles.memoryContent}>
+              {loading ? (
+                <div className={styles.empty}>{t("common.loading")}</div>
+              ) : !hasRecents ? (
+                <div className={styles.empty}>{emptyStateText}</div>
+              ) : (
+                <div className={styles.recentRow} ref={recentRowRef}>
+                  {displayedRecentGames.map((g, i) => {
+                    const id = g.id || g.profile
+                    const art = artwork?.[id]
+                    const focused = focusZone === "recents" && i === recentIndex
+                    return (
+                      <button
+                        key={id}
+                        ref={focused ? focusedRecentCardRef : null}
+                        className={styles.recentCard + (focused ? " " + styles.focused : "")}
+                        onClick={() => { acceptManualFocus(); setFocusZone("recents"); setRecentIndex(i); launch(g) }}
+                        disabled={launching}
+                      >
+                        <span className={styles.memoryIndex} aria-hidden="true">{String(i + 1).padStart(2, "0")}</span>
+                        {art?.capsule || art?.hero ? (
+                          <img className={styles.recentArt} src={art.capsule || art.hero} alt="" />
+                        ) : (
+                          <div className={styles.recentArtFallback} aria-hidden="true">
+                            <span className={styles.recentArtFallbackGlyph}>{g.system ? g.system[0] : "?"}</span>
+                          </div>
+                        )}
+                        <div className={styles.recentTitle}>{g.title}</div>
+                        <div className={styles.recentSystem}>{g.system}</div>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          </section>
+
+          {launchError && (
+            <div className={styles.launchError}>{launchError}</div>
+          )}
+
+          <section className={styles.destinationDeck} aria-label={t("home.destinationsLabel")}>
+            <div className={styles.destinationAxis} aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </div>
+            <div className={styles.actionRow}>
+              {ACTIONS.map((action, i) => {
+                const focused = focusZone === "actions" && i === actionIndex
+                const detail = action === "library"
+                  ? t("home.librarySubtitle")
+                  : action === "switchPlayer"
+                    ? t("home.switchPlayerSubtitle")
+                    : t("home.departSubtitle")
+                return (
+                  <button
+                    key={action}
+                    className={styles.actionBtn + " " + styles[action + "Destination"] + (focused ? " " + styles.focused : "")}
+                    onClick={() => { acceptManualFocus(); setFocusZone("actions"); setActionIndex(i); sounds.select(); runAction(action) }}
+                  >
+                    <span className={styles.destinationMarker} aria-hidden="true" />
+                    <span className={styles.destinationCopy}>
+                      <span className={styles.destinationName}>
+                        {action === "library" && isSetupFocus ? t("home.setUp") : ACTION_LABELS[action]}
+                      </span>
+                      <span className={styles.destinationDetail}>{detail}</span>
+                    </span>
+                    <span className={styles.destinationGlyph} aria-hidden="true">
+                      {action === "library" ? "◈" : action === "switchPlayer" ? "◎" : "◇"}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </section>
         </div>
-      </div>
+      </main>
 
       {needsControllerPrompt && (
         <ControllerPrompt
@@ -404,18 +464,22 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
 
       {showDepartConfirm && (
         <div className={styles.departOverlay}>
-          <div className={styles.departTitle}>{t("home.confirmDepartTitle")}</div>
-          <div className={styles.departChoices}>
-            <button
-              className={styles.departBtn + (departChoice === 0 ? " " + styles.departBtnActive : "")}
-              style={{ textTransform: 'uppercase' }}
-              onClick={() => { sounds.select(); window.nuarcade?.quit?.() }}
-            >{t("common.yes")}</button>
-            <button
-              className={styles.departBtn + (departChoice === 1 ? " " + styles.departBtnActive : "")}
-              style={{ textTransform: 'uppercase' }}
-              onClick={() => { sounds.back(); setShowDepartConfirm(false) }}
-            >{t("common.no")}</button>
+          <div className={styles.departChamber}>
+            <div className={styles.departEyebrow}>{t("home.worldName")}</div>
+            <div className={styles.departTitle}>{t("home.confirmDepartTitle")}</div>
+            <div className={styles.departHint}>{t("home.confirmDepartHint")}</div>
+            <div className={styles.departChoices}>
+              <button
+                className={styles.departBtn + (departChoice === 0 ? " " + styles.departBtnActive : "")}
+                style={{ textTransform: 'uppercase' }}
+                onClick={() => { sounds.select(); window.nuarcade?.quit?.() }}
+              >{t("common.yes")}</button>
+              <button
+                className={styles.departBtn + (departChoice === 1 ? " " + styles.departBtnActive : "")}
+                style={{ textTransform: 'uppercase' }}
+                onClick={() => { sounds.back(); setShowDepartConfirm(false) }}
+              >{t("common.no")}</button>
+            </div>
           </div>
         </div>
       )}

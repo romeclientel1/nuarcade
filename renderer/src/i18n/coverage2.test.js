@@ -30,8 +30,8 @@ import { translate } from "./locale.js"
 // -- Home: depart confirmation -------------------------------------------------
 
 test("Home depart confirmation switches language", () => {
-  assert.equal(translate("en", "home.confirmDepartTitle"), "EXIT NUARCADE?")
-  assert.equal(translate("es", "home.confirmDepartTitle"), "¿SALIR DE NUARCADE?")
+  assert.equal(translate("en", "home.confirmDepartTitle"), "LEAVE VESPARA?")
+  assert.equal(translate("es", "home.confirmDepartTitle"), "¿ABANDONAR VESPARA?")
   // Reuses the shared Yes/No vocabulary -- not a near-duplicate key.
   assert.equal(translate("en", "common.yes"), "Yes")
   assert.equal(translate("es", "common.yes"), "Sí")
