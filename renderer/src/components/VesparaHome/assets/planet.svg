@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" role="img" aria-hidden="true">
+  <defs>
+    <radialGradient id="planetBody" cx="38%" cy="34%" r="72%">
+      <stop offset="0%" stop-color="#7c8f92" />
+      <stop offset="45%" stop-color="#576669" />
+      <stop offset="78%" stop-color="#333f42" />
+      <stop offset="100%" stop-color="#1c2426" />
+    </radialGradient>
+    <linearGradient id="planetBands" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="10%" stop-color="#c9b184" stop-opacity="0.05" />
+      <stop offset="32%" stop-color="#8fa39e" stop-opacity="0.07" />
+      <stop offset="55%" stop-color="#c9b184" stop-opacity="0.04" />
+      <stop offset="80%" stop-color="#4c5a5c" stop-opacity="0.08" />
+    </linearGradient>
+    <radialGradient id="planetHaze" cx="30%" cy="28%" r="78%">
+      <stop offset="52%" stop-color="#050b0c" stop-opacity="0" />
+      <stop offset="100%" stop-color="#050b0c" stop-opacity="0.92" />
+    </radialGradient>
+    <filter id="planetSoftEdge" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" />
+    </filter>
+  </defs>
+  <circle cx="300" cy="300" r="260" fill="url(#planetBody)" filter="url(#planetSoftEdge)" />
+  <circle cx="300" cy="300" r="260" fill="url(#planetBands)" />
+  <circle cx="300" cy="300" r="260" fill="url(#planetHaze)" />
+</svg>

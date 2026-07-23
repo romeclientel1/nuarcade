@@ -20,6 +20,10 @@ import { consumeRestorationRequest } from "../../launchSession/restorationReques
 import { shouldConsumeRestoration, resolveHomeFocus } from "../../launchSession/restorationResolution.js"
 import { useI18n } from "../../i18n/I18nContext.js"
 import styles from "./VesparaHome.module.css"
+import starFieldAsset from "./assets/starField.svg"
+import planetAsset from "./assets/planet.svg"
+import sunAsset from "./assets/sun.svg"
+import moonAsset from "./assets/moon.svg"
 
 const RECENT_LIMIT = 8
 const ACTIONS = ["library", "switchPlayer", "depart"]
@@ -344,6 +348,15 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
     <div className={styles.home}>
       <div className={styles.worldLayer} aria-hidden="true">
         <div className={styles.deepField} />
+        {/* Sanctuary-beyond-the-chamber layers -- one large hazed planet,
+            the sun low in the horizon band, and a small off-axis moon,
+            behind a richer star layer. All decorative/inert, positioned
+            behind the architectural layers below them so the Library
+            threshold and traveler presence stay visually dominant. */}
+        <img src={starFieldAsset} alt="" aria-hidden="true" className={styles.starField} />
+        <img src={planetAsset} alt="" aria-hidden="true" className={styles.planetDisc} />
+        <img src={moonAsset} alt="" aria-hidden="true" className={styles.moonDisc} />
+        <img src={sunAsset} alt="" aria-hidden="true" className={styles.sunDisc} />
         <div className={styles.distantCrown} />
         <div className={styles.horizonGlow} />
         <div className={styles.lightShafts} />

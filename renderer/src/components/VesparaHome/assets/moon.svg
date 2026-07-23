@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-hidden="true">
+  <defs>
+    <radialGradient id="moonGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#eee0b6" stop-opacity="0.22" />
+      <stop offset="100%" stop-color="#eee0b6" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="moonLit" cx="38%" cy="36%" r="65%">
+      <stop offset="0%" stop-color="#f2ecd8" stop-opacity="0.9" />
+      <stop offset="55%" stop-color="#cfc3a4" stop-opacity="0.55" />
+      <stop offset="100%" stop-color="#8d8a76" stop-opacity="0.15" />
+    </radialGradient>
+  </defs>
+  <circle cx="50" cy="50" r="50" fill="url(#moonGlow)" />
+  <circle cx="50" cy="50" r="30" fill="url(#moonLit)" />
+</svg>

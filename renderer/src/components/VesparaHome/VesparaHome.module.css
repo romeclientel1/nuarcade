@@ -53,6 +53,68 @@
   animation: sanctuaryBreathe 16s ease-in-out infinite alternate;
 }
 
+/* Sanctuary-beyond-the-chamber -- a richer star layer plus one distant
+   sun, one large hazed planet, and one small off-axis moon, all sitting
+   behind distantCrown/horizonGlow/atmosphere so the architecture and
+   Library threshold always read as the foreground. Positioned to stay
+   clear of the header identity text and the body content below. */
+.starField,
+.planetDisc,
+.sunDisc,
+.moonDisc {
+  position: absolute;
+  pointer-events: none;
+}
+
+.starField {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.5;
+  mix-blend-mode: screen;
+  animation: sanctuaryBreathe 42s ease-in-out infinite alternate;
+}
+
+/* Large, partially-hazed planet bleeding off the upper-right edge --
+   scale without becoming the subject. Sits below the header's identity
+   row and within distantCrown's own vertical band. */
+.planetDisc {
+  top: 16%;
+  right: -16%;
+  width: clamp(340px, 38vw, 560px);
+  height: auto;
+  opacity: 0.46;
+  filter: blur(0.5px) saturate(0.85);
+  animation: sanctuaryBreathe 26s ease-in-out infinite alternate;
+  animation-delay: -11s;
+}
+
+/* Sun sits inside horizonGlow's own band so the two merge into one warm
+   source rather than competing -- reinforcing the Library's light, not
+   a second focal point. transform stays static (centering only); the
+   glow-pulse animation never touches transform, so it can't fight this. */
+.sunDisc {
+  left: 50%;
+  top: 26%;
+  width: clamp(120px, 11vw, 200px);
+  height: auto;
+  transform: translateX(-50%);
+  opacity: 0.85;
+  animation: sunGlowPulse 20s ease-in-out infinite alternate;
+}
+
+/* Small and off-axis -- discoverable, not announced. */
+.moonDisc {
+  left: 9%;
+  top: 20%;
+  width: clamp(20px, 2.4vw, 34px);
+  height: auto;
+  opacity: 0.48;
+  animation: sanctuaryBreathe 30s ease-in-out infinite alternate;
+  animation-delay: -6s;
+}
+
 .distantCrown {
   inset: 8% -8% auto;
   height: 44%;
@@ -771,9 +833,32 @@
   to { opacity: 1; }
 }
 
+/* The sun's one allowed independent motion -- a barely perceptible glow
+   change, never a transform, so it can't fight the static centering
+   transform on .sunDisc. */
+@keyframes sunGlowPulse {
+  from { opacity: 0.78; filter: brightness(0.96) saturate(0.95); }
+  to   { opacity: 0.95; filter: brightness(1.08) saturate(1.05); }
+}
+
 @media (max-width: 900px), (max-height: 680px) {
   .sanctuary {
     padding: 24px;
+  }
+
+  /* Narrower/shorter windows: the celestial layers recede further so they
+     never crowd the header or body content in the reduced space. */
+  .planetDisc {
+    width: clamp(240px, 46vw, 380px);
+    opacity: 0.36;
+  }
+
+  .sunDisc {
+    width: clamp(80px, 13vw, 130px);
+  }
+
+  .moonDisc {
+    width: clamp(16px, 3vw, 26px);
   }
 
   .header {
@@ -849,7 +934,11 @@
 @media (prefers-reduced-motion: reduce) {
   .home,
   .deepField,
-  .horizonGlow {
+  .horizonGlow,
+  .starField,
+  .planetDisc,
+  .sunDisc,
+  .moonDisc {
     animation: none;
   }
 }
