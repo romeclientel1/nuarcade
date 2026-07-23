@@ -6,7 +6,7 @@
   box-sizing: border-box;
   overflow: hidden;
   isolation: isolate;
-  background: #05070c;
+  background: #04080a;
   animation: homeMountFade var(--motion-atmosphere) var(--ease-standard);
 }
 
@@ -21,76 +21,93 @@
 .horizonGlow,
 .lightShafts,
 .atmosphere,
-.foregroundFrame {
+.foregroundFrame,
+.sanctuaryArch {
   position: absolute;
   inset: 0;
   pointer-events: none;
 }
 
+/* Vespara's world -- one continuous vista continuing the sanctuary-entry
+   film, not a stack of independent HUD decorations. Depth reads front to
+   back: deepField (sky), distantCrown (far architecture), horizonGlow
+   (the sanctuary's own warm light source), lightShafts + atmosphere
+   (the air the player stands in), sanctuaryArch + foregroundFrame (the
+   chamber immediately around them). */
 .worldLayer {
   z-index: -2;
   overflow: hidden;
   background:
-    radial-gradient(circle at 50% 24%, rgba(69, 134, 154, 0.18), transparent 26%),
-    linear-gradient(180deg, #080d18 0%, #070a11 44%, #030407 100%);
+    radial-gradient(circle at 50% 30%, rgba(214, 176, 110, 0.07), transparent 40%),
+    linear-gradient(180deg, #0a1414 0%, #071012 38%, #050b0c 68%, #030607 100%);
 }
 
 .deepField {
-  opacity: 0.75;
+  opacity: 0.65;
   background-image:
-    radial-gradient(circle at 13% 19%, rgba(230, 246, 241, 0.55) 0 1px, transparent 1.5px),
-    radial-gradient(circle at 78% 14%, rgba(163, 221, 225, 0.38) 0 1px, transparent 1.5px),
-    radial-gradient(circle at 66% 38%, rgba(255, 255, 255, 0.22) 0 1px, transparent 1.5px),
-    radial-gradient(circle at 34% 29%, rgba(255, 233, 190, 0.22) 0 1px, transparent 1.5px);
-  background-size: 280px 260px, 360px 320px, 420px 390px, 510px 460px;
-  animation: fieldDrift 18s ease-in-out infinite alternate;
+    radial-gradient(circle at 13% 16%, rgba(236, 244, 236, 0.5) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 78% 12%, rgba(196, 224, 216, 0.34) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 62% 34%, rgba(255, 244, 220, 0.26) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 34% 24%, rgba(255, 224, 170, 0.22) 0 1px, transparent 1.5px);
+  background-size: 300px 280px, 380px 340px, 440px 410px, 530px 480px;
+  animation: sanctuaryBreathe 16s ease-in-out infinite alternate;
 }
 
 .distantCrown {
-  inset: 5% -8% auto;
-  height: 47%;
-  opacity: 0.58;
+  inset: 8% -8% auto;
+  height: 44%;
+  opacity: 0.42;
   background:
-    linear-gradient(115deg, transparent 0 17%, rgba(47, 76, 91, 0.18) 17% 18%, transparent 18% 31%, rgba(59, 91, 105, 0.2) 31% 32%, transparent 32% 100%),
-    linear-gradient(245deg, transparent 0 21%, rgba(47, 76, 91, 0.2) 21% 22%, transparent 22% 39%, rgba(59, 91, 105, 0.18) 39% 40%, transparent 40% 100%);
+    linear-gradient(115deg, transparent 0 17%, rgba(214, 178, 116, 0.1) 17% 18%, transparent 18% 31%, rgba(120, 150, 140, 0.12) 31% 32%, transparent 32% 100%),
+    linear-gradient(245deg, transparent 0 21%, rgba(214, 178, 116, 0.1) 21% 22%, transparent 22% 39%, rgba(120, 150, 140, 0.1) 39% 40%, transparent 40% 100%);
   clip-path: polygon(0 100%, 0 67%, 8% 67%, 8% 45%, 16% 45%, 16% 57%, 24% 57%, 24% 23%, 30% 23%, 30% 44%, 40% 44%, 40% 10%, 47% 10%, 47% 32%, 54% 32%, 54% 2%, 61% 2%, 61% 39%, 70% 39%, 70% 18%, 77% 18%, 77% 53%, 86% 53%, 86% 34%, 94% 34%, 94% 68%, 100% 68%, 100% 100%);
-  background-color: rgba(10, 20, 30, 0.8);
-  filter: drop-shadow(0 0 24px rgba(61, 151, 166, 0.18));
+  background-color: rgba(9, 16, 18, 0.86);
+  filter: drop-shadow(0 0 30px rgba(214, 178, 116, 0.1));
 }
 
 .horizonGlow {
-  inset: 26% -15% auto;
-  height: 34%;
-  background: radial-gradient(ellipse at center, rgba(72, 180, 180, 0.2), rgba(30, 78, 91, 0.08) 35%, transparent 70%);
-  filter: blur(16px);
-  animation: horizonBreathe 7s ease-in-out infinite alternate;
+  inset: 22% -20% auto;
+  height: 40%;
+  background: radial-gradient(ellipse at center, rgba(232, 190, 122, 0.22), rgba(120, 150, 130, 0.07) 40%, transparent 72%);
+  filter: blur(22px);
+  animation: sanctuaryBreathe 16s ease-in-out infinite alternate;
+  animation-delay: -8s;
 }
 
 .lightShafts {
   inset: -18% 5% 20%;
-  opacity: 0.25;
+  opacity: 0.22;
   background:
-    linear-gradient(104deg, transparent 21%, rgba(154, 222, 211, 0.08) 29%, transparent 40%),
-    linear-gradient(76deg, transparent 57%, rgba(214, 184, 116, 0.07) 66%, transparent 76%);
-  filter: blur(2px);
+    linear-gradient(104deg, transparent 22%, rgba(232, 196, 132, 0.09) 30%, transparent 41%),
+    linear-gradient(76deg, transparent 58%, rgba(140, 200, 190, 0.06) 67%, transparent 77%);
+  filter: blur(3px);
 }
 
 .atmosphere {
   inset: 38% -10% -20%;
   background:
-    radial-gradient(ellipse at 50% 0%, rgba(99, 171, 169, 0.1), transparent 52%),
-    repeating-linear-gradient(90deg, transparent 0 10%, rgba(255, 255, 255, 0.012) 10% 10.15%);
+    radial-gradient(ellipse at 50% 0%, rgba(214, 178, 122, 0.08), transparent 55%),
+    repeating-linear-gradient(90deg, transparent 0 10%, rgba(255, 255, 255, 0.01) 10% 10.15%);
   mask-image: linear-gradient(to bottom, transparent, #000 35%, #000);
+}
+
+/* Soft architectural pillars flanking the content -- the sense of standing
+   inside a chamber rather than looking at a panel floating on a backdrop.
+   Static (no animation): reduced motion never needs to touch it. */
+.sanctuaryArch {
+  background:
+    linear-gradient(90deg, rgba(3, 6, 7, 0.7) 0%, transparent 14%, transparent 86%, rgba(3, 6, 7, 0.7) 100%),
+    radial-gradient(ellipse at 50% 108%, rgba(214, 178, 116, 0.05), transparent 60%);
 }
 
 .foregroundFrame {
   inset: auto -5% -18%;
   height: 55%;
   background:
-    linear-gradient(150deg, transparent 0 18%, rgba(9, 15, 19, 0.92) 18% 30%, transparent 30%),
-    linear-gradient(210deg, transparent 0 18%, rgba(9, 15, 19, 0.92) 18% 30%, transparent 30%),
-    radial-gradient(ellipse at 50% 100%, rgba(18, 28, 31, 0.94), rgba(3, 5, 7, 0.98) 62%);
-  border-top: 1px solid rgba(145, 207, 199, 0.08);
+    linear-gradient(150deg, transparent 0 18%, rgba(6, 11, 12, 0.94) 18% 30%, transparent 30%),
+    linear-gradient(210deg, transparent 0 18%, rgba(6, 11, 12, 0.94) 18% 30%, transparent 30%),
+    radial-gradient(ellipse at 50% 100%, rgba(13, 21, 21, 0.95), rgba(3, 5, 6, 0.98) 62%);
+  border-top: 1px solid rgba(214, 178, 116, 0.1);
   transform: perspective(700px) rotateX(52deg);
   transform-origin: bottom;
 }
@@ -119,17 +136,17 @@
 }
 
 .worldName {
-  font-size: clamp(30px, 4.2vw, 62px);
+  font-size: clamp(28px, 3.8vw, 54px);
   line-height: 0.92;
   letter-spacing: clamp(7px, 1.1vw, 18px);
   color: #f3ead1;
   text-transform: uppercase;
-  text-shadow: 0 0 34px rgba(199, 225, 205, 0.22);
+  text-shadow: 0 0 40px rgba(230, 195, 130, 0.28), 0 0 90px rgba(214, 178, 116, 0.14);
 }
 
 .worldPlace {
   padding-left: 4px;
-  color: rgba(172, 214, 210, 0.7);
+  color: rgba(196, 216, 202, 0.6);
   font-size: clamp(10px, 0.9vw, 13px);
   letter-spacing: 4px;
   text-transform: uppercase;
@@ -138,41 +155,35 @@
 .playerIdentity {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
   min-width: 220px;
   justify-content: flex-end;
   padding-top: 4px;
   text-align: right;
 }
 
+/* A single warm presence-light, not a HUD reticle -- signals "you are
+   known here" the way a lantern would, not a targeting marker. */
 .returnSignal {
-  width: 34px;
-  height: 34px;
-  border: 1px solid rgba(134, 211, 205, 0.42);
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(214, 178, 116, 0.3);
   border-radius: 50%;
-  box-shadow: inset 0 0 16px rgba(67, 185, 183, 0.12), 0 0 18px rgba(67, 185, 183, 0.08);
+  box-shadow: inset 0 0 14px rgba(214, 178, 116, 0.14), 0 0 20px rgba(214, 178, 116, 0.12);
   position: relative;
 }
 
-.returnSignal::before,
 .returnSignal::after {
   content: '';
   position: absolute;
-  inset: 7px;
-  border: 1px solid rgba(231, 205, 147, 0.45);
-  transform: rotate(45deg);
-}
-
-.returnSignal::after {
-  inset: 13px;
-  background: rgba(213, 235, 220, 0.74);
-  border: 0;
+  inset: 10px;
+  background: rgba(238, 216, 168, 0.8);
   border-radius: 50%;
-  box-shadow: 0 0 10px rgba(171, 231, 221, 0.6);
+  box-shadow: 0 0 12px rgba(232, 196, 132, 0.65);
 }
 
 .welcome {
-  color: rgba(255, 255, 255, 0.52);
+  color: rgba(255, 255, 255, 0.46);
   font-size: 10px;
   letter-spacing: 2px;
   text-transform: uppercase;
@@ -186,8 +197,8 @@
   white-space: nowrap;
   font-size: clamp(17px, 2vw, 28px);
   letter-spacing: 2px;
-  color: #aee4df;
-  text-shadow: 0 0 16px rgba(74, 190, 190, 0.38);
+  color: #e7ddc2;
+  text-shadow: 0 0 18px rgba(214, 178, 116, 0.3);
 }
 
 .body {
@@ -199,16 +210,23 @@
   padding-bottom: clamp(10px, 1.8vh, 20px);
 }
 
+/* An alcove the memories rest in, not a bordered dashboard panel -- depth
+   comes from a soft recessed glow beneath the row, not a boxed outline. */
 .memoryShelf {
+  position: relative;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: clamp(18px, 2.2vw, 28px);
-  border: 1px solid rgba(149, 205, 195, 0.13);
-  border-radius: 18px;
-  background: linear-gradient(180deg, rgba(10, 17, 22, 0.76), rgba(8, 12, 16, 0.52));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025), 0 26px 60px rgba(0, 0, 0, 0.24);
-  backdrop-filter: blur(8px);
+  padding: clamp(16px, 2vw, 26px) clamp(6px, 1vw, 14px) clamp(10px, 1.4vw, 18px);
+}
+
+.memoryShelf::before {
+  content: '';
+  position: absolute;
+  inset: auto 4% 6px;
+  height: 60%;
+  background: radial-gradient(ellipse at 50% 100%, rgba(214, 178, 116, 0.05), transparent 70%);
+  pointer-events: none;
 }
 
 .sectionHeading {
@@ -216,12 +234,13 @@
   align-items: center;
   gap: 18px;
   margin-bottom: 16px;
+  padding: 0 clamp(4px, 0.6vw, 10px);
 }
 
 .sectionTitle {
   font-size: clamp(13px, 1.2vw, 17px);
   letter-spacing: 2.5px;
-  color: rgba(241, 235, 215, 0.92);
+  color: rgba(241, 235, 215, 0.88);
   text-transform: uppercase;
 }
 
@@ -229,13 +248,13 @@
   margin-top: 5px;
   font-size: 10px;
   letter-spacing: 1.2px;
-  color: rgba(154, 197, 193, 0.5);
+  color: rgba(200, 190, 160, 0.44);
 }
 
 .memoryLine {
   height: 1px;
   flex: 1;
-  background: linear-gradient(90deg, rgba(132, 202, 196, 0.28), transparent);
+  background: linear-gradient(90deg, rgba(214, 178, 116, 0.22), transparent);
 }
 
 .memoryContent {
@@ -365,15 +384,15 @@
   flex: 0 0 auto;
   width: clamp(142px, 13vw, 184px);
   min-height: 154px;
-  background: linear-gradient(160deg, rgba(23, 34, 39, 0.86), rgba(8, 13, 18, 0.9));
-  border: 1px solid rgba(181, 211, 199, 0.18);
+  background: linear-gradient(160deg, rgba(20, 30, 30, 0.7), rgba(7, 11, 13, 0.78));
+  border: 1px solid rgba(214, 178, 116, 0.1);
   border-radius: 12px;
   padding: 10px;
   cursor: pointer;
   color: #f4f0e5;
   font-family: inherit;
   text-align: left;
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.28);
   transition: border-color var(--motion-focus) ease, box-shadow var(--motion-focus) ease, transform var(--motion-focus) ease, background var(--motion-focus) ease;
 }
 
@@ -392,8 +411,8 @@
 }
 
 .recentCard:hover:not(:disabled) {
-  border-color: rgba(134, 211, 205, 0.38);
-  background: linear-gradient(160deg, rgba(28, 43, 47, 0.9), rgba(9, 16, 20, 0.92));
+  border-color: rgba(214, 178, 116, 0.28);
+  background: linear-gradient(160deg, rgba(24, 36, 36, 0.78), rgba(8, 13, 16, 0.82));
 }
 
 .recentCard.focused,
@@ -401,7 +420,7 @@
   border-color: #8fe5dc;
   outline: 2px solid #8fe5dc;
   outline-offset: 3px;
-  box-shadow: 0 0 0 1px rgba(238, 213, 153, 0.25), 0 0 24px rgba(74, 193, 190, 0.34), 0 18px 32px rgba(0, 0, 0, 0.28);
+  box-shadow: 0 0 0 1px rgba(238, 213, 153, 0.25), 0 0 26px rgba(74, 193, 190, 0.3), 0 20px 36px rgba(0, 0, 0, 0.32);
   transform: translateY(-4px) scale(1.025);
 }
 
@@ -482,31 +501,36 @@
   padding-top: 8px;
 }
 
+/* A soft horizon accent under the destinations, not a HUD nav-strip --
+   no beaded nodes, just light gathering toward wherever the Library sits. */
 .destinationAxis {
   position: absolute;
   inset: 0 6% auto;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(153, 211, 203, 0.2) 18%, rgba(213, 190, 133, 0.18) 50%, rgba(153, 211, 203, 0.2) 82%, transparent);
+  background: linear-gradient(90deg, transparent, rgba(214, 178, 116, 0.16) 22%, rgba(214, 178, 116, 0.32) 50%, rgba(120, 170, 160, 0.14) 78%, transparent);
 }
 
 .destinationAxis span {
   position: absolute;
-  top: -3px;
-  width: 7px;
-  height: 7px;
-  border: 1px solid rgba(177, 215, 204, 0.34);
+  top: -1px;
+  width: 3px;
+  height: 3px;
   border-radius: 50%;
-  background: #0c1418;
+  background: rgba(232, 200, 140, 0.4);
+  box-shadow: 0 0 6px rgba(232, 200, 140, 0.35);
 }
 
 .destinationAxis span:nth-child(1) { left: 16%; }
 .destinationAxis span:nth-child(2) { left: 50%; }
 .destinationAxis span:nth-child(3) { right: 16%; }
 
+/* Library commands the composition; Switch Player is a quieter side
+   threshold; Depart recedes to barely more than a label. */
 .actionRow {
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(170px, 0.62fr);
-  gap: clamp(12px, 1.6vw, 22px);
+  grid-template-columns: minmax(0, 2.3fr) minmax(0, 1fr) minmax(120px, 0.5fr);
+  align-items: end;
+  gap: clamp(14px, 1.8vw, 26px);
   padding-top: 18px;
 }
 
@@ -515,16 +539,16 @@
   min-height: clamp(88px, 10vh, 124px);
   padding: 20px 22px;
   font-family: inherit;
-  background: linear-gradient(145deg, rgba(16, 25, 29, 0.9), rgba(8, 12, 16, 0.9));
-  border: 1px solid rgba(179, 211, 201, 0.17);
-  border-radius: 14px 14px 5px 5px;
-  color: #f5f0e2;
+  background: linear-gradient(145deg, rgba(13, 20, 22, 0.72), rgba(7, 10, 13, 0.78));
+  border: 1px solid rgba(214, 178, 116, 0.1);
+  border-radius: 16px 16px 6px 6px;
+  color: #f0ebdd;
   cursor: pointer;
   text-align: left;
   overflow: hidden;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 18px;
   transition: border-color var(--motion-focus) ease, box-shadow var(--motion-focus) ease, transform var(--motion-focus) ease, background var(--motion-focus) ease;
 }
 
@@ -533,13 +557,13 @@
   position: absolute;
   inset: auto 0 0;
   height: 3px;
-  background: linear-gradient(90deg, transparent, rgba(116, 206, 199, 0.34), transparent);
-  opacity: 0.55;
+  background: linear-gradient(90deg, transparent, rgba(214, 178, 116, 0.3), transparent);
+  opacity: 0.5;
 }
 
 .actionBtn:hover:not(.focused) {
-  border-color: rgba(131, 205, 198, 0.36);
-  background: linear-gradient(145deg, rgba(20, 34, 37, 0.92), rgba(8, 15, 18, 0.92));
+  border-color: rgba(214, 178, 116, 0.26);
+  background: linear-gradient(145deg, rgba(18, 27, 28, 0.8), rgba(8, 12, 15, 0.84));
 }
 
 .actionBtn.focused,
@@ -548,7 +572,7 @@
   outline: 2px solid #91e4db;
   outline-offset: 3px;
   color: #f8f1dc;
-  box-shadow: 0 0 0 1px rgba(225, 199, 135, 0.2), 0 0 28px rgba(71, 194, 190, 0.28), 0 18px 38px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 0 1px rgba(225, 199, 135, 0.2), 0 0 30px rgba(71, 194, 190, 0.26), 0 20px 44px rgba(0, 0, 0, 0.34);
   transform: translateY(-4px);
 }
 
@@ -561,9 +585,9 @@
 .destinationMarker {
   flex: 0 0 12px;
   height: 46px;
-  border-left: 2px solid rgba(131, 211, 202, 0.55);
-  border-top: 1px solid rgba(218, 198, 149, 0.38);
-  border-bottom: 1px solid rgba(218, 198, 149, 0.18);
+  border-left: 2px solid rgba(214, 178, 116, 0.4);
+  border-top: 1px solid rgba(214, 178, 116, 0.24);
+  border-bottom: 1px solid rgba(214, 178, 116, 0.1);
 }
 
 .destinationCopy {
@@ -584,33 +608,76 @@
   font-size: clamp(10px, 0.8vw, 12px);
   letter-spacing: 0.4px;
   line-height: 1.35;
-  color: rgba(204, 214, 202, 0.5);
+  color: rgba(214, 210, 194, 0.46);
   white-space: nowrap;
 }
 
-.destinationGlyph {
-  font-size: clamp(20px, 2vw, 30px);
-  color: rgba(152, 213, 206, 0.42);
-}
-
+/* The Library: the sanctuary's largest, brightest threshold -- taller,
+   warmer, and the one destination whose name reads at couch distance
+   without needing to be focused first. */
 .libraryDestination {
+  min-height: clamp(128px, 15vh, 190px);
+  padding: clamp(26px, 3vh, 36px) 28px;
   background:
-    radial-gradient(circle at 80% 20%, rgba(93, 193, 184, 0.09), transparent 35%),
-    linear-gradient(145deg, rgba(16, 29, 32, 0.94), rgba(7, 12, 16, 0.94));
+    radial-gradient(circle at 82% 14%, rgba(232, 196, 132, 0.12), transparent 42%),
+    linear-gradient(145deg, rgba(19, 32, 34, 0.86), rgba(8, 13, 17, 0.9));
+  border-color: rgba(214, 178, 116, 0.18);
 }
 
+.libraryDestination .destinationName {
+  font-size: clamp(19px, 2vw, 30px);
+  letter-spacing: 3px;
+}
+
+.libraryDestination .destinationDetail {
+  color: rgba(224, 214, 186, 0.6);
+}
+
+.libraryDestination .destinationMarker {
+  height: 60px;
+  border-left-color: rgba(232, 196, 132, 0.6);
+}
+
+/* Switch Player: present, but a quiet side path -- a person, not a menu
+   item -- smaller and more muted than the Library beside it. */
 .switchPlayerDestination {
+  min-height: clamp(72px, 9vh, 100px);
+  padding: 16px 20px;
   background:
-    radial-gradient(circle at 78% 22%, rgba(217, 185, 116, 0.08), transparent 34%),
-    linear-gradient(145deg, rgba(24, 27, 29, 0.94), rgba(9, 12, 15, 0.94));
+    radial-gradient(circle at 78% 22%, rgba(170, 200, 190, 0.06), transparent 36%),
+    linear-gradient(145deg, rgba(16, 20, 21, 0.68), rgba(8, 10, 12, 0.74));
+  opacity: 0.88;
 }
 
+.switchPlayerDestination .destinationName {
+  font-size: clamp(12px, 1.05vw, 15px);
+}
+
+/* Depart: accessible, but recedes almost to a label -- the one
+   destination the sanctuary does not want to emphasize. */
 .departDestination {
-  opacity: 0.78;
+  min-height: clamp(52px, 6vh, 72px);
+  padding: 12px 16px;
+  opacity: 0.5;
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.departDestination .destinationName {
+  font-size: clamp(11px, 0.95vw, 13px);
+}
+
+.departDestination .destinationDetail {
+  display: none;
 }
 
 .departDestination .destinationMarker {
-  border-left-color: rgba(199, 151, 125, 0.48);
+  height: 28px;
+  border-left-color: rgba(199, 151, 125, 0.4);
+}
+
+.departDestination:hover:not(.focused) {
+  opacity: 0.72;
 }
 
 .departOverlay {
@@ -690,14 +757,13 @@
   box-shadow: 0 0 20px rgba(72, 193, 190, 0.3);
 }
 
-@keyframes fieldDrift {
-  from { transform: translate3d(-0.4%, -0.2%, 0); }
-  to { transform: translate3d(0.6%, 0.4%, 0); }
-}
-
-@keyframes horizonBreathe {
-  from { opacity: 0.65; transform: scaleX(0.96); }
-  to { opacity: 1; transform: scaleX(1.04); }
+/* One coherent ambient motion system: deepField and horizonGlow share this
+   single rhythm (offset via animation-delay) rather than running as two
+   independently-timed animations, so the sanctuary reads as one breathing
+   place instead of several unrelated moving layers. */
+@keyframes sanctuaryBreathe {
+  from { opacity: 0.7; transform: scale(0.99) translate3d(-0.3%, -0.15%, 0); }
+  to { opacity: 1; transform: scale(1.01) translate3d(0.4%, 0.3%, 0); }
 }
 
 @keyframes departFadeIn {
@@ -728,13 +794,27 @@
   }
 
   .actionRow {
-    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) minmax(150px, 0.72fr);
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(110px, 0.6fr);
     gap: 10px;
   }
 
   .actionBtn {
     min-height: 70px;
     padding: 12px 14px;
+  }
+
+  .libraryDestination {
+    min-height: 84px;
+    padding: 14px 16px;
+  }
+
+  .switchPlayerDestination {
+    min-height: 62px;
+  }
+
+  .departDestination {
+    min-height: 44px;
+    padding: 8px 12px;
   }
 
   .destinationDetail {
@@ -758,7 +838,10 @@
     grid-template-columns: 1fr;
   }
 
-  .actionBtn {
+  .actionBtn,
+  .libraryDestination,
+  .switchPlayerDestination,
+  .departDestination {
     min-height: 66px;
   }
 }

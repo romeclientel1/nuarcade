@@ -348,6 +348,7 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
         <div className={styles.horizonGlow} />
         <div className={styles.lightShafts} />
         <div className={styles.atmosphere} />
+        <div className={styles.sanctuaryArch} />
         <div className={styles.foregroundFrame} />
       </div>
 
@@ -450,9 +451,6 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
                         {action === "library" && isSetupFocus ? t("home.setUp") : ACTION_LABELS[action]}
                       </span>
                       <span className={styles.destinationDetail}>{detail}</span>
-                    </span>
-                    <span className={styles.destinationGlyph} aria-hidden="true">
-                      {action === "library" ? "◈" : action === "switchPlayer" ? "◎" : "◇"}
                     </span>
                   </button>
                 )
