@@ -13,7 +13,6 @@ import Achievements from "../Achievements/Achievements"
 import { computeStats } from "../Achievements/computeStats"
 import { AchievementToastContainer, useAchievementToasts } from "../Achievements/AchievementToast"
 import VirtualKeyboard from "../VirtualKeyboard/VirtualKeyboard"
-import IntroVideo from "./IntroVideo"
 import GameCoach from "../GameCoach/GameCoach"
 import OperatorDashboard from "../OperatorDashboard/OperatorDashboard"
 import { useErrorToast, ErrorToastContainer } from "./ErrorToast"
@@ -354,7 +353,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const [showSort, setShowSort] = useState(false)
   const [showCollections, setShowCollections] = useState(false)
   const [showAchievements, setShowAchievements] = useState(false)
-  const [showIntro, setShowIntro] = useState(false)
   const [showKonami, setShowKonami] = useState(false)
   const konamiSeq = useRef([])
   const [exitConfirm, setExitConfirm] = useState(false)
@@ -368,23 +366,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const [bgActive, setBgActive] = useState('a') // which slot is visible
   const bgLastId = useRef(null)
 
-  // Show boot screen once after library loads (only on cabinet, only if games exist)
-  const bootShown = useRef(false)
-  useEffect(() => {
-    if (bootShown.current || loading || !games.length) return
-    bootShown.current = true
-    setShowDetail(false)
-    setSelectedIndex(0)
-    if (window.nuarcade?.platform === 'win32') {
-      // Check if user has a custom intro video
-      const introPath = (config?.mediaPath || 'C:\\Media\\') + 'intro.mp4'
-      if (window.nuarcade?.checkPath) {
-        window.nuarcade.checkPath(introPath)
-          .then(r => { if (r?.exists) setShowIntro(true) })
-          .catch(() => {})
-      }
-    }
-  }, [games.length, loading])
   const [showVirtualKeyboard, setShowVirtualKeyboard] = useState(false)
   const [sortBy, setSortBy] = useState("default")
   const [search,        setSearch       ] = useState("")
@@ -1524,14 +1505,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
 
       {/* Error toasts */}
       <ErrorToastContainer toasts={errorToasts} onDismiss={dismissError} />
-
-      {/* Custom intro video -- plays once on first library load if intro.mp4 exists */}
-      {showIntro && (
-        <IntroVideo
-          mediaPath={config?.mediaPath}
-          onComplete={() => setShowIntro(false)}
-        />
-      )}
 
       {/* Konami code easter egg -- version milestone celebration */}
       {showKonami && (

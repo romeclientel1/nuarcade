@@ -1,50 +1,62 @@
 import { useState, useEffect, useRef } from "react"
 import styles from "./IntroVideo.module.css"
+import { useI18n } from "../../i18n/I18nContext.js"
+import { useOverlayGamepad } from "../../hooks/useOverlayGamepad"
 
-// Plays F:\Media\intro.mp4 fullscreen before the wheel loads.
-// Skip on any key, click, or gamepad button.
-// If file doesn't exist or errors, calls onComplete immediately.
+const FADE_DURATION = 400
+
+const buildVideoUrl = (mediaPath) => {
+  const base = (mediaPath || "C:\\Media\\")
+    .replace(/\\/g, "/")
+    .replace(/\/+$/, "")
+
+  return `file:///${base}/intro.mp4`
+}
 
 export default function IntroVideo({ mediaPath, onComplete }) {
+  const { t } = useI18n()
   const videoRef = useRef(null)
+  const completionTimerRef = useRef(null)
+  const doneRef = useRef(false)
   const [visible, setVisible] = useState(true)
-  const doneRef  = useRef(false)
 
   const finish = () => {
     if (doneRef.current) return
     doneRef.current = true
     setVisible(false)
-    setTimeout(onComplete, 400) // let fade-out play
+    completionTimerRef.current = setTimeout(onComplete, FADE_DURATION)
   }
 
-  useEffect(() => {
-    // Skip on any key or gamepad
-    const onKey = () => finish()
-    window.addEventListener('keydown', onKey)
-    window.addEventListener('click',   onKey)
+  useOverlayGamepad({
+    onClose: finish,
+    onUp: finish,
+    onDown: finish,
+    onLeft: finish,
+    onRight: finish,
+    onConfirm: finish,
+    enabled: true,
+  })
 
-    // Gamepad polling -- any button skips
-    const gpInterval = setInterval(() => {
-      const pads = navigator.getGamepads ? navigator.getGamepads() : []
-      for (const pad of pads) {
-        if (!pad) continue
-        if (pad.buttons.some(b => b.pressed)) { clearInterval(gpInterval); finish(); return }
-      }
-    }, 100)
+  useEffect(() => {
+    window.addEventListener("keydown", finish)
+    window.addEventListener("click", finish)
 
     return () => {
-      window.removeEventListener('keydown', onKey)
-      window.removeEventListener('click',   onKey)
-      clearInterval(gpInterval)
+      window.removeEventListener("keydown", finish)
+      window.removeEventListener("click", finish)
+      clearTimeout(completionTimerRef.current)
     }
   }, [])
 
-  const introPath = 'file:///' + (mediaPath || 'F:\\Media\\').replace(/\\/g, '/').replace(/\/$/, '') + '/intro.mp4'
+  const introPath = buildVideoUrl(mediaPath)
 
   return (
     <div
       className={styles.overlay}
-      style={{ opacity: visible ? 1 : 0, transition: 'opacity 0.4s ease' }}
+      style={{
+        opacity: visible ? 1 : 0,
+        transition: `opacity ${FADE_DURATION}ms ease`,
+      }}
     >
       <video
         ref={videoRef}
@@ -55,7 +67,7 @@ export default function IntroVideo({ mediaPath, onComplete }) {
         onEnded={finish}
         onError={finish}
       />
-      <div className={styles.skipHint}>Press any button to skip</div>
+      <div className={styles.skipHint}>{t("bootScreen.hint")}</div>
     </div>
   )
 }

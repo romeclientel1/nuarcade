@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, Component } from "react"
 import Intro from "./components/Intro/Intro"
+import IntroVideo from "./components/Wheel/IntroVideo"
 import Wheel from "./components/Wheel/Wheel"
 import VesparaHome from "./components/VesparaHome/VesparaHome"
 import CRT from "./components/CRT/CRT"
@@ -49,8 +50,15 @@ class ErrorBoundary extends Component {
   }
 }
 
+const buildIntroVideoPath = (mediaPath) => {
+  const base = (mediaPath || "C:\\Media\\").replace(/[\\/]+$/, "")
+  return `${base}\\intro.mp4`
+}
+
 export default function App() {
-  const [phase, setPhase] = useState("intro")
+  const [phase, setPhase] = useState("videoCheck")
+  const [startupConfig, setStartupConfig] = useState(undefined)
+  const [introMediaPath, setIntroMediaPath] = useState(null)
   const { profiles, activeProfile, addProfile, selectProfile, selectGuest, deleteProfile } = useProfiles()
   // App-level surface: Vespara Home <-> the existing Wheel/Library
   // experience. A second, independent useDestination() instance --
@@ -81,12 +89,65 @@ export default function App() {
   const [uiSoundVolume, setUiSoundVolume] = useState(DEFAULT_UI_SOUND_VOLUME)
   useEffect(() => {
     window.nuarcade?.getConfig?.().then(cfg => {
+      setStartupConfig(cfg || null)
       if (!cfg) return
       if (typeof cfg.crtEffect === 'boolean') setCrtEnabled(cfg.crtEffect)
       setUiSoundsEnabled(normalizeUiSoundsEnabled(cfg.uiSoundsEnabled))
       setUiSoundVolume(normalizeUiSoundVolume(cfg.uiSoundVolume))
-    }).catch(() => {})
+    }).catch(() => setStartupConfig(null))
   }, [])
+
+  // Resolve the optional custom startup video before the built-in Vespara
+  // arrival. This fails open: unsupported platforms, absent IPC, missing
+  // files, errors, or a slow check all continue into the reliable built-in
+  // arrival rather than trapping startup.
+  useEffect(() => {
+    if (phase !== "videoCheck") return
+
+    const fallback = setTimeout(() => {
+      setPhase(current => current === "videoCheck" ? "intro" : current)
+    }, 1500)
+
+    if (startupConfig === undefined) {
+      return () => clearTimeout(fallback)
+    }
+
+    if (
+      window.nuarcade?.platform !== "win32" ||
+      !window.nuarcade?.checkPath
+    ) {
+      clearTimeout(fallback)
+      setPhase("intro")
+      return
+    }
+
+    const mediaPath = startupConfig?.mediaPath || "C:\\Media\\"
+    const introPath = buildIntroVideoPath(mediaPath)
+    let cancelled = false
+
+    window.nuarcade.checkPath(introPath)
+      .then(result => {
+        if (cancelled) return
+        clearTimeout(fallback)
+        if (result?.exists) {
+          setIntroMediaPath(mediaPath)
+          setPhase("introVideo")
+        } else {
+          setPhase("intro")
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          clearTimeout(fallback)
+          setPhase("intro")
+        }
+      })
+
+    return () => {
+      cancelled = true
+      clearTimeout(fallback)
+    }
+  }, [phase, startupConfig])
 
   // Startup launch-session recovery -- runs once, before Player Select, so
   // a stale nonterminal session from a previous crash/reload/restart never
@@ -160,6 +221,7 @@ export default function App() {
     setPendingRestoration(null)
   }
 
+  const handleIntroVideoComplete = () => setPhase("intro")
   const handleIntroComplete = () => setPhase("playerSelect")
 
   const handlePlayerSelect = (player) => {
@@ -198,6 +260,13 @@ export default function App() {
   return (
     <ErrorBoundary>
       <div style={{ position: 'relative', width: '100vw', height: '100vh', background: '#000', overflow: 'hidden' }}>
+
+        {phase === "introVideo" && (
+          <IntroVideo
+            mediaPath={introMediaPath}
+            onComplete={handleIntroVideoComplete}
+          />
+        )}
 
         {phase === "intro" && (
           <Intro onComplete={handleIntroComplete} />
