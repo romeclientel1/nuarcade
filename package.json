@@ -1,6 +1,6 @@
 {
   "name": "nuarcade",
-  "version": "5.5.9",
+  "version": "5.6.0",
   "description": "NuArcade \u2014 Modern arcade frontend for TeknoParrot and Visual Pinball X",
   "main": "src/main/index.js",
   "author": "Rome Clientel",
