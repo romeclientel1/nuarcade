@@ -196,6 +196,7 @@
   display: grid;
   grid-template-rows: minmax(190px, 1fr) auto auto;
   gap: clamp(18px, 2.8vh, 30px);
+  padding-bottom: clamp(10px, 1.8vh, 20px);
 }
 
 .memoryShelf {
