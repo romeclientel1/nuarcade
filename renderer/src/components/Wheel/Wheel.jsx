@@ -971,8 +971,9 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
 
   return (
     <div className={styles.stage + (cabinetMode ? " " + styles.cabinetMode : "") + (screenshotMode ? " " + styles.screenshotMode : "")}>
-      <div className={styles.bgGrid} />
-      <div className={styles.bgVignette} />
+      <div className={styles.bgGrid} aria-hidden="true" />
+      <div className={styles.libraryHorizon} aria-hidden="true" />
+      <div className={styles.bgVignette} aria-hidden="true" />
 
       {/* Background gameplay video -- A/B crossfade */}
       {bgVideoA && (
@@ -1016,9 +1017,12 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       )}
 
       <div className={styles.header}>
-        <div className={styles.logo}>
-          <span className={styles.logoNu}>Nu</span>
-          <span className={styles.logoArcade}>Arcade</span>
+        <div className={styles.worldNav}>
+          <button className={styles.returnHomeBtn + (focusZone === 0 && topMenuIdx === 5 ? " " + styles.barFocused : "")} onClick={() => { if (onReturnHome) onReturnHome() }} title={t("wheel.returnHomeTitle")}>{t("wheel.navHome")}</button>
+        </div>
+        <div className={styles.placeIdentity}>
+          <div className={styles.placeName}>{t("wheel.libraryPlaceName")}</div>
+          <div className={styles.placeSubtitle}>{t("wheel.libraryPlaceSubtitle")}</div>
         </div>
         <div className={styles.headerRight}>
           {showSearch ? (
@@ -1085,53 +1089,56 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
               {newGameCount > 0 && (
                 <span className={styles.newBadge}>+{newGameCount} new</span>
               )}
-              <button className={(sortBy !== "default" ? styles.sortActive : styles.sortBtn) + (focusZone === 0 && topMenuIdx === 0 ? " " + styles.barFocused : "")} onClick={() => setShowSort(s => !s)}>Sort</button>
-              <button className={styles.randBtn + (focusZone === 0 && topMenuIdx === 1 ? " " + styles.barFocused : "")} onClick={() => {
-                if (filteredGames.length > 0) {
-                  setSelectedIndex(Math.floor(Math.random() * filteredGames.length))
-                  sounds.navigate()
-                }
-              }} title={t("wheel.randomTitle")}>RND</button>
-              <button className={styles.colBtn + (focusZone === 0 && topMenuIdx === 2 ? " " + styles.barFocused : "")} onClick={() => setShowCollections(true)} title={t("wheel.collectionsTitle")}>Sets</button>
-              <button className={styles.statsBtn + (focusZone === 0 && topMenuIdx === 3 ? " " + styles.barFocused : "")} onClick={() => navigateTo("stats")} title={t("wheel.statsTitle")}>Stats</button>
-              <button className={styles.achieveBtn + (focusZone === 0 && topMenuIdx === 4 ? " " + styles.barFocused : "")} onClick={() => setShowAchievements(true)} title={t("wheel.achievementsTitle")}>Ach.</button>
-              <button className={styles.returnHomeBtn + (focusZone === 0 && topMenuIdx === 5 ? " " + styles.barFocused : "")} onClick={() => { if (onReturnHome) onReturnHome() }} title={t("wheel.returnHomeTitle")}>{t("wheel.navHome")}</button>
-              {activeProfile && (
+              <div className={styles.libraryToolsGroup}>
+                <button className={(sortBy !== "default" ? styles.sortActive : styles.sortBtn) + (focusZone === 0 && topMenuIdx === 0 ? " " + styles.barFocused : "")} onClick={() => setShowSort(s => !s)}>Sort</button>
+                <button className={styles.randBtn + (focusZone === 0 && topMenuIdx === 1 ? " " + styles.barFocused : "")} onClick={() => {
+                  if (filteredGames.length > 0) {
+                    setSelectedIndex(Math.floor(Math.random() * filteredGames.length))
+                    sounds.navigate()
+                  }
+                }} title={t("wheel.randomTitle")}>RND</button>
+                <button className={styles.colBtn + (focusZone === 0 && topMenuIdx === 2 ? " " + styles.barFocused : "")} onClick={() => setShowCollections(true)} title={t("wheel.collectionsTitle")}>Sets</button>
+                <button className={styles.statsBtn + (focusZone === 0 && topMenuIdx === 3 ? " " + styles.barFocused : "")} onClick={() => navigateTo("stats")} title={t("wheel.statsTitle")}>Stats</button>
+                <button className={styles.achieveBtn + (focusZone === 0 && topMenuIdx === 4 ? " " + styles.barFocused : "")} onClick={() => setShowAchievements(true)} title={t("wheel.achievementsTitle")}>Ach.</button>
+              </div>
+              <div className={styles.utilityGroup}>
+                {activeProfile && (
+                  <button
+                    className={styles.settingsBtn}
+                    style={{ borderColor: activeProfile.color + '44', color: activeProfile.color }}
+                    onClick={onSwitchPlayer}
+                    title={t("wheel.switchPlayerTitle")}
+                  >
+                    {activeProfile.name[0]} {activeProfile.name}
+                  </button>
+                )}
+                {!activeProfile && onSwitchPlayer && (
+                  <button className={styles.settingsBtn + (focusZone === 0 && topMenuIdx === 6 ? " " + styles.barFocused : "")} onClick={onSwitchPlayer} title={t("wheel.selectPlayerTitle")}>
+                    {t("wheel.guestCta")}
+                  </button>
+                )}
+                <button className={styles.mediaBtn + (focusZone === 0 && topMenuIdx === 7 ? " " + styles.barFocused : "")} onClick={() => setShowMediaManager(true)}>{t("wheel.navMedia")}</button>
+                <button className={styles.settingsBtn + (focusZone === 0 && topMenuIdx === 8 ? " " + styles.barFocused : "")} onClick={() => setShowSettings(true)}>{t("wheel.navSettings")}</button>
+                <button className={styles.helpBtn + (focusZone === 0 && topMenuIdx === 9 ? " " + styles.barFocused : "")} onClick={() => navigateTo("help")}>?</button>
+                {updateAvailable && (
+                  <button
+                    className={styles.settingsBtn}
+                    style={{ borderColor: 'rgba(255,170,0,0.5)', color: '#ffaa00' }}
+                    onClick={handleUpdateNow}
+                    disabled={installing}
+                    title={installing ? t("settings.installingEllipsis") : t("settings.updateAvailableTooltip", { version: remoteVersion })}
+                  >
+                    {installing ? (progress != null ? t("settings.installing", { progress }) : t("settings.installingEllipsis")) : t("settings.updateNow")}
+                  </button>
+                )}
                 <button
-                  className={styles.settingsBtn}
-                  style={{ borderColor: activeProfile.color + '44', color: activeProfile.color }}
-                  onClick={onSwitchPlayer}
-                  title={t("wheel.switchPlayerTitle")}
+                  className={styles.exitBtn + (focusZone === 0 && topMenuIdx === 10 ? " " + styles.barFocused : "")}
+                  onClick={() => setShowExitPopup(true)}
+                  title={t("wheel.exitTitle")}
                 >
-                  {activeProfile.name[0]} {activeProfile.name}
+                  {t("wheel.exit")}
                 </button>
-              )}
-              {!activeProfile && onSwitchPlayer && (
-                <button className={styles.settingsBtn + (focusZone === 0 && topMenuIdx === 6 ? " " + styles.barFocused : "")} onClick={onSwitchPlayer} title={t("wheel.selectPlayerTitle")}>
-                  {t("wheel.guestCta")}
-                </button>
-              )}
-              <button className={styles.mediaBtn + (focusZone === 0 && topMenuIdx === 7 ? " " + styles.barFocused : "")} onClick={() => setShowMediaManager(true)}>{t("wheel.navMedia")}</button>
-              <button className={styles.settingsBtn + (focusZone === 0 && topMenuIdx === 8 ? " " + styles.barFocused : "")} onClick={() => setShowSettings(true)}>{t("wheel.navSettings")}</button>
-              <button className={styles.helpBtn + (focusZone === 0 && topMenuIdx === 9 ? " " + styles.barFocused : "")} onClick={() => navigateTo("help")}>?</button>
-              {updateAvailable && (
-                <button
-                  className={styles.settingsBtn}
-                  style={{ borderColor: 'rgba(255,170,0,0.5)', color: '#ffaa00' }}
-                  onClick={handleUpdateNow}
-                  disabled={installing}
-                  title={installing ? t("settings.installingEllipsis") : t("settings.updateAvailableTooltip", { version: remoteVersion })}
-                >
-                  {installing ? (progress != null ? t("settings.installing", { progress }) : t("settings.installingEllipsis")) : t("settings.updateNow")}
-                </button>
-              )}
-              <button
-                className={styles.exitBtn + (focusZone === 0 && topMenuIdx === 10 ? " " + styles.barFocused : "")}
-                onClick={() => setShowExitPopup(true)}
-                title={t("wheel.exitTitle")}
-              >
-                {t("wheel.exit")}
-              </button>
+              </div>
             </div>
           )}
         </div>

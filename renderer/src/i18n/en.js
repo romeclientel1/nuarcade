@@ -162,6 +162,8 @@ export default {
   "wheel.categoryAll": "All",
   "wheel.navHome": "Return to Sanctuary",
   "wheel.returnHomeTitle": "Return to Sanctuary (Backspace)",
+  "wheel.libraryPlaceName": "The Library",
+  "wheel.libraryPlaceSubtitle": "Collection Hall",
   "wheel.navSettings": "Settings",
   "wheel.navMedia": "Media",
   "wheel.searchPlaceholder": "Search games, systems, ROM names...",

@@ -52,14 +52,25 @@
   .dialogFadeOnly { animation: none; }
 }
 
+/* The Library's environmental shell -- a deep teal-black collection hall,
+   not the old cyan graph-paper HUD. bgGrid is the base atmospheric wash,
+   libraryHorizon is a soft warm-gold light source (echoing Vespara Home's
+   own horizon glow), bgVignette (unchanged) frames the edges. All three
+   are decorative and inert. */
 .bgGrid {
   position: absolute;
   inset: 0;
-  background-image:
-    linear-gradient(rgba(0,200,255,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,200,255,0.03) 1px, transparent 1px);
-  background-size: 44px 44px;
+  background: linear-gradient(180deg, #050c0d 0%, #06100f 46%, #04090a 100%);
   z-index: 0;
+  pointer-events: none;
+}
+
+.libraryHorizon {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 65% 38% at 50% 0%, rgba(214, 178, 116, 0.12), transparent 62%);
 }
 
 .bgVignette {
@@ -73,24 +84,52 @@
 .header {
   position: relative;
   z-index: 10;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 18px 36px;
+  border-bottom: 1px solid rgba(214, 178, 116, 0.14);
+}
+
+/* A. World navigation -- Return to Sanctuary, unmistakable, always the
+   left-most element in the header regardless of search/overlay state. */
+.worldNav {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 18px 36px;
-  border-bottom: 1px solid rgba(0,200,255,0.12);
+  justify-self: start;
 }
 
-.logo {
+/* B. Place identity -- replaces the old Nu/Arcade wordmark. Centered via
+   the header's own grid columns, not flex justify-content, so its position
+   never shifts with the width of the world-nav or utility clusters on
+   either side. */
+.placeIdentity {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  justify-self: center;
+  text-align: center;
+  pointer-events: none;
+}
+
+.placeName {
   font-family: 'Orbitron', sans-serif;
-  font-size: 20px;
+  font-size: 15px;
   font-weight: 900;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #f3ead1;
+  text-shadow: 0 0 22px rgba(214, 178, 116, 0.3);
 }
 
-.logoNu     { color: var(--accent); }
-.logoArcade { color: #fff; }
+.placeSubtitle {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(214, 178, 116, 0.5);
+}
 
-.headerRight { display: flex; align-items: center; }
+.headerRight { display: flex; align-items: center; justify-self: end; }
 
 .statsRow {
   display: flex;
@@ -98,6 +137,36 @@
   gap: 12px;
   font-size: 11px;
   font-family: 'Share Tech Mono', monospace;
+}
+
+/* D. Library tools -- Sort/Random/Sets/Stats/Achievements read as one
+   coherent browsing-tool cluster, set off from the compatibility
+   utilities beside it by a quiet divider rather than an equal-weight row
+   of identical buttons. */
+.libraryToolsGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-right: 12px;
+  border-right: 1px solid rgba(214, 178, 116, 0.14);
+}
+
+/* E. Compatibility utilities -- Switch Player/Media/Settings/Help/Exit
+   stay fully functional (temporary compatibility path, per the Control
+   Room sequencing decision) but recede visually: dimmed at rest, restored
+   to full visibility on hover/focus so they remain fully discoverable and
+   usable, never truly hidden. */
+.utilityGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  opacity: 0.62;
+  transition: opacity 0.2s ease;
+}
+
+.utilityGroup:hover,
+.utilityGroup:focus-within {
+  opacity: 0.92;
 }
 
 .devBadge {
@@ -112,6 +181,10 @@
 .gameCount  { color: rgba(255,255,255,0.35); }
 .hiddenCount { color: rgba(255,255,255,0.2); }
 
+/* C. Primary browsing -- categories are the Library's main navigation
+   surface, given a touch more presence (a warm underline wash) than a
+   plain utility strip. Layout/height/overflow untouched -- getTabStyle's
+   SLOT_WIDTH positioning math depends on nothing here. */
 .categoryStrip {
   position: relative;
   z-index: 10;
@@ -120,6 +193,8 @@
   align-items: center;
   height: 60px;
   overflow: hidden;
+  background: linear-gradient(180deg, rgba(214, 178, 116, 0.05), transparent);
+  border-bottom: 1px solid rgba(214, 178, 116, 0.1);
 }
 
 .catPill {
@@ -144,8 +219,8 @@
 }
 
 .catPill:hover {
-  border-color: rgba(0,200,255,0.4);
-  color: rgba(0,200,255,0.7);
+  border-color: rgba(214, 178, 116, 0.4);
+  color: rgba(232, 200, 140, 0.85);
 }
 
 .catLogo {
@@ -157,9 +232,9 @@
 }
 
 .catActive {
-  border-color: var(--accent) !important;
-  color: var(--accent) !important;
-  background: rgba(0,200,255,0.08);
+  border-color: #d6b274 !important;
+  color: #f3e2b8 !important;
+  background: rgba(214, 178, 116, 0.1);
 }
 .catCollection {
   border-color: rgba(0,255,136,0.2);
@@ -1066,7 +1141,8 @@
   .randBtn,
   .colBtn,
   .statsBtn,
-  .achieveBtn {
+  .achieveBtn,
+  .utilityGroup {
     transition: none;
   }
 }

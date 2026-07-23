@@ -161,6 +161,8 @@ export default {
   "wheel.categoryAll": "Todos",
   "wheel.navHome": "Volver al Santuario",
   "wheel.returnHomeTitle": "Volver al Santuario (Retroceso)",
+  "wheel.libraryPlaceName": "La Biblioteca",
+  "wheel.libraryPlaceSubtitle": "Salón de Colección",
   "wheel.navSettings": "Configuración",
   "wheel.navMedia": "Medios",
   "wheel.searchPlaceholder": "Buscar juegos, sistemas, nombres de ROM...",
