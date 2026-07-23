@@ -577,6 +577,31 @@
   color: rgba(255,255,255,0.6);
 }
 
+/* Return to Sanctuary -- deliberately its own class, not .settingsBtn, so
+   the one control that leaves the Library entirely reads as visually
+   distinct from Sort/Media/Settings/Player rather than blending into that
+   row. Warm-gold accent (vs. the row's neutral grey) so it doesn't compete
+   with .exitBtn's red for "the way out" -- Return to Sanctuary is not Exit. */
+.returnHomeBtn {
+  padding: 4px 14px;
+  border: 1px solid rgba(232,196,132,0.5);
+  background: rgba(232,196,132,0.07);
+  color: rgba(245,230,195,0.92);
+  font-weight: 700;
+  font-size: 10px;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: border-color 0.15s, color 0.15s, background-color 0.15s, box-shadow 0.15s;
+  font-family: 'Share Tech Mono', monospace;
+  letter-spacing: 0.08em;
+}
+
+.returnHomeBtn:hover {
+  border-color: rgba(232,196,132,0.75);
+  background: rgba(232,196,132,0.13);
+  color: #fdf3dc;
+}
+
 .exitBtn {
   padding: 4px 12px;
   border: 1px solid rgba(255,80,80,0.35);
@@ -1003,6 +1028,7 @@
 .launchBtn:focus-visible,
 .mediaBtn:focus-visible,
 .settingsBtn:focus-visible,
+.returnHomeBtn:focus-visible,
 .exitBtn:focus-visible,
 .searchBtn:focus-visible,
 .favBtn:focus-visible,
@@ -1031,6 +1057,7 @@
   .launchBtn,
   .mediaBtn,
   .settingsBtn,
+  .returnHomeBtn,
   .exitBtn,
   .searchBtn,
   .favBtn,

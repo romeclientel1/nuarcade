@@ -43,12 +43,12 @@
 }
 
 .deepField {
-  opacity: 0.65;
+  opacity: 0.85;
   background-image:
-    radial-gradient(circle at 13% 16%, rgba(236, 244, 236, 0.5) 0 1px, transparent 1.5px),
-    radial-gradient(circle at 78% 12%, rgba(196, 224, 216, 0.34) 0 1px, transparent 1.5px),
-    radial-gradient(circle at 62% 34%, rgba(255, 244, 220, 0.26) 0 1px, transparent 1.5px),
-    radial-gradient(circle at 34% 24%, rgba(255, 224, 170, 0.22) 0 1px, transparent 1.5px);
+    radial-gradient(circle at 13% 16%, rgba(236, 244, 236, 0.65) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 78% 12%, rgba(196, 224, 216, 0.46) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 62% 34%, rgba(255, 244, 220, 0.38) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 34% 24%, rgba(255, 224, 170, 0.32) 0 1px, transparent 1.5px);
   background-size: 300px 280px, 380px 340px, 440px 410px, 530px 480px;
   animation: sanctuaryBreathe 16s ease-in-out infinite alternate;
 }
@@ -68,7 +68,7 @@
 .horizonGlow {
   inset: 22% -20% auto;
   height: 40%;
-  background: radial-gradient(ellipse at center, rgba(232, 190, 122, 0.22), rgba(120, 150, 130, 0.07) 40%, transparent 72%);
+  background: radial-gradient(ellipse at center, rgba(232, 190, 122, 0.34), rgba(120, 150, 130, 0.1) 40%, transparent 72%);
   filter: blur(22px);
   animation: sanctuaryBreathe 16s ease-in-out infinite alternate;
   animation-delay: -8s;
@@ -619,7 +619,7 @@
   min-height: clamp(128px, 15vh, 190px);
   padding: clamp(26px, 3vh, 36px) 28px;
   background:
-    radial-gradient(circle at 82% 14%, rgba(232, 196, 132, 0.12), transparent 42%),
+    radial-gradient(circle at 82% 14%, rgba(232, 196, 132, 0.17), transparent 42%),
     linear-gradient(145deg, rgba(19, 32, 34, 0.86), rgba(8, 13, 17, 0.9));
   border-color: rgba(214, 178, 116, 0.18);
 }

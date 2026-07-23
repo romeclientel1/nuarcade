@@ -160,7 +160,8 @@ export default {
 
   "wheel.scanning": "Scanning game library...",
   "wheel.categoryAll": "All",
-  "wheel.navHome": "Home",
+  "wheel.navHome": "Return to Sanctuary",
+  "wheel.returnHomeTitle": "Return to Sanctuary (Backspace)",
   "wheel.navSettings": "Settings",
   "wheel.navMedia": "Media",
   "wheel.searchPlaceholder": "Search games, systems, ROM names...",

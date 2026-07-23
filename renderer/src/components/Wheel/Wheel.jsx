@@ -702,6 +702,21 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       const anyOverlay = showDetail || currentDestination === "help" || currentDestination === "stats" || showAchievements || showCollections || showSettings || showMediaManager || showCoach || showOperator || !!needsControllerPrompt
       if (anyOverlay) return
 
+      // Backspace: direct keyboard path to Return to Sanctuary from the
+      // primary Library view -- the existing controller path (topMenu zone
+      // walk) and mouse click on the Home button are the only other ways
+      // to reach onReturnHome, and neither is reachable from a keyboard
+      // alone (see the Library return-path report). Guards SELECT and
+      // contenteditable in addition to the INPUT/TEXTAREA check already
+      // done above, so it's self-contained and independently correct even
+      // though INPUT/TEXTAREA can never reach this line. Never redefines
+      // Escape, never touches overlay-close behavior above.
+      if (e.key === "Backspace") {
+        const target = e.target
+        const isEditableTarget = target?.tagName === "SELECT" || target?.isContentEditable
+        if (!isEditableTarget) { if (onReturnHome) onReturnHome() }
+      }
+
       // Konami code detector: UP UP DOWN DOWN LEFT RIGHT LEFT RIGHT b a
       const KONAMI = ["ArrowUp","ArrowUp","ArrowDown","ArrowDown","ArrowLeft","ArrowRight","ArrowLeft","ArrowRight","b","a"]
       konamiSeq.current = [...konamiSeq.current, e.key].slice(-KONAMI.length)
@@ -726,7 +741,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     }
     window.addEventListener("keydown", handler)
     return () => window.removeEventListener("keydown", handler)
-  }, [filteredGames, selectedIndex, showSearch, showVirtualKeyboard, showDetail, currentDestination, showAchievements, showCollections, showSettings, showMediaManager, showCoach, showOperator, current])
+  }, [filteredGames, selectedIndex, showSearch, showVirtualKeyboard, showDetail, currentDestination, showAchievements, showCollections, showSettings, showMediaManager, showCoach, showOperator, current, onReturnHome])
 
   // search focus effect removed
 
@@ -1080,7 +1095,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
               <button className={styles.colBtn + (focusZone === 0 && topMenuIdx === 2 ? " " + styles.barFocused : "")} onClick={() => setShowCollections(true)} title={t("wheel.collectionsTitle")}>Sets</button>
               <button className={styles.statsBtn + (focusZone === 0 && topMenuIdx === 3 ? " " + styles.barFocused : "")} onClick={() => navigateTo("stats")} title={t("wheel.statsTitle")}>Stats</button>
               <button className={styles.achieveBtn + (focusZone === 0 && topMenuIdx === 4 ? " " + styles.barFocused : "")} onClick={() => setShowAchievements(true)} title={t("wheel.achievementsTitle")}>Ach.</button>
-              <button className={styles.settingsBtn + (focusZone === 0 && topMenuIdx === 5 ? " " + styles.barFocused : "")} onClick={() => { if (onReturnHome) onReturnHome() }} title="Return to Vespara Home">{t("wheel.navHome")}</button>
+              <button className={styles.returnHomeBtn + (focusZone === 0 && topMenuIdx === 5 ? " " + styles.barFocused : "")} onClick={() => { if (onReturnHome) onReturnHome() }} title={t("wheel.returnHomeTitle")}>{t("wheel.navHome")}</button>
               {activeProfile && (
                 <button
                   className={styles.settingsBtn}

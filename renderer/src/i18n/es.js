@@ -159,7 +159,8 @@ export default {
 
   "wheel.scanning": "Explorando la biblioteca de juegos...",
   "wheel.categoryAll": "Todos",
-  "wheel.navHome": "Inicio",
+  "wheel.navHome": "Volver al Santuario",
+  "wheel.returnHomeTitle": "Volver al Santuario (Retroceso)",
   "wheel.navSettings": "Configuración",
   "wheel.navMedia": "Medios",
   "wheel.searchPlaceholder": "Buscar juegos, sistemas, nombres de ROM...",
