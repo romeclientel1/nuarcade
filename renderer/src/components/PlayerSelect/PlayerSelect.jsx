@@ -189,8 +189,11 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDel
 
       <div className={styles.content}>
 
-        {/* Brand + Headline */}
-        <div className={styles.brand}>NuArcade</div>
+        {/* Vespara identity + traveler recognition */}
+        <div className={styles.worldIdentity}>
+          <div className={styles.brand}>{t("home.worldName")}</div>
+          <div className={styles.sanctuary}>{t("home.sanctuary")}</div>
+        </div>
         <div className={styles.headline}>{t("playerSelect.headline")}</div>
         <div className={styles.sub}>{t("playerSelect.sub")}</div>
 

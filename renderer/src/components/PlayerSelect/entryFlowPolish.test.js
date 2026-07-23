@@ -241,10 +241,10 @@ test("EXIT and CONFIRM EXIT are rendered via t(...) with semantic playerSelect k
 })
 
 test("playerSelect.exit and playerSelect.confirmExit exist and are distinct, non-empty strings in both English and Spanish", () => {
-  assert.match(en, /"playerSelect\.exit": "EXIT"/)
-  assert.match(en, /"playerSelect\.confirmExit": "CONFIRM EXIT"/)
-  assert.match(es, /"playerSelect\.exit": "SALIR"/)
-  assert.match(es, /"playerSelect\.confirmExit": "CONFIRMAR SALIDA"/)
+  assert.match(en, /"playerSelect\.exit": "DEPART"/)
+  assert.match(en, /"playerSelect\.confirmExit": "CONFIRM DEPARTURE"/)
+  assert.match(es, /"playerSelect\.exit": "PARTIR"/)
+  assert.match(es, /"playerSelect\.confirmExit": "CONFIRMAR PARTIDA"/)
 })
 
 test("neither key was cached at module scope -- both call sites use t(...) inline, not a translated constant captured once", () => {
@@ -261,24 +261,24 @@ test("profile names have a safe overflow treatment (ellipsis truncation) even th
   assert.match(rule, /white-space\s*:\s*nowrap/)
 })
 
-test("profileName's max-width fits inside .profileBtn's actual available inner width (max-width minus horizontal padding on both sides)", () => {
+test("profileName's max-width fits inside .profileBtn's actual available inner width", () => {
   const btnRule = sliceBetween(css, ".profileBtn {", "}", ".profileBtn rule")
-  const btnMaxWidthMatch = btnRule.match(/max-width:\s*(\d+)px/)
+  const btnWidthMatch = btnRule.match(/width:\s*min\((\d+)px,\s*\d+vw\)/)
   const paddingMatch = btnRule.match(/padding:\s*\d+px\s+(\d+)px/)
-  assert.ok(btnMaxWidthMatch, "expected .profileBtn to declare a max-width")
+  assert.ok(btnWidthMatch, "expected .profileBtn to declare a bounded width")
   assert.ok(paddingMatch, "expected .profileBtn to declare shorthand padding (vertical horizontal)")
-  const btnMaxWidth = Number(btnMaxWidthMatch[1])
+  const btnWidth = Number(btnWidthMatch[1])
   const horizontalPadding = Number(paddingMatch[1])
-  const availableInnerWidth = btnMaxWidth - horizontalPadding * 2
+  const availableInnerWidth = btnWidth - horizontalPadding * 2
 
   const nameRule = sliceBetween(css, ".profileName {", "}", ".profileName rule")
   const nameMaxWidthMatch = nameRule.match(/max-width:\s*(\d+)px/)
   assert.ok(nameMaxWidthMatch, "expected .profileName to declare a max-width")
   const nameMaxWidth = Number(nameMaxWidthMatch[1])
 
-  assert.equal(availableInnerWidth, 96, "sanity check: .profileBtn is still 140px max-width with 22px horizontal padding")
+  assert.equal(availableInnerWidth, 200, "sanity check: .profileBtn is 260px wide with 30px horizontal padding")
   assert.ok(nameMaxWidth <= availableInnerWidth, `.profileName max-width (${nameMaxWidth}px) must not exceed .profileBtn's available inner width (${availableInnerWidth}px)`)
-  assert.equal(nameMaxWidth, 96)
+  assert.equal(nameMaxWidth, 196)
 })
 
 test("zero-profile and one-profile information architecture is untouched -- profile row still conditionally renders only when profiles exist, action row unchanged", () => {

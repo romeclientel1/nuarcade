@@ -227,10 +227,10 @@ test("representative Home strings switch between locales", () => {
 })
 
 test("representative Player Select strings switch between locales", () => {
-  assert.equal(translate("en", "playerSelect.guest"), "Play as Guest")
-  assert.equal(translate("es", "playerSelect.guest"), "Jugar como invitado")
-  assert.equal(translate("en", "playerSelect.addPlayer"), "New Player")
-  assert.equal(translate("es", "playerSelect.addPlayer"), "Añadir jugador")
+  assert.equal(translate("en", "playerSelect.guest"), "Enter as Guest")
+  assert.equal(translate("es", "playerSelect.guest"), "Entrar como invitado")
+  assert.equal(translate("en", "playerSelect.addPlayer"), "New Traveler")
+  assert.equal(translate("es", "playerSelect.addPlayer"), "Nuevo viajero")
 })
 
 test("representative Library/Wheel strings switch between locales", () => {
