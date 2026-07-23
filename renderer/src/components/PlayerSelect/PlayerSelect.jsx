@@ -29,9 +29,6 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDel
   // Keep focusRef in sync
   useEffect(() => { focusRef.current = focusIdx }, [focusIdx])
 
-  // Play coin sound on mount
-  useEffect(() => { snd.coin() }, [])
-
   // Profile slots: EXIT(0), profiles(1..N), NewPlayer(N+1), Guest(N+2)
   const profileEnd = profiles.length
   const newPIdx    = profileEnd + 1
