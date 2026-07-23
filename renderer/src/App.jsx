@@ -55,6 +55,31 @@ const buildMediaVideoPath = (mediaPath, fileName) => {
   return `${base}\\${fileName}`
 }
 
+const resolveCinematicMediaPath = async (fileName, configuredMediaPath) => {
+  const mediaPath = configuredMediaPath || "C:\\Media\\"
+
+  // A user-supplied file remains the first-choice override on Windows.
+  if (
+    window.nuarcade?.platform === "win32" &&
+    window.nuarcade?.checkPath
+  ) {
+    try {
+      const result = await window.nuarcade.checkPath(
+        buildMediaVideoPath(mediaPath, fileName)
+      )
+      if (result?.exists) return mediaPath
+    } catch {
+      // Fall through to the bundled Vespara default.
+    }
+  }
+
+  try {
+    return await window.nuarcade?.getBundledCinematicMediaPath?.(fileName) || null
+  } catch {
+    return null
+  }
+}
+
 export default function App() {
   const [phase, setPhase] = useState("videoCheck")
   const [startupConfig, setStartupConfig] = useState(undefined)
@@ -99,10 +124,9 @@ export default function App() {
     }).catch(() => setStartupConfig(null))
   }, [])
 
-  // Resolve the optional custom startup video before the built-in Vespara
-  // arrival. This fails open: unsupported platforms, absent IPC, missing
-  // files, errors, or a slow check all continue into the reliable built-in
-  // arrival rather than trapping startup.
+  // Resolve the startup cinematic before the built-in Vespara arrival.
+  // A configured Media-folder file overrides the bundled product default.
+  // Missing files, IPC errors, or a slow lookup all fail open into arrival.
   useEffect(() => {
     if (phase !== "videoCheck") return
 
@@ -114,25 +138,16 @@ export default function App() {
       return () => clearTimeout(fallback)
     }
 
-    if (
-      window.nuarcade?.platform !== "win32" ||
-      !window.nuarcade?.checkPath
-    ) {
-      clearTimeout(fallback)
-      setPhase("intro")
-      return
-    }
-
     const mediaPath = startupConfig?.mediaPath || "C:\\Media\\"
-    const introPath = buildMediaVideoPath(mediaPath, "intro.mp4")
     let cancelled = false
 
-    window.nuarcade.checkPath(introPath)
-      .then(result => {
+    resolveCinematicMediaPath("intro.mp4", mediaPath)
+      .then(resolvedMediaPath => {
         if (cancelled) return
         clearTimeout(fallback)
-        if (result?.exists) {
-          setIntroMediaPath(mediaPath)
+
+        if (resolvedMediaPath) {
+          setIntroMediaPath(resolvedMediaPath)
           setPhase("introVideo")
         } else {
           setPhase("intro")
@@ -238,11 +253,7 @@ export default function App() {
     const reducedMotion =
       window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true
 
-    if (
-      reducedMotion ||
-      window.nuarcade?.platform !== "win32" ||
-      !window.nuarcade?.checkPath
-    ) {
+    if (reducedMotion) {
       setPhase("main")
       return
     }
@@ -250,7 +261,6 @@ export default function App() {
     setPhase("sanctuaryEntryCheck")
 
     const mediaPath = startupConfig?.mediaPath || "C:\\Media\\"
-    const entryPath = buildMediaVideoPath(mediaPath, "sanctuary-entry.mp4")
     let settled = false
 
     const fallback = setTimeout(() => {
@@ -259,14 +269,14 @@ export default function App() {
       setPhase("main")
     }, 1500)
 
-    window.nuarcade.checkPath(entryPath)
-      .then(result => {
+    resolveCinematicMediaPath("sanctuary-entry.mp4", mediaPath)
+      .then(resolvedMediaPath => {
         if (settled) return
         settled = true
         clearTimeout(fallback)
 
-        if (result?.exists) {
-          setSanctuaryEntryMediaPath(mediaPath)
+        if (resolvedMediaPath) {
+          setSanctuaryEntryMediaPath(resolvedMediaPath)
           setPhase("sanctuaryEntry")
         } else {
           setPhase("main")

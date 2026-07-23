@@ -41,6 +41,7 @@ contextBridge.exposeInMainWorld('nuarcade', {
 
   // Config
   getConfig:   () => ipcRenderer.invoke('get-config'),
+  getBundledCinematicMediaPath: (fileName) => ipcRenderer.invoke('get-bundled-cinematic-media-path', fileName),
   resetSetup:  () => ipcRenderer.invoke('reset-setup'),
   quit:        () => ipcRenderer.invoke('quit-app'),
   restartApp:  () => ipcRenderer.invoke('restart-app'),

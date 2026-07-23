@@ -646,6 +646,35 @@ ipcMain.handle('add-exclusions', async (event, paths) => {
   })
 })
 
+// -- Bundled Vespara cinematics ----------------------------------------------
+// The renderer may request only these product-owned files. Returning the
+// containing directory lets the existing video component preserve its
+// filename-based external-override behavior.
+const BUNDLED_CINEMATIC_FILES = new Set([
+  'intro.mp4',
+  'sanctuary-entry.mp4',
+])
+
+function getBundledCinematicMediaPath(fileName) {
+  if (!BUNDLED_CINEMATIC_FILES.has(fileName)) return null
+
+  const fs = require('fs')
+  const mediaPath = app.isPackaged
+    ? path.join(process.resourcesPath, 'cinematics')
+    : path.join(__dirname, '..', '..', 'assets', 'cinematics')
+  const filePath = path.join(mediaPath, fileName)
+
+  try {
+    return fs.existsSync(filePath) ? mediaPath : null
+  } catch (e) {
+    return null
+  }
+}
+
+ipcMain.handle('get-bundled-cinematic-media-path', (event, fileName) => {
+  return getBundledCinematicMediaPath(fileName)
+})
+
 ipcMain.handle('get-config', () => config.load())
 ipcMain.handle('quit-app', () => { app.quit() })
 

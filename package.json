@@ -1,7 +1,7 @@
 {
   "name": "nuarcade",
   "version": "5.5.8",
-  "description": "NuArcade — Modern arcade frontend for TeknoParrot and Visual Pinball X",
+  "description": "NuArcade \u2014 Modern arcade frontend for TeknoParrot and Visual Pinball X",
   "main": "src/main/index.js",
   "author": "Rome Clientel",
   "license": "MIT",
@@ -33,7 +33,8 @@
       "src/**/*",
       "renderer/dist/**/*",
       "assets/**/*",
-      "assets/installer/**/*"
+      "assets/installer/**/*",
+      "!assets/cinematics/**/*"
     ],
     "win": {
       "target": "nsis",
@@ -47,7 +48,16 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "include": "assets/installer/folders.nsh"
-    }
+    },
+    "extraResources": [
+      {
+        "from": "assets/cinematics",
+        "to": "cinematics",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ]
   },
   "dependencies": {
     "adm-zip": "^0.6.0",

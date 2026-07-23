@@ -61,17 +61,23 @@ test("reduced motion bypasses the cinematic and enters Home directly", () => {
   assert.match(block, /setPhase\("main"\)/)
 })
 
-test("unsupported platform or missing path-check IPC fails open to Home", () => {
-  const block = sliceBetween(
+test("cinematic resolution prefers a Windows external override and then uses the bundled default", () => {
+  assert.match(
     app,
-    "const beginMainEntry = () => {",
-    "const handlePlayerSelect",
-    "beginMainEntry"
+    /window\.nuarcade\?\.platform === "win32"[\s\S]*?window\.nuarcade\?\.checkPath/
   )
-
-  assert.match(block, /window\.nuarcade\?\.platform !== "win32"/)
-  assert.match(block, /!window\.nuarcade\?\.checkPath/)
-  assert.match(block, /setPhase\("main"\)/)
+  assert.match(
+    app,
+    /window\.nuarcade\?\.getBundledCinematicMediaPath\?\.\(fileName\)/
+  )
+  assert.match(
+    app,
+    /resolveCinematicMediaPath\("intro\.mp4", mediaPath\)/
+  )
+  assert.match(
+    app,
+    /resolveCinematicMediaPath\("sanctuary-entry\.mp4", mediaPath\)/
+  )
 })
 
 test("the sanctuary-entry file check has a bounded fail-open timer", () => {
