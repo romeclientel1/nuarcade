@@ -61,9 +61,15 @@ const STATUS_COLORS = {
   Unverified:       "#888888",
   ready:            "#00ff88",
   discovered:       "#ffaa00",
-  "path-missing":   "#ff4444",
+  "path-missing":   "#e2694a",
   "not-configured": "#888888",
 }
+
+// Vespara: every card shares this deep teal-black base rather than the old
+// per-genre/emulator rainbow slab -- genre/system identity now lives only
+// in small accents (the system label, the flip-back panel), not the whole
+// card's background.
+const CARD_BG = "#0b1615"
 
 export default function GameCard({ game, isCenter, onClick, isFavorite, artwork, artPref }) {
   const { t } = useI18n()
@@ -137,8 +143,8 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork,
     <div className={`${styles.flipContainer} ${flipped ? styles.flipped : ''}`}>
       <div className={styles.flipFront} onClick={onClick}>
         <div
-          className={`${styles.card} ${isCenter ? styles.center : ""}`}
-          style={{ background: colors.bg }}
+          className={`${styles.card} ${isCenter ? styles.center : styles.neighbor}`}
+          style={{ background: CARD_BG }}
         >
       {/* Hero image -- full bleed background on center card */}
       {showHero && (
@@ -217,8 +223,8 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork,
         <div style={{
           position: 'absolute', bottom: 28, left: 0, right: 0,
           textAlign: 'center', padding: '3px 6px',
-          background: game.status === 'path-missing' ? 'rgba(255,68,68,0.9)' : 'rgba(20,20,20,0.88)',
-          color: game.status === 'path-missing' ? '#fff' : '#aaa',
+          background: game.status === 'path-missing' ? 'rgba(196,90,70,0.92)' : 'rgba(11,22,21,0.88)',
+          color: game.status === 'path-missing' ? '#fdf1ea' : 'rgba(232,220,195,0.65)',
           fontSize: 9, fontFamily: 'Share Tech Mono, monospace',
           letterSpacing: 1, zIndex: 10,
         }}>
@@ -242,23 +248,22 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork,
       {!game.isPinball && (
         <div className={styles.info}>
           <div className={styles.title}>{game.title}</div>
-          <div className={styles.system}>{game.system}</div>
-        </div>
-      )}
-
-      {isCenter && (
-        <div className={styles.playOverlay}>
-          <div className={styles.playBtn} style={{ borderColor: colors.accent, color: colors.accent }}>
-            {game.isPinball ? t("gameCard.launch") : t("gameCard.play")}
+          <div className={styles.system}>
+            <span className={styles.systemAccentDot} style={{ background: colors.accent }} />
+            {game.system}
           </div>
         </div>
       )}
 
       {isCenter && (
-        <div className={styles.accentBorder}
-          style={{ boxShadow: `inset 0 0 20px ${colors.accent}22, 0 0 40px ${colors.accent}33` }}
-        />
+        <div className={styles.playOverlay}>
+          <div className={styles.playBtn}>
+            {game.isPinball ? t("gameCard.launch") : t("gameCard.play")}
+          </div>
+        </div>
       )}
+
+      {isCenter && <div className={styles.accentBorder} />}
 
         </div>
       </div>

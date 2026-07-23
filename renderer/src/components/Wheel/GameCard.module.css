@@ -2,17 +2,17 @@
   position: absolute;
   width: 240px;
   height: 320px;
-  border-radius: 6px;
+  border-radius: 8px;
   overflow: hidden;
   cursor: pointer;
   /* An explicit property list here (never a blanket catch-all) -- only
      what actually changes when .center toggles or the inline background
-     swaps: border color, glow, and background tint. Position/scale/
-     opacity are governed separately by the wrapping .cardSlot's own
-     inline transition (see Wheel.jsx getCardStyle) and are deliberately
-     not duplicated here. */
-  transition: border-color var(--motion-panel, 250ms) var(--ease-standard, ease), box-shadow var(--motion-panel, 250ms) var(--ease-standard, ease), background-color var(--motion-panel, 250ms) var(--ease-standard, ease);
-  border: 1px solid rgba(255,255,255,0.06);
+     swaps: border color, glow, background tint, and (Vespara) the
+     neighbor-desaturation filter. Position/scale/opacity are governed
+     separately by the wrapping .cardSlot's own inline transition (see
+     Wheel.jsx getCardStyle) and are deliberately not duplicated here. */
+  transition: border-color var(--motion-panel, 250ms) var(--ease-standard, ease), box-shadow var(--motion-panel, 250ms) var(--ease-standard, ease), background-color var(--motion-panel, 250ms) var(--ease-standard, ease), filter var(--motion-panel, 250ms) var(--ease-standard, ease), transform var(--motion-panel, 250ms) var(--ease-standard, ease);
+  border: 1px solid rgba(79, 209, 197, 0.1);
   display: flex;
   flex-direction: column;
 }
@@ -21,15 +21,32 @@
   .card { transition: none; }
 }
 
+/* Vespara focus framing -- warm-gold/teal-gold, replacing the old cyan
+   HUD-slab border. A modest additional scale (independent of Wheel's own
+   getCardStyle transform on the parent .cardSlot) gives the exhibit card
+   real presence without touching the carousel geometry. */
 .center {
-  border: 2px solid #00c8ff;
-  box-shadow: 0 0 40px rgba(0,200,255,0.3), 0 0 80px rgba(0,200,255,0.12);
+  border: 2px solid #d6b274;
+  box-shadow: 0 0 0 1px rgba(79, 209, 197, 0.22), 0 0 26px rgba(214, 178, 116, 0.28), 0 0 48px rgba(79, 209, 197, 0.12);
+  transform: scale(1.05);
 }
 
-/* Art area */
+/* Neighboring cards recede into the collection hall -- desaturated and
+   dimmed so the focused exhibit reads as the clear subject, while artwork
+   and title stay legible enough to browse by. */
+.neighbor {
+  filter: saturate(0.5) brightness(0.72);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .center { transform: none; }
+}
+
+/* Art area -- widened so artwork dominates the card's visual hierarchy
+   instead of leaving a large unused lower slab. */
 .artWrap {
   width: 100%;
-  height: 58%;
+  height: 68%;
   position: relative;
   overflow: hidden;
   flex-shrink: 0;
@@ -72,8 +89,8 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 35%;
-  background: linear-gradient(transparent, rgba(0,0,0,0.97));
+  height: 42%;
+  background: linear-gradient(transparent, rgba(4,10,10,0.97));
   pointer-events: none;
 }
 
@@ -101,7 +118,7 @@
   font-family: 'Orbitron', sans-serif;
   font-size: 11px;
   font-weight: 700;
-  color: #fff;
+  color: rgba(243, 234, 209, 0.85);
   line-height: 1.3;
   margin-bottom: 3px;
   white-space: nowrap;
@@ -111,9 +128,36 @@
 
 .system {
   font-size: 9px;
-  color: rgba(255,255,255,0.35);
+  color: rgba(214, 178, 116, 0.4);
   letter-spacing: 0.1em;
   text-transform: uppercase;
+}
+
+/* System/genre identity as a small accent dot -- not a full-card color */
+.systemAccentDot {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  margin-right: 5px;
+  vertical-align: middle;
+  opacity: 0.85;
+}
+
+/* Focused-card readability -- larger title and a clearer platform label,
+   legible from couch/cabinet distance. Neighboring cards keep the smaller
+   base sizes above since they're subordinate, not the exhibit. */
+.card.center .title {
+  font-size: 16px;
+  color: #f8f0dc;
+  text-shadow: 0 2px 14px rgba(0,0,0,0.65);
+}
+
+.card.center .system {
+  font-size: 10.5px;
+  color: rgba(120, 214, 198, 0.8);
+  letter-spacing: 0.14em;
+  font-weight: 700;
 }
 
 /* Play overlay */
@@ -134,23 +178,24 @@
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  border: 2px solid #00c8ff;
+  border: 2px solid #d6b274;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #00c8ff;
+  color: #f3e2b8;
   font-size: 20px;
   padding-left: 4px;
-  background: rgba(0,0,0,0.5);
+  background: rgba(8,16,15,0.6);
   backdrop-filter: blur(4px);
 }
 
-/* Accent border */
+/* Accent border -- a quiet inset glow, no longer per-genre neon */
 .accentBorder {
   position: absolute;
   inset: 0;
-  border-radius: 6px;
+  border-radius: 8px;
   pointer-events: none;
+  box-shadow: inset 0 0 24px rgba(79, 209, 197, 0.1), inset 0 0 2px rgba(214, 178, 116, 0.3);
 }
 .videoEl {
   position: absolute;
@@ -284,7 +329,7 @@
   opacity: 0;
   transition: opacity 0.6s ease;
   z-index: 0;
-  filter: brightness(0.4) saturate(1.2);
+  filter: brightness(0.52) saturate(1.05);
 }
 .heroLoaded { opacity: 1; }
 
@@ -398,4 +443,11 @@
   opacity: 0.5;
   text-align: center;
   margin-top: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flipFront,
+  .flipBack {
+    transition: none;
+  }
 }
