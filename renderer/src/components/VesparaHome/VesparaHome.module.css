@@ -268,6 +268,35 @@
   scrollbar-color: rgba(116, 191, 188, 0.32) transparent;
 }
 
+.singleRecentRow {
+  justify-content: center;
+  align-items: center;
+  padding-top: clamp(16px, 3vh, 34px);
+  padding-bottom: clamp(18px, 3vh, 38px);
+}
+
+.singleRecentRow .recentCard {
+  width: clamp(260px, 24vw, 340px);
+  min-height: 260px;
+  padding: 14px;
+}
+
+.singleRecentRow .recentArt,
+.singleRecentRow .recentArtFallback {
+  height: clamp(160px, 16vw, 220px);
+  margin-bottom: 14px;
+}
+
+.singleRecentRow .recentTitle {
+  font-size: clamp(14px, 1.25vw, 18px);
+}
+
+.singleRecentRow .recentSystem {
+  margin-top: 6px;
+  font-size: 10px;
+  letter-spacing: 1.4px;
+}
+
 .recentCard {
   position: relative;
   flex: 0 0 auto;

@@ -382,7 +382,13 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
               ) : !hasRecents ? (
                 <div className={styles.empty}>{emptyStateText}</div>
               ) : (
-                <div className={styles.recentRow} ref={recentRowRef}>
+                <div
+                  className={
+                    styles.recentRow
+                    + (displayedRecentGames.length === 1 ? " " + styles.singleRecentRow : "")
+                  }
+                  ref={recentRowRef}
+                >
                   {displayedRecentGames.map((g, i) => {
                     const id = g.id || g.profile
                     const art = artwork?.[id]
