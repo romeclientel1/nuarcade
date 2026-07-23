@@ -50,15 +50,17 @@ class ErrorBoundary extends Component {
   }
 }
 
-const buildIntroVideoPath = (mediaPath) => {
+const buildMediaVideoPath = (mediaPath, fileName) => {
   const base = (mediaPath || "C:\\Media\\").replace(/[\\/]+$/, "")
-  return `${base}\\intro.mp4`
+  return `${base}\\${fileName}`
 }
 
 export default function App() {
   const [phase, setPhase] = useState("videoCheck")
   const [startupConfig, setStartupConfig] = useState(undefined)
   const [introMediaPath, setIntroMediaPath] = useState(null)
+  const [sanctuaryEntryMediaPath, setSanctuaryEntryMediaPath] = useState(null)
+  const sanctuaryEntryPlayedRef = useRef(false)
   const { profiles, activeProfile, addProfile, selectProfile, selectGuest, deleteProfile } = useProfiles()
   // App-level surface: Vespara Home <-> the existing Wheel/Library
   // experience. A second, independent useDestination() instance --
@@ -122,7 +124,7 @@ export default function App() {
     }
 
     const mediaPath = startupConfig?.mediaPath || "C:\\Media\\"
-    const introPath = buildIntroVideoPath(mediaPath)
+    const introPath = buildMediaVideoPath(mediaPath, "intro.mp4")
     let cancelled = false
 
     window.nuarcade.checkPath(introPath)
@@ -223,20 +225,74 @@ export default function App() {
 
   const handleIntroVideoComplete = () => setPhase("intro")
   const handleIntroComplete = () => setPhase("playerSelect")
+  const handleSanctuaryEntryComplete = () => setPhase("main")
+
+  const beginMainEntry = () => {
+    if (sanctuaryEntryPlayedRef.current) {
+      setPhase("main")
+      return
+    }
+
+    sanctuaryEntryPlayedRef.current = true
+
+    const reducedMotion =
+      window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true
+
+    if (
+      reducedMotion ||
+      window.nuarcade?.platform !== "win32" ||
+      !window.nuarcade?.checkPath
+    ) {
+      setPhase("main")
+      return
+    }
+
+    setPhase("sanctuaryEntryCheck")
+
+    const mediaPath = startupConfig?.mediaPath || "C:\\Media\\"
+    const entryPath = buildMediaVideoPath(mediaPath, "sanctuary-entry.mp4")
+    let settled = false
+
+    const fallback = setTimeout(() => {
+      if (settled) return
+      settled = true
+      setPhase("main")
+    }, 1500)
+
+    window.nuarcade.checkPath(entryPath)
+      .then(result => {
+        if (settled) return
+        settled = true
+        clearTimeout(fallback)
+
+        if (result?.exists) {
+          setSanctuaryEntryMediaPath(mediaPath)
+          setPhase("sanctuaryEntry")
+        } else {
+          setPhase("main")
+        }
+      })
+      .catch(() => {
+        if (settled) return
+        settled = true
+        clearTimeout(fallback)
+        setPhase("main")
+      })
+  }
 
   const handlePlayerSelect = (player) => {
     selectProfile(player.id)
-    setPhase("main")
+    beginMainEntry()
   }
 
   const handleGuest = () => {
     selectGuest()
-    setPhase("main")
+    beginMainEntry()
   }
 
   const handleAddProfile = (name) => {
     addProfile(name)
-    setPhase("main")
+    beginMainEntry()
   }
 
   const handleReturnToPlayerSelect = () => {
@@ -270,6 +326,14 @@ export default function App() {
 
         {phase === "intro" && (
           <Intro onComplete={handleIntroComplete} />
+        )}
+
+        {phase === "sanctuaryEntry" && (
+          <IntroVideo
+            mediaPath={sanctuaryEntryMediaPath}
+            fileName="sanctuary-entry.mp4"
+            onComplete={handleSanctuaryEntryComplete}
+          />
         )}
 
         {phase === "playerSelect" && (

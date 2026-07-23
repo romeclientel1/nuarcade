@@ -5,15 +5,19 @@ import { useOverlayGamepad } from "../../hooks/useOverlayGamepad"
 
 const FADE_DURATION = 400
 
-const buildVideoUrl = (mediaPath) => {
+const buildVideoUrl = (mediaPath, fileName) => {
   const base = (mediaPath || "C:\\Media\\")
     .replace(/\\/g, "/")
     .replace(/\/+$/, "")
 
-  return `file:///${base}/intro.mp4`
+  return `file:///${base}/${fileName}`
 }
 
-export default function IntroVideo({ mediaPath, onComplete }) {
+export default function IntroVideo({
+  mediaPath,
+  fileName = "intro.mp4",
+  onComplete,
+}) {
   const { t } = useI18n()
   const videoRef = useRef(null)
   const completionTimerRef = useRef(null)
@@ -48,7 +52,7 @@ export default function IntroVideo({ mediaPath, onComplete }) {
     }
   }, [])
 
-  const introPath = buildVideoUrl(mediaPath)
+  const videoPath = buildVideoUrl(mediaPath, fileName)
 
   return (
     <div
@@ -61,7 +65,7 @@ export default function IntroVideo({ mediaPath, onComplete }) {
       <video
         ref={videoRef}
         className={styles.video}
-        src={introPath}
+        src={videoPath}
         autoPlay
         playsInline
         onEnded={finish}
