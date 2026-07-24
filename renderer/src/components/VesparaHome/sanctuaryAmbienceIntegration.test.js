@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { readFileSync, statSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -10,6 +10,8 @@ const hook = readFileSync(join(HERE, 'useSanctuaryAmbience.js'), 'utf8').replace
 const engine = readFileSync(join(HERE, 'sanctuaryAmbienceEngine.js'), 'utf8').replace(/\r\n/g, '\n')
 const gatewayHook = readFileSync(join(HERE, '../PlayerSelect/useGatewayMusic.js'), 'utf8')
 const packageJson = JSON.parse(readFileSync(join(HERE, '../../../package.json'), 'utf8'))
+const viteConfig = readFileSync(join(HERE, '../../../vite.config.js'), 'utf8')
+const ambiencePath = join(HERE, 'assets/sanctuary-ambience.mp3')
 
 test('Sanctuary Home mounts exactly one ambience hook independent of focus and selection state', () => {
   assert.equal((jsx.match(/useSanctuaryAmbience\(\)/g) || []).length, 1)
@@ -30,9 +32,18 @@ test('ambience uses existing music enablement and ambient/music volume preferenc
   assert.match(hook, /cfg\?\.ambientVolume \?\? cfg\?\.musicVolume \?\? 35/)
 })
 
-test('no unapproved audio is active: the explicit local-source handoff remains null', () => {
-  assert.match(hook, /export const SANCTUARY_AMBIENCE_SRC = null/)
+test('the approved Sanctuary ambience is a local imported production asset', () => {
+  assert.match(hook, /import sanctuaryAmbienceAsset from '\.\/assets\/sanctuary-ambience\.mp3'/)
+  assert.match(hook, /export const SANCTUARY_AMBIENCE_SRC = sanctuaryAmbienceAsset/)
   assert.doesNotMatch(hook + engine, /vespara-gateway-theme|https?:\/\/|data:audio|base64/i)
+})
+
+test('the ambience remains a standalone Vite asset rather than an inline payload', () => {
+  const file = readFileSync(ambiencePath)
+  assert.ok(file.length > 4096)
+  assert.ok(file.subarray(0, 3).toString() === 'ID3' || (file[0] === 0xff && (file[1] & 0xe0) === 0xe0))
+  assert.doesNotMatch(viteConfig, /assetsInlineLimit\s*:/)
+  assert.equal(statSync(ambiencePath).size, 1441196)
 })
 
 test('Library and Switch Player initiate the non-blocking fade before unchanged route dispatch', () => {

@@ -1,16 +1,15 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { Howl } from 'howler'
 import { createSanctuaryAmbienceController } from './sanctuaryAmbienceEngine.js'
+import sanctuaryAmbienceAsset from './assets/sanctuary-ambience.mp3'
 
 const FADE_IN_MS = 1800
 const FADE_OUT_MS = 700
 
-// Asset handoff point. There is no approved Sanctuary room-tone asset in
-// the repository yet, and the user-produced gateway theme must not be
-// repurposed. Keeping this null makes production safely silent while the
-// full lifecycle remains wired and testable. Replace only with a bundled
-// local import after the ambience source is approved.
-export const SANCTUARY_AMBIENCE_SRC = null
+// Approved Sanctuary room tone. This remains deliberately separate from the
+// Traveler Recognition gateway theme and is emitted by Vite as a local,
+// standalone production asset.
+export const SANCTUARY_AMBIENCE_SRC = sanctuaryAmbienceAsset
 
 export function useSanctuaryAmbience(src = SANCTUARY_AMBIENCE_SRC) {
   const controllerRef = useRef(null)
