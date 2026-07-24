@@ -3,6 +3,8 @@ import { useOverlayGamepad } from '../../hooks/useOverlayGamepad'
 import { useArcadeSounds } from '../../hooks/useArcadeSounds'
 import { useI18n } from '../../i18n/I18nContext.js'
 import styles from './PlayerSelect.module.css'
+import gatewayBackground from './assets/celestial_observatory_with_cosmic_vista.png'
+import vesparaSeal from '../../assets/brand/vespara-symbol-micro.svg'
 
 const MAX_NAME_LEN = 12
 
@@ -154,6 +156,15 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDel
 
   return (
     <div className={styles.overlay}>
+      {/* Gateway environmental plate (Traveler Recognition Milestone 1) --
+          the approved production background. Decorative only: aria-hidden,
+          pointer-events: none (see CSS), and layered behind every
+          functional control. Never stretched -- object-fit: cover with a
+          fixed focal position keeps the central platform and distant sun
+          in frame across viewport sizes. */}
+      <img src={gatewayBackground} alt="" aria-hidden="true" className={styles.gatewayBg} />
+      <div className={styles.gatewayVeil} aria-hidden="true" />
+      <div className={styles.gatewayHaze} aria-hidden="true" />
       <div className={styles.grid} />
       <div className={styles.scanlines} />
 
@@ -186,8 +197,11 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDel
 
       <div className={styles.content}>
 
-        {/* Vespara identity + traveler recognition */}
+        {/* Vespara identity + traveler recognition -- the graphic seal is a
+            restrained ornament, not a second brand announcement; the live
+            worldName/sanctuary text remains the meaningful identity. */}
         <div className={styles.worldIdentity}>
+          <img src={vesparaSeal} alt="" aria-hidden="true" className={styles.gatewaySeal} />
           <div className={styles.brand}>{t("home.worldName")}</div>
           <div className={styles.sanctuary}>{t("home.sanctuary")}</div>
         </div>
