@@ -1,5 +1,5 @@
 @echo off
-title NuArcade Updater
+title Vespara Updater
 color 0B
 
 echo.
@@ -86,15 +86,30 @@ echo.
 
 echo  [6/6] Build complete!
 echo.
+
+:: The real installer filename tracks package.json's productName + version
+:: (currently "Vespara Setup {version}.exe") -- resolved here instead of
+:: hardcoded so this script never goes stale again if either one changes.
+set "INSTALLER="
+for /f "delims=" %%F in ('dir /b /o-d "dist\*.exe" 2^>nul') do (
+    if not defined INSTALLER set "INSTALLER=%%F"
+)
+
 echo  ================================================
-echo  NuArcade installer is ready in the dist folder.
-echo  Run: dist\NuArcade Setup 1.0.0.exe
+if defined INSTALLER (
+    echo  Installer is ready in the dist folder.
+    echo  Run: dist\%INSTALLER%
+) else (
+    echo  [WARNING] No .exe found in dist\ -- check the build output above.
+)
 echo  ================================================
 echo.
 
-set /p launch="Install now? (y/n): "
-if /i "%launch%"=="y" (
-    start "" "dist\NuArcade Setup 1.0.0.exe"
+if defined INSTALLER (
+    set /p launch="Install now? (y/n): "
+    if /i "%launch%"=="y" (
+        start "" "dist\%INSTALLER%"
+    )
 )
 
 pause
