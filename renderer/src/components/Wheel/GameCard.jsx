@@ -69,7 +69,7 @@ const STATUS_COLORS = {
 // per-genre/emulator rainbow slab -- genre/system identity now lives only
 // in small accents (the system label, the flip-back panel), not the whole
 // card's background.
-const CARD_BG = "#0b1615"
+const CARD_BG = "#142522"
 
 export default function GameCard({ game, isCenter, onClick, isFavorite, artwork, artPref }) {
   const { t } = useI18n()

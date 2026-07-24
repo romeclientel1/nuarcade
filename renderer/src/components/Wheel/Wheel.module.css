@@ -20,6 +20,538 @@
   .stage { animation: none; }
 }
 
+/* -- Vespara Library concept shell: Milestone A -----------------------------
+   The approved concept is treated as a spatial specification, not a flattened
+   interface. The local plate supplies only the lived-in architecture and
+   overlook; every label, card, category and action remains live DOM above it.
+   These overrides deliberately leave the carousel/video state machines and
+   all navigation handlers untouched. */
+.libraryEnvironment {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+}
+
+.stage .bgGrid {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(2, 4, 4, 0.14) 0%, rgba(2, 5, 5, 0.03) 48%, rgba(2, 4, 4, 0.02) 72%, rgba(1, 3, 3, 0.12) 100%),
+    linear-gradient(180deg, rgba(1, 3, 3, 0.12), transparent 24%, transparent 76%, rgba(1, 3, 3, 0.12));
+}
+
+.stage .libraryHorizon {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 34% 42% at 61% 47%, rgba(235, 184, 104, 0.12), transparent 72%),
+    linear-gradient(90deg, rgba(3, 6, 6, 0.07) 0 48%, transparent 68%);
+}
+
+.stage .bgVignette {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 98% 98% at 52% 48%, transparent 58%, rgba(0, 0, 0, 0.42) 100%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.1), transparent 15%, transparent 84%, rgba(0, 0, 0, 0.25));
+}
+
+.libraryBrand {
+  position: absolute;
+  top: clamp(22px, 2.9vh, 34px);
+  left: clamp(24px, 2.5vw, 48px);
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: #f6ead0;
+  pointer-events: none;
+  filter: drop-shadow(0 5px 14px rgba(0, 0, 0, 0.72));
+}
+
+.libraryBrandSeal {
+  width: clamp(27px, 2vw, 38px);
+  height: auto;
+  opacity: 0.92;
+}
+
+.libraryBrandName {
+  font-family: "Times New Roman", Georgia, "Liberation Serif", serif;
+  font-size: clamp(23px, 1.8vw, 34px);
+  font-weight: 700;
+  line-height: 0.92;
+  letter-spacing: 0.22em;
+  color: #f5ead3;
+  -webkit-text-stroke: 0.45px rgba(214, 178, 116, 0.8);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.82);
+}
+
+.libraryBrandWorld {
+  margin-top: 7px;
+  font-family: "Times New Roman", Georgia, "Liberation Serif", serif;
+  font-size: clamp(9px, 0.72vw, 13px);
+  font-weight: 600;
+  letter-spacing: 0.38em;
+  color: #d6b274;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+}
+
+.travelerGreeting {
+  position: absolute;
+  top: clamp(30px, 3.5vh, 42px);
+  right: clamp(28px, 3vw, 56px);
+  z-index: 12;
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  font-family: "Times New Roman", Georgia, "Liberation Serif", serif;
+  text-transform: uppercase;
+  pointer-events: none;
+  text-shadow: 0 3px 12px rgba(0, 0, 0, 0.9);
+}
+
+.travelerGreeting span {
+  color: rgba(239, 218, 177, 0.84);
+  font-size: clamp(10px, 0.75vw, 14px);
+  letter-spacing: 0.12em;
+}
+
+.travelerGreeting strong {
+  color: #f8edd7;
+  font-size: clamp(22px, 1.8vw, 34px);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  -webkit-text-stroke: 0.4px rgba(214, 178, 116, 0.72);
+}
+
+.stage .header {
+  position: absolute;
+  top: clamp(130px, 15vh, 162px);
+  left: clamp(150px, 10.4vw, 200px);
+  width: min(42vw, 720px);
+  z-index: 12;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  padding: 0 0 14px;
+  column-gap: 18px;
+  border-bottom-color: rgba(214, 178, 116, 0.28);
+}
+
+.stage .worldNav {
+  position: fixed;
+  left: clamp(22px, 2.5vw, 48px);
+  top: clamp(136px, 16.5vh, 178px);
+  width: clamp(108px, 7.6vw, 146px);
+}
+
+.stage .returnHomeBtn {
+  width: 100%;
+  min-height: 68px;
+  padding: 14px 10px;
+  border: 0;
+  border-top: 1px solid rgba(214, 178, 116, 0.42);
+  border-bottom: 1px solid rgba(214, 178, 116, 0.3);
+  border-radius: 0;
+  background: linear-gradient(90deg, transparent, rgba(57, 36, 17, 0.46), transparent);
+  box-shadow:
+    inset 0 1px rgba(255, 237, 195, 0.04),
+    0 9px 20px rgba(0, 0, 0, 0.22);
+  font-family: "Times New Roman", Georgia, "Liberation Serif", serif;
+  font-size: 12px;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+}
+
+.stage .placeIdentity {
+  justify-self: start;
+  justify-items: start;
+  text-align: left;
+  gap: 1px;
+  pointer-events: none;
+}
+
+.stage .placeSeal {
+  width: 24px;
+  margin-bottom: 5px;
+  opacity: 0.86;
+}
+
+.stage .placeName {
+  font-family: "Times New Roman", Georgia, "Liberation Serif", serif;
+  font-size: clamp(23px, 1.65vw, 31px);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: #f7ecd6;
+  -webkit-text-stroke: 0.45px rgba(214, 178, 116, 0.72);
+  text-shadow: 0 3px 14px rgba(0, 0, 0, 0.88);
+}
+
+.stage .placeSubtitle {
+  margin-top: 4px;
+  font-family: "Times New Roman", Georgia, "Liberation Serif", serif;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: none;
+  color: rgba(246, 233, 207, 0.78);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+}
+
+.stage .collectionStatus {
+  justify-content: flex-start;
+  color: rgba(231, 204, 150, 0.62);
+  pointer-events: none;
+}
+
+.stage .consoleTrigger {
+  border: 0;
+  border-top: 1px solid rgba(214, 178, 116, 0.4);
+  border-bottom: 1px solid rgba(214, 178, 116, 0.28);
+  border-radius: 0;
+  background: linear-gradient(90deg, transparent, rgba(53, 34, 17, 0.5), transparent);
+  font-family: "Times New Roman", Georgia, "Liberation Serif", serif;
+}
+
+.stage .categoryStrip {
+  position: absolute;
+  top: clamp(226px, 25.5vh, 276px);
+  left: clamp(150px, 10.4vw, 200px);
+  width: min(42vw, 720px);
+  height: 48px;
+  z-index: 11;
+  justify-content: center;
+  background: linear-gradient(90deg, transparent, rgba(70, 44, 20, 0.35) 13%, rgba(85, 55, 27, 0.4) 50%, rgba(70, 44, 20, 0.35) 87%, transparent);
+  border: 0;
+  border-top: 1px solid rgba(214, 178, 116, 0.28);
+  border-bottom: 1px solid rgba(102, 63, 27, 0.7);
+  border-radius: 0;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+}
+
+.stage .catPill {
+  width: 142px;
+  padding: 8px 10px;
+  border: 0;
+  border-bottom: 1px solid rgba(214, 178, 116, 0.18);
+  border-radius: 0;
+  background: linear-gradient(180deg, rgba(93, 58, 27, 0.34), rgba(38, 24, 13, 0.38));
+  box-shadow: inset 0 1px rgba(255, 237, 195, 0.04);
+  font-family: "Times New Roman", Georgia, "Liberation Serif", serif;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+}
+
+.stage .recentCarousel {
+  position: absolute;
+  top: clamp(278px, 31vh, 336px);
+  left: clamp(150px, 10.4vw, 200px);
+  width: min(42vw, 720px);
+  box-sizing: border-box;
+  margin: 0;
+  padding: 8px 12px;
+  z-index: 10;
+  border-radius: 4px;
+  background: linear-gradient(90deg, rgba(35, 22, 12, 0.42), rgba(68, 42, 19, 0.34), rgba(35, 22, 12, 0.38));
+  border-color: rgba(214, 178, 116, 0.24);
+  box-shadow: 0 9px 20px rgba(0, 0, 0, 0.2);
+}
+
+.stage .wheelArea {
+  position: absolute;
+  top: clamp(348px, 38vh, 410px);
+  left: clamp(126px, 8.3vw, 160px);
+  width: min(47vw, 850px);
+  height: clamp(300px, 34vh, 368px);
+  z-index: 8;
+  overflow: hidden;
+  border-radius: 4px 4px 12px 12px;
+  background:
+    linear-gradient(180deg, rgba(94, 59, 27, 0.14), rgba(54, 34, 17, 0.27) 72%, rgba(22, 15, 9, 0.38)),
+    repeating-linear-gradient(90deg, rgba(214, 178, 116, 0.035) 0 1px, transparent 1px 14%);
+  border: 1px solid rgba(214, 178, 116, 0.2);
+  border-bottom: 3px solid rgba(126, 79, 35, 0.72);
+  box-shadow:
+    inset 0 1px rgba(255, 237, 195, 0.06),
+    inset 0 -18px 38px rgba(0, 0, 0, 0.22),
+    0 14px 26px rgba(0, 0, 0, 0.22);
+}
+
+.stage .cardTrack {
+  transform: scale(0.74);
+  transform-origin: center 58%;
+}
+
+.stage .shelfBays {
+  inset: 7% 2% 12%;
+  z-index: 1;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(90deg, rgba(214, 178, 116, 0.06) 0 1px, transparent 1px 15%);
+}
+
+.stage .shelfNiche {
+  top: 3%;
+  bottom: 8%;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 45% at 50% 64%, rgba(214, 178, 116, 0.14), transparent 72%),
+    linear-gradient(180deg, transparent, rgba(214, 178, 116, 0.05) 62%, rgba(214, 178, 116, 0.1));
+}
+
+.stage .shelfRail {
+  left: 2%;
+  right: 2%;
+  bottom: 12%;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent 0%, rgba(214, 178, 116, 0.12) 14%, rgba(214, 178, 116, 0.3) 50%, rgba(214, 178, 116, 0.12) 86%, transparent 100%);
+}
+
+.stage .navBtn {
+  width: 38px;
+  height: 62px;
+  border-radius: 3px;
+  border-color: rgba(214, 178, 116, 0.34);
+  color: #e6c789;
+  background: linear-gradient(180deg, rgba(80, 50, 23, 0.62), rgba(28, 18, 10, 0.68));
+}
+
+.stage .infoPanel {
+  position: absolute;
+  left: clamp(300px, 19vw, 365px);
+  bottom: clamp(36px, 4.2vh, 46px);
+  width: min(35vw, 620px);
+  min-height: 104px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  padding: 14px 22px;
+  border: 1px solid rgba(214, 178, 116, 0.34);
+  border-radius: 8px 2px 8px 2px;
+  background: linear-gradient(155deg, rgba(39, 27, 14, 0.86), rgba(19, 15, 10, 0.88));
+  box-shadow:
+    0 16px 34px rgba(0, 0, 0, 0.38),
+    inset 0 0 0 1px rgba(214, 178, 116, 0.08);
+}
+
+.stage .marqueeWrap {
+  font-family: "Times New Roman", Georgia, "Liberation Serif", serif;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: #f3dfb7;
+}
+
+.stage .launchBtn {
+  font-family: "Times New Roman", Georgia, "Liberation Serif", serif;
+  border-radius: 3px;
+}
+
+/* Milestone A keeps the proven A/B load/play/crossfade machinery. Its
+   fullscreen presentation is nearly transparent so the Library residence
+   remains the visual source of truth until Milestone B moves playback into
+   the reserved preview frame. */
+.stage .bgVideo {
+  z-index: 2;
+  opacity: 0.02;
+  filter: brightness(0.86) saturate(0.68);
+}
+
+.stage .bgVideo.bgVideoHidden {
+  opacity: 0;
+}
+
+.previewReservation {
+  position: absolute;
+  top: clamp(190px, 21vh, 228px);
+  right: clamp(48px, 4.2vw, 80px);
+  z-index: 7;
+  width: clamp(390px, 34vw, 560px);
+  box-sizing: border-box;
+  padding: 13px 15px 14px;
+  color: #f4e7ca;
+  border: 1px solid rgba(214, 178, 116, 0.42);
+  border-radius: 4px 4px 10px 10px;
+  background:
+    linear-gradient(145deg, rgba(78, 49, 23, 0.68), rgba(28, 20, 12, 0.72)),
+    rgba(18, 15, 10, 0.66);
+  box-shadow:
+    inset 0 0 0 2px rgba(53, 32, 15, 0.72),
+    inset 0 0 0 3px rgba(214, 178, 116, 0.12),
+    0 18px 38px rgba(0, 0, 0, 0.3);
+}
+
+.previewHeading {
+  padding: 0 2px 10px;
+  font-family: "Times New Roman", Georgia, "Liberation Serif", serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: #d6b274;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+}
+
+.previewScreen {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid rgba(226, 195, 136, 0.42);
+  background: rgba(7, 11, 10, 0.72);
+  box-shadow:
+    inset 0 0 30px rgba(0, 0, 0, 0.54),
+    0 0 0 4px rgba(31, 20, 11, 0.72);
+}
+
+.previewScreen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 226, 167, 0.04), transparent 60%, rgba(3, 7, 7, 0.24));
+}
+
+.previewStill {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.78;
+  filter: saturate(0.78) sepia(0.08) brightness(0.82);
+}
+
+.previewFallback {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 14px;
+  background:
+    radial-gradient(circle at 50% 48%, rgba(214, 178, 116, 0.12), transparent 36%),
+    linear-gradient(145deg, rgba(19, 33, 31, 0.86), rgba(7, 12, 12, 0.94));
+  font-family: "Times New Roman", Georgia, "Liberation Serif", serif;
+  font-size: clamp(15px, 1.25vw, 21px);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.previewFallback img {
+  width: 38px;
+  opacity: 0.62;
+}
+
+.previewCaption {
+  margin-top: 12px;
+  overflow: hidden;
+  font-family: "Times New Roman", Georgia, "Liberation Serif", serif;
+  font-size: clamp(15px, 1.2vw, 20px);
+  font-weight: 600;
+  letter-spacing: 0.075em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.departReservation {
+  position: absolute;
+  right: clamp(44px, 4vw, 76px);
+  bottom: clamp(34px, 4vh, 44px);
+  z-index: 12;
+  width: clamp(178px, 13vw, 226px);
+  padding: 12px 14px 10px;
+  display: grid;
+  gap: 4px;
+  border: 0;
+  border-top: 1px solid rgba(214, 178, 116, 0.46);
+  border-bottom: 1px solid rgba(214, 178, 116, 0.32);
+  border-radius: 0;
+  background: linear-gradient(90deg, transparent, rgba(58, 36, 17, 0.58), transparent);
+  color: #f7ecd6;
+  font-family: "Times New Roman", Georgia, "Liberation Serif", serif;
+  text-align: center;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2);
+}
+
+.departReservation span {
+  font-size: clamp(14px, 1.1vw, 18px);
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  -webkit-text-stroke: 0.35px rgba(214, 178, 116, 0.68);
+}
+
+.departReservation small {
+  color: rgba(214, 178, 116, 0.78);
+  font-size: 9px;
+  letter-spacing: 0.17em;
+}
+
+.departReservation:hover,
+.departReservation:focus-visible {
+  outline: none;
+  color: #fff5df;
+  border-color: rgba(238, 203, 139, 0.78);
+  background: linear-gradient(90deg, transparent, rgba(92, 57, 25, 0.7), transparent);
+}
+
+.cabinetMode .libraryBrand,
+.cabinetMode .travelerGreeting,
+.screenshotMode .libraryBrand,
+.screenshotMode .travelerGreeting {
+  opacity: 0;
+}
+
+@media (max-width: 1280px), (max-height: 760px) {
+  .stage .header,
+  .stage .categoryStrip,
+  .stage .recentCarousel {
+    left: 126px;
+    width: 570px;
+  }
+
+  .stage .wheelArea {
+    left: 98px;
+    width: 640px;
+    top: 300px;
+    height: 264px;
+  }
+
+  .stage .cardTrack {
+    transform: scale(0.62);
+  }
+
+  .stage .infoPanel {
+    left: 220px;
+    width: 490px;
+    min-height: 94px;
+    padding: 11px 18px;
+    bottom: 26px;
+  }
+
+  .previewReservation {
+    top: 168px;
+    right: 28px;
+    width: 410px;
+    padding: 10px 12px 12px;
+  }
+
+  .departReservation {
+    right: 28px;
+    bottom: 27px;
+    width: 180px;
+  }
+}
+
 /* Restrained entrance for the fullscreen confirm dialogs (Exit,
    RetroArch) -- brings them in line with GameDetail's own fade/slide
    pattern instead of popping in instantly. Transform+opacity only. */

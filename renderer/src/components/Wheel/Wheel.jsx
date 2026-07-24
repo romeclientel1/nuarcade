@@ -32,6 +32,7 @@ import { useI18n } from "../../i18n/I18nContext.js"
 
 import styles from "./Wheel.module.css"
 import vesparaMicroMark from "../../assets/brand/vespara-symbol-micro.svg"
+import libraryEnvironment from "./assets/vespara-library-overlook.png"
 import { useMediaFolders } from "../../hooks/useMediaFolders"
 import { buildLibraryOriginContext } from "./libraryLaunchOrigin.js"
 import { applyPendingRecentlyPlayedCredit } from "../../launchSession/startupRecovery.js"
@@ -552,6 +553,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     showRetroArchPopupRef.current  = showRetroArchPopup
     retroArchChoiceRef.current     = retroArchChoice
   const current = filteredGames[selectedIndex] || filteredGames[0]
+  const currentArtwork = current ? artwork?.[current.id || current.profile] : null
+  const previewStill = currentArtwork?.hero || currentArtwork?.capsule || currentArtwork?.logo || null
   currentRef.current = current
 
   // One-shot suppression: launch-origin restoration sets category and index
@@ -1072,9 +1075,26 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
 
   return (
     <div className={styles.stage + (cabinetMode ? " " + styles.cabinetMode : "") + (screenshotMode ? " " + styles.screenshotMode : "")}>
+      <img
+        src={libraryEnvironment}
+        alt=""
+        aria-hidden="true"
+        className={styles.libraryEnvironment}
+      />
       <div className={styles.bgGrid} aria-hidden="true" />
       <div className={styles.libraryHorizon} aria-hidden="true" />
       <div className={styles.bgVignette} aria-hidden="true" />
+      <div className={styles.libraryBrand} aria-hidden="true">
+        <img src={vesparaMicroMark} alt="" className={styles.libraryBrandSeal} />
+        <div>
+          <div className={styles.libraryBrandName}>VESPARA</div>
+          <div className={styles.libraryBrandWorld}>THE SANCTUARY</div>
+        </div>
+      </div>
+      <div className={styles.travelerGreeting} aria-hidden="true">
+        <span>{t("wheel.welcomeBack")}</span>
+        <strong>{activeProfile?.name || t("wheel.guestCta")}</strong>
+      </div>
 
       {/* Background gameplay video -- A/B crossfade */}
       {bgVideoA && (
@@ -1096,6 +1116,23 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
           playsInline
           autoPlay
         />
+      )}
+
+      {current && filteredGames.length > 0 && (
+        <aside className={styles.previewReservation} aria-label={t("wheel.previewTitle")}>
+          <div className={styles.previewHeading}>{t("wheel.previewTitle")}</div>
+          <div className={styles.previewScreen}>
+            {previewStill ? (
+              <img src={previewStill} alt="" aria-hidden="true" className={styles.previewStill} />
+            ) : (
+              <div className={styles.previewFallback} aria-hidden="true">
+                <img src={vesparaMicroMark} alt="" />
+                <span>{current.title}</span>
+              </div>
+            )}
+          </div>
+          <div className={styles.previewCaption}>{current.title}</div>
+        </aside>
       )}
 
       <AttractMode
@@ -1278,6 +1315,15 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
           )}
         </div>
       </div>
+
+      <button
+        className={styles.departReservation}
+        onClick={() => setShowExitPopup(true)}
+        title={t("wheel.exitTitle")}
+      >
+        <span>{t("wheel.depart")}</span>
+        <small>{t("wheel.departSubtitle")}</small>
+      </button>
 
       <div className={styles.categoryStrip}>
         {_visibleTabs.map((cat, tabIdx) => {
