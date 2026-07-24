@@ -40,23 +40,29 @@
   pointer-events: none;
 }
 
-/* Local contrast veil (Milestone 1.1 real-display correction) -- the
-   original pass under-darkened this layer, which combined with the
-   additive teal/gold washes below it read as a pale gray cast on a real
-   1080p panel rather than true shadow. Deepened here (near-black instead
-   of a light-alpha near-black) so the architecture and floor regain real
-   depth; the radial component's wide "transparent" core is unchanged in
-   shape, so the sun and platform reflection stay the brightest,
-   least-obscured part of the frame. Never repaints or materially alters
-   the source image; this is a separate layer above it. */
+/* Local contrast veil (Milestone 1.1 real-display correction; mid-frame
+   clarity pass at Milestone 1.2.1). The original Milestone 1.1 pass
+   deepened this layer to fix a pale gray cast, but that same depth was
+   also sitting over the central architecture and sky, muting the
+   source plate's limited native fine detail more than necessary.
+   Reshaped here, not removed: the radial core's transparent zone is
+   widened (22% -> 30%) and its outer alpha lightened (0.52 -> 0.40) so
+   the platform, architecture, and stars read with more perceived
+   clarity; the linear gradient's two mid-frame stops (sky and
+   architecture band) are lightened to match (0.3 -> 0.2, 0.42 -> 0.3).
+   The top and bottom stops -- the edge framing that keeps the title and
+   plaque/action text readable -- are untouched at 0.74/0.84. Never
+   repaints or materially alters the source image; this is a separate
+   layer above it, and this is a perceived-contrast adjustment only, not
+   new native detail. */
 .gatewayVeil {
   position: absolute;
   inset: 0;
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 72% 56% at 50% 62%, transparent 22%, rgba(2, 5, 6, 0.52) 78%),
-    linear-gradient(180deg, rgba(2, 5, 6, 0.74) 0%, rgba(2, 5, 6, 0.3) 24%, rgba(2, 5, 6, 0.42) 58%, rgba(2, 5, 6, 0.84) 100%);
+    radial-gradient(ellipse 72% 56% at 50% 62%, transparent 30%, rgba(2, 5, 6, 0.4) 78%),
+    linear-gradient(180deg, rgba(2, 5, 6, 0.74) 0%, rgba(2, 5, 6, 0.2) 24%, rgba(2, 5, 6, 0.3) 58%, rgba(2, 5, 6, 0.84) 100%);
 }
 
 /* Ambient horizon haze (Milestone 1.1: intensity reduced) -- the one
