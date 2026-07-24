@@ -1400,6 +1400,16 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
         </div>
       ) : (
         <div className={styles.wheelArea}>
+          {/* Shelf foundation (Milestone 3) -- purely decorative
+              architectural layers behind the existing carousel, giving
+              the card row a physical resting plane instead of floating
+              in empty space. Static/positional only: none of these
+              depend on selectedIndex or any other state, so there is
+              nothing here for reduced motion to neutralize beyond the
+              transitions declared in CSS. */}
+          <div className={styles.shelfBays} aria-hidden="true" />
+          <div className={styles.shelfNiche} aria-hidden="true" />
+          <div className={styles.shelfRail} aria-hidden="true" />
           <button className={styles.navBtn} onClick={() => navigate(-1)}>&#8249;</button>
           <div className={styles.cardTrack}>
             {filteredGames.map((game, index) => {

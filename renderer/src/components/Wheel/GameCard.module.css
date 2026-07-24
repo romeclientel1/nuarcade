@@ -24,18 +24,22 @@
 /* Vespara focus framing -- warm-gold/teal-gold, replacing the old cyan
    HUD-slab border. A modest additional scale (independent of Wheel's own
    getCardStyle transform on the parent .cardSlot) gives the exhibit card
-   real presence without touching the carousel geometry. */
+   real presence without touching the carousel geometry. The approved
+   scale value (1.05) is unchanged this milestone -- the small translateY
+   is purely the "pulled forward off the shelf" cue Milestone 3 asked
+   for, layered onto the same untouched scale rather than replacing it. */
 .center {
   border: 2px solid #d6b274;
   box-shadow: 0 0 0 1px rgba(214, 178, 116, 0.4), 0 0 0 3px rgba(214, 178, 116, 0.14), 0 0 30px rgba(214, 178, 116, 0.32), 0 0 50px rgba(79, 209, 197, 0.14);
-  transform: scale(1.05);
+  transform: scale(1.05) translateY(-3px);
 }
 
-/* Neighboring cards recede into the collection hall -- desaturated and
-   dimmed so the focused exhibit reads as the clear subject, while artwork
-   and title stay legible enough to browse by. */
+/* Neighboring cards recede into the collection hall -- desaturated,
+   dimmed, and (Milestone 3) held to a slightly deeper recession so they
+   read as seated further back in the shelf than the pulled-forward
+   center card, while artwork and title stay legible enough to browse by. */
 .neighbor {
-  filter: saturate(0.5) brightness(0.72);
+  filter: saturate(0.5) brightness(0.68);
 }
 
 @media (prefers-reduced-motion: reduce) {
