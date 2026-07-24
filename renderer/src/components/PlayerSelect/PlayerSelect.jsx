@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { useOverlayGamepad } from '../../hooks/useOverlayGamepad'
 import { useArcadeSounds } from '../../hooks/useArcadeSounds'
+import { useGatewayMusic } from './useGatewayMusic.js'
 import { useI18n } from '../../i18n/I18nContext.js'
 import styles from './PlayerSelect.module.css'
 import gatewayBackground from './assets/celestial_observatory_with_cosmic_vista.png'
+import gatewayTheme from './assets/vespara-gateway-theme.mp3'
 import vesparaSeal from '../../assets/brand/vespara-symbol-micro.svg'
 
 const MAX_NAME_LEN = 12
@@ -19,6 +21,7 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDel
   // Home/Wheel wiring. Pre-converting here would be a second, redundant
   // conversion.
   const snd = useArcadeSounds({ enabled: uiSoundsEnabled, volume: uiSoundVolume })
+  const { fadeOutAndStop: fadeOutGatewayMusic } = useGatewayMusic(gatewayTheme)
   const { t } = useI18n()
 
   const [adding,    setAdding   ] = useState(false)
@@ -85,12 +88,20 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDel
 
   const handleExit = () => {
     if (exitConfirm) {
+      fadeOutGatewayMusic()
       window.nuarcade?.quit?.()
     } else {
       setExitConfirm(true)
       setTimeout(() => setExitConfirm(false), 3000)
     }
   }
+
+  // Gateway-theme fade-out is fire-and-forget (see gatewayMusicEngine.js)
+  // -- these wrappers never delay the onSelect/onGuest navigation that
+  // follows them, on either the keyboard/gamepad path (confirmFocused)
+  // or the mouse path (each button's own onClick below).
+  const selectProfile = (p) => { fadeOutGatewayMusic(); onSelect(p) }
+  const enterGuest = () => { fadeOutGatewayMusic(); onGuest() }
 
   const confirmFocused = () => {
     if (adding) return
@@ -99,10 +110,10 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDel
     if (cur === EXIT_IDX)  { handleExit(); return }
     if (cur >= 1 && cur <= profileEnd) {
       const p = profiles[cur - 1]
-      onSelect(p); return
+      selectProfile(p); return
     }
     if (cur === newPIdx)   { setAdding(true); return }
-    if (cur === guestIdx)  { onGuest(); return }
+    if (cur === guestIdx)  { enterGuest(); return }
   }
 
   useOverlayGamepad({
@@ -216,7 +227,7 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDel
                 key={p.id}
                 ref={registerSlot(1 + i)}
                 className={[styles.profileBtn, isFocused(1 + i) ? styles.profileBtnActive : ''].join(' ')}
-                onClick={() => { snd.select(); onSelect(p) }}
+                onClick={() => { snd.select(); selectProfile(p) }}
                 onMouseEnter={() => hoverFocus(1 + i)}
                 onFocus={syncFromNativeFocus(1 + i)}
               >
@@ -263,7 +274,7 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDel
             <button
               ref={registerSlot(guestIdx)}
               className={[styles.btnGuest, isFocused(guestIdx) ? styles.focused : ''].join(' ')}
-              onClick={onGuest}
+              onClick={enterGuest}
               onMouseEnter={() => hoverFocus(guestIdx)}
               onFocus={syncFromNativeFocus(guestIdx)}
             >

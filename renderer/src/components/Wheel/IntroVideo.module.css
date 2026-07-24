@@ -25,17 +25,34 @@
   pointer-events: none;
 }
 
-/* Startup brand connection (Brand Identity Milestone 2) -- a small, quiet
-   mark in the opposite corner from the skip hint. Deliberately restrained
-   (low opacity, corner-only) so it reads as a signature on the existing
-   cinematic rather than a splash screen pasted over it. The video itself,
-   its timing, and skip behavior are completely untouched. */
+/* Startup brand connection (Brand Identity Milestone 2; enlarged to a
+   cinematic scale at Traveler Recognition Milestone 1.2). A quiet corner
+   mark, opposite the skip hint, deliberately restrained -- not a splash
+   screen pasted over the cinematic. Width sized to the 160-230 CSS px
+   couch-distance target at 1920x1080 (the SVG's own 619:213 aspect ratio
+   yields a proportional ~69px height); the safe-area margin matches the
+   skip hint's own inset on the opposite corner. The video itself, its
+   timing, and skip behavior are completely untouched -- only this mark's
+   asset and size changed. */
 .brandMark {
   position: absolute;
   bottom: 24px;
   left: 32px;
-  height: 28px;
-  width: auto;
-  opacity: 0.55;
+  width: 200px;
+  height: auto;
+  opacity: 0.92;
+  pointer-events: none;
+}
+
+/* A soft, localized dark backing -- not a glowing box -- so the mark
+   keeps contrast against bright cinematic frames without a hard edge or
+   bloom. Sized generously around .brandMark's footprint. */
+.brandMarkBacking {
+  position: absolute;
+  bottom: 4px;
+  left: 12px;
+  width: 248px;
+  height: 108px;
+  background: radial-gradient(ellipse at 30% 70%, rgba(0,0,0,0.42) 0%, rgba(0,0,0,0.18) 55%, transparent 80%);
   pointer-events: none;
 }

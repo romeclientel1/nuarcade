@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import styles from "./IntroVideo.module.css"
 import { useI18n } from "../../i18n/I18nContext.js"
 import { useOverlayGamepad } from "../../hooks/useOverlayGamepad"
-import vesparaLockupHorizontal from "../../assets/brand/vespara-lockup-horizontal.svg"
+import vesparaLockupCinematic from "../../assets/brand/vespara-lockup-cinematic.svg"
 
 const FADE_DURATION = 400
 
@@ -72,7 +72,8 @@ export default function IntroVideo({
         onEnded={finish}
         onError={finish}
       />
-      <img src={vesparaLockupHorizontal} alt="" aria-hidden="true" className={styles.brandMark} />
+      <div className={styles.brandMarkBacking} aria-hidden="true" />
+      <img src={vesparaLockupCinematic} alt="" aria-hidden="true" className={styles.brandMark} />
       <div className={styles.skipHint}>{t("bootScreen.hint")}</div>
     </div>
   )

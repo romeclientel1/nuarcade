@@ -31,20 +31,27 @@ const css = read("PlayerSelect.module.css")
 const appJsx = read("../../App.jsx")
 
 const BG_ASSET_PATH = join(HERE, "assets/celestial_observatory_with_cosmic_vista.png")
-// The exact MD5 of the approved production plate, captured at Milestone 1
-// integration time -- if this ever fails, the bundled asset itself
-// changed, which this milestone's own scope explicitly forbids.
-const APPROVED_BG_MD5 = "383792cbc39d2190ea9eeae6a9863bc4"
+// The exact MD5 of the approved production plate. Updated at Milestone 1.2
+// (Production Resolution and Cinematic Identity) to lock the new approved
+// 3840x2160 source, replacing the 1672x941 plate approved at Milestone 1 --
+// if this ever fails, the bundled asset itself changed without going
+// through that approval process again.
+const APPROVED_BG_MD5 = "ba687320ca3eb4a7b2a40477895c35cd"
 
 // -- 1. The approved bundled gateway asset remains unchanged -----------------
 
-test("the bundled gateway background is byte-identical to the approved Milestone 1 source (MD5 match)", () => {
+test("the bundled gateway background is byte-identical to the approved Milestone 1.2 4K source (MD5 match)", () => {
   assert.ok(existsSync(BG_ASSET_PATH))
   const hash = createHash("md5").update(readFileSync(BG_ASSET_PATH)).digest("hex")
   assert.equal(hash, APPROVED_BG_MD5, "the approved PNG must never be repainted, re-exported, or edited")
 })
 
-test("no JSX file was changed this milestone -- the background import/render call sites are untouched", () => {
+// Milestone 1.2 added the gateway-music import/wiring elsewhere in this
+// file (see productionCinematicPolish.test.js) and updated the profile
+// button's onClick to route through the new selectProfile() wrapper below
+// -- but the background import/render call sites this Milestone 1.1 test
+// originally locked remain untouched.
+test("the background import/render call sites from Milestone 1.1 remain untouched", () => {
   assert.match(jsx, /import gatewayBackground from '\.\/assets\/celestial_observatory_with_cosmic_vista\.png'/)
   assert.match(jsx, /<img src=\{gatewayBackground\} alt="" aria-hidden="true" className=\{styles\.gatewayBg\} \/>/)
 })
@@ -91,7 +98,7 @@ test("the veil and haze remain present, decorative, and non-interactive -- reduc
 
 test("the profile render loop, icon/name content, and selection dispatch are byte-for-byte unchanged", () => {
   assert.match(jsx, /\{profiles\.map\(\(p, i\) => \(/)
-  assert.match(jsx, /onClick=\{\(\) => \{ snd\.select\(\); onSelect\(p\) \}\}/)
+  assert.match(jsx, /onClick=\{\(\) => \{ snd\.select\(\); selectProfile\(p\) \}\}/)
   assert.match(jsx, /<span className=\{styles\.profileIcon\}>\{p\.name\[0\]\.toUpperCase\(\)\}<\/span>/)
   assert.match(jsx, /<span className=\{styles\.profileName\}>\{p\.name\}<\/span>/)
 })
@@ -117,7 +124,7 @@ test("New Traveler and Guest keep their exact onClick handlers and rendered orde
   const guestIdx = jsx.indexOf("styles.btnGuest", actionRowIdx)
   assert.ok(actionRowIdx > -1 && newPlayerIdx > actionRowIdx && guestIdx > newPlayerIdx, "New Traveler must still render before Guest, inside actionRow")
   assert.match(jsx, /onClick=\{\(\) => setAdding\(true\)\}/)
-  assert.match(jsx, /onClick=\{onGuest\}/)
+  assert.match(jsx, /onClick=\{enterGuest\}/)
   assert.match(jsx, /\{t\("playerSelect\.addPlayer"\)\}/)
   assert.match(jsx, /\{t\("playerSelect\.guest"\)\}/)
 })

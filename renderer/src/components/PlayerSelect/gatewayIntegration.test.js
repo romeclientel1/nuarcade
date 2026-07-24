@@ -84,7 +84,7 @@ test("PlayerSelect never renders a flattened full-screen mockup image -- the onl
 test("profile render loop, selection dispatch, and zero/one-profile architecture are byte-for-byte unchanged", () => {
   assert.match(jsx, /\{profiles\.length > 0 && \(/)
   assert.match(jsx, /\{profiles\.map\(\(p, i\) => \(/)
-  assert.match(jsx, /onClick=\{\(\) => \{ snd\.select\(\); onSelect\(p\) \}\}/)
+  assert.match(jsx, /onClick=\{\(\) => \{ snd\.select\(\); selectProfile\(p\) \}\}/)
   assert.match(jsx, /<span className=\{styles\.profileIcon\}>\{p\.name\[0\]\.toUpperCase\(\)\}<\/span>/)
   assert.match(jsx, /<span className=\{styles\.profileName\}>\{p\.name\}<\/span>/)
 })
@@ -94,15 +94,15 @@ test("confirmFocused's dispatch table (EXIT/profile/New Traveler/Guest) is uncha
   assert.match(fn, /if \(cur === EXIT_IDX\)  \{ handleExit\(\); return \}/)
   assert.match(fn, /if \(cur >= 1 && cur <= profileEnd\) \{/)
   assert.match(fn, /const p = profiles\[cur - 1\]/)
-  assert.match(fn, /onSelect\(p\); return/)
+  assert.match(fn, /selectProfile\(p\); return/)
   assert.match(fn, /if \(cur === newPIdx\)   \{ setAdding\(true\); return \}/)
-  assert.match(fn, /if \(cur === guestIdx\)  \{ onGuest\(\); return \}/)
+  assert.match(fn, /if \(cur === guestIdx\)  \{ enterGuest\(\); return \}/)
 })
 
 test("New Traveler (add-player) submit/cancel and Guest onClick are unchanged", () => {
   assert.match(jsx, /if \(e\.key === 'Enter' && name\.trim\(\)\) \{ snd\.select\(\); onAdd\(name\.trim\(\)\); setAdding\(false\); setName\(''\) \}/)
   assert.match(jsx, /onClick=\{\(\) => \{\s*\n\s*if \(name\.trim\(\)\) \{ snd\.select\(\); onAdd\(name\.trim\(\)\); setAdding\(false\); setName\(''\) \}\s*\n\s*\}\}/)
-  assert.match(jsx, /onClick=\{onGuest\}/)
+  assert.match(jsx, /onClick=\{enterGuest\}/)
 })
 
 test("handleExit's confirm-then-quit sequence and its 3s auto-reset are unchanged", () => {
@@ -238,9 +238,9 @@ test("PlayerSelect imports the existing production micro-mark SVG from renderer/
   assert.ok(existsSync(brandAssetPath), "the referenced brand asset must be the real, existing production file")
 })
 
-test("no new SVG was created inside PlayerSelect/assets -- only the bundled raster background lives there", () => {
-  const files = readdirSync(join(HERE, "assets"))
-  assert.deepEqual(files, ["celestial_observatory_with_cosmic_vista.png"])
+test("no new SVG was created inside PlayerSelect/assets -- only the bundled raster background and (as of Milestone 1.2) the bundled gateway theme mp3 live there", () => {
+  const files = readdirSync(join(HERE, "assets")).sort()
+  assert.deepEqual(files, ["celestial_observatory_with_cosmic_vista.png", "vespara-gateway-theme.mp3"].sort())
 })
 
 // -- 13. Typography uses only existing bundled/licensed resources or a documented fallback --

@@ -25,9 +25,13 @@ const wheelCss = readFileSync(join(HERE, "Wheel.module.css"), "utf8").replace(/\
 
 // -- 9. Startup uses the new production brand assets -------------------------
 
-test("IntroVideo renders the horizontal Vespara lockup as a decorative, aria-hidden brand mark", () => {
-  assert.match(introJsx, /import vesparaLockupHorizontal from "\.\.\/\.\.\/assets\/brand\/vespara-lockup-horizontal\.svg"/)
-  assert.match(introJsx, /<img src=\{vesparaLockupHorizontal\} alt="" aria-hidden="true" className=\{styles\.brandMark\} \/>/)
+// Traveler Recognition Milestone 1.2 replaced the small utility-scale
+// horizontal lockup used here with a purpose-built cinematic lockup
+// (see IntroVideo.test.js and cinematicLockup.test.js for the dedicated
+// coverage of that change) -- this test now locks the new asset.
+test("IntroVideo renders the cinematic Vespara lockup as a decorative, aria-hidden brand mark", () => {
+  assert.match(introJsx, /import vesparaLockupCinematic from "\.\.\/\.\.\/assets\/brand\/vespara-lockup-cinematic\.svg"/)
+  assert.match(introJsx, /<img src=\{vesparaLockupCinematic\} alt="" aria-hidden="true" className=\{styles\.brandMark\} \/>/)
 })
 
 test("the brand mark is positioned as a quiet corner signature, not a full-screen splash", () => {

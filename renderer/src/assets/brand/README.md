@@ -31,7 +31,8 @@ present as the quiet "by NuArcade" endorsement, never as the primary mark.
 | `vespara-endorsement.svg` | "BY NUARCADE" small-caps endorsement, warm gold, 82% opacity | Beneath the wordmark, always subordinate |
 | `vespara-endorsement-cream.svg` | Same, Starlight cream | Pairing with `vespara-wordmark-cream.svg` |
 | `vespara-lockup-primary.svg` | Symbol (simplified) + VESPARA + by NuArcade, stacked | Startup screen, About surface, promotional/vertical placements |
-| `vespara-lockup-horizontal.svg` | Symbol (simplified) beside a two-line VESPARA / by NuArcade stack | Headers, wide banners, horizontal placements |
+| `vespara-lockup-horizontal.svg` | Symbol (simplified) beside a two-line VESPARA / by NuArcade stack | Headers, wide banners, horizontal placements, small utility-scale UI corners |
+| `vespara-lockup-cinematic.svg` | Same horizontal composition as `vespara-lockup-horizontal.svg`, reusing its exact archway/wordmark/endorsement geometry, with a subtle drop-shadow filter and a slightly less-subordinate endorsement opacity (0.9 vs. 0.82) for legibility at large scale | The startup cinematic's (`IntroVideo.jsx`) lower-left corner mark only. See "Cinematic corner placement" below. |
 | `vespara-icon-square.svg` | Symbol centered in a square viewBox with ~16% padding, transparent background | Square-safe app-icon source art |
 | `vespara-icon-dark-field.svg` | Same icon composition over a rounded Sanctuary-Deep→Void square field | Icon preview / dark-field presentation |
 | `vespara-icon-mono-mask.svg` | Micro mark, solid white fill, transparent background | Mask-ready / single-color icon derivation |
@@ -57,6 +58,30 @@ consolidating values already used throughout Wheel/GameCard/VesparaHome:
 The symbol/wordmark/lockup SVGs use the literal hex values directly (SVGs
 opened outside the app have no access to the app's CSS variables), matching
 this table exactly.
+
+## Cinematic corner placement (Traveler Recognition Milestone 1.2)
+
+`vespara-lockup-cinematic.svg` exists specifically because the startup
+cinematic's real 1080p lower-left mark, using the small utility-scale
+`vespara-lockup-horizontal.svg` at ~28px tall (~81px wide), read as too
+weak and compressed to be recognizable from couch distance. It is not a
+general-purpose replacement for the horizontal lockup -- `IntroVideo.jsx`
+is its only intended surface.
+
+- **Intended size range:** ~160-230 CSS px wide at 1920x1080 (shipped at
+  200px wide; the SVG's 619:213 viewBox keeps height proportional, ~69px
+  at that width). Scales cleanly to 4K since it is pure vector.
+- **Recommended safe margins:** at least 24px from the bottom edge and
+  32px from the left edge at 1080p -- matching the skip hint's own inset
+  on the opposite corner, so neither mark crowds the frame edge.
+- **Use on:** the startup cinematic's lower-left corner only.
+- **Do not use on:** headers, banners, Settings, Sanctuary/Wheel surfaces,
+  or any small utility-scale UI corner -- `vespara-lockup-horizontal.svg`
+  remains the correct asset for those, unchanged by this milestone.
+- A `.brandMarkBacking` soft radial-gradient div (not part of the SVG
+  itself) may sit behind it purely for localized contrast against bright
+  video frames -- this is a page-level treatment, not a change to the
+  brand asset, and must never read as a glowing box.
 
 ## Minimum clear space
 
