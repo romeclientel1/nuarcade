@@ -4,7 +4,7 @@ const OPTIONS = [
   {
     key: 'steamgriddb',
     label: 'A',
-    title: 'NuArcade Built-In',
+    title: 'Vespara Built-In',
     source: 'SteamGridDB',
     lines: [
       'Downloads hero artwork for your games automatically.',

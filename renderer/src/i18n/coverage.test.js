@@ -109,8 +109,8 @@ test("common Yes/No/Back/Close/Cancel/Confirm translate correctly in both locale
 // -- Wheel and launch dialogs --------------------------------------------------
 
 test("Wheel exit dialog switches language", () => {
-  assert.equal(translate("en", "wheel.confirmExitTitle"), "EXIT NUARCADE?")
-  assert.equal(translate("es", "wheel.confirmExitTitle"), "¿SALIR DE NUARCADE?")
+  assert.equal(translate("en", "wheel.confirmExitTitle"), "EXIT VESPARA?")
+  assert.equal(translate("es", "wheel.confirmExitTitle"), "¿SALIR DE VESPARA?")
   assert.notEqual(translate("en", "wheel.confirmExitHint"), translate("es", "wheel.confirmExitHint"))
 })
 
@@ -170,8 +170,8 @@ test("Settings buttons and dialogs switch language", () => {
   assert.equal(translate("es", "settings.resetToDefaults"), "Restablecer valores predeterminados")
   assert.equal(translate("en", "settings.restartNow"), "Restart Now")
   assert.equal(translate("es", "settings.restartNow"), "Reiniciar ahora")
-  assert.equal(translate("en", "settings.updateAvailable", { version: "v6.0.0" }), "NuArcade v6.0.0 is available!")
-  assert.equal(translate("es", "settings.updateAvailable", { version: "v6.0.0" }), "¡NuArcade v6.0.0 ya está disponible!")
+  assert.equal(translate("en", "settings.updateAvailable", { version: "v6.0.0" }), "Vespara v6.0.0 is available!")
+  assert.equal(translate("es", "settings.updateAvailable", { version: "v6.0.0" }), "¡Vespara v6.0.0 ya está disponible!")
 })
 
 // -- Secondary surfaces -----------------------------------------------------
@@ -204,8 +204,8 @@ test("Collections controls switch language", () => {
 })
 
 test("Help heading/navigation switches language", () => {
-  assert.equal(translate("en", "help.title"), "NuArcade Help")
-  assert.equal(translate("es", "help.title"), "Ayuda de NuArcade")
+  assert.equal(translate("en", "help.title"), "Vespara Help")
+  assert.equal(translate("es", "help.title"), "Ayuda de Vespara")
   assert.equal(translate("en", "help.sectionEmulators", { count: 18 }), "Supported Emulators (18)")
   assert.equal(translate("es", "help.sectionEmulators", { count: 18 }), "Emuladores compatibles (18)")
 })

@@ -414,7 +414,7 @@ const handleSave = async () => {
       })
 
       const lines = [
-        "NuArcade Game Library",
+        "Vespara Game Library",
         "Generated: " + new Date().toLocaleString(),
         "Total games: " + sorted.length,
         "=".repeat(70),
@@ -1400,7 +1400,7 @@ const handleSave = async () => {
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           zIndex: 10000, flexDirection: 'column', gap: 20,
         }}>
-          <div style={{ color: '#ffaa00', fontFamily: 'Orbitron, monospace', fontSize: 11, letterSpacing: 3 }}>NUARCADE</div>
+          <div style={{ color: '#ffaa00', fontFamily: 'Orbitron, monospace', fontSize: 11, letterSpacing: 3 }}>VESPARA</div>
           <div style={{ color: '#fff', fontFamily: 'Orbitron, monospace', fontSize: 20, letterSpacing: 2 }}>{t("settings.restartConfirmTitle")}</div>
           <div style={{ color: '#aaa', fontFamily: 'Share Tech Mono, monospace', fontSize: 12, textAlign: 'center', maxWidth: 360 }}>
             {t("settings.restartConfirmBody")}

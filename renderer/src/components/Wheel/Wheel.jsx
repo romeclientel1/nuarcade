@@ -31,6 +31,7 @@ import { useI18n } from "../../i18n/I18nContext.js"
 
 
 import styles from "./Wheel.module.css"
+import vesparaMicroMark from "../../assets/brand/vespara-symbol-micro.svg"
 import { useMediaFolders } from "../../hooks/useMediaFolders"
 import { buildLibraryOriginContext } from "./libraryLaunchOrigin.js"
 import { applyPendingRecentlyPlayedCredit } from "../../launchSession/startupRecovery.js"
@@ -222,7 +223,7 @@ function KonamiCelebration({ onClose }) {
       <div style={{ position: 'relative', textAlign: 'center', padding: '0 24px' }}>
         <div style={headStyle}>V5.0</div>
         <div style={subStyle}>MAJOR RELEASE UNLOCKED</div>
-        <div style={tagStyle}>NUARCADE {window.nuarcade?.version || 'v5.0.0'} // ROME CLIENTEL // 2026</div>
+        <div style={tagStyle}>VESPARA {window.nuarcade?.version || 'v5.0.0'} // ROME CLIENTEL // 2026</div>
         <div style={codeStyle}>UP UP DOWN DOWN LEFT RIGHT LEFT RIGHT B A</div>
       </div>
     </div>
@@ -1121,6 +1122,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
           <button className={styles.returnHomeBtn + (focusZone === 0 && topMenuIdx === 5 ? " " + styles.barFocused : "")} onClick={() => { if (onReturnHome) onReturnHome() }} title={t("wheel.returnHomeTitle")}>{t("wheel.navHome")}</button>
         </div>
         <div className={styles.placeIdentity}>
+          <img src={vesparaMicroMark} alt="" aria-hidden="true" className={styles.placeSeal} />
           <div className={styles.placeName}>{t("wheel.libraryPlaceName")}</div>
           <div className={styles.placeSubtitle}>{t("wheel.libraryPlaceSubtitle")}</div>
           <div className={styles.collectionStatus} aria-hidden="true">

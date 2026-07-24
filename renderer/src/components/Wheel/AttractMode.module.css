@@ -81,10 +81,21 @@
   background: linear-gradient(transparent, rgba(0,0,0,0.9));
 }
 .nuarcadeBrand {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.brandPrimary {
   font-family: 'Orbitron', sans-serif;
-  font-size: 11px; font-weight: 700;
-  color: rgba(255,255,255,0.25);
+  font-size: 12px; font-weight: 700;
+  color: rgba(232, 210, 165, 0.5);
   letter-spacing: 0.2em;
+}
+.brandSecondary {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 8px; font-weight: 400;
+  color: rgba(255,255,255,0.2);
+  letter-spacing: 0.12em;
 }
 .insertCoin {
   font-family: 'Orbitron', sans-serif;

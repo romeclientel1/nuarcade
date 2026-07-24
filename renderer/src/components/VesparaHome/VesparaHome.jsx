@@ -24,6 +24,7 @@ import starFieldAsset from "./assets/starField.svg"
 import planetAsset from "./assets/planet.svg"
 import sunAsset from "./assets/sun.svg"
 import moonAsset from "./assets/moon.svg"
+import vesparaSealAsset from "../../assets/brand/vespara-symbol-simplified.svg"
 
 const RECENT_LIMIT = 8
 const ACTIONS = ["library", "switchPlayer", "depart"]
@@ -368,6 +369,7 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
       <main className={styles.sanctuary}>
         <header className={styles.header}>
           <div className={styles.worldIdentity}>
+            <img src={vesparaSealAsset} alt="" aria-hidden="true" className={styles.worldSeal} />
             <div className={styles.worldName}>{t("home.worldName")}</div>
             <div className={styles.worldPlace}>{t("home.sanctuary")}</div>
           </div>

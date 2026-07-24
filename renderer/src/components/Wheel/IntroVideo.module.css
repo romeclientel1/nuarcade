@@ -24,3 +24,18 @@
   letter-spacing: 0.12em;
   pointer-events: none;
 }
+
+/* Startup brand connection (Brand Identity Milestone 2) -- a small, quiet
+   mark in the opposite corner from the skip hint. Deliberately restrained
+   (low opacity, corner-only) so it reads as a signature on the existing
+   cinematic rather than a splash screen pasted over it. The video itself,
+   its timing, and skip behavior are completely untouched. */
+.brandMark {
+  position: absolute;
+  bottom: 24px;
+  left: 32px;
+  height: 28px;
+  width: auto;
+  opacity: 0.55;
+  pointer-events: none;
+}

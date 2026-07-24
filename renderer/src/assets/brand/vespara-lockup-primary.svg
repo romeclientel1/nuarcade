@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 330 530" role="img" aria-label="Vespara by NuArcade">
+  <defs>
+    <radialGradient id="vesparaThresholdLightSimple" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f3e2b8" stop-opacity="0.95"/>
+      <stop offset="60%" stop-color="#d6b274" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#d6b274" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <g transform="translate(30.0,30.0) scale(1.35)">
+    <path d="M36,240 L36,96 L100,18 L164,96 L164,240" fill="none" stroke="#d6b274" stroke-width="9" stroke-linejoin="round" stroke-linecap="round"/>
+    <path d="M68,240 L68,118 L100,66 L132,118 L132,240" fill="none" stroke="#f3e2b8" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="100" cy="196" r="20" fill="url(#vesparaThresholdLightSimple)"/>
+    <circle cx="100" cy="196" r="6" fill="#f3e2b8"/>
+  </g>
+  <g transform="translate(48.9,417.0) scale(0.4088028169014084)">
+    <path transform="translate(0,0)" d="M0,0 L32,100 L64,0" fill="none" stroke="#d6b274" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <path transform="translate(90,0)" d="M0,0 L0,100 M0,0 L52,0 M0,50 L40,50 M0,100 L52,100" fill="none" stroke="#d6b274" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <path transform="translate(168,0)" d="M52,8 L8,8 L8,46 L52,54 L52,92 L8,92" fill="none" stroke="#d6b274" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <path transform="translate(250,0)" d="M0,0 L0,100 M0,0 L40,0 L40,46 L0,46" fill="none" stroke="#d6b274" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <path transform="translate(330,0)" d="M0,100 L32,0 L64,100 M14,64 L50,64" fill="none" stroke="#d6b274" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <path transform="translate(420,0)" d="M0,0 L0,100 M0,0 L42,0 L42,46 L0,46 M18,46 L58,100" fill="none" stroke="#d6b274" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <path transform="translate(504,0)" d="M0,100 L32,0 L64,100 M14,64 L50,64" fill="none" stroke="#d6b274" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <g transform="translate(81.4,479.9) scale(0.20538574938574936)" opacity="0.82">
+    <path transform="translate(0,0)" d="M0,0 L0,100 M0,0 L38,0 L46,12 L46,38 L38,50 L0,50 M0,50 L40,50 L50,64 L50,86 L40,100 L0,100" fill="none" stroke="#d6b274" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+    <path transform="translate(78,0)" d="M0,0 L30,50 L60,0 M30,50 L30,100" fill="none" stroke="#d6b274" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+    <path transform="translate(198,0)" d="M0,100 L0,0 L64,100 L64,0" fill="none" stroke="#d6b274" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+    <path transform="translate(282,0)" d="M0,0 L0,78 L14,100 L46,100 L60,78 L60,0" fill="none" stroke="#d6b274" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+    <path transform="translate(362,0)" d="M0,100 L32,0 L64,100 M14,64 L50,64" fill="none" stroke="#d6b274" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+    <path transform="translate(446,0)" d="M0,0 L0,100 M0,0 L42,0 L42,46 L0,46 M18,46 L58,100" fill="none" stroke="#d6b274" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+    <path transform="translate(524,0)" d="M56,14 L44,0 L12,0 L0,14 L0,86 L12,100 L44,100 L56,86" fill="none" stroke="#d6b274" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+    <path transform="translate(600,0)" d="M0,100 L32,0 L64,100 M14,64 L50,64" fill="none" stroke="#d6b274" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+    <path transform="translate(684,0)" d="M0,0 L0,100 M0,0 L34,0 L50,16 L50,84 L34,100 L0,100" fill="none" stroke="#d6b274" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+    <path transform="translate(762,0)" d="M0,0 L0,100 M0,0 L52,0 M0,50 L40,50 M0,100 L52,100" fill="none" stroke="#d6b274" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

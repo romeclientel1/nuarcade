@@ -156,8 +156,8 @@ test("updater/status text switches language", () => {
 })
 
 test("UpdateBanner status text switches language and preserves the dynamic version exactly", () => {
-  assert.equal(translate("en", "updateBanner.available", { version: "5.4.0" }), "NuArcade v5.4.0 is available")
-  assert.equal(translate("es", "updateBanner.available", { version: "5.4.0" }), "NuArcade v5.4.0 está disponible")
+  assert.equal(translate("en", "updateBanner.available", { version: "5.4.0" }), "Vespara v5.4.0 is available")
+  assert.equal(translate("es", "updateBanner.available", { version: "5.4.0" }), "Vespara v5.4.0 está disponible")
   assert.notEqual(translate("en", "updateBanner.readyToInstall"), translate("es", "updateBanner.readyToInstall"))
   assert.notEqual(translate("en", "updateBanner.downloadFailed"), translate("es", "updateBanner.downloadFailed"))
 })

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Vespara">
+  <defs>
+    <radialGradient id="vesparaThresholdLightIcon" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f3e2b8" stop-opacity="0.95"/>
+      <stop offset="60%" stop-color="#d6b274" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#d6b274" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <g transform="translate(61.0,41.0) scale(0.6695)">
+    <path d="M36,240 L36,96 L100,18 L164,96 L164,240" fill="none" stroke="#d6b274" stroke-width="9" stroke-linejoin="round" stroke-linecap="round"/>
+    <path d="M68,240 L68,118 L100,66 L132,118 L132,240" fill="none" stroke="#f3e2b8" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="100" cy="196" r="20" fill="url(#vesparaThresholdLightIcon)"/>
+    <circle cx="100" cy="196" r="6" fill="#f3e2b8"/>
+  </g>
+</svg>

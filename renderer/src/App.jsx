@@ -33,7 +33,7 @@ class ErrorBoundary extends Component {
           alignItems: 'center', justifyContent: 'center',
           color: '#ef4444', fontFamily: 'monospace', padding: 40, gap: 16
         }}>
-          <div style={{ fontSize: 18, fontWeight: 700 }}>NuArcade render error</div>
+          <div style={{ fontSize: 18, fontWeight: 700 }}>Vespara render error</div>
           <div style={{ fontSize: 12, color: '#ff8888', maxWidth: 600, textAlign: 'center' }}>
             {this.state.error.message}
           </div>

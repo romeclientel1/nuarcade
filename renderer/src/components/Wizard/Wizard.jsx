@@ -146,7 +146,7 @@ const handleExit = () => {
           <button
             className={styles.exitBtn + (exitConfirm ? ' ' + styles.exitConfirm : '')}
             onClick={handleExit}
-            title="Exit NuArcade"
+            title="Exit Vespara"
           >
             {exitConfirm ? 'CONFIRM' : 'EXIT'}
           </button>

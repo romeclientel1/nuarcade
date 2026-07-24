@@ -1152,7 +1152,7 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
             <div className={styles.settingsSection}>
               <div className={styles.sectionTitle}>How videos work</div>
               <div className={styles.sectionSub}>
-                NuArcade uses YouTube for video previews and SteamGridDB for artwork.
+                Vespara uses YouTube for video previews and SteamGridDB for artwork.
                 Videos are saved to F:/Media/Videos/ and play on the center card when you select a game.
                 No account needed. No manual setup required.
               </div>
@@ -1206,10 +1206,10 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           zIndex: 10000, flexDirection: 'column', gap: 20,
         }}>
-          <div style={{ color: '#ffaa00', fontFamily: 'Orbitron, monospace', fontSize: 11, letterSpacing: 3 }}>NUARCADE</div>
+          <div style={{ color: '#ffaa00', fontFamily: 'Orbitron, monospace', fontSize: 11, letterSpacing: 3 }}>VESPARA</div>
           <div style={{ color: '#fff', fontFamily: 'Orbitron, monospace', fontSize: 20, letterSpacing: 2 }}>Restart Now?</div>
           <div style={{ color: '#aaa', fontFamily: 'Share Tech Mono, monospace', fontSize: 12, textAlign: 'center', maxWidth: 360 }}>
-            NuArcade needs to restart to show the media you just imported.
+            Vespara needs to restart to show the media you just imported.
           </div>
           <div style={{ display: 'flex', gap: 20, marginTop: 8 }}>
             <button style={{ padding: '10px 32px', background: '#ffaa00', color: '#000', border: 'none', borderRadius: 6, fontFamily: 'Orbitron, monospace', fontSize: 14, cursor: 'pointer', fontWeight: 'bold' }}

@@ -46,3 +46,19 @@ html, body, #root {
   --ease-standard: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
+
+/* Vespara brand palette (Brand Identity Milestone 2) -- named, documented
+   variables for the same deep-teal/warm-gold values Wheel.module.css,
+   GameCard.module.css, and VesparaHome.module.css already use throughout
+   as literal hex/rgba. Consolidated here for the new brand assets and any
+   future brand surface to reference by name; deliberately additive --
+   existing component CSS keeps its own literal values this milestone
+   rather than being broadly rewritten to consume these. */
+:root {
+  --vespara-void:      #020505; /* deepest teal-black -- Wheel's bgGrid base */
+  --vespara-sanctuary-deep: #0a1414; /* elevated teal-black -- VesparaHome's worldLayer top stop */
+  --vespara-threshold-gold: #d6b274; /* primary warm gold -- the shared focus/accent border color */
+  --vespara-horizon-gold:   #f3e2b8; /* brighter illuminated accent -- focused/hover text */
+  --vespara-starlight:      #f8f0dc; /* warm cream -- pedestal/title text */
+  --vespara-quiet-teal:     #5ec4b4; /* restrained secondary accent -- card border/glow teal */
+}

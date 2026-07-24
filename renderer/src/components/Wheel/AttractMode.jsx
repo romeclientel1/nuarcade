@@ -209,7 +209,10 @@ export default function AttractMode({ games, isActive, onWake, onSelect, artwork
 
       {/* Bottom bar */}
       <div className={styles.bottomBar}>
-        <div className={styles.nuarcadeBrand}>NuArcade</div>
+        <div className={styles.nuarcadeBrand}>
+          <span className={styles.brandPrimary}>VESPARA</span>
+          <span className={styles.brandSecondary}>by NuArcade</span>
+        </div>
         <div className={styles.insertCoin}>
           <span className={styles.coinBlink}>INSERT COIN</span>
         </div>

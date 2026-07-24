@@ -1,10 +1,10 @@
-# NuArcade
+# Vespara <sub>by NuArcade</sub>
 
-A modern arcade cabinet frontend built for serious collectors and venue operators. NuArcade replaces HyperSpin and LaunchBox with a clean, fast, AI-powered experience built on Electron + React.
+A modern arcade cabinet frontend built for serious collectors and venue operators. Vespara replaces HyperSpin and LaunchBox with a clean, fast, AI-powered experience built on Electron + React, powered by the NuArcade platform underneath.
 
 **Current version: v5.6.5**
 
-**New to NuArcade or just need a refresher?** See the [User Manual](USER_MANUAL.md) -- covers everything from a guest's quick start to full owner setup.
+**New to Vespara or just need a refresher?** See the [User Manual](USER_MANUAL.md) -- covers everything from a guest's quick start to full owner setup.
 
 ---
 

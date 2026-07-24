@@ -258,7 +258,7 @@ export default function ScanScreen({ config, next, prev }) {
                   <>
                     <div className={styles.scanUnmatchedNote}>
                       These folders exist on disk but don't match any TeknoParrot game profile.
-                      NuArcade can rename them automatically to match what TP expects.
+                      Vespara can rename them automatically to match what TP expects.
                     </div>
                     <div className={styles.scanUnmatchedAction}>
                       Go to Settings -- Game Library -- TeknoParrot Folder Renamer to fix these automatically.

@@ -197,6 +197,17 @@
   gap: 4px;
 }
 
+/* Threshold insignia -- a quiet architectural seal above the world name,
+   not a promotional logo. Purely decorative: no focus, no interaction,
+   no motion of its own (Brand Identity Milestone 2). */
+.worldSeal {
+  width: 30px;
+  height: auto;
+  margin-bottom: 2px;
+  opacity: 0.85;
+  pointer-events: none;
+}
+
 .worldName {
   font-size: clamp(28px, 3.8vw, 54px);
   line-height: 0.92;

@@ -1,4 +1,17 @@
 const { app, BrowserWindow, ipcMain, screen, dialog, shell, globalShortcut } = require('electron')
+
+// Vespara Brand Identity Milestone 2 -- the packaged productName is now
+// "Vespara" (see package.json's build.productName), but Electron's default
+// userData directory is derived from app.getName(), which packaged builds
+// resolve from productName unless overridden. Pinning the app name back to
+// "NuArcade" here, as the very first statement after requiring electron and
+// BEFORE requiring './config' (which computes its own userData-relative
+// CONFIG_PATH at module-load time, synchronously, the instant it's
+// required), keeps every existing user's config/profile/metadata directory
+// exactly where it already is. Nothing after this line may run before it --
+// in particular, './config' must stay required afterward, never before.
+app.setName('NuArcade')
+
 const path = require('path')
 const { exec, spawn } = require('child_process')
 const config = require('./config')
@@ -448,7 +461,7 @@ ipcMain.handle('create-folder-structure', async () => {
 ipcMain.handle('backup-config', async () => {
   const cfg = config.load()
   const result = await dialog.showSaveDialog({
-    title: 'Save NuArcade Backup',
+    title: 'Save Vespara Backup',
     defaultPath: 'nuarcade-backup-' + new Date().toISOString().slice(0,10) + '.json',
     filters: [{ name: 'JSON', extensions: ['json'] }]
   })
@@ -470,7 +483,7 @@ ipcMain.handle('backup-config', async () => {
 ipcMain.handle('backup-localstorage', async (event, data) => {
   const cfg = config.load()
   const result = await dialog.showSaveDialog({
-    title: 'Save NuArcade Full Backup',
+    title: 'Save Vespara Full Backup',
     defaultPath: 'nuarcade-backup-' + new Date().toISOString().slice(0,10) + '.json',
     filters: [{ name: 'JSON', extensions: ['json'] }]
   })
@@ -489,7 +502,7 @@ ipcMain.handle('backup-localstorage', async (event, data) => {
 // -- Restore config from file -------------------------------------------------
 ipcMain.handle('restore-config', async () => {
   const result = await dialog.showOpenDialog({
-    title: 'Restore NuArcade Backup',
+    title: 'Restore Vespara Backup',
     filters: [{ name: 'JSON', extensions: ['json'] }],
     properties: ['openFile']
   })
@@ -568,7 +581,7 @@ ipcMain.handle('open-marquee', async () => {
       <img id="hero" src="" style="display:none" />
       <img id="capsule" src="" style="display:none" />
       <div id="textblock">
-        <div id="title">NuArcade</div>
+        <div id="title">Vespara</div>
         <div id="system">Insert Coin</div>
         <img id="logo" src="" style="display:none" />
       </div>
@@ -578,7 +591,7 @@ ipcMain.handle('open-marquee', async () => {
       </div>
       <div id="accent"></div>
     </div>
-    <div class="brand">NuArcade</div>
+    <div class="brand">Vespara</div>
     <script>
       const { ipcRenderer } = require("electron")
       ipcRenderer.on("marquee-update", (e, data) => {
@@ -590,7 +603,7 @@ ipcMain.handle('open-marquee', async () => {
         const nowBadge   = document.getElementById("now-playing")
         const accent     = document.getElementById("accent")
 
-        title.textContent  = data.title  || "NuArcade"
+        title.textContent  = data.title  || "Vespara"
         system.textContent = data.system || ""
 
         // Now Playing badge
@@ -2053,7 +2066,7 @@ ipcMain.handle('download-update', async (event, { version, downloadUrl }) => {
   const os = require('os')
 
   const tmpDir = os.tmpdir()
-  const installerPath = path.join(tmpDir, 'NuArcade-Setup-' + version + '.exe')
+  const installerPath = path.join(tmpDir, 'Vespara-Setup-' + version + '.exe')
 
   // If already downloaded, skip
   if (fs.existsSync(installerPath)) {
@@ -2440,7 +2453,7 @@ ipcMain.handle('ensure-media-folders', async (event, customPath) => {
       'will not have media for these regardless of which category you pick.\r\n\r\n' +
       'The one confirmed real match: select "Konami e-AMUSEMENT" in Sync for any\r\n' +
       'Konami/Bemani-adjacent titles in your TeknoParrot library.\r\n\r\n' +
-      'For everything else, use NuArcade\'s own YouTube video pipeline instead --\r\n' +
+      'For everything else, use Vespara\'s own YouTube video pipeline instead --\r\n' +
       'open Media > Library tab and use "Find video" per game. That has real\r\n' +
       'coverage for popular arcade racing/lightgun titles EmuMovies does not.'
 
@@ -2454,17 +2467,17 @@ ipcMain.handle('ensure-media-folders', async (event, customPath) => {
         if (sys === 'TeknoParrot') {
           readmeText = teknoParrotReadme
         } else {
-          const description = emumoviesSystemDescriptions[sys] || 'See NuArcade Settings for details.'
+          const description = emumoviesSystemDescriptions[sys] || 'See Vespara Settings for details.'
           readmeText = sys + ' plays: ' + description + '.\r\n\r\n' +
             'How to use this folder:\r\n' +
             '1. Point EmuMovies Sync\'s destination folder here.\r\n' +
             '2. In Sync, select the matching system and run a download.\r\n' +
             '   Sync creates its own system-named subfolder inside this one --\r\n' +
             '   that is normal, Sync always names things its own way.\r\n' +
-            '3. In NuArcade, go to Media > EmuMovies tab and click "Scan EmuMovies\r\n' +
-            '   folder". NuArcade finds whatever Sync created and shows a review\r\n' +
+            '3. In Vespara, go to Media > EmuMovies tab and click "Scan EmuMovies\r\n' +
+            '   folder". Vespara finds whatever Sync created and shows a review\r\n' +
             '   list -- click Import per item. No manual file copying needed;\r\n' +
-            '   NuArcade handles moving the right file to the right place for you.'
+            '   Vespara handles moving the right file to the right place for you.'
         }
         try { fs.writeFileSync(readmePath, readmeText) } catch (e) { /* non-fatal */ }
       }

@@ -54,7 +54,7 @@ export default function BootScreen({ games, artwork, onComplete }) {
         />
       )}
       <div className={styles.content}>
-        <div className={styles.brand}>NuArcade</div>
+        <div className={styles.brand}>Vespara</div>
         <div className={styles.label}>{t("bootScreen.label")}</div>
         <div className={styles.gameRow} style={{ opacity: fade ? 1 : 0, transition: "opacity 0.15s" }}>
           {topGames.map((g, i) => {

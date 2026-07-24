@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 850 136" role="img" aria-label="by NuArcade">
+  <g transform="translate(18,18)" opacity="0.82">
+    <path transform="translate(0,0)" d="M0,0 L0,100 M0,0 L38,0 L46,12 L46,38 L38,50 L0,50 M0,50 L40,50 L50,64 L50,86 L40,100 L0,100" fill="none" stroke="#d6b274" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+    <path transform="translate(78,0)" d="M0,0 L30,50 L60,0 M30,50 L30,100" fill="none" stroke="#d6b274" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+    <path transform="translate(198,0)" d="M0,100 L0,0 L64,100 L64,0" fill="none" stroke="#d6b274" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+    <path transform="translate(282,0)" d="M0,0 L0,78 L14,100 L46,100 L60,78 L60,0" fill="none" stroke="#d6b274" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+    <path transform="translate(362,0)" d="M0,100 L32,0 L64,100 M14,64 L50,64" fill="none" stroke="#d6b274" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+    <path transform="translate(446,0)" d="M0,0 L0,100 M0,0 L42,0 L42,46 L0,46 M18,46 L58,100" fill="none" stroke="#d6b274" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+    <path transform="translate(524,0)" d="M56,14 L44,0 L12,0 L0,14 L0,86 L12,100 L44,100 L56,86" fill="none" stroke="#d6b274" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+    <path transform="translate(600,0)" d="M0,100 L32,0 L64,100 M14,64 L50,64" fill="none" stroke="#d6b274" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+    <path transform="translate(684,0)" d="M0,0 L0,100 M0,0 L34,0 L50,16 L50,84 L34,100 L0,100" fill="none" stroke="#d6b274" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+    <path transform="translate(762,0)" d="M0,0 L0,100 M0,0 L52,0 M0,50 L40,50 M0,100 L52,100" fill="none" stroke="#d6b274" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

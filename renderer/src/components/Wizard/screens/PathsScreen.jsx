@@ -40,7 +40,7 @@ const PATH_FIELDS = [
   // -- Steam --
   { key: 'steam',        label: 'Steam (steamapps)',     default: '',  hint: 'Path to your steamapps folder e.g. C:\\Steam\\steamapps -- leave blank to skip' },
   // -- RetroArch (launch only -- no scan) --
-  { key: 'retroarch',    label: 'RetroArch (launch only)', default: '', hint: 'Path to retroarch.exe -- NuArcade will launch RetroArch directly' },
+  { key: 'retroarch',    label: 'RetroArch (launch only)', default: '', hint: 'Path to retroarch.exe -- Vespara will launch RetroArch directly' },
 ]
 
 export default function PathsScreen({ config, updateConfig, next, prev }) {
@@ -72,7 +72,7 @@ export default function PathsScreen({ config, updateConfig, next, prev }) {
       <div className={styles.title}>Where are your files?</div>
       <div className={styles.sub}>
         Configure paths for systems you have installed. Leave blank
-        for any system you don't use -- NuArcade will skip those automatically.
+        for any system you don't use -- Vespara will skip those automatically.
       </div>
 
       <div className={styles.pathList}>

@@ -355,7 +355,7 @@ export default function SetupGuideScreen({ config, updateConfig, next, prev }) {
       <div className={styles.eyebrow}>Step 2 -- Emulator Setup</div>
       <div className={styles.title}>Install your emulators.</div>
       <div className={styles.sub}>
-        NuArcade manages your library automatically -- but each emulator
+        Vespara manages your library automatically -- but each emulator
         needs to be installed separately. You can skip this and come back
         via Settings anytime.
       </div>

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Vespara">
+  <defs>
+    <radialGradient id="vesparaThresholdLightDarkField" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f3e2b8" stop-opacity="0.95"/>
+      <stop offset="60%" stop-color="#d6b274" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#d6b274" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="vesparaFieldBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0a1414"/>
+      <stop offset="100%" stop-color="#020505"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="256" height="256" rx="36" fill="url(#vesparaFieldBg)"/>
+  <g transform="translate(61.0,41.0) scale(0.6695)">
+    <path d="M36,240 L36,96 L100,18 L164,96 L164,240" fill="none" stroke="#d6b274" stroke-width="9" stroke-linejoin="round" stroke-linecap="round"/>
+    <path d="M68,240 L68,118 L100,66 L132,118 L132,240" fill="none" stroke="#f3e2b8" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="100" cy="196" r="20" fill="url(#vesparaThresholdLightDarkField)"/>
+    <circle cx="100" cy="196" r="6" fill="#f3e2b8"/>
+  </g>
+</svg>

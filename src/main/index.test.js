@@ -35,6 +35,7 @@ function createElectronMock() {
       quit: () => {},
       exit: () => {},
       relaunch: () => {},
+      setName: () => {},
     },
     BrowserWindow: class { static getAllWindows() { return [] } },
     ipcMain: {

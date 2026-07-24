@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 616 148" role="img" aria-label="VESPARA">
+  <g transform="translate(24,24)">
+    <path transform="translate(0,0)" d="M0,0 L32,100 L64,0" fill="none" stroke="#f8f0dc" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <path transform="translate(90,0)" d="M0,0 L0,100 M0,0 L52,0 M0,50 L40,50 M0,100 L52,100" fill="none" stroke="#f8f0dc" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <path transform="translate(168,0)" d="M52,8 L8,8 L8,46 L52,54 L52,92 L8,92" fill="none" stroke="#f8f0dc" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <path transform="translate(250,0)" d="M0,0 L0,100 M0,0 L40,0 L40,46 L0,46" fill="none" stroke="#f8f0dc" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <path transform="translate(330,0)" d="M0,100 L32,0 L64,100 M14,64 L50,64" fill="none" stroke="#f8f0dc" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <path transform="translate(420,0)" d="M0,0 L0,100 M0,0 L42,0 L42,46 L0,46 M18,46 L58,100" fill="none" stroke="#f8f0dc" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <path transform="translate(504,0)" d="M0,100 L32,0 L64,100 M14,64 L50,64" fill="none" stroke="#f8f0dc" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

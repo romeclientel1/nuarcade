@@ -43,7 +43,7 @@ export default function UpdateBanner({ newVersion, releaseUrl, downloadUrl, rele
     setPhase('installing')
     // installer path is in temp dir
     const os = window.require ? window.require('os') : null
-    const installerPath = (os?.tmpdir() || 'C:\\Users\\Public') + '\\NuArcade-Setup-' + newVersion + '.exe'
+    const installerPath = (os?.tmpdir() || 'C:\\Users\\Public') + '\\Vespara-Setup-' + newVersion + '.exe'
     try {
       await window.nuarcade.installUpdate({ installerPath })
       // app will quit itself after spawning installer

@@ -64,7 +64,7 @@ export default function SecurityScreen({ config, updateConfig, next, prev }) {
       <div className={styles.sub}>
         Adding folder exclusions to Windows Defender and SmartScreen so
         your games are never quarantined. Your system stays protected --
-        only NuArcade and your game folders are excluded.
+        only Vespara and your game folders are excluded.
       </div>
 
       <div className={styles.statusList}>

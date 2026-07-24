@@ -12,7 +12,7 @@ export default function ReadyScreen({ config, games, finish, prev }) {
       <div className={styles.title}>Your cabinet is ready.</div>
       <div className={styles.sub}>
         Every game is configured, controllers are mapped, and security
-        exclusions are in place. NuArcade will check for TeknoParrot
+        exclusions are in place. Vespara will check for TeknoParrot
         updates silently on each launch.
       </div>
 
@@ -38,14 +38,14 @@ export default function ReadyScreen({ config, games, finish, prev }) {
       </div>
 
       <div className={styles.infoBar}>
-        NuArcade will re-verify security exclusions and check for new
+        Vespara will re-verify security exclusions and check for new
         games on every launch automatically.
       </div>
 
       <div className={styles.btnRow}>
         <button className={styles.btnBack} onClick={prev}>Back</button>
         <button className={[styles.btn, styles.btnLaunch].join(' ')} onClick={finish}>
-          Launch NuArcade
+          Launch Vespara
         </button>
       </div>
     </div>
