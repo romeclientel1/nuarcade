@@ -276,9 +276,12 @@ test("profileName's max-width fits inside .profileBtn's actual available inner w
   assert.ok(nameMaxWidthMatch, "expected .profileName to declare a max-width")
   const nameMaxWidth = Number(nameMaxWidthMatch[1])
 
-  assert.equal(availableInnerWidth, 200, "sanity check: .profileBtn is 260px wide with 30px horizontal padding")
+  // Milestone 1.1 (real-display plaque refinement) narrowed .profileBtn
+  // from 260px/30px padding to 230px/22px padding as part of making the
+  // plaque read as an artifact rather than a generic wide card.
+  assert.equal(availableInnerWidth, 186, "sanity check: .profileBtn is 230px wide with 22px horizontal padding")
   assert.ok(nameMaxWidth <= availableInnerWidth, `.profileName max-width (${nameMaxWidth}px) must not exceed .profileBtn's available inner width (${availableInnerWidth}px)`)
-  assert.equal(nameMaxWidth, 196)
+  assert.equal(nameMaxWidth, 182)
 })
 
 test("zero-profile and one-profile information architecture is untouched -- profile row still conditionally renders only when profiles exist, action row unchanged", () => {
