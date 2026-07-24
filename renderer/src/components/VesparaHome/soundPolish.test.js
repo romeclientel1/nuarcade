@@ -109,7 +109,7 @@ test("depart dialog Left/Right only sound when the choice actually changes", () 
 test("depart dialog confirm plays exactly one cue per branch -- select() for quitting, back() for cancelling, never both", () => {
   const block = jsx.slice(jsx.indexOf("Depart confirmation's own"), jsx.indexOf("// Keyboard parity"))
   const onConfirmBlock = block.slice(block.indexOf("onConfirm:"), block.indexOf("onClose:"))
-  assert.match(onConfirmBlock, /sounds\.select\(\); window\.nuarcade\?\.quit\?\.\(\)/)
+  assert.match(onConfirmBlock, /sounds\.select\(\); confirmDepart\(\)/)
   assert.match(onConfirmBlock, /sounds\.back\(\); setShowDepartConfirm\(false\)/)
 })
 
@@ -167,11 +167,11 @@ test("the recent-card click handler dispatches launch directly with no confirm s
 })
 
 test("the action-button click handler plays exactly one select() cue, matching the keyboard/gamepad confirm path", () => {
-  assert.match(jsx, /onClick=\{\(\) => \{ acceptManualFocus\(\); setFocusZone\("actions"\); setActionIndex\(i\); sounds\.select\(\); runAction\(action\) \}\}/)
+  assert.match(jsx, /onClick=\{\(\) => \{ acceptManualFocus\(\); setFocusZone\("actions"\); setActionIndex\(i\); sounds\.select\(\); activateAction\(action\) \}\}/)
 })
 
 test("depart dialog mouse click handlers use select() for quit and back() for cancel, matching the gamepad/keyboard paths", () => {
-  assert.match(jsx, /onClick=\{\(\) => \{ sounds\.select\(\); window\.nuarcade\?\.quit\?\.\(\) \}\}/)
+  assert.match(jsx, /onClick=\{\(\) => \{ sounds\.select\(\); confirmDepart\(\) \}\}/)
   assert.match(jsx, /onClick=\{\(\) => \{ sounds\.back\(\); setShowDepartConfirm\(false\) \}\}/)
 })
 

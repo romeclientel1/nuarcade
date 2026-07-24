@@ -12,7 +12,7 @@ const es = readFileSync(join(HERE, "../../i18n/es.js"), "utf8")
 
 test("the Vespara world layer is decorative and non-focusable", () => {
   assert.match(jsx, /<div className=\{styles\.worldLayer\} aria-hidden="true">/)
-  for (const className of ["deepField", "distantCrown", "horizonGlow", "lightShafts", "atmosphere", "foregroundFrame"]) {
+  for (const className of ["sanctuaryPlate", "environmentVeil"]) {
     assert.match(jsx, new RegExp(`styles\\.${className}`))
   }
   assert.match(css, /\.worldLayer[\s\S]*pointer-events:\s*none/)
@@ -55,8 +55,7 @@ test("destination controls retain explicit focus-visible styling", () => {
 test("reduced motion neutralizes world animation without removing focus", () => {
   const reducedBlocks = css.match(/@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\n\}/g) || []
   const reduced = reducedBlocks.join("\n")
-  assert.match(reduced, /\.deepField/)
-  assert.match(reduced, /\.horizonGlow/)
+  assert.match(reduced, /\.home/)
   assert.match(reduced, /animation:\s*none/)
   assert.doesNotMatch(reduced, /outline:\s*none/)
 })

@@ -16,162 +16,40 @@
 }
 
 .worldLayer,
-.deepField,
-.distantCrown,
-.horizonGlow,
-.lightShafts,
-.atmosphere,
-.foregroundFrame,
-.sanctuaryArch {
+.sanctuaryPlate,
+.environmentVeil {
   position: absolute;
   inset: 0;
   pointer-events: none;
 }
 
-/* Vespara's world -- one continuous vista continuing the sanctuary-entry
-   film, not a stack of independent HUD decorations. Depth reads front to
-   back: deepField (sky), distantCrown (far architecture), horizonGlow
-   (the sanctuary's own warm light source), lightShafts + atmosphere
-   (the air the player stands in), sanctuaryArch + foregroundFrame (the
-   chamber immediately around them). */
+/* The Sanctuary is now one coherent architectural plate rather than a
+   collection of independent planet/star/gradient layers. The plate carries
+   real foreground arches, a grounded concourse, the luminous central vista,
+   and readable side wings; live UI remains completely separate above it. */
 .worldLayer {
-  z-index: -2;
+  z-index: 0;
   overflow: hidden;
-  background:
-    radial-gradient(circle at 50% 30%, rgba(214, 176, 110, 0.07), transparent 40%),
-    linear-gradient(180deg, #0a1414 0%, #071012 38%, #050b0c 68%, #030607 100%);
+  background: #050706;
 }
 
-.deepField {
-  opacity: 0.85;
-  background-image:
-    radial-gradient(circle at 13% 16%, rgba(236, 244, 236, 0.65) 0 1px, transparent 1.5px),
-    radial-gradient(circle at 78% 12%, rgba(196, 224, 216, 0.46) 0 1px, transparent 1.5px),
-    radial-gradient(circle at 62% 34%, rgba(255, 244, 220, 0.38) 0 1px, transparent 1.5px),
-    radial-gradient(circle at 34% 24%, rgba(255, 224, 170, 0.32) 0 1px, transparent 1.5px);
-  background-size: 300px 280px, 380px 340px, 440px 410px, 530px 480px;
-  animation: sanctuaryBreathe 16s ease-in-out infinite alternate;
-}
-
-/* Sanctuary-beyond-the-chamber -- a richer star layer plus one distant
-   sun, one large hazed planet, and one small off-axis moon, all sitting
-   behind distantCrown/horizonGlow/atmosphere so the architecture and
-   Library threshold always read as the foreground. Positioned to stay
-   clear of the header identity text and the body content below. */
-.starField,
-.planetDisc,
-.sunDisc,
-.moonDisc {
-  position: absolute;
-  pointer-events: none;
-}
-
-.starField {
-  inset: 0;
+.sanctuaryPlate {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0.5;
-  mix-blend-mode: screen;
-  animation: sanctuaryBreathe 42s ease-in-out infinite alternate;
+  object-position: center center;
+  filter: saturate(0.82) brightness(0.76) contrast(1.05);
 }
 
-/* Large, partially-hazed planet bleeding off the upper-right edge --
-   scale without becoming the subject. Sits below the header's identity
-   row and within distantCrown's own vertical band. */
-.planetDisc {
-  top: 16%;
-  right: -16%;
-  width: clamp(340px, 38vw, 560px);
-  height: auto;
-  opacity: 0.46;
-  filter: blur(0.5px) saturate(0.85);
-  animation: sanctuaryBreathe 26s ease-in-out infinite alternate;
-  animation-delay: -11s;
-}
-
-/* Sun sits inside horizonGlow's own band so the two merge into one warm
-   source rather than competing -- reinforcing the Library's light, not
-   a second focal point. transform stays static (centering only); the
-   glow-pulse animation never touches transform, so it can't fight this. */
-.sunDisc {
-  left: 50%;
-  top: 26%;
-  width: clamp(120px, 11vw, 200px);
-  height: auto;
-  transform: translateX(-50%);
-  opacity: 0.85;
-  animation: sunGlowPulse 20s ease-in-out infinite alternate;
-}
-
-/* Small and off-axis -- discoverable, not announced. */
-.moonDisc {
-  left: 9%;
-  top: 20%;
-  width: clamp(20px, 2.4vw, 34px);
-  height: auto;
-  opacity: 0.48;
-  animation: sanctuaryBreathe 30s ease-in-out infinite alternate;
-  animation-delay: -6s;
-}
-
-.distantCrown {
-  inset: 8% -8% auto;
-  height: 44%;
-  opacity: 0.42;
+/* Local contrast only: the center vista stays luminous while the identity,
+   memory shelf, and destination thresholds receive enough backing to remain
+   legible at couch distance. No blur is applied to the plate, preserving its
+   architectural edge detail. */
+.environmentVeil {
   background:
-    linear-gradient(115deg, transparent 0 17%, rgba(214, 178, 116, 0.1) 17% 18%, transparent 18% 31%, rgba(120, 150, 140, 0.12) 31% 32%, transparent 32% 100%),
-    linear-gradient(245deg, transparent 0 21%, rgba(214, 178, 116, 0.1) 21% 22%, transparent 22% 39%, rgba(120, 150, 140, 0.1) 39% 40%, transparent 40% 100%);
-  clip-path: polygon(0 100%, 0 67%, 8% 67%, 8% 45%, 16% 45%, 16% 57%, 24% 57%, 24% 23%, 30% 23%, 30% 44%, 40% 44%, 40% 10%, 47% 10%, 47% 32%, 54% 32%, 54% 2%, 61% 2%, 61% 39%, 70% 39%, 70% 18%, 77% 18%, 77% 53%, 86% 53%, 86% 34%, 94% 34%, 94% 68%, 100% 68%, 100% 100%);
-  background-color: rgba(9, 16, 18, 0.86);
-  filter: drop-shadow(0 0 30px rgba(214, 178, 116, 0.1));
-}
-
-.horizonGlow {
-  inset: 22% -20% auto;
-  height: 40%;
-  background: radial-gradient(ellipse at center, rgba(232, 190, 122, 0.34), rgba(120, 150, 130, 0.1) 40%, transparent 72%);
-  filter: blur(22px);
-  animation: sanctuaryBreathe 16s ease-in-out infinite alternate;
-  animation-delay: -8s;
-}
-
-.lightShafts {
-  inset: -18% 5% 20%;
-  opacity: 0.22;
-  background:
-    linear-gradient(104deg, transparent 22%, rgba(232, 196, 132, 0.09) 30%, transparent 41%),
-    linear-gradient(76deg, transparent 58%, rgba(140, 200, 190, 0.06) 67%, transparent 77%);
-  filter: blur(3px);
-}
-
-.atmosphere {
-  inset: 38% -10% -20%;
-  background:
-    radial-gradient(ellipse at 50% 0%, rgba(214, 178, 122, 0.08), transparent 55%),
-    repeating-linear-gradient(90deg, transparent 0 10%, rgba(255, 255, 255, 0.01) 10% 10.15%);
-  mask-image: linear-gradient(to bottom, transparent, #000 35%, #000);
-}
-
-/* Soft architectural pillars flanking the content -- the sense of standing
-   inside a chamber rather than looking at a panel floating on a backdrop.
-   Static (no animation): reduced motion never needs to touch it. */
-.sanctuaryArch {
-  background:
-    linear-gradient(90deg, rgba(3, 6, 7, 0.7) 0%, transparent 14%, transparent 86%, rgba(3, 6, 7, 0.7) 100%),
-    radial-gradient(ellipse at 50% 108%, rgba(214, 178, 116, 0.05), transparent 60%);
-}
-
-.foregroundFrame {
-  inset: auto -5% -18%;
-  height: 55%;
-  background:
-    linear-gradient(150deg, transparent 0 18%, rgba(6, 11, 12, 0.94) 18% 30%, transparent 30%),
-    linear-gradient(210deg, transparent 0 18%, rgba(6, 11, 12, 0.94) 18% 30%, transparent 30%),
-    radial-gradient(ellipse at 50% 100%, rgba(13, 21, 21, 0.95), rgba(3, 5, 6, 0.98) 62%);
-  border-top: 1px solid rgba(214, 178, 116, 0.1);
-  transform: perspective(700px) rotateX(52deg);
-  transform-origin: bottom;
+    linear-gradient(180deg, rgba(2, 5, 6, 0.52) 0%, rgba(2, 5, 6, 0.08) 31%, rgba(2, 5, 6, 0.2) 56%, rgba(2, 4, 5, 0.78) 100%),
+    linear-gradient(90deg, rgba(2, 5, 6, 0.42) 0%, transparent 24%, transparent 76%, rgba(2, 5, 6, 0.38) 100%),
+    radial-gradient(ellipse 34% 28% at 50% 43%, transparent 0 58%, rgba(2, 5, 6, 0.12) 100%);
 }
 
 .sanctuary {
@@ -214,15 +92,20 @@
   letter-spacing: clamp(7px, 1.1vw, 18px);
   color: #f3ead1;
   text-transform: uppercase;
-  text-shadow: 0 0 40px rgba(230, 195, 130, 0.28), 0 0 90px rgba(214, 178, 116, 0.14);
+  -webkit-text-stroke: 0.7px rgba(214, 178, 116, 0.72);
+  paint-order: stroke fill;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.72), 0 0 40px rgba(230, 195, 130, 0.25);
 }
 
 .worldPlace {
   padding-left: 4px;
-  color: rgba(196, 216, 202, 0.6);
+  color: rgba(246, 239, 218, 0.86);
   font-size: clamp(10px, 0.9vw, 13px);
   letter-spacing: 4px;
   text-transform: uppercase;
+  -webkit-text-stroke: 0.55px rgba(214, 178, 116, 0.66);
+  paint-order: stroke fill;
+  text-shadow: 0 2px 7px rgba(0, 0, 0, 0.72);
 }
 
 .playerIdentity {
@@ -315,6 +198,9 @@
   letter-spacing: 2.5px;
   color: rgba(241, 235, 215, 0.88);
   text-transform: uppercase;
+  -webkit-text-stroke: 0.55px rgba(214, 178, 116, 0.64);
+  paint-order: stroke fill;
+  text-shadow: 0 2px 7px rgba(0, 0, 0, 0.72);
 }
 
 .sectionSubtitle {
@@ -674,6 +560,10 @@
   font-size: clamp(13px, 1.25vw, 18px);
   letter-spacing: 2px;
   text-transform: uppercase;
+  color: #f4eddb;
+  -webkit-text-stroke: 0.6px rgba(214, 178, 116, 0.68);
+  paint-order: stroke fill;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.74);
 }
 
 .destinationDetail {
@@ -830,46 +720,14 @@
   box-shadow: 0 0 20px rgba(72, 193, 190, 0.3);
 }
 
-/* One coherent ambient motion system: deepField and horizonGlow share this
-   single rhythm (offset via animation-delay) rather than running as two
-   independently-timed animations, so the sanctuary reads as one breathing
-   place instead of several unrelated moving layers. */
-@keyframes sanctuaryBreathe {
-  from { opacity: 0.7; transform: scale(0.99) translate3d(-0.3%, -0.15%, 0); }
-  to { opacity: 1; transform: scale(1.01) translate3d(0.4%, 0.3%, 0); }
-}
-
 @keyframes departFadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
-/* The sun's one allowed independent motion -- a barely perceptible glow
-   change, never a transform, so it can't fight the static centering
-   transform on .sunDisc. */
-@keyframes sunGlowPulse {
-  from { opacity: 0.78; filter: brightness(0.96) saturate(0.95); }
-  to   { opacity: 0.95; filter: brightness(1.08) saturate(1.05); }
-}
-
 @media (max-width: 900px), (max-height: 680px) {
   .sanctuary {
     padding: 24px;
-  }
-
-  /* Narrower/shorter windows: the celestial layers recede further so they
-     never crowd the header or body content in the reduced space. */
-  .planetDisc {
-    width: clamp(240px, 46vw, 380px);
-    opacity: 0.36;
-  }
-
-  .sunDisc {
-    width: clamp(80px, 13vw, 130px);
-  }
-
-  .moonDisc {
-    width: clamp(16px, 3vw, 26px);
   }
 
   .header {
@@ -943,13 +801,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .home,
-  .deepField,
-  .horizonGlow,
-  .starField,
-  .planetDisc,
-  .sunDisc,
-  .moonDisc {
+  .home {
     animation: none;
   }
 }

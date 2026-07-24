@@ -19,22 +19,17 @@ import { applyPendingRecentlyPlayedCredit } from "../../launchSession/startupRec
 import { consumeRestorationRequest } from "../../launchSession/restorationRequest.js"
 import { shouldConsumeRestoration, resolveHomeFocus } from "../../launchSession/restorationResolution.js"
 import { useI18n } from "../../i18n/I18nContext.js"
+import { useSanctuaryAmbience } from "./useSanctuaryAmbience.js"
 import styles from "./VesparaHome.module.css"
-import starFieldAsset from "./assets/starField.svg"
-import planetAsset from "./assets/planet.svg"
-import sunAsset from "./assets/sun.svg"
-import moonAsset from "./assets/moon.svg"
+import sanctuaryArrivalHall from "./assets/sanctuary-arrival-hall.png"
 import vesparaSealAsset from "../../assets/brand/vespara-symbol-simplified.svg"
 
 const RECENT_LIMIT = 8
 const ACTIONS = ["library", "switchPlayer", "depart"]
 
 // VesparaHome -------------------------------------------------------------
-// The neutral, temporary Vespara Home shell. Proves the app can exist
-// outside Wheel: identify the active player, show Recently Played, launch
-// one directly, or enter the existing Wheel/Library experience. Not the
-// final Vespara world -- no cinematic transitions, camera movement, or
-// environmental design here, deliberately.
+// Vespara's central arrival space after Traveler Recognition: identify the
+// active Traveler, revisit a recent game, or continue deeper into Library.
 export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restorationRequest, uiSoundsEnabled, uiSoundVolume }) {
   const { t } = useI18n()
   const ACTION_LABELS = { library: t("home.libraryDestination"), switchPlayer: t("home.switchPlayer"), depart: t("home.depart") }
@@ -46,6 +41,7 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
   // single normalization/conversion boundary (0-100 percent -> 0-1 gain
   // scale); pre-converting here would be a second, redundant conversion.
   const sounds = useArcadeSounds({ enabled: uiSoundsEnabled, volume: uiSoundVolume })
+  const { fadeOutAndStop: fadeOutSanctuaryAmbience } = useSanctuaryAmbience()
 
   const activeProfileId = activeProfile?.id ?? null
 
@@ -234,6 +230,19 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
     else if (action === "depart") { setDepartChoice(1); setShowDepartConfirm(true) }
   }, [onEnterLibrary, onSwitchPlayer])
 
+  // Navigation remains immediate; the ambience controller owns its short
+  // non-blocking fade after Home unmounts. Depart only leaves the world after
+  // confirmation, so opening/cancelling its safe-default dialog stays audible.
+  const activateAction = useCallback((action) => {
+    if (action === "library" || action === "switchPlayer") fadeOutSanctuaryAmbience()
+    runAction(action)
+  }, [fadeOutSanctuaryAmbience, runAction])
+
+  const confirmDepart = useCallback(() => {
+    fadeOutSanctuaryAmbience()
+    window.nuarcade?.quit?.()
+  }, [fadeOutSanctuaryAmbience])
+
   const launchFocused = useCallback(() => {
     if (focusZone === "recents" && displayedRecentGames[recentIndex]) {
       // No confirm sound here -- a recent-game launch gets its one sound
@@ -245,9 +254,9 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
       // Opening Library/Switch Player, or opening the Depart confirmation
       // dialog, is an ordinary menu-action activation -- one select() cue.
       sounds.select()
-      runAction(ACTIONS[actionIndex])
+      activateAction(ACTIONS[actionIndex])
     }
-  }, [focusZone, displayedRecentGames, recentIndex, actionIndex, launch, runAction, sounds])
+  }, [focusZone, displayedRecentGames, recentIndex, actionIndex, launch, activateAction, sounds])
 
   // Main Home controller handling -- disabled while the Depart
   // confirmation or a controller hint prompt is showing, matching the
@@ -288,7 +297,7 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
     onLeft:  () => { if (departChoice !== 0) { sounds.navigate(); setDepartChoice(0) } },
     onRight: () => { if (departChoice !== 1) { sounds.navigate(); setDepartChoice(1) } },
     onConfirm: () => {
-      if (departChoice === 0) { sounds.select(); window.nuarcade?.quit?.() }
+      if (departChoice === 0) { sounds.select(); confirmDepart() }
       else { sounds.back(); setShowDepartConfirm(false) }
     },
     onClose: () => { sounds.back(); setShowDepartConfirm(false) },
@@ -303,7 +312,7 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
         if (e.key === "ArrowLeft" && departChoice !== 0)  { sounds.navigate(); setDepartChoice(0) }
         if (e.key === "ArrowRight" && departChoice !== 1) { sounds.navigate(); setDepartChoice(1) }
         if (e.key === "Enter") {
-          if (departChoice === 0) { sounds.select(); window.nuarcade?.quit?.() }
+          if (departChoice === 0) { sounds.select(); confirmDepart() }
           else { sounds.back(); setShowDepartConfirm(false) }
         }
         if (e.key === "Escape") { sounds.back(); setShowDepartConfirm(false) }
@@ -333,7 +342,7 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
     }
     window.addEventListener("keydown", handler)
     return () => window.removeEventListener("keydown", handler)
-  }, [focusZone, recentIndex, actionIndex, displayedRecentGames.length, hasRecents, showDepartConfirm, departChoice, needsControllerPrompt, launchFocused, acceptManualFocus, sounds])
+  }, [focusZone, recentIndex, actionIndex, displayedRecentGames.length, hasRecents, showDepartConfirm, departChoice, needsControllerPrompt, launchFocused, acceptManualFocus, confirmDepart, sounds])
 
   const isSetupFocus = installationReadiness === "unconfigured"
   const emptyStateText = isSetupFocus
@@ -348,22 +357,13 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
   return (
     <div className={styles.home}>
       <div className={styles.worldLayer} aria-hidden="true">
-        <div className={styles.deepField} />
-        {/* Sanctuary-beyond-the-chamber layers -- one large hazed planet,
-            the sun low in the horizon band, and a small off-axis moon,
-            behind a richer star layer. All decorative/inert, positioned
-            behind the architectural layers below them so the Library
-            threshold and traveler presence stay visually dominant. */}
-        <img src={starFieldAsset} alt="" aria-hidden="true" className={styles.starField} />
-        <img src={planetAsset} alt="" aria-hidden="true" className={styles.planetDisc} />
-        <img src={moonAsset} alt="" aria-hidden="true" className={styles.moonDisc} />
-        <img src={sunAsset} alt="" aria-hidden="true" className={styles.sunDisc} />
-        <div className={styles.distantCrown} />
-        <div className={styles.horizonGlow} />
-        <div className={styles.lightShafts} />
-        <div className={styles.atmosphere} />
-        <div className={styles.sanctuaryArch} />
-        <div className={styles.foregroundFrame} />
+        <img
+          src={sanctuaryArrivalHall}
+          alt=""
+          aria-hidden="true"
+          className={styles.sanctuaryPlate}
+        />
+        <div className={styles.environmentVeil} />
       </div>
 
       <main className={styles.sanctuary}>
@@ -458,7 +458,7 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
                   <button
                     key={action}
                     className={styles.actionBtn + " " + styles[action + "Destination"] + (focused ? " " + styles.focused : "")}
-                    onClick={() => { acceptManualFocus(); setFocusZone("actions"); setActionIndex(i); sounds.select(); runAction(action) }}
+                    onClick={() => { acceptManualFocus(); setFocusZone("actions"); setActionIndex(i); sounds.select(); activateAction(action) }}
                   >
                     <span className={styles.destinationMarker} aria-hidden="true" />
                     <span className={styles.destinationCopy}>
@@ -492,7 +492,7 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
               <button
                 className={styles.departBtn + (departChoice === 0 ? " " + styles.departBtnActive : "")}
                 style={{ textTransform: 'uppercase' }}
-                onClick={() => { sounds.select(); window.nuarcade?.quit?.() }}
+                onClick={() => { sounds.select(); confirmDepart() }}
               >{t("common.yes")}</button>
               <button
                 className={styles.departBtn + (departChoice === 1 ? " " + styles.departBtnActive : "")}
