@@ -1,86 +1,77 @@
-// cinematicLockup.test.js -----------------------------------------------
-// Committed regression tests, run via `node --test`. No test framework
-// dependency, matching every other *.test.js in this project.
-//
-// vespara-lockup-cinematic.svg is new production brand art added at
-// Vespara Traveler Recognition Milestone 1.2 (Production Resolution and
-// Cinematic Identity), for IntroVideo's lower-left corner mark only --
-// see brandAssets.test.js for the Brand Identity Milestone 2 inventory
-// this file intentionally does not join (it's not a general-purpose
-// asset). These tests assert this specific file is vector-only, contains
-// the doorway/beacon symbol, the VESPARA wordmark, and the world-facing
-// "THE SANCTUARY" line. The symbol/wordmark reuse the same production
-// geometry as vespara-lockup-horizontal.svg; the subordinate line uses
-// matching path-built letterforms rather than an external font.
+// Cinematic corner-identity regression tests. The startup lockup combines
+// the approved doorway/beacon SVG with live serif text; it intentionally
+// does not use a path-built wordmark asset.
 
 import { test } from "node:test"
 import assert from "node:assert/strict"
-import { readFileSync } from "node:fs"
+import { existsSync, readFileSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 import { dirname, join } from "node:path"
 
 const HERE = dirname(fileURLToPath(import.meta.url))
-const svg = readFileSync(join(HERE, "vespara-lockup-cinematic.svg"), "utf8")
-const horizontal = readFileSync(join(HERE, "vespara-lockup-horizontal.svg"), "utf8")
+const introJsx = readFileSync(join(HERE, "../../components/Wheel/IntroVideo.jsx"), "utf8")
+const introCss = readFileSync(join(HERE, "../../components/Wheel/IntroVideo.module.css"), "utf8")
+const symbol = readFileSync(join(HERE, "vespara-symbol-simplified.svg"), "utf8")
 
-test("is well-formed, vector-only SVG with a clean viewBox", () => {
-  assert.match(svg, /^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg"/)
-  assert.match(svg, /viewBox="[\d.\s]+"/)
+test("IntroVideo uses the approved simplified doorway/beacon symbol", () => {
+  assert.match(introJsx, /import vesparaSymbol from "\.\.\/\.\.\/assets\/brand\/vespara-symbol-simplified\.svg"/)
+  assert.match(introJsx, /<img src=\{vesparaSymbol\} alt="" className=\{styles\.brandSymbol\} \/>/)
+  assert.match(symbol, /M36,240 L36,96 L100,18 L164,96 L164,240/)
+  assert.match(symbol, /M68,240 L68,118 L100,66 L132,118 L132,240/)
 })
 
-test("contains no embedded raster, base64 data, remote URL, or external font reference", () => {
-  assert.doesNotMatch(svg, /<image[\s>]/i)
-  assert.doesNotMatch(svg, /data:image\/(png|jpe?g|gif|webp);base64/i)
-  assert.doesNotMatch(svg, /data:font/i)
-  const withoutNamespaceDecls = svg.replace(/xmlns(:\w+)?="https?:\/\/[^"]*"/g, "")
-  assert.doesNotMatch(withoutNamespaceDecls, /https?:\/\//i)
-  assert.doesNotMatch(svg, /@font-face/i)
-  assert.doesNotMatch(svg, /font-family/i)
+test("the cinematic identity is live VESPARA / THE SANCTUARY text", () => {
+  assert.match(introJsx, /<div className=\{styles\.brandName\}>VESPARA<\/div>/)
+  assert.match(introJsx, /<div className=\{styles\.brandSubtitle\}>THE SANCTUARY<\/div>/)
 })
 
-test("contains the recognizable nested doorway/beacon symbol (the same two-archway + threshold-light geometry as the simplified symbol)", () => {
-  assert.match(svg, /vesparaThresholdLight/, "must include the symbol's threshold-light gradient")
-  assert.match(svg, /M36,240 L36,96 L100,18 L164,96 L164,240/, "must include the outer archway path")
-  assert.match(svg, /M68,240 L68,118 L100,66 L132,118 L132,240/, "must include the inner archway path")
+test("the complete live-type lockup is decorative and aria-hidden", () => {
+  assert.match(introJsx, /<div className=\{styles\.brandLockup\} aria-hidden="true">/)
+  assert.match(introJsx, /<img src=\{vesparaSymbol\} alt=""/)
 })
 
-test("spells VESPARA via 7 distinct letterform paths, and THE SANCTUARY via 12 subordinate paths", () => {
-  assert.match(svg, /aria-label="Vespara — The Sanctuary"/)
-  assert.doesNotMatch(svg, /by NuArcade/i)
-  // 2 archway paths + 7 VESPARA letterform paths + 12 world-identity
-  // letterform paths (T-H-E-S-A-N-C-T-U-A-R-Y) = 21 total paths.
-  const pathCount = (svg.match(/<path /g) || []).length
-  assert.equal(pathCount, 21)
+test("the cinematic lockup uses no old techno or hand-built alphabet asset", () => {
+  assert.doesNotMatch(introJsx, /vespara-(?:lockup|wordmark)/)
+  assert.equal(existsSync(join(HERE, "vespara-lockup-cinematic.svg")), false)
+  assert.equal((symbol.match(/<path /g) || []).length, 2, "the active SVG contains only the approved doorway paths")
+  assert.doesNotMatch(symbol, /<text[\s>]/i)
 })
 
-test("is visually subordinate for the endorsement, but slightly less so than the utility lockup -- deliberately tuned for large-scale legibility, still restrained", () => {
-  const opacityMatch = svg.match(/scale\(0\.331589[\d]*\)" opacity="([\d.]+)"/)
-  assert.ok(opacityMatch, "expected the endorsement group's opacity attribute")
-  const opacity = Number(opacityMatch[1])
-  assert.ok(opacity > 0.82, "must read stronger than the 0.82 utility-lockup endorsement at cinematic scale")
-  assert.ok(opacity < 1, "must remain visually subordinate to the wordmark, never full-strength")
+test("the live identity uses the Traveler Recognition classical serif stack", () => {
+  const rule = introCss.match(/\.brandText\s*\{([^}]*)\}/)
+  assert.ok(rule)
+  assert.match(rule[1], /font-family:\s*"Times New Roman", Georgia, "Liberation Serif", serif/)
 })
 
-test("uses a subtle drop-shadow filter for contrast, not a glowing box or bloom", () => {
-  assert.match(svg, /<feDropShadow[^>]*flood-opacity="0\.[0-9]+"/)
-  assert.doesNotMatch(svg, /feGaussianBlur[^>]*stdDeviation="(1[0-9]|[2-9][0-9])/, "blur radius must stay subtle, not a bloom")
-  assert.doesNotMatch(svg, /<rect[^>]*fill="url\(/i, "must not paint a filled/gradient backing rect inside the SVG itself (any backing lives in CSS as a page-level treatment)")
+test("the lockup adds no remote font, embedded font, base64, or font package", () => {
+  const symbolWithoutNamespace = symbol.replace(/xmlns(:\w+)?="https?:\/\/[^"]*"/g, "")
+  const activeSources = introJsx + "\n" + introCss + "\n" + symbolWithoutNamespace
+  assert.doesNotMatch(activeSources, /@font-face|data:font|base64|https?:\/\//i)
+  const rendererPkg = JSON.parse(readFileSync(join(HERE, "../../../package.json"), "utf8"))
+  assert.deepEqual(Object.keys(rendererPkg.dependencies).sort(), ["@fontsource/orbitron", "howler", "react", "react-dom"].sort())
 })
 
-test("reuses vespara-lockup-horizontal.svg's exact archway and VESPARA wordmark geometry -- not a redrawn/disconnected primary mark", () => {
-  // \s before d=" so id="..." attributes (e.g. the gradient/filter ids)
-  // are never mistaken for a path's d attribute.
-  const extractPaths = (source) => [...source.matchAll(/\sd="([^"]+)"/g)].map(m => m[1])
-  const cinematicPaths = extractPaths(svg)
-  const horizontalPaths = extractPaths(horizontal)
-  assert.ok(cinematicPaths.length > horizontalPaths.length)
-  // The first two paths are the archway; the next seven spell VESPARA.
-  for (let i = 0; i < 9; i++) {
-    assert.equal(cinematicPaths[i], horizontalPaths[i], `path #${i} geometry must be byte-identical to the existing production lockup`)
-  }
+test("the production lockup dimensions and restrained hierarchy stay in range", () => {
+  const lockup = introCss.match(/\.brandLockup\s*\{([^}]*)\}/)
+  const symbolRule = introCss.match(/\.brandSymbol\s*\{([^}]*)\}/)
+  const name = introCss.match(/\.brandName\s*\{([^}]*)\}/)
+  const subtitle = introCss.match(/\.brandSubtitle\s*\{([^}]*)\}/)
+  assert.match(lockup[1], /width:\s*276px/)
+  assert.match(symbolRule[1], /height:\s*52px/)
+  assert.match(name[1], /font-size:\s*30px/)
+  assert.match(name[1], /letter-spacing:\s*0\.15em/)
+  assert.match(subtitle[1], /font-size:\s*11px/)
+  assert.match(subtitle[1], /letter-spacing:\s*0\.24em/)
+  assert.doesNotMatch(name[1] + subtitle[1], /-webkit-text-stroke|filter:\s*blur|box-shadow/)
 })
 
-test("is non-trivial (actually draws something, not an empty shell)", () => {
-  const hasDrawing = /<path[\s>]/.test(svg) || /<circle[\s>]/.test(svg)
-  assert.ok(hasDrawing)
+test("lower-left safe-area placement and the existing soft backing remain", () => {
+  const lockup = introCss.match(/\.brandLockup\s*\{([^}]*)\}/)
+  const backing = introCss.match(/\.brandMarkBacking\s*\{([^}]*)\}/)
+  assert.match(lockup[1], /bottom:\s*24px/)
+  assert.match(lockup[1], /left:\s*32px/)
+  assert.match(lockup[1], /pointer-events:\s*none/)
+  assert.match(backing[1], /radial-gradient/)
+  assert.match(backing[1], /pointer-events:\s*none/)
+  assert.doesNotMatch(backing[1], /box-shadow/)
 })

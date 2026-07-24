@@ -32,7 +32,6 @@ present as the quiet "by NuArcade" endorsement, never as the primary mark.
 | `vespara-endorsement-cream.svg` | Same, Starlight cream | Pairing with `vespara-wordmark-cream.svg` |
 | `vespara-lockup-primary.svg` | Symbol (simplified) + VESPARA + by NuArcade, stacked | Startup screen, About surface, promotional/vertical placements |
 | `vespara-lockup-horizontal.svg` | Symbol (simplified) beside a two-line VESPARA / by NuArcade stack | Headers, wide banners, horizontal placements, small utility-scale UI corners |
-| `vespara-lockup-cinematic.svg` | Same horizontal composition as `vespara-lockup-horizontal.svg`, reusing its exact archway/wordmark/endorsement geometry, with a subtle drop-shadow filter and a slightly less-subordinate endorsement opacity (0.9 vs. 0.82) for legibility at large scale | The startup cinematic's (`IntroVideo.jsx`) lower-left corner mark only. See "Cinematic corner placement" below. |
 | `vespara-icon-square.svg` | Symbol centered in a square viewBox with ~16% padding, transparent background | Square-safe app-icon source art |
 | `vespara-icon-dark-field.svg` | Same icon composition over a rounded Sanctuary-Deep→Void square field | Icon preview / dark-field presentation |
 | `vespara-icon-mono-mask.svg` | Micro mark, solid white fill, transparent background | Mask-ready / single-color icon derivation |
@@ -61,16 +60,18 @@ this table exactly.
 
 ## Cinematic corner placement (Traveler Recognition Milestone 1.2)
 
-`vespara-lockup-cinematic.svg` exists specifically because the startup
-cinematic's real 1080p lower-left mark, using the small utility-scale
-`vespara-lockup-horizontal.svg` at ~28px tall (~81px wide), read as too
-weak and compressed to be recognizable from couch distance. It is not a
-general-purpose replacement for the horizontal lockup -- `IntroVideo.jsx`
-is its only intended surface.
+The startup cinematic uses a live HTML/CSS composition rather than a
+standalone wordmark asset: the approved `vespara-symbol-simplified.svg`
+doorway/beacon sits beside live `VESPARA` and `THE SANCTUARY` text. This
+lets the cinematic identity use the same classical serif language as
+Traveler Recognition without introducing another hand-drawn alphabet,
+embedded font, external font request, or font dependency.
 
-- **Intended size range:** ~160-230 CSS px wide at 1920x1080 (shipped at
-  200px wide; the SVG's 619:213 viewBox keeps height proportional, ~69px
-  at that width). Scales cleanly to 4K since it is pure vector.
+- **Intended size:** 276 CSS px wide at 1920x1080, with the doorway symbol
+  52px tall.
+- **Typography:** `"Times New Roman", Georgia, "Liberation Serif", serif`;
+  30px/700/0.15em for `VESPARA`, and 11px/600/0.24em for
+  `THE SANCTUARY`.
 - **Recommended safe margins:** at least 24px from the bottom edge and
   32px from the left edge at 1080p -- matching the skip hint's own inset
   on the opposite corner, so neither mark crowds the frame edge.
@@ -78,8 +79,8 @@ is its only intended surface.
 - **Do not use on:** headers, banners, Settings, Sanctuary/Wheel surfaces,
   or any small utility-scale UI corner -- `vespara-lockup-horizontal.svg`
   remains the correct asset for those, unchanged by this milestone.
-- A `.brandMarkBacking` soft radial-gradient div (not part of the SVG
-  itself) may sit behind it purely for localized contrast against bright
+- A `.brandMarkBacking` soft radial-gradient div may sit behind it purely
+  for localized contrast against bright
   video frames -- this is a page-level treatment, not a change to the
   brand asset, and must never read as a glowing box.
 

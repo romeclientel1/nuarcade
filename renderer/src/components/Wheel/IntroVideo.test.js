@@ -8,17 +8,14 @@
 // These are source-level structural assertions on the real committed
 // files proving the specific claims Vespara Traveler Recognition
 // Milestone 1.2 (Production Resolution and Cinematic Identity) made for
-// the startup cinematic's corner identity: it now uses the new
-// purpose-built vespara-lockup-cinematic.svg (not the small utility-scale
-// horizontal lockup), the mark is sized/placed for lower-left safe-area
-// cinematic legibility, and every existing intro behavior -- playback,
-// fade timing, skip paths (keyboard/mouse/controller), and the
-// completion handoff into Traveler Recognition -- is completely
+// the startup cinematic's corner identity: it uses the approved doorway
+// symbol with live classical-serif VESPARA / THE SANCTUARY text, remains
+// in the lower-left safe area, and leaves every existing intro behavior
 // unchanged.
 
 import { test } from "node:test"
 import assert from "node:assert/strict"
-import { readFileSync, existsSync } from "node:fs"
+import { readFileSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 import { dirname, join } from "node:path"
 
@@ -26,39 +23,34 @@ const HERE = dirname(fileURLToPath(import.meta.url))
 const jsx = readFileSync(join(HERE, "IntroVideo.jsx"), "utf8")
 const css = readFileSync(join(HERE, "IntroVideo.module.css"), "utf8")
 
-// -- 9 & 10. Uses the new cinematic lockup, not the previous utility lockup --
+// -- 9 & 10. Approved symbol plus live world-facing identity ------------
 
-test("imports and renders the new purpose-built cinematic lockup, not the previous utility-scale horizontal lockup", () => {
-  assert.match(jsx, /import vesparaLockupCinematic from "\.\.\/\.\.\/assets\/brand\/vespara-lockup-cinematic\.svg"/)
-  assert.match(jsx, /<img src=\{vesparaLockupCinematic\} alt="" aria-hidden="true" className=\{styles\.brandMark\} \/>/)
-  assert.doesNotMatch(jsx, /vespara-lockup-horizontal/, "the old utility lockup must no longer be imported here")
-})
-
-test("the referenced cinematic SVG is a real, existing production file", () => {
-  const brandAssetPath = join(HERE, "../../assets/brand/vespara-lockup-cinematic.svg")
-  assert.ok(existsSync(brandAssetPath))
+test("renders the approved doorway symbol with live VESPARA and THE SANCTUARY text", () => {
+  assert.match(jsx, /import vesparaSymbol from "\.\.\/\.\.\/assets\/brand\/vespara-symbol-simplified\.svg"/)
+  assert.match(jsx, /<img src=\{vesparaSymbol\} alt="" className=\{styles\.brandSymbol\} \/>/)
+  assert.match(jsx, /<div className=\{styles\.brandName\}>VESPARA<\/div>/)
+  assert.match(jsx, /<div className=\{styles\.brandSubtitle\}>THE SANCTUARY<\/div>/)
+  assert.doesNotMatch(jsx, /vespara-(?:lockup|wordmark)/, "no old techno or hand-built alphabet asset may be active")
 })
 
 // -- 14. Lower-left safe-area placement remains present ----------------------
 
-test("the brand mark stays lower-left, sized within the 160-230 CSS px cinematic target, with a safe-area margin matching the skip hint's own inset", () => {
-  const rule = css.match(/\.brandMark\s*\{([^}]*)\}/)
+test("the live lockup stays lower-left at the 260-285px cinematic target with the established safe-area inset", () => {
+  const rule = css.match(/\.brandLockup\s*\{([^}]*)\}/)
   assert.ok(rule)
   assert.match(rule[1], /bottom:\s*24px/)
   assert.match(rule[1], /left:\s*32px/)
   const widthMatch = rule[1].match(/width:\s*(\d+)px/)
   assert.ok(widthMatch)
   const width = Number(widthMatch[1])
-  assert.ok(width >= 160 && width <= 230, `expected 160-230 CSS px, got ${width}`)
+  assert.ok(width >= 260 && width <= 285, `expected 260-285 CSS px, got ${width}`)
 })
 
-test("the mark is substantially larger/stronger than the previous tiny utility treatment (was 28px tall / ~0.55 opacity)", () => {
-  const rule = css.match(/\.brandMark\s*\{([^}]*)\}/)
-  assert.ok(rule)
-  assert.doesNotMatch(rule[1], /height:\s*28px/, "must no longer use the old tiny fixed height")
-  const opacityMatch = rule[1].match(/opacity:\s*([\d.]+)/)
-  assert.ok(opacityMatch)
-  assert.ok(Number(opacityMatch[1]) > 0.55, "must read stronger than the previous 0.55 opacity")
+test("uses the Traveler Recognition serif stack and production-scale type hierarchy", () => {
+  assert.match(css, /font-family:\s*"Times New Roman", Georgia, "Liberation Serif", serif/)
+  assert.match(css, /\.brandName\s*\{[^}]*font-size:\s*30px/s)
+  assert.match(css, /\.brandSubtitle\s*\{[^}]*font-size:\s*11px/s)
+  assert.match(css, /\.brandSymbol\s*\{[^}]*height:\s*52px/s)
 })
 
 test("any localized backing behind the mark is a soft gradient, not a hard-edged glowing box", () => {
@@ -70,9 +62,13 @@ test("any localized backing behind the mark is a soft gradient, not a hard-edged
 })
 
 test("the mark and its optional backing remain decorative and non-interactive", () => {
-  assert.match(jsx, /className=\{styles\.brandMark\} \/>/)
-  const rule = css.match(/\.brandMark\s*\{([^}]*)\}/)
+  assert.match(jsx, /<div className=\{styles\.brandLockup\} aria-hidden="true">/)
+  const rule = css.match(/\.brandLockup\s*\{([^}]*)\}/)
   assert.match(rule[1], /pointer-events:\s*none/)
+})
+
+test("no remote font, embedded font, base64, or new dependency supports the lockup", () => {
+  assert.doesNotMatch(jsx + "\n" + css, /@font-face|data:font|base64|https?:\/\//i)
 })
 
 // -- 8, 15 & 16. Existing intro playback/fade/skip/input/transition/reduced-motion behavior is unchanged --

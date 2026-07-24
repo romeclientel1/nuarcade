@@ -25,18 +25,16 @@ const wheelCss = readFileSync(join(HERE, "Wheel.module.css"), "utf8").replace(/\
 
 // -- 9. Startup uses the new production brand assets -------------------------
 
-// Traveler Recognition Milestone 1.2 replaced the small utility-scale
-// horizontal lockup used here with a purpose-built cinematic lockup
-// (see IntroVideo.test.js and cinematicLockup.test.js for the dedicated
-// coverage of that change) -- this test now locks the new asset.
-test("IntroVideo renders the cinematic Vespara lockup as a decorative, aria-hidden brand mark", () => {
-  assert.match(introJsx, /import vesparaLockupCinematic from "\.\.\/\.\.\/assets\/brand\/vespara-lockup-cinematic\.svg"/)
-  assert.match(introJsx, /<img src=\{vesparaLockupCinematic\} alt="" aria-hidden="true" className=\{styles\.brandMark\} \/>/)
+test("IntroVideo renders the approved symbol with a decorative live-type cinematic identity", () => {
+  assert.match(introJsx, /import vesparaSymbol from "\.\.\/\.\.\/assets\/brand\/vespara-symbol-simplified\.svg"/)
+  assert.match(introJsx, /<div className=\{styles\.brandLockup\} aria-hidden="true">/)
+  assert.match(introJsx, />VESPARA<\/div>/)
+  assert.match(introJsx, />THE SANCTUARY<\/div>/)
 })
 
 test("the brand mark is positioned as a quiet corner signature, not a full-screen splash", () => {
-  const rule = introCss.match(/\.brandMark\s*\{([^}]*)\}/)
-  assert.ok(rule, ".brandMark rule must exist")
+  const rule = introCss.match(/\.brandLockup\s*\{([^}]*)\}/)
+  assert.ok(rule, ".brandLockup rule must exist")
   assert.match(rule[1], /position:\s*absolute/)
   assert.match(rule[1], /opacity:\s*0\.\d+/, "must be a restrained, non-opaque overlay")
   assert.match(rule[1], /pointer-events:\s*none/)
