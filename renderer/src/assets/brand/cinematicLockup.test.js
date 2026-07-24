@@ -8,9 +8,10 @@
 // see brandAssets.test.js for the Brand Identity Milestone 2 inventory
 // this file intentionally does not join (it's not a general-purpose
 // asset). These tests assert this specific file is vector-only, contains
-// the doorway/beacon symbol, the VESPARA wordmark, and the "by NuArcade"
-// endorsement, and reuses the same production geometry as
-// vespara-lockup-horizontal.svg rather than a disconnected new style.
+// the doorway/beacon symbol, the VESPARA wordmark, and the world-facing
+// "THE SANCTUARY" line. The symbol/wordmark reuse the same production
+// geometry as vespara-lockup-horizontal.svg; the subordinate line uses
+// matching path-built letterforms rather than an external font.
 
 import { test } from "node:test"
 import assert from "node:assert/strict"
@@ -43,13 +44,13 @@ test("contains the recognizable nested doorway/beacon symbol (the same two-archw
   assert.match(svg, /M68,240 L68,118 L100,66 L132,118 L132,240/, "must include the inner archway path")
 })
 
-test("spells VESPARA via 7 distinct letterform paths, and BY NUARCADE via the endorsement paths", () => {
-  assert.match(svg, /aria-label="Vespara by NuArcade"/)
-  // 2 archway paths + 7 VESPARA letterform paths + 10 endorsement
-  // letterform paths (B-Y-N-U-A-R-C-A-D-E) = 19 total <path> elements,
-  // exactly matching vespara-lockup-horizontal.svg's own path count.
+test("spells VESPARA via 7 distinct letterform paths, and THE SANCTUARY via 12 subordinate paths", () => {
+  assert.match(svg, /aria-label="Vespara — The Sanctuary"/)
+  assert.doesNotMatch(svg, /by NuArcade/i)
+  // 2 archway paths + 7 VESPARA letterform paths + 12 world-identity
+  // letterform paths (T-H-E-S-A-N-C-T-U-A-R-Y) = 21 total paths.
   const pathCount = (svg.match(/<path /g) || []).length
-  assert.equal(pathCount, 19)
+  assert.equal(pathCount, 21)
 })
 
 test("is visually subordinate for the endorsement, but slightly less so than the utility lockup -- deliberately tuned for large-scale legibility, still restrained", () => {
@@ -66,14 +67,15 @@ test("uses a subtle drop-shadow filter for contrast, not a glowing box or bloom"
   assert.doesNotMatch(svg, /<rect[^>]*fill="url\(/i, "must not paint a filled/gradient backing rect inside the SVG itself (any backing lives in CSS as a page-level treatment)")
 })
 
-test("reuses vespara-lockup-horizontal.svg's exact archway, wordmark, and endorsement path geometry -- not a redrawn/disconnected new style", () => {
+test("reuses vespara-lockup-horizontal.svg's exact archway and VESPARA wordmark geometry -- not a redrawn/disconnected primary mark", () => {
   // \s before d=" so id="..." attributes (e.g. the gradient/filter ids)
   // are never mistaken for a path's d attribute.
   const extractPaths = (source) => [...source.matchAll(/\sd="([^"]+)"/g)].map(m => m[1])
   const cinematicPaths = extractPaths(svg)
   const horizontalPaths = extractPaths(horizontal)
-  assert.equal(cinematicPaths.length, horizontalPaths.length)
-  for (let i = 0; i < horizontalPaths.length; i++) {
+  assert.ok(cinematicPaths.length > horizontalPaths.length)
+  // The first two paths are the archway; the next seven spell VESPARA.
+  for (let i = 0; i < 9; i++) {
     assert.equal(cinematicPaths[i], horizontalPaths[i], `path #${i} geometry must be byte-identical to the existing production lockup`)
   }
 })

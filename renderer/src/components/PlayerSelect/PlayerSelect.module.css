@@ -235,8 +235,10 @@
   100% { background-position: 200% center; }
 }
 
-/* Traveler-recognition heading -- the display serif treatment, warm
-   cream/gold rather than the previous teal-white. */
+/* Traveler-recognition heading -- the display serif treatment keeps its
+   warm-cream fill, with a hairline Vespara-gold edge for a more resolved
+   cinematic title against the gateway sky. The fractional Chromium stroke
+   is deliberately restrained: definition, not a heavy outlined-title look. */
 .headline {
   max-width: 820px;
   font-family: 'Times New Roman', Georgia, 'Liberation Serif', serif;
@@ -244,6 +246,7 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   color: #f8f0dc;
+  -webkit-text-stroke: 0.55px rgba(214, 178, 116, 0.9);
   line-height: 1.14;
   text-align: center;
   text-shadow:

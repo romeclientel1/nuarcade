@@ -160,6 +160,14 @@ test("the selected Traveler plaque is never communicated by color alone -- outli
   assert.match(rule[1], /border-color:/)
 })
 
+test("the Traveler Recognition headline keeps its cream fill and adds only a restrained Vespara-gold hairline edge", () => {
+  const rule = css.match(/\.headline\s*\{([^}]*)\}/)
+  assert.ok(rule)
+  assert.match(rule[1], /color:\s*#f8f0dc/)
+  assert.match(rule[1], /-webkit-text-stroke:\s*0\.55px rgba\(214, 178, 116, 0\.9\)/)
+  assert.doesNotMatch(rule[1], /-webkit-text-stroke:\s*[2-9]/, "the title edge must remain thin, never cartoonishly heavy")
+})
+
 // -- 8. Background/decorative layers are aria-hidden and non-interactive ----
 
 test("the background, veil, haze, and seal are all aria-hidden and pointer-events: none", () => {
