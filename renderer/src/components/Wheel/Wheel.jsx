@@ -381,6 +381,69 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     clearTimeout(searchDebounce.current)
     searchDebounce.current = setTimeout(() => setDebouncedSearch(val), 120)
   }
+
+  // Library Console (Milestone 2.2) -- the single upper-right control that
+  // now houses the utilities previously spread across statsRow/
+  // libraryToolsGroup/utilityGroup. consoleOpen is the mouse/keyboard-
+  // driven popover state; the panel is ALSO shown whenever the pre-
+  // existing gamepad zone-0 (topMenu) focus is active, so a controller
+  // user moving focus into that zone still sees the buttons it's cycling
+  // through. Deliberately its own state, not derived from focusZone, so
+  // opening/closing it never touches the existing zone system's behavior
+  // contracts (topMenuActions, TOP_MENU_MAX, zone transitions all stay
+  // exactly as they were).
+  const [consoleOpen, setConsoleOpen] = useState(false)
+  const consoleOpenRef = useRef(false)
+  const consoleTriggerRef = useRef(null)
+  const consoleFirstItemRef = useRef(null)
+  // True whenever the panel is actually shown, for either reason above --
+  // computed here (not just near its render use) so the effects below can
+  // read it.
+  const consoleVisible = consoleOpen || focusZone === 0
+
+  // Console-local controller focus model (2.2 correction pass) -- Search
+  // was previously unreachable by controller because it isn't one of the
+  // existing topMenuActions, and that array's indices/order must never
+  // shift or be renumbered (compatibility contract). Rather than touch
+  // topMenuActions, the console owns its OWN focus index (consoleFocusIdx)
+  // while it's visible: index 0 is Search, indices 1..10 map onto the
+  // existing topMenuActions indices below (skipping 5/Home, which lives
+  // in worldNav, not the console). The gamepad handlers intercept D-pad/
+  // confirm/back BEFORE the old zone-0 branches whenever the console is
+  // visible, so those older branches are left completely intact in source
+  // (satisfying every existing index/ordering test) but simply never run
+  // while the console owns navigation.
+  const CONSOLE_ACTION_INDICES = [0, 1, 2, 3, 4, 6, 7, 8, 9, 10]
+  const CONSOLE_FOCUS_MAX = CONSOLE_ACTION_INDICES.length // Search is 0, actions are 1..10
+  const [consoleFocusIdx, setConsoleFocusIdx] = useState(0)
+  const consoleFocusIdxRef = useRef(0)
+
+  const closeConsole = useCallback(() => {
+    setConsoleOpen(false)
+    consoleTriggerRef.current?.focus()
+  }, [])
+
+  // Focus moves into the panel on open (mouse/keyboard path only -- the
+  // gamepad zone system manages its own visual focus via barFocused/
+  // consoleFocusIdx and never needs real DOM focus moved for it).
+  useEffect(() => {
+    if (consoleOpen) consoleFirstItemRef.current?.focus()
+  }, [consoleOpen])
+
+  // Whenever the console becomes visible (by either path), controller
+  // focus starts on a valid item -- Search, matching the mouse/keyboard
+  // entry point's own first-item focus above.
+  useEffect(() => {
+    if (consoleVisible) setConsoleFocusIdx(0)
+  }, [consoleVisible])
+
+  // Search still reveals and focuses the existing input -- opening it
+  // from the console (or any other future entry point) always lands
+  // keyboard input directly in the field.
+  useEffect(() => {
+    if (showSearch) searchRef.current?.focus()
+  }, [showSearch])
+
   // Pass the raw config values straight through -- useArcadeSounds is the
   // single normalization/conversion boundary (0-100 percent -> 0-1 gain
   // scale); pre-converting here would be a second, redundant conversion.
@@ -475,6 +538,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   showDetailRef.current        = showDetail
   showSettingsRef.current      = showSettings
   showSearchRef.current        = showSearch
+  consoleOpenRef.current        = consoleOpen
+  consoleFocusIdxRef.current    = consoleFocusIdx
   currentDestinationRef.current = currentDestination
   showMediaManagerRef.current  = showMediaManager
   showVirtualKeyboardRef.current = showVirtualKeyboard
@@ -695,6 +760,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
         if (currentDestination === "stats") back()
         setShowSort(false)
         setShowAchievements(false); setShowCollections(false)
+        if (consoleOpenRef.current) closeConsole()
         // search removed
       }
 
@@ -805,6 +871,13 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     left: () => {
       if (showRetroArchPopupRef.current) { if (retroArchChoiceRef.current !== 0) { sounds.navigate(); setRetroArchChoice(0) } return }
       if (showExitPopupRef.current) { if (exitChoiceRef.current !== 0) { sounds.navigate(); setExitChoice(0) } return }
+      // Console-local focus (2.2 correction) -- while the Library Console
+      // is visible (mouse-opened, or the pre-existing gamepad zone-0
+      // focus), D-pad left/right moves consoleFocusIdx, never topMenuIdx.
+      // The old z===0 branch below is left completely intact but
+      // unreachable in this state, since it's the same condition this
+      // check already covers.
+      if (consoleOpenRef.current || focusZoneRef.current === 0) { setConsoleFocusIdx(i => Math.max(0, i - 1)); sounds.navigate(); return }
       const z = focusZoneRef.current
       if (z === 0) { setTopMenuIdx(i => Math.max(0, i - 1)); sounds.navigate(); return }
       if (z === 1) { const tabs = visibleTabsRef.current; const newIdx = tabFocusIdxRef.current <= 0 ? tabs.length - 1 : tabFocusIdxRef.current - 1; setTabFocusIdx(newIdx); setActiveCategory(tabs[newIdx]); sounds.navigate(); return }
@@ -815,6 +888,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     right: () => {
       if (showRetroArchPopupRef.current) { if (retroArchChoiceRef.current !== 1) { sounds.navigate(); setRetroArchChoice(1) } return }
       if (showExitPopupRef.current) { if (exitChoiceRef.current !== 1) { sounds.navigate(); setExitChoice(1) } return }
+      if (consoleOpenRef.current || focusZoneRef.current === 0) { setConsoleFocusIdx(i => Math.min(CONSOLE_FOCUS_MAX, i + 1)); sounds.navigate(); return }
       const z = focusZoneRef.current
       if (z === 0) { setTopMenuIdx(i => Math.min(TOP_MENU_MAX, i + 1)); sounds.navigate(); return }
       if (z === 1) { const tabs = visibleTabsRef.current; const newIdx = tabFocusIdxRef.current >= tabs.length - 1 ? 0 : tabFocusIdxRef.current + 1; setTabFocusIdx(newIdx); setActiveCategory(tabs[newIdx]); sounds.navigate(); return }
@@ -824,6 +898,13 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     },
     up: () => {
       if (showExitPopupRef.current) return
+      // Documented boundary (2.2 correction) -- Up while the console is
+      // visible is a deliberate no-op, not a silent trap: the console is
+      // already the top-level header, exactly like the pre-existing
+      // zone-0 (topMenu) had no further "up" target either. Left/Right/
+      // Confirm/Back all remain fully live; Down (below) is the live
+      // spatial exit.
+      if (consoleOpenRef.current || focusZoneRef.current === 0) return
       const z = focusZoneRef.current
       if (z === 4) { setFocusZone(3); sounds.navigate(); return }  // hintBar -> launch
       if (z === 3) { setFocusZone(2); sounds.navigate(); return }  // launch -> wheel
@@ -832,6 +913,12 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     },
     down: () => {
       if (showExitPopupRef.current) return
+      // Down exits the console the same way the pre-existing zone-0 ->
+      // tabs transition did -- close the popover (if mouse-opened) and
+      // land in the category/tab zone, which already shows visible
+      // controller focus via its own existing
+      // `focusZone === 1 && ...catFocused` condition (unchanged).
+      if (consoleOpenRef.current || focusZoneRef.current === 0) { setConsoleOpen(false); setFocusZone(1); sounds.navigate(); return }
       const z = focusZoneRef.current
       if (z === 0) { setFocusZone(1); sounds.navigate(); return }  // topMenu -> tabs
       if (z === 1) { setFocusZone(2); sounds.navigate(); return }  // tabs -> wheel
@@ -853,6 +940,16 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       if (showExitPopupRef.current) {
         if (exitChoiceRef.current === 0) { sounds.select(); window.nuarcade?.quit?.() }
         else { sounds.back(); setShowExitPopup(false); setExitChoice(1) }
+        return
+      }
+      if (consoleOpenRef.current || focusZoneRef.current === 0) {
+        // consoleFocusIdx 0 is Search -- reveal/focus it exactly like the
+        // mouse-driven consoleSearchItem button does. Every other index
+        // maps onto the existing topMenuActions array via
+        // CONSOLE_ACTION_INDICES, so the same unchanged handlers fire.
+        if (consoleFocusIdxRef.current === 0) { setShowSearch(true); setConsoleOpen(false); return }
+        const actionIdx = CONSOLE_ACTION_INDICES[consoleFocusIdxRef.current - 1]
+        topMenuActions[actionIdx]?.()
         return
       }
       const z = focusZoneRef.current
@@ -877,6 +974,9 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       if (showSearchRef.current)      { sounds.back(); setShowSearch(false); setShowVirtualKeyboard(false); setSearch(""); setDebouncedSearch(""); return }
       if (currentDestinationRef.current === "help") { back(); return }
       if (showMediaManagerRef.current){ setShowMediaManager(false); return }
+      // Mouse-opened console: close it and restore focus to its trigger
+      // predictably, same as Escape/backdrop-click.
+      if (consoleOpenRef.current)     { closeConsole(); return }
       // If in any zone other than wheel, return to wheel
       if (focusZoneRef.current !== 2) { setFocusZone(2); return }
     },
@@ -1023,6 +1123,22 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
         <div className={styles.placeIdentity}>
           <div className={styles.placeName}>{t("wheel.libraryPlaceName")}</div>
           <div className={styles.placeSubtitle}>{t("wheel.libraryPlaceSubtitle")}</div>
+          <div className={styles.collectionStatus} aria-hidden="true">
+            {stats?.devMode && <span className={styles.devBadge}>DEV MODE</span>}
+            {attractMode && <span className={styles.attractBadge}>ATTRACT</span>}
+            {activeCategory.startsWith("col_") && collections[activeCategory] && (
+              <span className={styles.collectionBadge}>
+                [] {collections[activeCategory].name}
+              </span>
+            )}
+            {!activeCategory.startsWith("col_") && activeCategory !== "All" && activeCategory !== "Recent" && activeCategory !== "Favorites" && (
+              <span className={styles.filterBadge}>{activeCategory}</span>
+            )}
+            <span className={styles.gameCount}>{filteredGames.length} game{filteredGames.length !== 1 ? "s" : ""}</span>
+            {newGameCount > 0 && (
+              <span className={styles.newBadge}>+{newGameCount} new</span>
+            )}
+          </div>
         </div>
         <div className={styles.headerRight}>
           {showSearch ? (
@@ -1074,71 +1190,88 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
               }}>x</button>
             </div>
           ) : (
-            <div className={styles.statsRow}>
-              {stats?.devMode && <span className={styles.devBadge}>DEV MODE</span>}
-              {attractMode && <span className={styles.attractBadge}>ATTRACT</span>}
-              {activeCategory.startsWith("col_") && collections[activeCategory] && (
-                <span className={styles.collectionBadge}>
-                  [] {collections[activeCategory].name}
-                </span>
-              )}
-              {!activeCategory.startsWith("col_") && activeCategory !== "All" && activeCategory !== "Recent" && activeCategory !== "Favorites" && (
-                <span className={styles.filterBadge}>{activeCategory}</span>
-              )}
-              <span className={styles.gameCount}>{filteredGames.length} game{filteredGames.length !== 1 ? "s" : ""}</span>
-              {newGameCount > 0 && (
-                <span className={styles.newBadge}>+{newGameCount} new</span>
-              )}
-              <div className={styles.libraryToolsGroup}>
-                <button className={(sortBy !== "default" ? styles.sortActive : styles.sortBtn) + (focusZone === 0 && topMenuIdx === 0 ? " " + styles.barFocused : "")} onClick={() => setShowSort(s => !s)}>Sort</button>
-                <button className={styles.randBtn + (focusZone === 0 && topMenuIdx === 1 ? " " + styles.barFocused : "")} onClick={() => {
-                  if (filteredGames.length > 0) {
-                    setSelectedIndex(Math.floor(Math.random() * filteredGames.length))
-                    sounds.navigate()
-                  }
-                }} title={t("wheel.randomTitle")}>RND</button>
-                <button className={styles.colBtn + (focusZone === 0 && topMenuIdx === 2 ? " " + styles.barFocused : "")} onClick={() => setShowCollections(true)} title={t("wheel.collectionsTitle")}>Sets</button>
-                <button className={styles.statsBtn + (focusZone === 0 && topMenuIdx === 3 ? " " + styles.barFocused : "")} onClick={() => navigateTo("stats")} title={t("wheel.statsTitle")}>Stats</button>
-                <button className={styles.achieveBtn + (focusZone === 0 && topMenuIdx === 4 ? " " + styles.barFocused : "")} onClick={() => setShowAchievements(true)} title={t("wheel.achievementsTitle")}>Ach.</button>
-              </div>
-              <div className={styles.utilityGroup}>
-                {activeProfile && (
-                  <button
-                    className={styles.settingsBtn}
-                    style={{ borderColor: activeProfile.color + '44', color: activeProfile.color }}
-                    onClick={onSwitchPlayer}
-                    title={t("wheel.switchPlayerTitle")}
-                  >
-                    {activeProfile.name[0]} {activeProfile.name}
-                  </button>
-                )}
-                {!activeProfile && onSwitchPlayer && (
-                  <button className={styles.settingsBtn + (focusZone === 0 && topMenuIdx === 6 ? " " + styles.barFocused : "")} onClick={onSwitchPlayer} title={t("wheel.selectPlayerTitle")}>
-                    {t("wheel.guestCta")}
-                  </button>
-                )}
-                <button className={styles.mediaBtn + (focusZone === 0 && topMenuIdx === 7 ? " " + styles.barFocused : "")} onClick={() => setShowMediaManager(true)}>{t("wheel.navMedia")}</button>
-                <button className={styles.settingsBtn + (focusZone === 0 && topMenuIdx === 8 ? " " + styles.barFocused : "")} onClick={() => setShowSettings(true)}>{t("wheel.navSettings")}</button>
-                <button className={styles.helpBtn + (focusZone === 0 && topMenuIdx === 9 ? " " + styles.barFocused : "")} onClick={() => navigateTo("help")}>?</button>
+            <div className={styles.consoleWrap}>
+              <button
+                ref={consoleTriggerRef}
+                className={styles.consoleTrigger + (consoleVisible ? " " + styles.consoleTriggerActive : "")}
+                onClick={() => setConsoleOpen(v => !v)}
+                aria-haspopup="true"
+                aria-expanded={consoleVisible}
+                aria-controls="library-console-panel"
+                title={updateAvailable ? t("wheel.libraryConsoleUpdateTitle") : t("wheel.libraryConsoleTitle")}
+                aria-label={updateAvailable ? t("wheel.libraryConsoleUpdateTitle") : undefined}
+              >
+                {t("wheel.libraryConsole")}
                 {updateAvailable && (
-                  <button
-                    className={styles.settingsBtn}
-                    style={{ borderColor: 'rgba(255,170,0,0.5)', color: '#ffaa00' }}
-                    onClick={handleUpdateNow}
-                    disabled={installing}
-                    title={installing ? t("settings.installingEllipsis") : t("settings.updateAvailableTooltip", { version: remoteVersion })}
-                  >
-                    {installing ? (progress != null ? t("settings.installing", { progress }) : t("settings.installingEllipsis")) : t("settings.updateNow")}
-                  </button>
+                  <span className={styles.consoleUpdateBadge} aria-hidden="true">{t("wheel.updateBadge")}</span>
                 )}
-                <button
-                  className={styles.exitBtn + (focusZone === 0 && topMenuIdx === 10 ? " " + styles.barFocused : "")}
-                  onClick={() => setShowExitPopup(true)}
-                  title={t("wheel.exitTitle")}
-                >
-                  {t("wheel.exit")}
-                </button>
-              </div>
+              </button>
+              {consoleVisible && (
+                <div className={styles.consoleBackdrop} onClick={closeConsole} aria-hidden="true" />
+              )}
+              {consoleVisible && (
+                <div id="library-console-panel" role="menu" className={styles.consolePanel}>
+                  <button
+                    ref={consoleFirstItemRef}
+                    className={styles.consoleSearchItem + (consoleVisible && consoleFocusIdx === 0 ? " " + styles.barFocused : "")}
+                    onClick={() => { setShowSearch(true); setConsoleOpen(false) }}
+                  >
+                    {t("wheel.searchAction")}
+                  </button>
+                  <div className={styles.consoleDivider} aria-hidden="true" />
+                  <div className={styles.libraryToolsGroup}>
+                    <button className={(sortBy !== "default" ? styles.sortActive : styles.sortBtn) + ((focusZone === 0 && topMenuIdx === 0) || (consoleVisible && consoleFocusIdx === 1) ? " " + styles.barFocused : "")} onClick={() => setShowSort(s => !s)}>Sort</button>
+                    <button className={styles.randBtn + ((focusZone === 0 && topMenuIdx === 1) || (consoleVisible && consoleFocusIdx === 2) ? " " + styles.barFocused : "")} onClick={() => {
+                      if (filteredGames.length > 0) {
+                        setSelectedIndex(Math.floor(Math.random() * filteredGames.length))
+                        sounds.navigate()
+                      }
+                    }} title={t("wheel.randomTitle")}>RND</button>
+                    <button className={styles.colBtn + ((focusZone === 0 && topMenuIdx === 2) || (consoleVisible && consoleFocusIdx === 3) ? " " + styles.barFocused : "")} onClick={() => setShowCollections(true)} title={t("wheel.collectionsTitle")}>Sets</button>
+                    <button className={styles.statsBtn + ((focusZone === 0 && topMenuIdx === 3) || (consoleVisible && consoleFocusIdx === 4) ? " " + styles.barFocused : "")} onClick={() => navigateTo("stats")} title={t("wheel.statsTitle")}>Stats</button>
+                    <button className={styles.achieveBtn + ((focusZone === 0 && topMenuIdx === 4) || (consoleVisible && consoleFocusIdx === 5) ? " " + styles.barFocused : "")} onClick={() => setShowAchievements(true)} title={t("wheel.achievementsTitle")}>Ach.</button>
+                  </div>
+                  <div className={styles.consoleDivider} aria-hidden="true" />
+                  <div className={styles.utilityGroup}>
+                    {activeProfile && (
+                      <button
+                        className={styles.settingsBtn}
+                        style={{ borderColor: activeProfile.color + '44', color: activeProfile.color }}
+                        onClick={onSwitchPlayer}
+                        title={t("wheel.switchPlayerTitle")}
+                      >
+                        {activeProfile.name[0]} {activeProfile.name}
+                      </button>
+                    )}
+                    {!activeProfile && onSwitchPlayer && (
+                      <button className={styles.settingsBtn + ((focusZone === 0 && topMenuIdx === 6) || (consoleVisible && consoleFocusIdx === 6) ? " " + styles.barFocused : "")} onClick={onSwitchPlayer} title={t("wheel.selectPlayerTitle")}>
+                        {t("wheel.guestCta")}
+                      </button>
+                    )}
+                    <button className={styles.mediaBtn + ((focusZone === 0 && topMenuIdx === 7) || (consoleVisible && consoleFocusIdx === 7) ? " " + styles.barFocused : "")} onClick={() => setShowMediaManager(true)}>{t("wheel.navMedia")}</button>
+                    <button className={styles.settingsBtn + ((focusZone === 0 && topMenuIdx === 8) || (consoleVisible && consoleFocusIdx === 8) ? " " + styles.barFocused : "")} onClick={() => setShowSettings(true)}>{t("wheel.navSettings")}</button>
+                    <button className={styles.helpBtn + ((focusZone === 0 && topMenuIdx === 9) || (consoleVisible && consoleFocusIdx === 9) ? " " + styles.barFocused : "")} onClick={() => navigateTo("help")}>?</button>
+                    {updateAvailable && (
+                      <button
+                        className={styles.settingsBtn}
+                        style={{ borderColor: 'rgba(255,170,0,0.5)', color: '#ffaa00' }}
+                        onClick={handleUpdateNow}
+                        disabled={installing}
+                        title={installing ? t("settings.installingEllipsis") : t("settings.updateAvailableTooltip", { version: remoteVersion })}
+                      >
+                        {installing ? (progress != null ? t("settings.installing", { progress }) : t("settings.installingEllipsis")) : t("settings.updateNow")}
+                      </button>
+                    )}
+                    <button
+                      className={styles.exitBtn + ((focusZone === 0 && topMenuIdx === 10) || (consoleVisible && consoleFocusIdx === 10) ? " " + styles.barFocused : "")}
+                      onClick={() => setShowExitPopup(true)}
+                      title={t("wheel.exitTitle")}
+                    >
+                      {t("wheel.exit")}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

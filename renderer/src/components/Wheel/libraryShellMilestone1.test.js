@@ -82,7 +82,10 @@ test("showSettings/showMediaManager state and their mount points are unchanged",
 })
 
 test("Settings/Media/Player/Help/Exit controls are grouped in the new utilityGroup wrapper, still present and dispatching unchanged", () => {
-  const groupBlock = jsx.slice(jsx.indexOf("<div className={styles.utilityGroup}>"), jsx.indexOf("</div>\n            </div>\n          )}"))
+  // Milestone 2.2 moved utilityGroup inside the Library Console panel --
+  // the wrapper class, its buttons, and their handlers are unchanged,
+  // only the surrounding container (statsRow -> consolePanel) changed.
+  const groupBlock = jsx.slice(jsx.indexOf("<div className={styles.utilityGroup}>"), jsx.indexOf("</div>\n                </div>\n              )}"))
   assert.match(groupBlock, /onClick=\{onSwitchPlayer\}/)
   assert.match(groupBlock, /onClick=\{\(\) => setShowMediaManager\(true\)\}/)
   assert.match(groupBlock, /onClick=\{\(\) => setShowSettings\(true\)\}/)
@@ -91,7 +94,10 @@ test("Settings/Media/Player/Help/Exit controls are grouped in the new utilityGro
 })
 
 test("Sort/Random/Sets/Stats/Achievements are grouped in the new libraryToolsGroup wrapper, dispatching unchanged", () => {
-  const groupBlock = jsx.slice(jsx.indexOf("<div className={styles.libraryToolsGroup}>"), jsx.indexOf("</div>\n              <div className={styles.utilityGroup}>"))
+  // Milestone 2.2: libraryToolsGroup now sits inside the same console
+  // panel as utilityGroup, separated by a consoleDivider instead of a
+  // border-right -- still the same wrapper class, buttons, and handlers.
+  const groupBlock = jsx.slice(jsx.indexOf("<div className={styles.libraryToolsGroup}>"), jsx.indexOf("</div>\n                  <div className={styles.consoleDivider}"))
   assert.match(groupBlock, /onClick=\{\(\) => setShowSort\(s => !s\)\}/)
   assert.match(groupBlock, /onClick=\{\(\) => setShowCollections\(true\)\}/)
   assert.match(groupBlock, /onClick=\{\(\) => navigateTo\("stats"\)\}/)
@@ -114,7 +120,11 @@ test("the new wrapper classes (worldNav, placeIdentity, libraryToolsGroup) do no
 
 test(".utilityGroup's hover/focus-within opacity transition is included in the existing reduced-motion transition-removal block", () => {
   const reducedBlock = css.slice(css.indexOf("@media (prefers-reduced-motion: reduce) {\n  /* Outline/glow stay"))
-  assert.match(reducedBlock, /\.utilityGroup\s*\{/)
+  // .utilityGroup now shares its transition-removal rule with the
+  // Library Console's own new controls (Milestone 2.2) -- it no longer
+  // needs to be the last selector before the declaration block, just
+  // present as one of the selectors in that shared rule.
+  assert.match(reducedBlock, /\.utilityGroup\s*[,{]/)
 })
 
 test("reduced-motion overrides still never remove outline or box-shadow (focus must stay visible)", () => {

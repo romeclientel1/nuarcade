@@ -158,8 +158,6 @@
   flex-wrap: wrap;
   row-gap: 6px;
   gap: 10px;
-  padding-right: 12px;
-  border-right: 1px solid rgba(214, 178, 116, 0.14);
 }
 
 /* E. Compatibility utilities -- Switch Player/Media/Settings/Help/Exit
@@ -191,17 +189,161 @@
   letter-spacing: 0.1em;
 }
 
-/* Its own quiet pill (not bare text) so it reads as a distinct chip rather
-   than a stray number wedged against the centered Library title beside it. */
+/* Milestone 2.2: relocated beneath the place identity as quiet collection
+   status, not a utility-cluster pill -- plain text, no border/background,
+   so it reads as ambient environmental information rather than an
+   interactive control. */
 .gameCount {
   color: rgba(232, 210, 165, 0.55);
-  padding: 3px 10px;
-  border: 1px solid rgba(214, 178, 116, 0.16);
-  border-radius: 10px;
-  background: rgba(214, 178, 116, 0.05);
   white-space: nowrap;
 }
 .hiddenCount { color: rgba(255,255,255,0.2); }
+
+/* Collection status -- game count and the other read-only badges
+   (dev/attract/collection/filter/new), gathered under the place identity
+   instead of crowding the upper-right utility cluster. Decorative/inert:
+   aria-hidden and pointer-events: none, matching bgGrid/libraryHorizon/
+   bgVignette's own treatment. */
+.collectionStatus {
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  font-size: 10px;
+  font-family: 'Share Tech Mono', monospace;
+  letter-spacing: 0.06em;
+  pointer-events: none;
+}
+
+/* -- Library Console (Milestone 2.2) ---------------------------------
+   Replaces the exposed statsRow/libraryToolsGroup/utilityGroup cluster
+   with a single restrained upper-right control. libraryToolsGroup and
+   utilityGroup keep their own class names/layout below -- only their
+   container changed, not their internal buttons, handlers, or focus
+   treatment. */
+.consoleWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.consoleTrigger {
+  position: relative;
+  padding: 8px 22px;
+  border: 1px solid rgba(214, 178, 116, 0.22);
+  border-radius: 8px;
+  background: linear-gradient(160deg, rgba(10, 18, 18, 0.75), rgba(6, 12, 12, 0.85));
+  color: rgba(232, 220, 195, 0.75);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  z-index: 41;
+  transition: border-color 0.18s, color 0.18s, background-color 0.18s, box-shadow 0.18s;
+}
+
+/* Quiet architectural bracket framing -- not an icon, not a kebab/hamburger. */
+.consoleTrigger::before,
+.consoleTrigger::after {
+  content: '';
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  width: 5px;
+  border-color: rgba(214, 178, 116, 0.35);
+}
+.consoleTrigger::before { left: 5px; border-left: 1px solid; }
+.consoleTrigger::after  { right: 5px; border-right: 1px solid; }
+
+.consoleTrigger:hover {
+  border-color: rgba(214, 178, 116, 0.4);
+  color: rgba(232, 200, 140, 0.9);
+}
+
+.consoleTriggerActive {
+  border-color: #d6b274;
+  color: #f3e2b8;
+  background: rgba(214, 178, 116, 0.1);
+  box-shadow: 0 0 18px rgba(214, 178, 116, 0.16);
+}
+
+/* Update indicator -- a compact, static text marker (never color alone,
+   never animated) so the trigger keeps surfacing "an update is waiting"
+   without reintroducing a second header button. The button's own
+   title/aria-label (set conditionally in JSX) carries the real accessible
+   description; this span is aria-hidden and purely the visual echo. */
+.consoleUpdateBadge {
+  margin-left: 7px;
+  padding: 1px 5px;
+  border: 1px solid rgba(214, 178, 116, 0.45);
+  border-radius: 3px;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #f3e2b8;
+  background: rgba(214, 178, 116, 0.16);
+  vertical-align: middle;
+}
+
+.consoleBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  background: transparent;
+}
+
+.consolePanel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 40;
+  min-width: 260px;
+  max-width: min(360px, 90vw);
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(214, 178, 116, 0.24);
+  background: linear-gradient(165deg, rgba(8, 15, 15, 0.96), rgba(4, 9, 10, 0.98));
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(214, 178, 116, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: consolePanelEnter var(--motion-panel, 220ms) var(--ease-standard, ease);
+}
+
+@keyframes consolePanelEnter {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.consoleSearchItem {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid rgba(214, 178, 116, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  color: rgba(232, 220, 195, 0.85);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, background-color 0.15s, color 0.15s;
+}
+
+.consoleSearchItem:hover {
+  border-color: rgba(214, 178, 116, 0.32);
+  background: rgba(214, 178, 116, 0.05);
+}
+
+.consoleDivider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(214, 178, 116, 0.16), transparent);
+}
 
 /* C. Primary browsing -- categories are the Library's main navigation
    surface, given a touch more presence (a warm underline wash) than a
@@ -1169,7 +1311,9 @@
 .randBtn:focus-visible,
 .colBtn:focus-visible,
 .statsBtn:focus-visible,
-.achieveBtn:focus-visible {
+.achieveBtn:focus-visible,
+.consoleTrigger:focus-visible,
+.consoleSearchItem:focus-visible {
   outline: 2px solid #00ffff;
   outline-offset: 2px;
   box-shadow: 0 0 10px rgba(0, 255, 255, 0.6), 0 0 20px rgba(0, 255, 255, 0.3);
@@ -1199,8 +1343,13 @@
   .colBtn,
   .statsBtn,
   .achieveBtn,
-  .utilityGroup {
+  .utilityGroup,
+  .consoleTrigger,
+  .consoleSearchItem {
     transition: none;
+  }
+  .consolePanel {
+    animation: none;
   }
 }
 
