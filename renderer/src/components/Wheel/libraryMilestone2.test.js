@@ -120,20 +120,23 @@ test("reduced-motion overrides in GameCard.module.css never remove outline or bo
   }
 })
 
-// -- 8. Background video A/B crossfade logic remains unchanged ---------------
+// -- 8. Archive View preserves and hardens the A/B crossfade lifecycle -------
 
-test("the background video A/B crossfade effect (load/play swap on bgActive) is untouched", () => {
-  assert.match(wheelJsx, /if \(bgActive === 'a'\) \{\s*setBgVideoB\(videoPath\)/)
-  assert.match(wheelJsx, /bgVideoBRef\.current\.load\(\); bgVideoBRef\.current\.play\(\)\.catch\(\(\) => \{\}\)/)
-  assert.match(wheelJsx, /setBgVideoA\(videoPath\)/)
-  assert.match(wheelJsx, /bgVideoARef\.current\.load\(\); bgVideoARef\.current\.play\(\)\.catch\(\(\) => \{\}\)/)
+test("the dual video refs/states remain and selection assigns only the inactive Archive View slot", () => {
+  assert.match(wheelJsx, /const bgVideoARef = useRef\(null\)/)
+  assert.match(wheelJsx, /const bgVideoBRef = useRef\(null\)/)
+  assert.match(wheelJsx, /const incomingSlot = activeSlot === 'a' \? 'b' : 'a'/)
+  assert.match(wheelJsx, /if \(incomingSlot === 'a'\) setBgVideoA\(incoming\)\s*else setBgVideoB\(incoming\)/)
 })
 
-test("background video visual treatment (blur/brightness/saturate) was restyled without touching the JSX video elements' src/loop/playsInline/autoPlay props", () => {
-  assert.match(wheelJsx, /<video\s*\n\s*ref=\{bgVideoARef\}\s*\n\s*className=\{`\$\{styles\.bgVideo\} \$\{bgActive !== 'a' \? styles\.bgVideoHidden : ''\}`\}\s*\n\s*src=\{bgVideoA\}\s*\n\s*loop\s*\n\s*playsInline\s*\n\s*autoPlay/)
-  const block = wheelCss.match(/\.bgVideo\s*\{([^}]*)\}/)
+test("video presentation is framed, cover-fit, restrained, and keeps loop/playsInline/autoPlay", () => {
+  assert.match(wheelJsx, /<video\s*\n\s*ref=\{bgVideoARef\}[\s\S]*?src=\{bgVideoA\.source\}[\s\S]*?loop\s*\n\s*playsInline\s*\n\s*autoPlay/)
+  const block = wheelCss.match(/\.archiveVideo\s*\{([^}]*)\}/)
   assert.ok(block)
-  assert.match(block[1], /filter:/)
+  assert.match(block[1], /position:\s*absolute/)
+  assert.match(block[1], /object-fit:\s*cover/)
+  assert.match(block[1], /filter:\s*saturate\(0\.92\) brightness\(0\.92\) contrast\(1\.02\)/)
+  assert.doesNotMatch(wheelCss, /\.bgVideo\s*\{|\.bgVideoHidden\s*\{/)
 })
 
 // -- 9. Selected-game launch and secondary action handlers unchanged --------

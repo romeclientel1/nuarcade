@@ -55,19 +55,19 @@ test("the concept shell reserves a brighter left collection wall and preserves t
   assert.match(cardCss, /\.card\.center \.title\s*\{[^}]*"Times New Roman", Georgia, "Liberation Serif", serif/s)
 })
 
-test("Milestone A keeps the existing gameplay video lifecycle while making the residence primary", () => {
-  assert.match(jsx, /ref=\{bgVideoARef\}[\s\S]*?src=\{bgVideoA\}[\s\S]*?loop[\s\S]*?playsInline[\s\S]*?autoPlay/)
-  assert.match(jsx, /ref=\{bgVideoBRef\}[\s\S]*?src=\{bgVideoB\}[\s\S]*?loop[\s\S]*?playsInline[\s\S]*?autoPlay/)
-  assert.match(css, /\.stage \.bgVideo\s*\{[^}]*opacity:\s*0\.02[^}]*filter:\s*brightness\(0\.86\) saturate\(0\.68\)/s)
-  assert.doesNotMatch(css.match(/\.stage \.bgVideo\s*\{[^}]*\}/s)?.[0] || "", /blur|mix-blend-mode/)
-  assert.match(css, /\.stage \.bgVideo\.bgVideoHidden\s*\{[^}]*opacity:\s*0/s)
+test("Milestone B preserves the A/B lifecycle while removing fullscreen video treatment", () => {
+  assert.match(jsx, /ref=\{bgVideoARef\}[\s\S]*?src=\{bgVideoA\.source\}[\s\S]*?loop[\s\S]*?playsInline[\s\S]*?autoPlay/)
+  assert.match(jsx, /ref=\{bgVideoBRef\}[\s\S]*?src=\{bgVideoB\.source\}[\s\S]*?loop[\s\S]*?playsInline[\s\S]*?autoPlay/)
+  assert.doesNotMatch(css, /\.stage \.bgVideo|\.bgVideoHidden/)
 })
 
-test("the right-hand frame is a dormant live-DOM reservation, never another video surface", () => {
-  assert.match(jsx, /<aside className=\{styles\.previewReservation\} aria-label=\{t\("wheel\.previewTitle"\)\}>/)
-  assert.match(jsx, /const previewStill = currentArtwork\?\.hero \|\| currentArtwork\?\.capsule \|\| currentArtwork\?\.logo \|\| null/)
+test("the approved right-hand frame now owns the live presentation-only video surface", () => {
+  assert.match(jsx, /<aside className=\{styles\.previewReservation\} aria-hidden="true">/)
+  assert.match(jsx, /const previewStill =\s*currentArtwork\?\.hero \|\|\s*currentArtwork\?\.screenshot \|\|\s*current\?\.snapPath \|\|\s*currentArtwork\?\.capsule \|\|\s*current\?\.boxArtPath \|\|\s*currentArtwork\?\.logo \|\|/s)
   const previewMarkup = jsx.slice(jsx.indexOf("<aside className={styles.previewReservation}"), jsx.indexOf("</aside>", jsx.indexOf("<aside className={styles.previewReservation}")))
-  assert.doesNotMatch(previewMarkup, /<video|bgVideo|autoPlay|playsInline/)
+  assert.match(previewMarkup, /<video[\s\S]*?styles\.archiveVideo[\s\S]*?autoPlay/)
+  assert.doesNotMatch(previewMarkup, /controls=/)
+  assert.equal((previewMarkup.match(/tabIndex=\{-1\}/g) || []).length, 2)
   assert.match(css, /\.previewReservation\s*\{[^}]*right:\s*clamp\([^}]*width:\s*clamp\(390px,\s*34vw,\s*560px\)/s)
 })
 

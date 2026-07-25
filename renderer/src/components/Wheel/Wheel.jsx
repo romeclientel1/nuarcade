@@ -41,6 +41,8 @@ import { shouldConsumeRestoration, resolveLibraryRestoration } from "../../launc
 
 const CATEGORIES = ["All", "Favorites", "Recent", "Arcade", "MAME", "Retro", "Racing", "Fighting", "Shooter", "Rhythm", "Flying", "Sports", "N64", "PS1", "PSP", "Dreamcast", "Model2", "Model3", "PS3", "Xbox360", "GCWii", "WiiU", "PS2", "Switch", "Pinball", "PC"]
 const ATTRACT_TIMEOUT = 120000
+const ARCHIVE_VIDEO_FADE_MS = 600
+const ARCHIVE_SELECTION_SETTLE_MS = 100
 
 function sortGames(games, sortBy) {
   const sorted = [...games]
@@ -360,13 +362,123 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const [exitConfirm, setExitConfirm] = useState(false)
   const exitConfirmTimer = useRef(null)
 
-  // Background video -- A/B crossfade
+  // Archive View video -- A/B crossfade. Each slot carries the request that
+  // assigned its source so late media events cannot take ownership after a
+  // faster selection has superseded them.
   const bgVideoARef = useRef(null)
   const bgVideoBRef = useRef(null)
   const [bgVideoA, setBgVideoA] = useState(null)
   const [bgVideoB, setBgVideoB] = useState(null)
-  const [bgActive, setBgActive] = useState('a') // which slot is visible
+  const [bgActive, setBgActive] = useState(null)
+  const bgActiveRef = useRef(null)
   const bgLastId = useRef(null)
+  const bgRequestIdRef = useRef(0)
+  const bgPendingRef = useRef(null)
+  const bgSelectionTimerRef = useRef(null)
+  const bgReleaseTimerRef = useRef(null)
+  const bgVideoVolumeRef = useRef(0.35)
+
+  const releaseArchiveVideoSlot = useCallback((slot, clearState = true) => {
+    const ref = slot === 'a' ? bgVideoARef : bgVideoBRef
+    const element = ref.current
+    if (element) {
+      element.pause()
+      element.removeAttribute('src')
+      element.load()
+    }
+    if (clearState) {
+      if (slot === 'a') setBgVideoA(null)
+      else setBgVideoB(null)
+    }
+  }, [])
+
+  const releaseAllArchiveVideo = useCallback((clearState = true) => {
+    if (bgReleaseTimerRef.current) {
+      clearTimeout(bgReleaseTimerRef.current)
+      bgReleaseTimerRef.current = null
+    }
+    releaseArchiveVideoSlot('a', clearState)
+    releaseArchiveVideoSlot('b', clearState)
+  }, [releaseArchiveVideoSlot])
+
+  const handleArchiveVideoError = useCallback((slot, requestId) => {
+    const pending = bgPendingRef.current
+
+    // The selected game's incoming source failed. Invalidate that request
+    // once, release the previous game's video too, and reveal the selected
+    // game's live artwork fallback rather than retaining the wrong memory.
+    if (pending?.slot === slot && pending.requestId === requestId) {
+      bgRequestIdRef.current += 1
+      bgPendingRef.current = null
+      bgActiveRef.current = null
+      setBgActive(null)
+      releaseAllArchiveVideo()
+      return
+    }
+
+    // An already-active source can still fail later. Only clear it if the
+    // event belongs to the currently displayed request; stale slot events
+    // are ignored and cannot disturb a newer selection.
+    const slotState = slot === 'a' ? bgVideoA : bgVideoB
+    if (
+      bgActiveRef.current === slot &&
+      slotState?.requestId === requestId
+    ) {
+      bgActiveRef.current = null
+      setBgActive(null)
+      releaseArchiveVideoSlot(slot)
+    }
+  }, [bgVideoA, bgVideoB, releaseAllArchiveVideo, releaseArchiveVideoSlot])
+
+  const handleArchiveVideoReady = useCallback((slot, requestId, source) => {
+    const pending = bgPendingRef.current
+    if (
+      !pending ||
+      pending.slot !== slot ||
+      pending.requestId !== requestId ||
+      pending.source !== source ||
+      pending.playRequested
+    ) return
+
+    const ref = slot === 'a' ? bgVideoARef : bgVideoBRef
+    const element = ref.current
+    if (!element || element.dataset.archiveRequest !== String(requestId)) return
+
+    pending.playRequested = true
+    element.volume = bgVideoVolumeRef.current
+
+    Promise.resolve(element.play()).then(() => {
+      const latest = bgPendingRef.current
+      if (
+        !latest ||
+        latest.slot !== slot ||
+        latest.requestId !== requestId ||
+        latest.source !== source ||
+        element.dataset.archiveRequest !== String(requestId)
+      ) {
+        // A rapid selection replaced this request while play() was pending.
+        // Do not pause a newer source that may now reuse the same DOM slot.
+        if (element.dataset.archiveRequest === String(requestId)) element.pause()
+        return
+      }
+
+      const outgoing = bgActiveRef.current
+      bgPendingRef.current = null
+      bgActiveRef.current = slot
+      setBgActive(slot)
+
+      if (bgReleaseTimerRef.current) clearTimeout(bgReleaseTimerRef.current)
+      if (outgoing && outgoing !== slot) {
+        bgReleaseTimerRef.current = setTimeout(() => {
+          if (
+            bgActiveRef.current === slot &&
+            bgRequestIdRef.current === requestId
+          ) releaseArchiveVideoSlot(outgoing)
+          bgReleaseTimerRef.current = null
+        }, ARCHIVE_VIDEO_FADE_MS)
+      }
+    }).catch(() => handleArchiveVideoError(slot, requestId))
+  }, [handleArchiveVideoError, releaseArchiveVideoSlot])
 
   const [showVirtualKeyboard, setShowVirtualKeyboard] = useState(false)
   const [sortBy, setSortBy] = useState("default")
@@ -554,7 +666,14 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     retroArchChoiceRef.current     = retroArchChoice
   const current = filteredGames[selectedIndex] || filteredGames[0]
   const currentArtwork = current ? artwork?.[current.id || current.profile] : null
-  const previewStill = currentArtwork?.hero || currentArtwork?.capsule || currentArtwork?.logo || null
+  const previewStill =
+    currentArtwork?.hero ||
+    currentArtwork?.screenshot ||
+    current?.snapPath ||
+    currentArtwork?.capsule ||
+    current?.boxArtPath ||
+    currentArtwork?.logo ||
+    null
   currentRef.current = current
 
   // One-shot suppression: launch-origin restoration sets category and index
@@ -569,37 +688,92 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     setSelectedIndex(0)
   }, [activeCategory, debouncedSearch, sortBy])
 
-  // Background video crossfade when center game changes
+  // Prepare the selected game's video in the inactive Archive View slot.
+  // The outgoing slot remains visible until onCanPlay + play() confirm that
+  // the incoming source is genuinely ready. Ordinary rerenders/focus changes
+  // do not restart this effect because it is keyed only to stable selection
+  // identity and video source fields.
   useEffect(() => {
-    if (!current) return
-    const newId = current.id || current.profile
-    if (newId === bgLastId.current) return
-    bgLastId.current = newId
-    const videoPath = current.videoPath || null
-    if (!videoPath) return
-    // Load into inactive slot, then swap
-    if (bgActive === 'a') {
-      setBgVideoB(videoPath)
-      setTimeout(() => {
-        if (bgVideoBRef.current) { bgVideoBRef.current.load(); bgVideoBRef.current.play().catch(() => {}) }
-        setBgActive('b')
-      }, 50)
-    } else {
-      setBgVideoA(videoPath)
-      setTimeout(() => {
-        if (bgVideoARef.current) { bgVideoARef.current.load(); bgVideoARef.current.play().catch(() => {}) }
-        setBgActive('a')
-      }, 50)
+    if (bgSelectionTimerRef.current) clearTimeout(bgSelectionTimerRef.current)
+
+    // Wheel navigation intentionally overshoots for 80ms before settling.
+    // Waiting just past that visual spring prevents the transient card from
+    // tearing down the outgoing preview or loading media the user did not
+    // actually select.
+    bgSelectionTimerRef.current = setTimeout(() => {
+      bgSelectionTimerRef.current = null
+      const newId = current ? (current.id || current.profile) : null
+      const videoPath = current?.videoPath || null
+      const selectionKey = `${newId || 'empty'}::${videoPath || 'fallback'}`
+      if (selectionKey === bgLastId.current) return
+      bgLastId.current = selectionKey
+
+      const requestId = ++bgRequestIdRef.current
+      if (bgReleaseTimerRef.current) {
+        clearTimeout(bgReleaseTimerRef.current)
+        bgReleaseTimerRef.current = null
+      }
+
+      if (!current || !videoPath) {
+        bgPendingRef.current = null
+        bgActiveRef.current = null
+        setBgActive(null)
+        releaseAllArchiveVideo()
+        return
+      }
+
+      const activeSlot = bgActiveRef.current
+      const incomingSlot = activeSlot === 'a' ? 'b' : 'a'
+      const incomingRef = incomingSlot === 'a' ? bgVideoARef : bgVideoBRef
+      incomingRef.current?.pause()
+
+      const incoming = { source: videoPath, requestId }
+      bgPendingRef.current = {
+        slot: incomingSlot,
+        source: videoPath,
+        requestId,
+        playRequested: false,
+      }
+
+      if (incomingSlot === 'a') setBgVideoA(incoming)
+      else setBgVideoB(incoming)
+    }, ARCHIVE_SELECTION_SETTLE_MS)
+
+    return () => {
+      if (bgSelectionTimerRef.current) {
+        clearTimeout(bgSelectionTimerRef.current)
+        bgSelectionTimerRef.current = null
+      }
     }
   }, [current?.id, current?.profile, current?.videoPath])
 
-  // Sync background video volume with the "Attract volume" setting -- applies to both
-  // the A/B crossfade elements here on the main wheel, whenever the value changes
+  // Assigning a source is deliberately selection-driven and lazy. Explicit
+  // load() calls after React commits the new src keep local file:// media
+  // behavior deterministic without assigning or decoding any extra source.
+  useEffect(() => {
+    if (bgVideoA && bgVideoARef.current) bgVideoARef.current.load()
+  }, [bgVideoA])
+  useEffect(() => {
+    if (bgVideoB && bgVideoBRef.current) bgVideoBRef.current.load()
+  }, [bgVideoB])
+
+  // Preserve the existing Attract-volume policy for Archive View audio.
   useEffect(() => {
     const vol = Math.max(0, Math.min(1, (config?.ambientVolume ?? 35) / 100))
+    bgVideoVolumeRef.current = vol
     if (bgVideoARef.current) bgVideoARef.current.volume = vol
     if (bgVideoBRef.current) bgVideoBRef.current.volume = vol
   }, [config?.ambientVolume, bgVideoA, bgVideoB])
+
+  // Stop decoding and release both file/network sources on unmount. The
+  // request increment also makes any already-resolving play() promise stale.
+  useEffect(() => () => {
+    bgRequestIdRef.current += 1
+    bgPendingRef.current = null
+    bgActiveRef.current = null
+    if (bgSelectionTimerRef.current) clearTimeout(bgSelectionTimerRef.current)
+    releaseAllArchiveVideo(false)
+  }, [releaseAllArchiveVideo])
   useEffect(() => {
     if (!current || !window.nuarcade?.updateMarquee) return
     const art = artwork?.[current.id || current.profile]
@@ -642,7 +816,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     playLaunchSound: sounds.launch,
     artwork,
     onLaunchStart: () => {
-      // The background gameplay video (and its audio) has no reason to
+      // The Archive View gameplay video (and its audio) has no reason to
       // keep playing once the actual game launches -- resumed in onReturn
       // below once the emulator closes.
       bgVideoARef.current?.pause()
@@ -650,8 +824,9 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     },
     onReturn: () => {
       setAchievementStats(computeStats(games))
-      const activeRef = bgActive === 'a' ? bgVideoARef : bgVideoBRef
-      activeRef.current?.play().catch(() => {})
+      const activeSlot = bgActiveRef.current
+      const activeRef = activeSlot === 'a' ? bgVideoARef : activeSlot === 'b' ? bgVideoBRef : null
+      activeRef?.current?.play().catch(() => {})
     },
     originDestination: "library",
     originContext: buildLibraryOriginContext({ activeCategory, selectedIndex }),
@@ -1096,44 +1271,50 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
         <strong>{activeProfile?.name || t("wheel.guestCta")}</strong>
       </div>
 
-      {/* Background gameplay video -- A/B crossfade */}
-      {bgVideoA && (
-        <video
-          ref={bgVideoARef}
-          className={`${styles.bgVideo} ${bgActive !== 'a' ? styles.bgVideoHidden : ''}`}
-          src={bgVideoA}
-          loop
-          playsInline
-          autoPlay
-        />
-      )}
-      {bgVideoB && (
-        <video
-          ref={bgVideoBRef}
-          className={`${styles.bgVideo} ${bgActive !== 'b' ? styles.bgVideoHidden : ''}`}
-          src={bgVideoB}
-          loop
-          playsInline
-          autoPlay
-        />
-      )}
-
-      {current && filteredGames.length > 0 && (
-        <aside className={styles.previewReservation} aria-label={t("wheel.previewTitle")}>
-          <div className={styles.previewHeading}>{t("wheel.previewTitle")}</div>
-          <div className={styles.previewScreen}>
-            {previewStill ? (
-              <img src={previewStill} alt="" aria-hidden="true" className={styles.previewStill} />
-            ) : (
-              <div className={styles.previewFallback} aria-hidden="true">
-                <img src={vesparaMicroMark} alt="" />
-                <span>{current.title}</span>
-              </div>
-            )}
-          </div>
-          <div className={styles.previewCaption}>{current.title}</div>
-        </aside>
-      )}
+      <aside className={styles.previewReservation} aria-hidden="true">
+        <div className={styles.previewHeading}>{t("wheel.previewTitle")}</div>
+        <div className={styles.previewScreen}>
+          {previewStill ? (
+            <img src={previewStill} alt="" className={styles.previewStill} />
+          ) : (
+            <div className={styles.previewFallback}>
+              <img src={vesparaMicroMark} alt="" />
+              <span>{current?.title || "VESPARA"}</span>
+            </div>
+          )}
+          {bgVideoA && (
+            <video
+              ref={bgVideoARef}
+              className={`${styles.archiveVideo} ${bgActive === 'a' ? styles.archiveVideoActive : ''}`}
+              src={bgVideoA.source}
+              data-archive-request={bgVideoA.requestId}
+              preload="auto"
+              loop
+              playsInline
+              autoPlay
+              tabIndex={-1}
+              onCanPlay={() => handleArchiveVideoReady('a', bgVideoA.requestId, bgVideoA.source)}
+              onError={() => handleArchiveVideoError('a', bgVideoA.requestId)}
+            />
+          )}
+          {bgVideoB && (
+            <video
+              ref={bgVideoBRef}
+              className={`${styles.archiveVideo} ${bgActive === 'b' ? styles.archiveVideoActive : ''}`}
+              src={bgVideoB.source}
+              data-archive-request={bgVideoB.requestId}
+              preload="auto"
+              loop
+              playsInline
+              autoPlay
+              tabIndex={-1}
+              onCanPlay={() => handleArchiveVideoReady('b', bgVideoB.requestId, bgVideoB.source)}
+              onError={() => handleArchiveVideoError('b', bgVideoB.requestId)}
+            />
+          )}
+        </div>
+        <div className={styles.previewCaption}>{current?.title || t("wheel.previewTitle")}</div>
+      </aside>
 
       <AttractMode
         games={games.filter(g => !g.isLauncher)}

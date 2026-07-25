@@ -207,9 +207,11 @@ test("carousel geometry, launch dispatch, and Recently Played click-to-select ar
   assert.match(jsx, /const idx = filteredGames\.findIndex\(fg =>/)
 })
 
-test("background-video A/B crossfade logic is untouched", () => {
-  assert.match(jsx, /if \(bgActive === 'a'\) \{\s*setBgVideoB\(videoPath\)/)
-  assert.match(jsx, /setBgVideoA\(videoPath\)/)
+test("Library Console remains independent of the Archive View A/B lifecycle", () => {
+  assert.match(jsx, /const incomingSlot = activeSlot === 'a' \? 'b' : 'a'/)
+  assert.match(jsx, /if \(incomingSlot === 'a'\) setBgVideoA\(incoming\)/)
+  assert.match(jsx, /else setBgVideoB\(incoming\)/)
+  assert.doesNotMatch(jsx.slice(jsx.indexOf("const closeConsole"), jsx.indexOf("// Search still reveals")), /bgVideo|archiveVideo/)
 })
 
 test("Settings and Media destinations mount with their unchanged props", () => {
