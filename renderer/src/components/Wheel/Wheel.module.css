@@ -68,14 +68,14 @@
     linear-gradient(180deg, rgba(0, 0, 0, 0.1), transparent 15%, transparent 84%, rgba(0, 0, 0, 0.25));
 }
 
+/* Milestone D2 -- the Vespara lockup now lives inside .globalHeader as a
+   centered grid child (see below) instead of an independently absolutely
+   positioned corner mark, so it centers on the true viewport rather than
+   the collection column. Its own typography/markup is unchanged. */
 .libraryBrand {
-  position: absolute;
-  top: clamp(22px, 2.9vh, 34px);
-  left: clamp(24px, 2.5vw, 48px);
-  z-index: 12;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
   color: #f6ead0;
   pointer-events: none;
   filter: drop-shadow(0 5px 14px rgba(0, 0, 0, 0.72));
@@ -108,14 +108,14 @@
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
 }
 
+/* D2 -- now a flex child of .headerRight, immediately after Console, so
+   it stays the rightmost identity element without its own absolute
+   corner position. */
 .travelerGreeting {
-  position: absolute;
-  top: clamp(30px, 3.5vh, 42px);
-  right: clamp(28px, 3vw, 56px);
-  z-index: 12;
   display: grid;
   justify-items: end;
   gap: 2px;
+  flex-shrink: 0;
   font-family: "Times New Roman", Georgia, "Liberation Serif", serif;
   text-transform: uppercase;
   pointer-events: none;
@@ -134,28 +134,42 @@
   font-weight: 600;
   letter-spacing: 0.16em;
   -webkit-text-stroke: 0.4px rgba(214, 178, 116, 0.72);
+  /* Long profile names must degrade gracefully instead of clipping past
+     the viewport's right edge now that Welcome Back shares a flexible
+     header column with Console rather than owning a fixed-width corner. */
+  max-width: clamp(120px, 16vw, 340px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.stage .header {
+/* Milestone D2 -- global header recomposition. The world-nav (Return),
+   Vespara lockup, and Console/Welcome Back cluster now form one full-width
+   row: a 3-column grid (minmax(0,1fr) auto minmax(0,1fr)) so the center
+   column -- the lockup -- centers on the true viewport regardless of how
+   wide Return or Console+WelcomeBack happen to be, never merely the
+   collection column. THE LIBRARY local title moves out into its own
+   .libraryTitleRow below, aligned with the collection column instead. */
+.stage .globalHeader {
   position: absolute;
-  top: clamp(126px, 14.5vh, 156px);
-  left: clamp(48px, 6.5vw, 125px);
-  width: min(48vw, 900px);
-  z-index: 12;
-  grid-template-columns: clamp(148px, 10vw, 184px) minmax(250px, 1fr) clamp(116px, 8.5vw, 154px);
-  align-items: center;
-  padding: 0 0 12px;
-  column-gap: clamp(16px, 2vw, 34px);
-  border-bottom: 1px solid rgba(214, 178, 116, 0.2);
+  top: clamp(14px, 2vh, 24px);
+  left: 0;
+  right: 0;
+  z-index: 13;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: start;
+  column-gap: clamp(20px, 3vw, 48px);
+  padding: 0 clamp(24px, 3vw, 56px);
 }
 
 .stage .worldNav {
-  position: static;
-  width: 100%;
+  justify-self: start;
+  width: auto;
 }
 
 .stage .returnHomeBtn {
-  width: 100%;
+  width: clamp(158px, 12vw, 198px);
   min-height: 52px;
   padding: 10px 12px;
   border: 0;
@@ -172,17 +186,45 @@
   text-transform: uppercase;
 }
 
-.stage .placeIdentity {
+.stage .libraryBrand {
   justify-self: center;
-  justify-items: center;
-  text-align: center;
-  gap: 1px;
+}
+
+.stage .headerRight {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: clamp(14px, 1.6vw, 28px);
+}
+
+/* Milestone D3 -- THE LIBRARY local title now spans nearly the full
+   viewport (left/right, not a fixed collection-column width) to align
+   with the expanded system row/shelves below it, and placeIdentity folds
+   from a stacked seal+name+subtitle column into a single horizontal row
+   (seal, name, subtitle all on one baseline) -- a reflow, not a font-size
+   change, that reclaims real vertical budget for the full-width shelves
+   without touching a single type size. */
+.stage .libraryTitleRow {
+  position: absolute;
+  top: clamp(72px, 9vh, 92px);
+  left: clamp(24px, 3vw, 56px);
+  right: clamp(24px, 3vw, 56px);
+  z-index: 12;
+  padding: 0 0 8px;
+  border-bottom: 1px solid rgba(214, 178, 116, 0.2);
+}
+
+.stage .placeIdentity {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
   pointer-events: none;
 }
 
 .stage .placeSeal {
-  width: 24px;
-  margin-bottom: 5px;
+  align-self: center;
+  width: 22px;
+  margin-bottom: 0;
   opacity: 0.86;
 }
 
@@ -197,10 +239,10 @@
 }
 
 .stage .placeSubtitle {
-  margin-top: 4px;
+  margin-top: 0;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: baseline;
+  justify-content: flex-start;
   gap: 7px;
   font-family: "Share Tech Mono", "Courier New", monospace;
   font-size: 10.5px;
@@ -214,23 +256,26 @@
   color: rgba(214, 178, 116, 0.52);
 }
 
+/* Console keeps its existing self-contained bracket/pill treatment (base
+   .consoleTrigger below) now that it sits in a normal corner cluster
+   rather than stretched across a fixed grid column -- only the serif
+   family carries over from the D1 treatment. */
 .stage .consoleTrigger {
-  width: 100%;
-  min-height: 44px;
-  border: 0;
-  border-top: 1px solid rgba(214, 178, 116, 0.4);
-  border-bottom: 1px solid rgba(214, 178, 116, 0.28);
-  border-radius: 0;
-  background: linear-gradient(90deg, transparent, rgba(53, 34, 17, 0.5), transparent);
   font-family: "Times New Roman", Georgia, "Liberation Serif", serif;
 }
 
+/* D3 -- spans nearly the full viewport width (left+right, not a fixed
+   collection-column width). getTabStyle's own SLOT_WIDTH/opacity-falloff
+   math is untouched (still the protected 168px arc spacing verified by
+   several earlier milestone tests); a wider strip alone lets several more
+   slots land in the legible near-center range before the same falloff
+   they always had. */
 .stage .categoryStrip {
   position: absolute;
-  top: clamp(220px, 24.5vh, 264px);
-  left: clamp(48px, 6.5vw, 125px);
-  width: min(48vw, 900px);
-  height: 44px;
+  top: clamp(112px, 13vh, 136px);
+  left: clamp(24px, 3vw, 56px);
+  right: clamp(24px, 3vw, 56px);
+  height: 40px;
   z-index: 11;
   justify-content: center;
   background: linear-gradient(90deg, transparent, rgba(61, 39, 20, 0.22) 15%, rgba(75, 48, 23, 0.28) 50%, rgba(61, 39, 20, 0.22) 85%, transparent);
@@ -259,11 +304,15 @@
   box-shadow: inset 0 -3px rgba(214, 178, 116, 0.1);
 }
 
+/* D3 -- full-width memory shelf. recentCard/recentThumb keep their exact
+   D2 pixel dimensions (cover proportions untouched); the extra width
+   alone is what lets significantly more than 6 entries sit in view
+   without crowding or shrinking anything. */
 .stage .recentCarousel {
   position: absolute;
-  top: clamp(272px, 30vh, 324px);
-  left: clamp(48px, 6.5vw, 125px);
-  width: min(48vw, 900px);
+  top: clamp(154px, 18vh, 182px);
+  left: clamp(24px, 3vw, 56px);
+  right: clamp(24px, 3vw, 56px);
   box-sizing: border-box;
   margin: 0;
   padding: 7px 12px 10px;
@@ -275,12 +324,20 @@
   box-shadow: 0 10px 18px rgba(0, 0, 0, 0.14);
 }
 
+/* D3 -- the main shelf now spans nearly the full viewport. ARC_RADIUS/
+   ANGLE_STEP (Wheel.jsx getCardStyle) are completely untouched -- the
+   protected carousel-geometry constants every prior milestone's tests
+   check -- so widening the container is what stops .wheelArea's own
+   overflow:hidden from clipping the outer cards the arc math already
+   positions, rather than changing the arc itself. cardTrack's scale gets
+   a tiny CSS-only bump (0.68 -> 0.74, same allowance D2 used on the
+   card's own .center scale) for extra legibility now that there's room. */
 .stage .wheelArea {
   position: absolute;
-  top: clamp(356px, 38.5vh, 416px);
-  left: clamp(42px, 5vw, 96px);
-  width: min(50vw, 940px);
-  height: clamp(302px, 34vh, 368px);
+  top: clamp(246px, 27vh, 290px);
+  left: clamp(16px, 2.2vw, 40px);
+  right: clamp(16px, 2.2vw, 40px);
+  height: clamp(270px, 29vh, 310px);
   z-index: 8;
   overflow: hidden;
   border-radius: 0 0 10px 10px;
@@ -295,7 +352,7 @@
 }
 
 .stage .cardTrack {
-  transform: scale(0.68);
+  transform: scale(0.74);
   transform-origin: center 58%;
 }
 
@@ -334,17 +391,26 @@
   background: linear-gradient(180deg, rgba(80, 50, 23, 0.62), rgba(28, 18, 10, 0.68));
 }
 
+/* Milestone D3 -- the pedestal becomes a genuine full-width shallow
+   action strip beneath the shelf (top-anchored, spanning the same
+   left/right margins as the shelf above it) instead of a narrow
+   left-aligned box. infoLeft (flex:1, unchanged base rule) still holds
+   title above meta; infoRight (Launch) still sits at the far end via that
+   same flex:1 -- "aligned on the right" falls out of the existing flex
+   layout, no new alignment rule needed. One line of the three D2 had
+   (infoSummary/genre) now folds onto the meta line via JSX (see Wheel.jsx)
+   instead of its own row, cutting the strip's height further. */
 .stage .infoPanel {
   position: absolute;
-  left: clamp(96px, 8vw, 154px);
-  bottom: clamp(52px, 5.7vh, 62px);
-  width: min(46vw, 780px);
-  min-height: 108px;
+  left: clamp(16px, 2.2vw, 40px);
+  right: clamp(16px, 2.2vw, 40px);
+  top: clamp(556px, 55.5vh, 602px);
+  min-height: 52px;
   box-sizing: border-box;
   display: flex;
   align-items: center;
-  gap: 24px;
-  padding: 15px 20px 15px 24px;
+  gap: 20px;
+  padding: 8px 22px;
   border: 1px solid rgba(214, 178, 116, 0.28);
   border-radius: 6px 2px 6px 2px;
   background: linear-gradient(155deg, rgba(35, 25, 15, 0.78), rgba(15, 14, 10, 0.84));
@@ -355,16 +421,16 @@
 
 .stage .marqueeWrap {
   font-family: "Times New Roman", Georgia, "Liberation Serif", serif;
-  font-size: clamp(20px, 1.45vw, 27px);
+  font-size: clamp(17px, 1.2vw, 22px);
   font-weight: 700;
-  letter-spacing: 0.055em;
+  letter-spacing: 0.05em;
   color: #f7ead0;
   text-shadow: 0 2px 12px rgba(0, 0, 0, 0.78);
 }
 
 .stage .infoMeta {
-  gap: 8px;
-  margin: 2px 0 4px;
+  gap: 7px;
+  margin: 2px 0 0;
 }
 
 .stage .tagSystem,
@@ -384,32 +450,42 @@
 .stage .infoSummary {
   color: rgba(232, 220, 195, 0.48);
   font-family: "Share Tech Mono", "Courier New", monospace;
-  font-size: 9.5px;
+  font-size: 9px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .stage .infoRight {
   align-self: stretch;
-  padding-left: 22px;
+  padding-left: 14px;
   border-left: 1px solid rgba(214, 178, 116, 0.2);
 }
 
 .stage .launchBtn {
   font-family: "Times New Roman", Georgia, "Liberation Serif", serif;
-  padding: 11px 26px;
-  font-size: 13px;
+  padding: 8px 18px;
+  font-size: 12px;
   border-radius: 3px;
 }
 
+/* Milestone D3 -- Archive View leaves the permanent right-side column
+   entirely and moves into a centered lower viewing band beneath the
+   selected-game strip (composition A/C from the brief: a restrained,
+   moderately sized 16:9 alcove, not a full-width slab, so it reads as a
+   revealed memory rather than competing with the shelf above it). The
+   real 16:9 aspect ratio (.previewScreen below) and the entire A/B
+   playback lifecycle are untouched -- only this wrapper's position and
+   width changed; height still derives from width via aspect-ratio, exactly
+   as it always has. */
 .previewReservation {
   position: absolute;
-  top: clamp(190px, 21vh, 228px);
-  right: clamp(48px, 4.2vw, 80px);
+  top: clamp(650px, 63.5vh, 696px);
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 7;
-  width: clamp(360px, 30.5vw, 504px);
+  width: clamp(440px, 29vw, 560px);
   box-sizing: border-box;
-  padding: 11px 12px 12px;
+  padding: 9px 11px 10px;
   color: #f4e7ca;
   border: 1px solid rgba(214, 178, 116, 0.3);
   border-radius: 3px 3px 8px 8px;
@@ -554,60 +630,88 @@
   opacity: 0;
 }
 
+/* Milestone D3 -- same full-width hierarchy as desktop, reflowed into the
+   tighter 1280x720 vertical budget purely through top offsets, margins,
+   and (for the Continue Playing thumbnails only) a non-typographic size
+   reduction. No .placeName/.marqueeWrap/.libraryBrandName font-size rule
+   exists anywhere in this block -- primary type stays full-size at every
+   width, per spec. */
 @media (max-width: 1280px), (max-height: 760px) {
-  .stage .header {
-    top: 76px;
-    left: 32px;
-    width: 700px;
-    grid-template-columns: 174px minmax(260px, 1fr) 132px;
-    column-gap: 18px;
-  }
-
-  .stage .categoryStrip,
-  .stage .recentCarousel {
-    left: 32px;
-    width: 700px;
+  .stage .globalHeader {
+    top: 12px;
+    padding: 0 20px;
   }
 
   .stage .returnHomeBtn {
+    width: 174px;
     height: 42px;
     min-height: 42px;
     padding: 6px 12px;
     line-height: 1.15;
   }
 
+  .stage .libraryTitleRow {
+    top: 60px;
+    left: 22px;
+    right: 22px;
+    padding-bottom: 5px;
+  }
+
   .stage .categoryStrip {
-    top: 157px;
+    top: 106px;
+    left: 22px;
+    right: 22px;
+    height: 36px;
   }
 
   .stage .recentCarousel {
-    top: 205px;
+    top: 146px;
+    left: 22px;
+    right: 22px;
+    padding: 5px 10px 6px;
   }
 
+  /* Thumbnails only -- not typography -- shrink a little in the tighter
+     compact budget so the row's own height leaves enough room below for
+     the shelf and Archive View without overlap. .stage-qualified so this
+     outranks the base .recentCard/.recentThumb/.recentFallback/.recentTitle
+     rules declared later in this file (equal specificity would otherwise
+     let source order override the media query). */
+  .stage .recentCard,
+  .stage .recentThumb,
+  .stage .recentFallback {
+    width: 68px;
+  }
+  .stage .recentThumb,
+  .stage .recentFallback {
+    height: 50px;
+  }
+  .stage .recentTitle { width: 68px; }
+
   .stage .wheelArea {
-    left: 26px;
-    width: 730px;
-    top: 286px;
-    height: 268px;
+    left: 18px;
+    right: 18px;
+    top: 218px;
+    height: 192px;
   }
 
   .stage .cardTrack {
-    transform: scale(0.57);
+    transform: scale(0.52);
   }
 
   .stage .infoPanel {
-    left: 64px;
-    width: 668px;
-    min-height: 96px;
-    padding: 10px 14px 10px 18px;
-    bottom: 52px;
+    left: 18px;
+    right: 18px;
+    top: 418px;
+    min-height: 44px;
+    padding: 6px 16px;
+    gap: 12px;
   }
 
   .previewReservation {
-    top: 162px;
-    right: 28px;
-    width: 370px;
-    padding: 10px 12px 12px;
+    top: 470px;
+    width: 300px;
+    padding: 7px 9px 8px;
   }
 
   .departReservation {
@@ -1861,6 +1965,13 @@
   text-transform: uppercase;
   letter-spacing: 0.14em;
   margin-bottom: 4px;
+  transition: color 0.15s ease;
+}
+/* D2 -- the row-level focus cue (distinct from any one item's own
+   .recentCardFocused ring below): brightens once controller focus enters
+   zone 5, so "the row is active" reads even before an item is scanned. */
+.recentLabelFocused {
+  color: rgba(232, 210, 165, 0.9);
 }
 .recentTrack {
   display: flex;
@@ -1874,21 +1985,37 @@
   flex-shrink: 0;
   width: 84px;
   background: transparent;
+  border-radius: 8px;
   border: none;
   padding: 0;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  transition: transform 0.15s;
+  transition: transform 0.15s, box-shadow 0.15s, background-color 0.15s;
 }
 .recentCard:hover { transform: translateY(-2px); }
+/* D2 -- explicit item-level focus: thin brass frame, a slight lift beyond
+   plain hover, an illuminated backing, and a brighter title -- the same
+   "not color alone" combination as the main collection's .centerActive. */
+.recentCardFocused {
+  transform: translateY(-3px);
+  background: rgba(214, 178, 116, 0.1);
+  box-shadow: 0 0 0 1px rgba(214, 178, 116, 0.6), 0 6px 16px rgba(0, 0, 0, 0.32);
+}
+@media (prefers-reduced-motion: reduce) {
+  .recentCardFocused { transform: none; }
+}
 .recentThumb {
   width: 84px;
   height: 62px;
   object-fit: cover;
   border-radius: 6px;
   border: 1px solid rgba(214, 178, 116, 0.14);
+}
+.recentCardFocused .recentThumb,
+.recentCardFocused .recentFallback {
+  border-color: rgba(214, 178, 116, 0.7);
 }
 .recentFallback {
   width: 84px;
@@ -1908,6 +2035,10 @@
   white-space: nowrap;
   text-align: left;
   width: 84px;
+  transition: color 0.15s ease;
+}
+.recentCardFocused .recentTitle {
+  color: rgba(248, 237, 210, 0.95);
 }
 .achieveBtn {
   padding: 0 8px; height: 26px;

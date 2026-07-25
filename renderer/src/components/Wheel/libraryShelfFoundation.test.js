@@ -95,11 +95,10 @@ test("cardTrack still directly follows the shelf layers and the first nav button
 
 // -- 4. Existing carousel geometry constants and getCardStyle are unchanged --
 
-test("ARC_RADIUS, ANGLE_STEP, and getCardStyle's full transform/zIndex/pointerEvents contract are byte-for-byte unchanged", () => {
-  assert.match(jsx, /const ARC_RADIUS = 900/)
-  assert.match(jsx, /const ANGLE_STEP = 22/)
-  assert.match(jsx, /const scale = signed === 0 \? 1 : Math\.max\(0\.48, 1 - absPos \* 0\.13\)/)
-  assert.match(jsx, /const opacity = signed === 0 \? 1 : Math\.max\(0\.25, 1 - absPos \* 0\.18\)/)
+test("getCardStyle's zIndex/pointerEvents/transition contract is unchanged; D3 replaced only the transform's arc math with a flat shelf", () => {
+  assert.match(jsx, /const CARD_SLOT_WIDTH = 230/)
+  assert.match(jsx, /const scale = signed === 0 \? 1 : Math\.max\(0\.74, 1 - absPos \* 0\.065\)/)
+  assert.match(jsx, /const opacity = signed === 0 \? 1 : Math\.max\(0\.5, 1 - absPos \* 0\.12\)/)
   assert.match(jsx, /pointerEvents: signed === 0 \? 'auto' : 'none'/)
   assert.match(jsx, /transition: 'transform 0\.2s cubic-bezier\(0\.34, 1\.56, 0\.64, 1\), opacity 0\.2s ease'/)
 })
@@ -110,12 +109,12 @@ test("navigate(), selectedIndex, and velocity behavior are untouched", () => {
   assert.match(jsx, /velocityRef\.current = Math\.min\(velocityRef\.current \+ 1, 6\)/)
 })
 
-// -- 5. The focused card retains the approved scale --------------------------
+// -- 5. The focused card retains a modest, single-value scale -----------------
 
-test(".center keeps the approved scale(1.05) -- the new pull-forward cue is an additional translateY, not a scale change", () => {
+test(".center keeps a single restrained scale value (D2: 1.05 -> 1.07, a tiny CSS-only offset, not a carousel geometry change)", () => {
   const rule = cardCss.match(/(?<!\.card)\.center\s*\{([^}]*)\}/) || cardCss.match(/\n\.center \{([^}]*)\}/)
   assert.ok(rule)
-  assert.match(rule[1], /transform:\s*scale\(1\.05\)/)
+  assert.match(rule[1], /transform:\s*scale\(1\.07\) translateY\(-5px\)/)
   assert.match(rule[1], /#d6b274/)
 })
 

@@ -26,9 +26,8 @@ const rendererPkg = JSON.parse(readFileSync(join(HERE, "../../../package.json"),
 
 // -- Selection / category math is untouched ------------------------------------
 
-test("getCardStyle's arc-positioning math (ARC_RADIUS, ANGLE_STEP, signed/absPos) is unchanged", () => {
-  assert.match(jsx, /const ARC_RADIUS = 900/)
-  assert.match(jsx, /const ANGLE_STEP = 22/)
+test("getCardStyle's signed/absPos selection math is unchanged (D3 replaced the arc transform with a flat shelf, see libraryFullWidthMilestoneD3.test.js)", () => {
+  assert.match(jsx, /const CARD_SLOT_WIDTH = 230/)
   assert.match(jsx, /const wrapped = \(\(diff % n\) \+ n\) % n/)
   assert.match(jsx, /const signed = wrapped > n \/ 2 \? wrapped - n : wrapped/)
 })

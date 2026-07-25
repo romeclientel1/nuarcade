@@ -27,9 +27,8 @@ const es = readFileSync(join(HERE, "../../i18n/es.js"), "utf8")
 
 // -- 1. Carousel geometry/math is unchanged (re-affirmed alongside visualPolish.test.js) --
 
-test("carousel arc math (ARC_RADIUS, ANGLE_STEP) and tab SLOT_WIDTH are unchanged by the shell/header pass", () => {
-  assert.match(jsx, /const ARC_RADIUS = 900/)
-  assert.match(jsx, /const ANGLE_STEP = 22/)
+test("shelf geometry (CARD_SLOT_WIDTH, D3's flat-shelf replacement for the old arc math) and tab SLOT_WIDTH are unchanged by the shell/header pass", () => {
+  assert.match(jsx, /const CARD_SLOT_WIDTH = 230/)
   assert.match(jsx, /const SLOT_WIDTH = 168/)
 })
 

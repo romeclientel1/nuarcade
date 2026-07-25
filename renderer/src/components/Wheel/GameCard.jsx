@@ -71,7 +71,7 @@ const STATUS_COLORS = {
 // card's background.
 const CARD_BG = "#142522"
 
-export default function GameCard({ game, isCenter, onClick, isFavorite, artwork, artPref }) {
+export default function GameCard({ game, isCenter, isNavFocused, onClick, isFavorite, artwork, artPref }) {
   const { t } = useI18n()
   const [imgLoaded,   setImgLoaded  ] = useState(false)
   const [imgError,    setImgError   ] = useState(false)
@@ -143,7 +143,7 @@ export default function GameCard({ game, isCenter, onClick, isFavorite, artwork,
     <div className={`${styles.flipContainer} ${flipped ? styles.flipped : ''}`}>
       <div className={styles.flipFront} onClick={onClick}>
         <div
-          className={`${styles.card} ${isCenter ? styles.center : styles.neighbor}`}
+          className={`${styles.card} ${isCenter ? styles.center : styles.neighbor}${isCenter && isNavFocused ? ' ' + styles.centerActive : ''}`}
           style={{ background: CARD_BG }}
         >
       {/* Hero image -- full bleed background on center card */}

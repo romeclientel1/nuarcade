@@ -87,9 +87,13 @@ test("Library Console trigger/panel, consoleFocusIdx model, and topMenuActions/T
   }
 })
 
-test("carousel geometry, launch dispatch, category/tab behavior, and search filtering remain untouched", () => {
-  assert.match(wheelJsx, /const ARC_RADIUS = 900/)
-  assert.match(wheelJsx, /const ANGLE_STEP = 22/)
+test("shelf geometry, launch dispatch, category/tab behavior, and search filtering remain untouched", () => {
+  // D3: the main collection's curved-wheel arc math (ARC_RADIUS/ANGLE_STEP/
+  // rotateY) was deliberately replaced with a flat horizontal shelf -- see
+  // libraryFullWidthMilestoneD3.test.js for the full contract. Tab geometry
+  // (SLOT_WIDTH, unrelated to the card shelf) is untouched.
+  assert.match(wheelJsx, /const CARD_SLOT_WIDTH = 230/)
+  assert.doesNotMatch(wheelJsx, /rotateY\(/)
   assert.match(wheelJsx, /onClick=\{launchGame\} disabled=\{launching\}/)
   assert.match(wheelJsx, /const SLOT_WIDTH = 168/)
   assert.match(wheelJsx, /if \(debouncedSearch\.trim\(\)\) \{/)

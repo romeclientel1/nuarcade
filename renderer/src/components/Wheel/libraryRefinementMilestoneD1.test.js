@@ -16,16 +16,24 @@ function block(source, selector) {
 }
 
 test("Library header exposes distinct navigation, place identity, and utility roles", () => {
-  const header = jsx.slice(jsx.indexOf("<div className={styles.header}>"), jsx.indexOf("</div>\n\n      {showUniversalDepart"))
-  const returnIndex = header.indexOf("<div className={styles.worldNav}>")
-  const identityIndex = header.indexOf("<div className={styles.placeIdentity}>")
-  const utilityIndex = header.indexOf("<div className={styles.headerRight}>")
-  assert.ok(returnIndex >= 0 && identityIndex > returnIndex && utilityIndex > identityIndex)
-  assert.match(block(css, ".stage .header"), /grid-template-columns:\s*clamp\([^;]+minmax\(250px,\s*1fr\)[^;]+clamp\(/)
+  // D2: the global header (Return | Vespara lockup | Console+WelcomeBack)
+  // and the local title row (THE LIBRARY) are now two separate elements --
+  // globalHeader no longer contains placeIdentity at all.
+  const globalHeader = jsx.slice(jsx.indexOf("<div className={styles.globalHeader}>"), jsx.indexOf("</div>\n\n      <div className={styles.libraryTitleRow}>"))
+  const returnIndex = globalHeader.indexOf("<div className={styles.worldNav}>")
+  const brandIndex = globalHeader.indexOf("<div className={styles.libraryBrand}")
+  const utilityIndex = globalHeader.indexOf("<div className={styles.headerRight}>")
+  assert.ok(returnIndex >= 0 && brandIndex > returnIndex && utilityIndex > brandIndex, "globalHeader must order Return, then the lockup, then Console/WelcomeBack")
+  assert.match(block(css, ".stage .globalHeader"), /grid-template-columns:\s*minmax\(0,\s*1fr\)\s*auto\s*minmax\(0,\s*1fr\)/)
+
+  const globalHeaderIdx = jsx.indexOf("<div className={styles.globalHeader}>")
+  const titleRowIdx = jsx.indexOf("<div className={styles.libraryTitleRow}>")
+  const identityIndex = jsx.indexOf("<div className={styles.placeIdentity}>")
+  assert.ok(titleRowIdx > globalHeaderIdx && identityIndex > titleRowIdx, "libraryTitleRow (with placeIdentity) must render after the global header")
 })
 
 test("Collection Hall subtitle contains only place context and filtered game count", () => {
-  const identity = jsx.slice(jsx.indexOf("<div className={styles.placeIdentity}>"), jsx.indexOf("<div className={styles.headerRight}>"))
+  const identity = jsx.slice(jsx.indexOf("<div className={styles.placeIdentity}>"), jsx.indexOf("{showUniversalDepart"))
   assert.match(identity, /styles\.placeSubtitle[^>]*aria-hidden="true"[\s\S]*wheel\.libraryPlaceSubtitle[\s\S]*placeSubtitleDivider[\s\S]*filteredGames\.length/)
   assert.doesNotMatch(identity, /activeCategory|collectionBadge|filterBadge|newBadge|collectionStatus/)
 })
@@ -43,14 +51,13 @@ test("Continue Playing remains a separate upper shelf before the main collection
   const recentIndex = jsx.indexOf("<div className={styles.recentCarousel}>")
   const wheelIndex = jsx.indexOf("<div className={styles.wheelArea}>")
   assert.ok(recentIndex > -1 && wheelIndex > recentIndex)
-  assert.match(jsx, /recentlyPlayed\.slice\(0,\s*6\)\.map/)
+  assert.match(jsx, /continuePlayingItems\.map/)
   assert.match(block(css, ".stage .recentCarousel"), /border-bottom:\s*2px solid/)
 })
 
-test("carousel navigation geometry and handlers remain at the approved values", () => {
-  assert.match(jsx, /const ARC_RADIUS = 900/)
-  assert.match(jsx, /const ANGLE_STEP = 22/)
-  assert.match(jsx, /const x = Math\.sin\(angleRad\) \* ARC_RADIUS \* 0\.95/)
+test("shelf navigation handlers remain at the approved values (D3: flat-shelf geometry, see libraryFullWidthMilestoneD3.test.js)", () => {
+  assert.match(jsx, /const CARD_SLOT_WIDTH = 230/)
+  assert.match(jsx, /const x = signed \* CARD_SLOT_WIDTH/)
   assert.match(jsx, /<button className=\{styles\.navBtn\} onClick=\{\(\) => navigate\(-1\)\}/)
   assert.match(jsx, /<button className=\{styles\.navBtn\} onClick=\{\(\) => navigate\(1\)\}/)
 })
@@ -69,7 +76,7 @@ test("Archive View keeps the A/B media lifecycle while removing duplicate game-t
   assert.match(jsx, /ref=\{bgVideoBRef\}[\s\S]*onCanPlay=\{\(\) => handleArchiveVideoReady\('b'/)
   assert.match(jsx, /preload="auto"[\s\S]*loop[\s\S]*playsInline[\s\S]*autoPlay/)
   assert.doesNotMatch(jsx, /styles\.previewCaption/)
-  assert.match(block(css, ".previewReservation"), /width:\s*clamp\(360px,\s*30\.5vw,\s*504px\)/)
+  assert.match(block(css, ".previewReservation"), /width:\s*clamp\(440px,\s*29vw,\s*560px\)/)
 })
 
 test("selected-game pedestal is authoritative and technical filenames leave the main view", () => {
@@ -89,11 +96,14 @@ test("Launch, favorite, Return, Console, and Depart handlers remain wired", () =
   assert.match(jsx, /if \(z === 3\) \{ launchGame\(\); return \}/)
 })
 
-test("responsive rules preserve the 1280 and desktop compositions without shrinking primary type", () => {
+test("D3: responsive rules preserve the full-width 1280 and desktop compositions without shrinking primary type", () => {
   const compact = css.slice(css.indexOf("@media (max-width: 1280px), (max-height: 760px)"), css.indexOf("/* Restrained entrance", css.indexOf("@media (max-width: 1280px), (max-height: 760px)")))
-  assert.match(compact, /\.stage \.header\s*\{[^}]*left:\s*32px[^}]*width:\s*700px[^}]*grid-template-columns:/s)
-  assert.match(compact, /\.stage \.categoryStrip,[\s\S]*?\.stage \.recentCarousel\s*\{[^}]*left:\s*32px[^}]*width:\s*700px/s)
-  assert.match(compact, /\.previewReservation\s*\{[^}]*right:\s*28px[^}]*width:\s*370px/s)
-  assert.match(compact, /\.stage \.infoPanel\s*\{[^}]*left:\s*64px[^}]*width:\s*668px[^}]*bottom:\s*52px/s)
+  assert.doesNotMatch(compact, /\.stage \.globalHeader\s*\{[^}]*grid-template-columns:/s)
+  assert.match(compact, /\.stage \.libraryTitleRow\s*\{[^}]*top:\s*60px[^}]*left:\s*22px[^}]*right:\s*22px/s)
+  assert.match(compact, /\.stage \.categoryStrip\s*\{[^}]*top:\s*106px[^}]*left:\s*22px[^}]*right:\s*22px/s)
+  assert.match(compact, /\.stage \.recentCarousel\s*\{[^}]*top:\s*146px[^}]*left:\s*22px[^}]*right:\s*22px/s)
+  assert.match(compact, /\.previewReservation\s*\{[^}]*top:\s*470px[^}]*width:\s*300px/s)
+  assert.match(compact, /\.stage \.infoPanel\s*\{[^}]*left:\s*18px[^}]*right:\s*18px[^}]*top:\s*418px[^}]*min-height:\s*44px/s)
   assert.doesNotMatch(compact, /\.placeName\s*\{[^}]*font-size:/s)
+  assert.doesNotMatch(compact, /\.marqueeWrap\s*\{[^}]*font-size:/s)
 })

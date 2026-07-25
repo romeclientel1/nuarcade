@@ -126,17 +126,25 @@ test("Archive View is decorative with no native controls or tab stop", () => {
   assert.match(archiveMarkup, /<img src=\{previewStill\} alt=""/)
 })
 
-test("Archive View keeps the approved right-side geometry and framed cover crop", () => {
-  assert.match(css, /\.previewReservation\s*\{[^}]*right:\s*clamp\(48px,\s*4\.2vw,\s*80px\)[^}]*width:\s*clamp\(360px,\s*30\.5vw,\s*504px\)/s)
+test("Archive View keeps a framed, centered lower-band geometry and framed cover crop (D3: moved out of the permanent right-side column)", () => {
+  assert.match(css, /\.previewReservation\s*\{[^}]*left:\s*50%[^}]*transform:\s*translateX\(-50%\)[^}]*z-index:\s*7[^}]*width:\s*clamp\(440px,\s*29vw,\s*560px\)/s)
   assert.match(css, /\.previewScreen\s*\{[^}]*aspect-ratio:\s*16 \/ 9[^}]*overflow:\s*hidden/s)
   assert.match(css, /\.archiveVideo\s*\{[^}]*object-fit:\s*cover[^}]*pointer-events:\s*none/s)
 })
 
-test("compact layout gives Return, Library identity, and Console separate grid columns without shrinking Return text", () => {
+test("compact layout keeps Return, the Vespara lockup, and Console/Welcome Back in separate global-header columns, with the local Library title in its own row below, without shrinking Return's text", () => {
   const compactStart = css.indexOf("@media (max-width: 1280px), (max-height: 760px)")
   const compact = css.slice(compactStart, css.indexOf("/* Restrained entrance", compactStart))
-  assert.match(compact, /\.stage \.header\s*\{[^}]*top:\s*76px[^}]*left:\s*32px[^}]*width:\s*700px[^}]*grid-template-columns:\s*174px minmax\(260px,\s*1fr\) 132px/s)
-  assert.match(compact, /\.stage \.returnHomeBtn\s*\{[^}]*height:\s*42px[^}]*min-height:\s*42px[^}]*padding:\s*6px 12px/s)
+  // .stage .globalHeader (Return | lockup | Console+WelcomeBack) keeps its
+  // desktop 3-column grid (minmax(0,1fr) auto minmax(0,1fr)) at every
+  // width -- only its top offset and side padding change in compact.
+  assert.match(compact, /\.stage \.globalHeader\s*\{[^}]*top:\s*12px[^}]*padding:\s*0 20px/s)
+  assert.doesNotMatch(compact, /\.stage \.globalHeader\s*\{[^}]*grid-template-columns:/s)
+  assert.match(css, /\.stage \.globalHeader\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s*auto\s*minmax\(0,\s*1fr\)/s)
+  // THE LIBRARY's own row (D3: full-width left+right, not a fixed
+  // collection-column width) below the global header.
+  assert.match(compact, /\.stage \.libraryTitleRow\s*\{[^}]*top:\s*60px[^}]*left:\s*22px[^}]*right:\s*22px/s)
+  assert.match(compact, /\.stage \.returnHomeBtn\s*\{[^}]*width:\s*174px[^}]*height:\s*42px[^}]*min-height:\s*42px[^}]*padding:\s*6px 12px/s)
   assert.match(css, /\.stage \.returnHomeBtn\s*\{[^}]*font-size:\s*12px/s)
   assert.doesNotMatch(compact, /\.stage \.returnHomeBtn\s*\{[^}]*font-size:/s)
 })

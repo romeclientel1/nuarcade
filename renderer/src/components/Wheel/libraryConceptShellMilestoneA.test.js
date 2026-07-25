@@ -46,10 +46,10 @@ test("the Traveler greeting is live profile data and localized", () => {
   assert.match(es, /"wheel\.welcomeBack":\s*"Bienvenido de nuevo,"/)
 })
 
-test("the concept shell reserves a brighter left collection wall and preserves the overlook", () => {
-  assert.match(css, /\.stage \.header\s*\{[^}]*left:\s*clamp\([^}]*width:\s*min\(48vw,\s*900px\)/s)
-  assert.match(css, /\.stage \.categoryStrip\s*\{[^}]*left:\s*clamp\([^}]*width:\s*min\(48vw,\s*900px\)/s)
-  assert.match(css, /\.stage \.wheelArea\s*\{[^}]*left:\s*clamp\([^}]*width:\s*min\(50vw,\s*940px\)[^}]*overflow:\s*hidden/s)
+test("D3: the collection region now spans nearly the full viewport (left+right margins, not a fixed collection-column width) while preserving the overlook", () => {
+  assert.match(css, /\.stage \.libraryTitleRow\s*\{[^}]*left:\s*clamp\([^}]*right:\s*clamp\(/s)
+  assert.match(css, /\.stage \.categoryStrip\s*\{[^}]*left:\s*clamp\([^}]*right:\s*clamp\(/s)
+  assert.match(css, /\.stage \.wheelArea\s*\{[^}]*left:\s*clamp\([^}]*right:\s*clamp\([^}]*overflow:\s*hidden/s)
   assert.match(cardCss, /\.neighbor\s*\{[^}]*saturate\(0\.86\) brightness\(0\.94\)/s)
   assert.match(cardJsx, /const CARD_BG = "#142522"/)
   assert.match(cardCss, /\.card\.center \.title\s*\{[^}]*"Times New Roman", Georgia, "Liberation Serif", serif/s)
@@ -61,27 +61,33 @@ test("Milestone B preserves the A/B lifecycle while removing fullscreen video tr
   assert.doesNotMatch(css, /\.stage \.bgVideo|\.bgVideoHidden/)
 })
 
-test("the approved right-hand frame now owns the live presentation-only video surface", () => {
+test("the centered lower Archive View frame (D3) still owns the live presentation-only video surface", () => {
   assert.match(jsx, /<aside className=\{styles\.previewReservation\} aria-hidden="true">/)
   assert.match(jsx, /const previewStill =\s*currentArtwork\?\.hero \|\|\s*currentArtwork\?\.screenshot \|\|\s*current\?\.snapPath \|\|\s*currentArtwork\?\.capsule \|\|\s*current\?\.boxArtPath \|\|\s*currentArtwork\?\.logo \|\|/s)
   const previewMarkup = jsx.slice(jsx.indexOf("<aside className={styles.previewReservation}"), jsx.indexOf("</aside>", jsx.indexOf("<aside className={styles.previewReservation}")))
   assert.match(previewMarkup, /<video[\s\S]*?styles\.archiveVideo[\s\S]*?autoPlay/)
   assert.doesNotMatch(previewMarkup, /controls=/)
   assert.equal((previewMarkup.match(/tabIndex=\{-1\}/g) || []).length, 2)
-  assert.match(css, /\.previewReservation\s*\{[^}]*right:\s*clamp\([^}]*width:\s*clamp\(360px,\s*30\.5vw,\s*504px\)/s)
+  assert.match(css, /\.previewReservation\s*\{[^}]*left:\s*50%[^}]*transform:\s*translateX\(-50%\)[^}]*z-index:\s*7[^}]*width:\s*clamp\(440px,\s*29vw,\s*560px\)/s)
 })
 
-test("the information pedestal sits below the shelf and does not cover the collection row", () => {
-  assert.match(css, /\.stage \.wheelArea\s*\{[^}]*top:\s*clamp\(356px,\s*38\.5vh,\s*416px\)[^}]*height:\s*clamp\(302px,\s*34vh,\s*368px\)/s)
-  assert.match(css, /\.stage \.infoPanel\s*\{[^}]*bottom:\s*clamp\(52px,\s*5\.7vh,\s*62px\)[^}]*min-height:\s*108px/s)
-  assert.match(css, /@media \(max-width: 1280px\), \(max-height: 760px\)[\s\S]*?\.stage \.wheelArea\s*\{[^}]*top:\s*286px[^}]*height:\s*268px[\s\S]*?\.stage \.infoPanel\s*\{[^}]*bottom:\s*52px/s)
+test("the compact selected-game strip sits below the shelf and does not cover the collection row", () => {
+  assert.match(css, /\.stage \.wheelArea\s*\{[^}]*top:\s*clamp\(246px,\s*27vh,\s*290px\)[^}]*height:\s*clamp\(270px,\s*29vh,\s*310px\)/s)
+  // D3: infoPanel is top-anchored (a full-width strip) instead of
+  // bottom-anchored, positioned right below .wheelArea's own bottom edge.
+  assert.match(css, /\.stage \.infoPanel\s*\{[^}]*top:\s*clamp\(556px,\s*55\.5vh,\s*602px\)[^}]*min-height:\s*52px/s)
+  assert.match(css, /@media \(max-width: 1280px\), \(max-height: 760px\)[\s\S]*?\.stage \.wheelArea\s*\{[^}]*top:\s*218px[^}]*height:\s*192px[\s\S]*?\.stage \.infoPanel\s*\{[^}]*top:\s*418px/s)
 })
 
 test("return, console, and the visible Depart plaque use integrated live controls", () => {
   assert.match(jsx, /className=\{styles\.departReservation\}[\s\S]*?onClick=\{openDepart\}/)
   assert.match(jsx, /\{t\("wheel\.depart"\)\}[\s\S]*?\{t\("wheel\.departSubtitle"\)\}/)
   assert.match(css, /\.stage \.returnHomeBtn\s*\{[^}]*border-top:[^}]*border-bottom:[^}]*border-radius:\s*0/s)
-  assert.match(css, /\.stage \.consoleTrigger\s*\{[^}]*border-top:[^}]*border-bottom:[^}]*border-radius:\s*0/s)
+  // D2: Console now sits in the global header's own corner cluster rather
+  // than a stretched grid column, so it keeps its self-contained pill/
+  // bracket treatment (base .consoleTrigger) instead of the plaque-bar
+  // border style -- still a real, unmistakable button either way.
+  assert.match(css, /\.consoleTrigger\s*\{[^}]*border-radius:\s*8px/s)
   assert.match(css, /\.departReservation:hover,\s*\.departReservation:focus-visible\s*\{/s)
   assert.match(en, /"wheel\.depart":\s*"Depart"/)
   assert.match(es, /"wheel\.depart":\s*"Partir"/)

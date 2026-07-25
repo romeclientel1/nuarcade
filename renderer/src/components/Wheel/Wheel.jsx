@@ -34,6 +34,15 @@ import { resolveDepartInvoker, restoreDepartFocus } from "../Depart/departIntera
 
 import styles from "./Wheel.module.css"
 import vesparaMicroMark from "../../assets/brand/vespara-symbol-micro.svg"
+// D3: the centered global-header lockup must use the same approved
+// doorway/beacon geometry as the startup cinematic (IntroVideo.jsx) and
+// Sanctuary (VesparaHome.jsx) -- vespara-symbol-micro.svg above is a
+// separate flat-silhouette glyph (no threshold-light glow, no nested
+// arch strokes) meant for small inline bullets/seals elsewhere in the
+// Library, not the production lockup mark itself. It stays imported and
+// in use for those smaller decorative seals (placeSeal, Archive View
+// fallback); only the header lockup switches to the approved asset.
+import vesparaLockupSymbol from "../../assets/brand/vespara-symbol-simplified.svg"
 import libraryEnvironment from "./assets/vespara-library-overlook.png"
 import { useMediaFolders } from "../../hooks/useMediaFolders"
 import { buildLibraryOriginContext } from "./libraryLaunchOrigin.js"
@@ -275,7 +284,10 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   }
 
   const [selectedIndex, setSelectedIndex] = useState(0)
-  // 5-tier zone navigation: 0=topMenu, 1=tabs, 2=wheel, 3=launch, 4=hintBar
+  // Zone navigation: 0=topMenu, 1=tabs, 2=wheel, 3=launch, 4=hintBar,
+  // 5=continuePlaying (Milestone D2 -- inserted logically between tabs and
+  // wheel; kept as its own non-sequential id rather than renumbering 2-4
+  // so every pre-existing z===2/3/4 comparison stays correct unchanged).
   const [focusZone,    setFocusZone   ] = useState(2)
   const [showExitPopup, setShowExitPopup] = useState(false)
   const [exitChoice,    setExitChoice   ] = useState(1)  // 0=Yes, 1=No -- default NO
@@ -285,10 +297,14 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const [topMenuIdx,   setTopMenuIdx  ] = useState(0)   // index within zone 0
   const [tabFocusIdx,  setTabFocusIdx ] = useState(0)   // index within zone 1
   const [barFocusIdx,  setBarFocusIdx ] = useState(0)   // index within zone 4
+  const [continueFocusIdx, setContinueFocusIdx] = useState(0)  // index within zone 5
   const focusZoneRef    = useRef(2)
   const topMenuIdxRef   = useRef(0)
   const tabFocusIdxRef  = useRef(0)
   const barFocusIdxRef  = useRef(0)
+  const continueFocusIdxRef = useRef(0)
+  const continuePlayingVisibleRef = useRef(false)
+  const continuePlayingItemsRef   = useRef([])
   const visibleTabsRef  = useRef([])  // tabs actually visible on screen
   const velocityRef = useRef(0)
   const filteredGamesRef = useRef([])
@@ -697,6 +713,17 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     showOperatorRef.current        = showOperator
     showRetroArchPopupRef.current  = showRetroArchPopup
     retroArchChoiceRef.current     = retroArchChoice
+  // Continue Playing visibility -- mirrors the recentCarousel render guard
+  // exactly, so the focus graph (zone 5) never routes into a row that
+  // isn't actually on screen (D2 vertical-navigation correction). Cap
+  // raised 6 -> 12 for D3's full-width shelf, which has genuine room to
+  // show more than 6 without crowding; ordering/launch/focus logic below
+  // is unchanged, it just has a longer list to work with.
+  const continuePlayingItems = recentlyPlayed.slice(0, 12)
+  const continuePlayingVisible = !libraryEmpty && !cabinetMode && !screenshotMode && continuePlayingItems.length > 0 && activeCategory !== "Recent" && !debouncedSearch
+  continueFocusIdxRef.current       = continueFocusIdx
+  continuePlayingVisibleRef.current = continuePlayingVisible
+  continuePlayingItemsRef.current   = continuePlayingItems
   const current = filteredGames[selectedIndex] || filteredGames[0]
   const currentArtwork = current ? artwork?.[current.id || current.profile] : null
   const previewStill =
@@ -720,6 +747,22 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     if (suppressSelectedIndexResetRef.current) { suppressSelectedIndexResetRef.current = false; return }
     setSelectedIndex(0)
   }, [activeCategory, debouncedSearch, sortBy])
+
+  // D2 vertical-navigation correction -- Continue Playing is now a real
+  // focus zone (5). If the row disappears out from under an active zone-5
+  // focus (filter change, search, category switch to "Recent", list drains
+  // to empty) controller focus must not dead-end there -- it falls back to
+  // the main collection, the same place Down already sends it from zone 1
+  // when the row was never visible to begin with.
+  useEffect(() => {
+    if (focusZone === 5 && !continuePlayingVisible) setFocusZone(2)
+  }, [focusZone, continuePlayingVisible])
+
+  // Keep the remembered Continue Playing focus item in range as the list
+  // (max 6 slots) shrinks, so re-entering zone 5 later restores a real item.
+  useEffect(() => {
+    setContinueFocusIdx(i => Math.min(i, Math.max(0, continuePlayingItems.length - 1)))
+  }, [continuePlayingItems.length])
 
   // Prepare the selected game's video in the inactive Archive View slot.
   // The outgoing slot remains visible until onCanPlay + play() confirm that
@@ -1103,6 +1146,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       const z = focusZoneRef.current
       if (z === 0) { setTopMenuIdx(i => Math.max(0, i - 1)); sounds.navigate(); return }
       if (z === 1) { const tabs = visibleTabsRef.current; const newIdx = tabFocusIdxRef.current <= 0 ? tabs.length - 1 : tabFocusIdxRef.current - 1; setTabFocusIdx(newIdx); setActiveCategory(tabs[newIdx]); sounds.navigate(); return }
+      if (z === 5) { const n = continuePlayingItemsRef.current.length; if (n > 0) { setContinueFocusIdx(i => (i <= 0 ? n - 1 : i - 1)); sounds.navigate() } return }
       if (z === 2) { navigate(-1); return }
       if (z === 3) { return }
       if (z === 4) { setBarFocusIdx(i => Math.max(0, i - 1)); sounds.navigate(); return }
@@ -1113,6 +1157,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       const z = focusZoneRef.current
       if (z === 0) { setTopMenuIdx(i => Math.min(TOP_MENU_MAX, i + 1)); sounds.navigate(); return }
       if (z === 1) { const tabs = visibleTabsRef.current; const newIdx = tabFocusIdxRef.current >= tabs.length - 1 ? 0 : tabFocusIdxRef.current + 1; setTabFocusIdx(newIdx); setActiveCategory(tabs[newIdx]); sounds.navigate(); return }
+      if (z === 5) { const n = continuePlayingItemsRef.current.length; if (n > 0) { setContinueFocusIdx(i => (i >= n - 1 ? 0 : i + 1)); sounds.navigate() } return }
       if (z === 2) { navigate(1); return }
       if (z === 3) { return }
       if (z === 4) { setBarFocusIdx(i => Math.min(HINT_BAR_MAX, i + 1)); sounds.navigate(); return }
@@ -1128,7 +1173,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       const z = focusZoneRef.current
       if (z === 4) { setFocusZone(3); sounds.navigate(); return }  // hintBar -> launch
       if (z === 3) { setFocusZone(2); sounds.navigate(); return }  // launch -> wheel
-      if (z === 2) { setFocusZone(1); sounds.navigate(); return }  // wheel -> tabs
+      if (z === 2) { setFocusZone(continuePlayingVisibleRef.current ? 5 : 1); sounds.navigate(); return }  // wheel -> continue playing (or tabs when empty)
+      if (z === 5) { setFocusZone(1); sounds.navigate(); return }  // continue playing -> tabs
       if (z === 1) { setFocusZone(0); sounds.navigate(); return }  // tabs -> topMenu
     },
     down: () => {
@@ -1140,7 +1186,11 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       if (consoleOpenRef.current || focusZoneRef.current === 0) { setConsoleOpen(false); setFocusZone(1); sounds.navigate(); return }
       const z = focusZoneRef.current
       if (z === 0) { setFocusZone(1); sounds.navigate(); return }  // topMenu -> tabs
-      if (z === 1) { setFocusZone(2); sounds.navigate(); return }  // tabs -> wheel
+      // D2 correction: Down from the active filter enters Continue Playing
+      // when it has items on screen; when the row is empty/hidden it skips
+      // straight to the main collection, exactly like before this milestone.
+      if (z === 1) { setFocusZone(continuePlayingVisibleRef.current ? 5 : 2); sounds.navigate(); return }  // tabs -> continue playing (or wheel when empty)
+      if (z === 5) { setFocusZone(2); sounds.navigate(); return }  // continue playing -> wheel
       if (z === 2) { setFocusZone(3); sounds.navigate(); return }  // wheel -> launch
       if (z === 3) { setFocusZone(4); sounds.navigate(); return }  // launch -> hintBar
     },
@@ -1173,6 +1223,23 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
         const tabs = visibleTabsRef.current
         const tab = tabs[tabFocusIdxRef.current]
         if (tab) setActiveCategory(tab)
+        setFocusZone(2); return
+      }
+      if (z === 5) {
+        // Mirrors the mouse recentCard onClick exactly: jump the main
+        // collection's selection to the focused Continue Playing item
+        // (falling back to "All" if it's no longer in the current filter),
+        // then hand focus down to the collection so the new selection is
+        // where the next action (Launch) will act on.
+        const items = continuePlayingItemsRef.current
+        const g = items[continueFocusIdxRef.current]
+        if (g) {
+          const idx = filteredGamesRef.current.findIndex(fg =>
+            (fg.id && fg.id === g.id) || (fg.profile && fg.profile === g.profile)
+          )
+          if (idx >= 0) { setSelectedIndex(idx); sounds.navigate() }
+          else { setActiveCategory("All"); setSelectedIndex(0) }
+        }
         setFocusZone(2); return
       }
       if (z === 2) { if (!showDetailRef.current) { resetLaunching(); setShowDetail(true) } return }
@@ -1226,6 +1293,15 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   })
 
 
+  // Milestone D3 -- straight horizontal shelf, replacing the earlier arc/
+  // cylinder layout (no sin/cos radius, no rotateY perspective skew, no
+  // vertical curve). The selection/navigation architecture underneath is
+  // completely unchanged: same signed/absPos derivation from selectedIndex,
+  // same 4-card-each-side display cutoff, same zIndex/pointerEvents/
+  // transition contract navigate()'s overshoot-then-correct spring relies
+  // on -- only the transform formula that used to bend cards along an arc
+  // now just spaces them along a flat line, with a gentler scale/opacity
+  // falloff so distant covers stay legible instead of shrinking to slivers.
   const getCardStyle = (index) => {
     const diff = index - selectedIndex
     const n = filteredGames.length
@@ -1233,19 +1309,13 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     const signed = wrapped > n / 2 ? wrapped - n : wrapped
     const absPos = Math.abs(signed)
     if (absPos > 4) return { display: 'none' }
-    // Arc layout: parametric circle positioning
-    const ARC_RADIUS = 900
-    const ANGLE_STEP = 22  // degrees between cards
-    const angle = signed * ANGLE_STEP
-    const angleRad = (angle * Math.PI) / 180
-    const x = Math.sin(angleRad) * ARC_RADIUS * 0.95
-    const y = (Math.cos(angleRad) - 1) * ARC_RADIUS * 0.18
-    const scale = signed === 0 ? 1 : Math.max(0.48, 1 - absPos * 0.13)
-    const opacity = signed === 0 ? 1 : Math.max(0.25, 1 - absPos * 0.18)
-    const rotateY = signed * -8
+    const CARD_SLOT_WIDTH = 230  // px between adjacent card centers on the flat shelf
+    const x = signed * CARD_SLOT_WIDTH
+    const scale = signed === 0 ? 1 : Math.max(0.74, 1 - absPos * 0.065)
+    const opacity = signed === 0 ? 1 : Math.max(0.5, 1 - absPos * 0.12)
     const zIndex = 10 - absPos
     return {
-      transform: 'translateX(' + x + 'px) translateY(' + y + 'px) scale(' + scale + ') rotateY(' + rotateY + 'deg)',
+      transform: 'translateX(' + x + 'px) scale(' + scale + ')',
       opacity,
       zIndex,
       pointerEvents: signed === 0 ? 'auto' : 'none',
@@ -1258,11 +1328,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       // spring feel here.
       transition: 'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease',
     }
-  
-  // Xbox controller mapping
-
-
-}
+  }
 
   const getTabStyle = (index) => {
     const tabs = visibleTabsRef.current
@@ -1301,17 +1367,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       <div className={styles.bgGrid} aria-hidden="true" />
       <div className={styles.libraryHorizon} aria-hidden="true" />
       <div className={styles.bgVignette} aria-hidden="true" />
-      <div className={styles.libraryBrand} aria-hidden="true">
-        <img src={vesparaMicroMark} alt="" className={styles.libraryBrandSeal} />
-        <div>
-          <div className={styles.libraryBrandName}>VESPARA</div>
-          <div className={styles.libraryBrandWorld}>THE SANCTUARY</div>
-        </div>
-      </div>
-      <div className={styles.travelerGreeting} aria-hidden="true">
-        <span>{t("wheel.welcomeBack")}</span>
-        <strong>{activeProfile?.name || t("wheel.guestCta")}</strong>
-      </div>
 
       <aside className={styles.previewReservation} aria-hidden="true">
         <div className={styles.previewHeading}>{t("wheel.previewTitle")}</div>
@@ -1376,17 +1431,15 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
         </div>
       )}
 
-      <div className={styles.header}>
+      <div className={styles.globalHeader}>
         <div className={styles.worldNav}>
           <button className={styles.returnHomeBtn + (focusZone === 0 && topMenuIdx === 5 ? " " + styles.barFocused : "")} onClick={() => { if (onReturnHome) onReturnHome() }} title={t("wheel.returnHomeTitle")}>{t("wheel.navHome")}</button>
         </div>
-        <div className={styles.placeIdentity}>
-          <img src={vesparaMicroMark} alt="" aria-hidden="true" className={styles.placeSeal} />
-          <div className={styles.placeName}>{t("wheel.libraryPlaceName")}</div>
-          <div className={styles.placeSubtitle} aria-hidden="true">
-            <span>{t("wheel.libraryPlaceSubtitle")}</span>
-            <span className={styles.placeSubtitleDivider}>·</span>
-            <span className={styles.gameCount}>{filteredGames.length} game{filteredGames.length !== 1 ? "s" : ""}</span>
+        <div className={styles.libraryBrand} aria-hidden="true">
+          <img src={vesparaLockupSymbol} alt="" className={styles.libraryBrandSeal} />
+          <div>
+            <div className={styles.libraryBrandName}>VESPARA</div>
+            <div className={styles.libraryBrandWorld}>THE SANCTUARY</div>
           </div>
         </div>
         <div className={styles.headerRight}>
@@ -1526,6 +1579,22 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
               )}
             </div>
           )}
+          <div className={styles.travelerGreeting} aria-hidden="true">
+            <span>{t("wheel.welcomeBack")}</span>
+            <strong>{activeProfile?.name || t("wheel.guestCta")}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.libraryTitleRow}>
+        <div className={styles.placeIdentity}>
+          <img src={vesparaMicroMark} alt="" aria-hidden="true" className={styles.placeSeal} />
+          <div className={styles.placeName}>{t("wheel.libraryPlaceName")}</div>
+          <div className={styles.placeSubtitle} aria-hidden="true">
+            <span>{t("wheel.libraryPlaceSubtitle")}</span>
+            <span className={styles.placeSubtitleDivider}>·</span>
+            <span className={styles.gameCount}>{filteredGames.length} game{filteredGames.length !== 1 ? "s" : ""}</span>
+          </div>
         </div>
       </div>
 
@@ -1566,26 +1635,28 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       </div>
 
       {/* Recently played carousel -- shown when library has games and recent list is non-empty */}
-      {!libraryEmpty && !cabinetMode && !screenshotMode && recentlyPlayed.length > 0 && activeCategory !== "Recent" && !debouncedSearch && (
+      {continuePlayingVisible && (
         <div className={styles.recentCarousel}>
-          <div className={styles.recentLabel}>Continue Playing</div>
+          <div className={styles.recentLabel + (focusZone === 5 ? " " + styles.recentLabelFocused : "")}>Continue Playing</div>
           <div className={styles.recentTrack}>
-            {recentlyPlayed.slice(0, 6).map(g => {
+            {continuePlayingItems.map((g, idx) => {
               const gArt = artwork?.[g.id || g.profile]
               const thumb = gArt?.capsule || gArt?.hero || null
               const colors = { Racing:"#0066cc",Fighting:"#9900cc",Shooter:"#cc0000",Rhythm:"#6600cc",
                 Arcade:"#ff6600",Retro:"#9933ff",PS1:"#003791",N64:"#e4000f",Dreamcast:"#ff6600",
                 PS3:"#0070d1",Xbox360:"#107c10",GCWii:"#6b21a8",PS2:"#003791",Switch:"#e4000f" }
               const accent = colors[g.genre] || "#00ff88"
+              const isFocused = focusZone === 5 && continueFocusIdx === idx
               return (
                 <button
                   key={g.id || g.profile}
-                  className={styles.recentCard}
+                  className={styles.recentCard + (isFocused ? " " + styles.recentCardFocused : "")}
                   onClick={() => {
-                    const idx = filteredGames.findIndex(fg =>
+                    setContinueFocusIdx(idx)
+                    const idxInWheel = filteredGames.findIndex(fg =>
                       (fg.id && fg.id === g.id) || (fg.profile && fg.profile === g.profile)
                     )
-                    if (idx >= 0) { setSelectedIndex(idx); sounds.navigate() }
+                    if (idxInWheel >= 0) { setSelectedIndex(idxInWheel); sounds.navigate() }
                     else { setActiveCategory("All"); setSelectedIndex(0) }
                   }}
                   title={g.title}
@@ -1696,6 +1767,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
                     <GameCard
                       game={game}
                       isCenter={index === selectedIndex}
+                      isNavFocused={focusZone === 2}
                       isAttract={attractMode}
                       isFavorite={isFavorite(game.id || game.profile)}
                       artPref={artPref}
@@ -1739,8 +1811,13 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
               >
                 {isFavorite(current.id || current.profile) ? "<3" : "+"}
               </button>
+              {/* D3: the one quiet secondary detail (genre) now folds onto
+                  the same line as platform/readiness/favorite instead of
+                  its own row, so the strip stays shallow -- same
+                  styles.infoSummary element/content D2 tests expect. */}
+              <span className={styles.infoMetaDivider} aria-hidden="true">·</span>
+              <span className={styles.infoSummary}>{current.genre}</span>
             </div>
-            <div className={styles.infoSummary}>{current.genre}</div>
           </div>
           <div className={styles.infoRight}>
             <button className={styles.launchBtn + (focusZone === 3 ? " " + styles.barFocused : "")} onClick={launchGame} disabled={launching}>

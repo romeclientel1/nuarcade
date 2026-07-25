@@ -24,14 +24,26 @@
 /* Vespara focus framing -- warm-gold/teal-gold, replacing the old cyan
    HUD-slab border. A modest additional scale (independent of Wheel's own
    getCardStyle transform on the parent .cardSlot) gives the exhibit card
-   real presence without touching the carousel geometry. The approved
-   scale value (1.05) is unchanged this milestone -- the small translateY
-   is purely the "pulled forward off the shelf" cue Milestone 3 asked
-   for, layered onto the same untouched scale rather than replacing it. */
+   real presence without touching the carousel geometry. D2 widened the
+   lift/glow slightly (still a tiny CSS-only offset, not a geometry
+   change) -- selection alone was reported as not unmistakable enough;
+   this combines with the brighter title/system rules below and the
+   neighbor desaturation, so no single cue (color, scale, or contrast
+   alone) carries the whole signal. */
 .center {
   border: 1px solid #d6b274;
-  box-shadow: 0 0 0 1px rgba(214, 178, 116, 0.24), 0 0 24px rgba(214, 178, 116, 0.24), 0 0 38px rgba(79, 209, 197, 0.1);
-  transform: scale(1.05) translateY(-3px);
+  box-shadow: 0 0 0 1px rgba(214, 178, 116, 0.3), 0 0 28px rgba(214, 178, 116, 0.3), 0 0 44px rgba(79, 209, 197, 0.12);
+  transform: scale(1.07) translateY(-5px);
+}
+
+/* Layered on top of .center only while controller focus actually owns the
+   main collection (Wheel.jsx's focusZone === 2 -- the "wheel" zone), so a
+   viewer can tell "this game is selected" (.center, persists even once
+   focus moves on to Launch Game) apart from "this is where the next D-pad
+   action will land" (.centerActive, only while browsing the shelf). */
+.centerActive {
+  border-color: #f0d29c;
+  box-shadow: 0 0 0 1px rgba(240, 210, 156, 0.5), 0 0 0 3px rgba(240, 210, 156, 0.2), 0 0 36px rgba(240, 210, 156, 0.46), 0 0 56px rgba(79, 209, 197, 0.16);
 }
 
 /* Neighboring cards recede into the collection hall -- desaturated,

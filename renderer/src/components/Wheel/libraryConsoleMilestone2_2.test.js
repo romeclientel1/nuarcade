@@ -137,12 +137,16 @@ test("Return to Sanctuary (worldNav) renders as a sibling of headerRight, uncond
 // -- 9. Game count remains within the calm place-context subtitle --
 
 test("gameCount renders inside placeSubtitle under the identity, not inside the console/utility cluster", () => {
-  const placeIdentityIdx = jsx.indexOf("<div className={styles.placeIdentity}>")
+  // D2: placeIdentity moved out of the global header entirely, into its
+  // own .libraryTitleRow below it -- so it now renders AFTER headerRight
+  // (the global header's Console/Welcome Back cluster), not before it.
   const headerRightIdx = jsx.indexOf("<div className={styles.headerRight}>")
+  const placeIdentityIdx = jsx.indexOf("<div className={styles.placeIdentity}>")
   const placeSubtitleIdx = jsx.indexOf("<div className={styles.placeSubtitle}")
   const gameCountIdx = jsx.indexOf("<span className={styles.gameCount}>")
-  assert.ok(placeIdentityIdx > -1 && placeSubtitleIdx > placeIdentityIdx && placeSubtitleIdx < headerRightIdx, "placeSubtitle must be inside placeIdentity, before headerRight")
-  assert.ok(gameCountIdx > placeSubtitleIdx && gameCountIdx < headerRightIdx, "gameCount must render inside placeSubtitle, before headerRight")
+  assert.ok(headerRightIdx > -1 && placeIdentityIdx > headerRightIdx, "placeIdentity must render after headerRight, in its own row")
+  assert.ok(placeSubtitleIdx > placeIdentityIdx, "placeSubtitle must be inside placeIdentity")
+  assert.ok(gameCountIdx > placeSubtitleIdx, "gameCount must render inside placeSubtitle")
 })
 
 test("placeSubtitle is decorative and the redundant collectionStatus surface is inactive", () => {
@@ -201,9 +205,8 @@ test("reduced motion neutralizes the new console panel entrance animation and it
 
 // -- 12. No unrelated Library behavior changed -------------------------------
 
-test("carousel geometry, launch dispatch, and Recently Played click-to-select are untouched", () => {
-  assert.match(jsx, /const ARC_RADIUS = 900/)
-  assert.match(jsx, /const ANGLE_STEP = 22/)
+test("shelf geometry, launch dispatch, and Recently Played click-to-select are untouched", () => {
+  assert.match(jsx, /const CARD_SLOT_WIDTH = 230/)
   assert.match(jsx, /onClick=\{launchGame\} disabled=\{launching\}/)
   assert.match(jsx, /const idx = filteredGames\.findIndex\(fg =>/)
 })

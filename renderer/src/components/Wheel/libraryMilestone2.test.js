@@ -29,9 +29,8 @@ const cardCss = readFileSync(join(HERE, "GameCard.module.css"), "utf8").replace(
 
 // -- 1. Carousel geometry/math unchanged (re-affirmed once more here) --------
 
-test("ARC_RADIUS, ANGLE_STEP, getCardStyle's signed/absPos math, and navigate() are unchanged by the card/pedestal pass", () => {
-  assert.match(wheelJsx, /const ARC_RADIUS = 900/)
-  assert.match(wheelJsx, /const ANGLE_STEP = 22/)
+test("getCardStyle's signed/absPos selection math and navigate() are unchanged by the card/pedestal pass (D3 replaced only the arc transform, not this architecture)", () => {
+  assert.match(wheelJsx, /const CARD_SLOT_WIDTH = 230/)
   assert.match(wheelJsx, /const wrapped = \(\(diff % n\) \+ n\) % n/)
   assert.match(wheelJsx, /const signed = wrapped > n \/ 2 \? wrapped - n : wrapped/)
   assert.match(wheelJsx, /const navigate = \(dir\) => \{/)
@@ -151,10 +150,15 @@ test("favorite toggle in the pedestal still dispatches toggleFavorite unchanged"
 
 // -- 10. Header utilities remain present, ordered, focusable, overflow-safe --
 
-test("header grid reserves bounded navigation/utility columns and a shrink-safe identity column", () => {
-  const block = wheelCss.match(/\.header\s*\{([^}]*)\}/)
+test("the global header reserves a shrink-safe centered identity column between bounded navigation/utility columns", () => {
+  // D2: the local Library title moved out into its own .libraryTitleRow,
+  // so the surviving 3-column row is .stage .globalHeader (Return | the
+  // Vespara lockup | Console+WelcomeBack) -- symmetric minmax(0,1fr) side
+  // columns so the centered lockup never shifts off true-center regardless
+  // of how wide Return or the utility cluster happen to be.
+  const block = wheelCss.match(/\.stage \.globalHeader\s*\{([^}]*)\}/)
   assert.ok(block)
-  assert.match(block[1], /grid-template-columns:\s*clamp\([^;]+\)\s*minmax\(250px,\s*1fr\)\s*clamp\([^;]+\)/)
+  assert.match(block[1], /grid-template-columns:\s*minmax\(0,\s*1fr\)\s*auto\s*minmax\(0,\s*1fr\)/)
 })
 
 test("statsRow, libraryToolsGroup, and utilityGroup all wrap instead of overflowing off-screen", () => {
@@ -197,8 +201,8 @@ test("Settings and Media buttons still dispatch their unchanged handlers from th
 // -- Continue Playing: data/click behavior preserved, visual integration improved --
 
 test("Continue Playing carousel still resolves click-to-select the same way, only its container styling changed", () => {
-  assert.match(wheelJsx, /const idx = filteredGames\.findIndex\(fg =>\s*\n\s*\(fg\.id && fg\.id === g\.id\) \|\| \(fg\.profile && fg\.profile === g\.profile\)\s*\n\s*\)/)
-  assert.match(wheelJsx, /if \(idx >= 0\) \{ setSelectedIndex\(idx\); sounds\.navigate\(\) \}/)
+  assert.match(wheelJsx, /const idxInWheel = filteredGames\.findIndex\(fg =>\s*\n\s*\(fg\.id && fg\.id === g\.id\) \|\| \(fg\.profile && fg\.profile === g\.profile\)\s*\n\s*\)/)
+  assert.match(wheelJsx, /if \(idxInWheel >= 0\) \{ setSelectedIndex\(idxInWheel\); sounds\.navigate\(\) \}/)
   const block = wheelCss.match(/\.recentCarousel\s*\{([^}]*)\}/)
   assert.ok(block)
   assert.match(block[1], /border-radius/, "expected the carousel to gain a framed backdrop tying it to the hall")
