@@ -1,4 +1,59 @@
+!include "nsDialogs.nsh"
+!include "LogicLib.nsh"
+
+!ifndef BUILD_UNINSTALLER
+
+Var VesparaDesktopShortcutCheckbox
+Var VesparaDesktopShortcutState
+
+Function VesparaDesktopShortcutPageCreate
+  # The directory/upgrade resolution has already run. An existing compatible
+  # executable means this is an upgrade/reinstall, where electron-builder's
+  # established shortcut migration policy remains completely authoritative.
+  IfFileExists "$INSTDIR\${PRODUCT_FILENAME}.exe" 0 +2
+    Abort
+
+  nsDialogs::Create 1018
+  Pop $0
+  ${If} $0 == error
+    Abort
+  ${EndIf}
+
+  ${NSD_CreateLabel} 0 0 100% 24u "Choose how Vespara should appear on this computer."
+  Pop $1
+
+  ${NSD_CreateCheckbox} 0 34u 100% 14u "Create a Vespara desktop shortcut"
+  Pop $VesparaDesktopShortcutCheckbox
+  ${NSD_Check} $VesparaDesktopShortcutCheckbox
+
+  ${NSD_CreateLabel} 0 58u 100% 28u "The Start Menu shortcut is always installed. You can opt out of the desktop shortcut."
+  Pop $1
+
+  nsDialogs::Show
+FunctionEnd
+
+Function VesparaDesktopShortcutPageLeave
+  ${NSD_GetState} $VesparaDesktopShortcutCheckbox $VesparaDesktopShortcutState
+FunctionEnd
+
+!macro customInit
+  StrCpy $VesparaDesktopShortcutState ${BST_CHECKED}
+!macroend
+
+!macro customPageAfterChangeDir
+  Page custom VesparaDesktopShortcutPageCreate VesparaDesktopShortcutPageLeave
+!macroend
+
 !macro customInstall
+  # electron-builder creates the standard shortcut first so its existing
+  # upgrade/rename and uninstall bookkeeping remains authoritative. A fresh
+  # install that opted out removes that just-created link before completion.
+  ${If} $VesparaDesktopShortcutState != ${BST_CHECKED}
+    WinShell::UninstShortcut "$newDesktopLink"
+    Delete "$newDesktopLink"
+    System::Call 'shell32::SHChangeNotify(i, i, i, i) v (0x08000000, 0, 0, 0)'
+  ${EndIf}
+
   IfFileExists "F:\" 0 Done
     CreateDirectory "F:\TeknoParrot"
     CreateDirectory "F:\MAME"
@@ -42,3 +97,5 @@
     CreateDirectory "F:\Media\Artwork"
   Done:
 !macroend
+
+!endif

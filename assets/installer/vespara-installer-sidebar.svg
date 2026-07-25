@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 164 314">
+  <defs>
+    <linearGradient id="sidebarField" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0a1414"/>
+      <stop offset="100%" stop-color="#020505"/>
+    </linearGradient>
+    <radialGradient id="sidebarLight" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f3e2b8" stop-opacity=".95"/>
+      <stop offset="58%" stop-color="#d6b274" stop-opacity=".44"/>
+      <stop offset="100%" stop-color="#d6b274" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="164" height="314" fill="url(#sidebarField)"/>
+  <circle cx="25" cy="43" r="1.2" fill="#d6b274" opacity=".48"/>
+  <circle cx="137" cy="71" r=".8" fill="#f3e2b8" opacity=".34"/>
+  <circle cx="31" cy="227" r=".7" fill="#f3e2b8" opacity=".28"/>
+  <path d="M22 276h120" stroke="#d6b274" stroke-width=".8" opacity=".24"/>
+  <path d="M46 251V120l36-44 36 44v131" fill="none" stroke="#d6b274" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M61 251V133l21-34 21 34v118" fill="none" stroke="#f3e2b8" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="82" cy="222" r="24" fill="url(#sidebarLight)"/>
+  <circle cx="82" cy="222" r="4.3" fill="#f3e2b8"/>
+</svg>

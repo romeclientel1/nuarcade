@@ -36,9 +36,10 @@ present as the quiet "by NuArcade" endorsement, never as the primary mark.
 | `vespara-icon-dark-field.svg` | Same icon composition over a rounded Sanctuary-Deep→Void square field | Icon preview / dark-field presentation |
 | `vespara-icon-mono-mask.svg` | Micro mark, solid white fill, transparent background | Mask-ready / single-color icon derivation |
 
-None of these are wired into the platform icon build (`assets/icons/icon.ico`
-/ `.icns` / `.png`) — see the milestone report for why that step was
-deliberately deferred.
+`vespara-icon-dark-field.svg` is the approved source geometry for the active
+platform icon build (`assets/icons/icon.ico` / `.icns` / `.png`). Windows
+installer compositions and the deterministic conversion command are
+documented in `assets/installer/README.md`.
 
 ## Approved colors
 

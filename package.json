@@ -46,6 +46,13 @@
       "allowToChangeInstallationDirectory": true,
       "installerIcon": "assets/icons/icon.ico",
       "installerHeaderIcon": "assets/icons/icon.ico",
+      "installerHeader": "assets/installer/vespara-installer-header.bmp",
+      "installerSidebar": "assets/installer/vespara-installer-sidebar.bmp",
+      "uninstallerIcon": "assets/icons/icon.ico",
+      "uninstallerSidebar": "assets/installer/vespara-installer-sidebar.bmp",
+      "artifactName": "${productName} Setup ${version}.${ext}",
+      "shortcutName": "Vespara",
+      "uninstallDisplayName": "Vespara",
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "include": "assets/installer/folders.nsh"

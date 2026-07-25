@@ -44,9 +44,10 @@ test('no installer GUID, update-channel, or repository-targeting field was touch
   assert.equal('publish' in pkg.build, false)
 })
 
-test('the nsis installer/header icon paths and folders.nsh include are unchanged', () => {
+test('the NSIS surfaces use the local Vespara icon while the existing include remains authoritative', () => {
   assert.equal(pkg.build.nsis.installerIcon, 'assets/icons/icon.ico')
   assert.equal(pkg.build.nsis.installerHeaderIcon, 'assets/icons/icon.ico')
+  assert.equal(pkg.build.nsis.uninstallerIcon, 'assets/icons/icon.ico')
   assert.equal(pkg.build.nsis.include, 'assets/installer/folders.nsh')
 })
 
