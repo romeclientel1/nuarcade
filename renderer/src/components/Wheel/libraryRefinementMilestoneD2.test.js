@@ -47,11 +47,26 @@ test("Console (or the search field that replaces it) renders immediately before 
 // -- 4. THE LIBRARY remains a separate local title ---------------------------
 
 test("THE LIBRARY renders in its own libraryTitleRow, separate from and after the global header", () => {
-  const globalHeaderCloseIdx = jsx.indexOf("</div>\n\n      <div className={styles.libraryTitleRow}>")
-  const titleRowIdx = jsx.indexOf("<div className={styles.libraryTitleRow}>")
-  const placeNameIdx = jsx.indexOf('<div className={styles.placeName}>{t("wheel.libraryPlaceName")}</div>')
-  assert.ok(globalHeaderCloseIdx > -1 && titleRowIdx === globalHeaderCloseIdx + "</div>\n\n      ".length)
-  assert.ok(placeNameIdx > titleRowIdx)
+  // Platform-independent: normalize CRLF first, then locate the boundary
+  // with a whitespace-tolerant regex instead of a literal "\n\n      "
+  // substring (which broke on Windows checkouts using CRLF line endings).
+  const source = jsx.replace(/\r\n/g, "\n")
+
+  const globalHeaderIdx = source.indexOf("<div className={styles.globalHeader}>")
+  assert.ok(globalHeaderIdx > -1, "globalHeader must exist")
+
+  const boundaryMatch = source.slice(globalHeaderIdx).match(/<\/div>\s*<div className=\{styles\.libraryTitleRow\}>/)
+  assert.ok(boundaryMatch, "libraryTitleRow must immediately follow globalHeader's closing boundary")
+
+  // Prove libraryTitleRow/placeName ("THE LIBRARY") are structurally
+  // outside globalHeader, not merely that the strings exist somewhere.
+  const globalHeaderBlock = source.slice(globalHeaderIdx, globalHeaderIdx + boundaryMatch.index)
+  assert.doesNotMatch(globalHeaderBlock, /styles\.libraryTitleRow/, "libraryTitleRow must not be nested inside globalHeader")
+  assert.doesNotMatch(globalHeaderBlock, /styles\.placeName/, "THE LIBRARY (placeName) must not render inside globalHeader")
+
+  const titleRowIdx = globalHeaderIdx + boundaryMatch.index + boundaryMatch[0].indexOf("<div className={styles.libraryTitleRow}>")
+  const placeNameIdx = source.indexOf('<div className={styles.placeName}>{t("wheel.libraryPlaceName")}</div>')
+  assert.ok(placeNameIdx > titleRowIdx, "THE LIBRARY must render after libraryTitleRow opens")
 })
 
 // -- 5. No redundant active-system subtitle reintroduced ---------------------
