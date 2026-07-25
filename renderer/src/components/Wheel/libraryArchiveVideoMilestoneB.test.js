@@ -127,17 +127,16 @@ test("Archive View is decorative with no native controls or tab stop", () => {
 })
 
 test("Archive View keeps the approved right-side geometry and framed cover crop", () => {
-  assert.match(css, /\.previewReservation\s*\{[^}]*right:\s*clamp\(48px,\s*4\.2vw,\s*80px\)[^}]*width:\s*clamp\(390px,\s*34vw,\s*560px\)/s)
+  assert.match(css, /\.previewReservation\s*\{[^}]*right:\s*clamp\(48px,\s*4\.2vw,\s*80px\)[^}]*width:\s*clamp\(360px,\s*30\.5vw,\s*504px\)/s)
   assert.match(css, /\.previewScreen\s*\{[^}]*aspect-ratio:\s*16 \/ 9[^}]*overflow:\s*hidden/s)
   assert.match(css, /\.archiveVideo\s*\{[^}]*object-fit:\s*cover[^}]*pointer-events:\s*none/s)
 })
 
-test("compact layout places Return above the Library title without shrinking its text", () => {
+test("compact layout gives Return, Library identity, and Console separate grid columns without shrinking Return text", () => {
   const compactStart = css.indexOf("@media (max-width: 1280px), (max-height: 760px)")
   const compact = css.slice(compactStart, css.indexOf("/* Restrained entrance", compactStart))
-  assert.match(compact, /\.stage \.worldNav\s*\{[^}]*top:\s*80px[^}]*left:\s*126px[^}]*width:\s*174px/s)
+  assert.match(compact, /\.stage \.header\s*\{[^}]*top:\s*76px[^}]*left:\s*32px[^}]*width:\s*700px[^}]*grid-template-columns:\s*174px minmax\(260px,\s*1fr\) 132px/s)
   assert.match(compact, /\.stage \.returnHomeBtn\s*\{[^}]*height:\s*42px[^}]*min-height:\s*42px[^}]*padding:\s*6px 12px/s)
-  assert.ok(80 + 42 < 130, "compact Return plaque must end above the desktop-minimum header top")
   assert.match(css, /\.stage \.returnHomeBtn\s*\{[^}]*font-size:\s*12px/s)
   assert.doesNotMatch(compact, /\.stage \.returnHomeBtn\s*\{[^}]*font-size:/s)
 })

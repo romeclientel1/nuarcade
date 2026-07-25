@@ -47,10 +47,10 @@ test("the Traveler greeting is live profile data and localized", () => {
 })
 
 test("the concept shell reserves a brighter left collection wall and preserves the overlook", () => {
-  assert.match(css, /\.stage \.header\s*\{[^}]*left:\s*clamp\([^}]*width:\s*min\(42vw,\s*720px\)/s)
-  assert.match(css, /\.stage \.categoryStrip\s*\{[^}]*left:\s*clamp\([^}]*width:\s*min\(42vw,\s*720px\)/s)
-  assert.match(css, /\.stage \.wheelArea\s*\{[^}]*left:\s*clamp\([^}]*width:\s*min\(47vw,\s*850px\)[^}]*overflow:\s*hidden/s)
-  assert.match(cardCss, /\.neighbor\s*\{[^}]*saturate\(0\.78\) brightness\(0\.9\)/s)
+  assert.match(css, /\.stage \.header\s*\{[^}]*left:\s*clamp\([^}]*width:\s*min\(48vw,\s*900px\)/s)
+  assert.match(css, /\.stage \.categoryStrip\s*\{[^}]*left:\s*clamp\([^}]*width:\s*min\(48vw,\s*900px\)/s)
+  assert.match(css, /\.stage \.wheelArea\s*\{[^}]*left:\s*clamp\([^}]*width:\s*min\(50vw,\s*940px\)[^}]*overflow:\s*hidden/s)
+  assert.match(cardCss, /\.neighbor\s*\{[^}]*saturate\(0\.86\) brightness\(0\.94\)/s)
   assert.match(cardJsx, /const CARD_BG = "#142522"/)
   assert.match(cardCss, /\.card\.center \.title\s*\{[^}]*"Times New Roman", Georgia, "Liberation Serif", serif/s)
 })
@@ -68,13 +68,13 @@ test("the approved right-hand frame now owns the live presentation-only video su
   assert.match(previewMarkup, /<video[\s\S]*?styles\.archiveVideo[\s\S]*?autoPlay/)
   assert.doesNotMatch(previewMarkup, /controls=/)
   assert.equal((previewMarkup.match(/tabIndex=\{-1\}/g) || []).length, 2)
-  assert.match(css, /\.previewReservation\s*\{[^}]*right:\s*clamp\([^}]*width:\s*clamp\(390px,\s*34vw,\s*560px\)/s)
+  assert.match(css, /\.previewReservation\s*\{[^}]*right:\s*clamp\([^}]*width:\s*clamp\(360px,\s*30\.5vw,\s*504px\)/s)
 })
 
 test("the information pedestal sits below the shelf and does not cover the collection row", () => {
-  assert.match(css, /\.stage \.wheelArea\s*\{[^}]*top:\s*clamp\(348px,\s*38vh,\s*410px\)[^}]*height:\s*clamp\(300px,\s*34vh,\s*368px\)/s)
-  assert.match(css, /\.stage \.infoPanel\s*\{[^}]*bottom:\s*clamp\(36px,\s*4\.2vh,\s*46px\)[^}]*min-height:\s*104px/s)
-  assert.match(css, /@media \(max-width: 1280px\), \(max-height: 760px\)[\s\S]*?\.stage \.wheelArea\s*\{[^}]*top:\s*300px[^}]*height:\s*264px[\s\S]*?\.stage \.infoPanel\s*\{[^}]*bottom:\s*26px/s)
+  assert.match(css, /\.stage \.wheelArea\s*\{[^}]*top:\s*clamp\(356px,\s*38\.5vh,\s*416px\)[^}]*height:\s*clamp\(302px,\s*34vh,\s*368px\)/s)
+  assert.match(css, /\.stage \.infoPanel\s*\{[^}]*bottom:\s*clamp\(52px,\s*5\.7vh,\s*62px\)[^}]*min-height:\s*108px/s)
+  assert.match(css, /@media \(max-width: 1280px\), \(max-height: 760px\)[\s\S]*?\.stage \.wheelArea\s*\{[^}]*top:\s*286px[^}]*height:\s*268px[\s\S]*?\.stage \.infoPanel\s*\{[^}]*bottom:\s*52px/s)
 })
 
 test("return, console, and the visible Depart plaque use integrated live controls", () => {

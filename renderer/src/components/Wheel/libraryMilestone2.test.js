@@ -151,10 +151,10 @@ test("favorite toggle in the pedestal still dispatches toggleFavorite unchanged"
 
 // -- 10. Header utilities remain present, ordered, focusable, overflow-safe --
 
-test("header grid columns allow the side columns to shrink instead of clipping (minmax(0, 1fr), not a bare 1fr)", () => {
+test("header grid reserves bounded navigation/utility columns and a shrink-safe identity column", () => {
   const block = wheelCss.match(/\.header\s*\{([^}]*)\}/)
   assert.ok(block)
-  assert.match(block[1], /grid-template-columns:\s*minmax\(0,\s*1fr\)\s*auto\s*minmax\(0,\s*1fr\)/)
+  assert.match(block[1], /grid-template-columns:\s*clamp\([^;]+\)\s*minmax\(250px,\s*1fr\)\s*clamp\([^;]+\)/)
 })
 
 test("statsRow, libraryToolsGroup, and utilityGroup all wrap instead of overflowing off-screen", () => {

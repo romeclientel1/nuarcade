@@ -138,27 +138,26 @@
 
 .stage .header {
   position: absolute;
-  top: clamp(130px, 15vh, 162px);
-  left: clamp(150px, 10.4vw, 200px);
-  width: min(42vw, 720px);
+  top: clamp(126px, 14.5vh, 156px);
+  left: clamp(48px, 6.5vw, 125px);
+  width: min(48vw, 900px);
   z-index: 12;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  padding: 0 0 14px;
-  column-gap: 18px;
-  border-bottom-color: rgba(214, 178, 116, 0.28);
+  grid-template-columns: clamp(148px, 10vw, 184px) minmax(250px, 1fr) clamp(116px, 8.5vw, 154px);
+  align-items: center;
+  padding: 0 0 12px;
+  column-gap: clamp(16px, 2vw, 34px);
+  border-bottom: 1px solid rgba(214, 178, 116, 0.2);
 }
 
 .stage .worldNav {
-  position: fixed;
-  left: clamp(22px, 2.5vw, 48px);
-  top: clamp(136px, 16.5vh, 178px);
-  width: clamp(108px, 7.6vw, 146px);
+  position: static;
+  width: 100%;
 }
 
 .stage .returnHomeBtn {
   width: 100%;
-  min-height: 68px;
-  padding: 14px 10px;
+  min-height: 52px;
+  padding: 10px 12px;
   border: 0;
   border-top: 1px solid rgba(214, 178, 116, 0.42);
   border-bottom: 1px solid rgba(214, 178, 116, 0.3);
@@ -174,9 +173,9 @@
 }
 
 .stage .placeIdentity {
-  justify-self: start;
-  justify-items: start;
-  text-align: left;
+  justify-self: center;
+  justify-items: center;
+  text-align: center;
   gap: 1px;
   pointer-events: none;
 }
@@ -189,8 +188,8 @@
 
 .stage .placeName {
   font-family: "Times New Roman", Georgia, "Liberation Serif", serif;
-  font-size: clamp(23px, 1.65vw, 31px);
-  font-weight: 600;
+  font-size: clamp(27px, 1.85vw, 35px);
+  font-weight: 700;
   letter-spacing: 0.16em;
   color: #f7ecd6;
   -webkit-text-stroke: 0.45px rgba(214, 178, 116, 0.72);
@@ -199,21 +198,25 @@
 
 .stage .placeSubtitle {
   margin-top: 4px;
-  font-family: "Times New Roman", Georgia, "Liberation Serif", serif;
-  font-size: 11px;
-  letter-spacing: 0.08em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-family: "Share Tech Mono", "Courier New", monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
   text-transform: none;
-  color: rgba(246, 233, 207, 0.78);
+  color: rgba(239, 218, 177, 0.72);
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
 }
 
-.stage .collectionStatus {
-  justify-content: flex-start;
-  color: rgba(231, 204, 150, 0.62);
-  pointer-events: none;
+.stage .placeSubtitleDivider {
+  color: rgba(214, 178, 116, 0.52);
 }
 
 .stage .consoleTrigger {
+  width: 100%;
+  min-height: 44px;
   border: 0;
   border-top: 1px solid rgba(214, 178, 116, 0.4);
   border-bottom: 1px solid rgba(214, 178, 116, 0.28);
@@ -224,70 +227,75 @@
 
 .stage .categoryStrip {
   position: absolute;
-  top: clamp(226px, 25.5vh, 276px);
-  left: clamp(150px, 10.4vw, 200px);
-  width: min(42vw, 720px);
-  height: 48px;
+  top: clamp(220px, 24.5vh, 264px);
+  left: clamp(48px, 6.5vw, 125px);
+  width: min(48vw, 900px);
+  height: 44px;
   z-index: 11;
   justify-content: center;
-  background: linear-gradient(90deg, transparent, rgba(70, 44, 20, 0.35) 13%, rgba(85, 55, 27, 0.4) 50%, rgba(70, 44, 20, 0.35) 87%, transparent);
+  background: linear-gradient(90deg, transparent, rgba(61, 39, 20, 0.22) 15%, rgba(75, 48, 23, 0.28) 50%, rgba(61, 39, 20, 0.22) 85%, transparent);
   border: 0;
-  border-top: 1px solid rgba(214, 178, 116, 0.28);
-  border-bottom: 1px solid rgba(102, 63, 27, 0.7);
+  border-bottom: 1px solid rgba(214, 178, 116, 0.22);
   border-radius: 0;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
 }
 
 .stage .catPill {
-  width: 142px;
-  padding: 8px 10px;
+  width: 136px;
+  padding: 7px 9px 8px;
   border: 0;
-  border-bottom: 1px solid rgba(214, 178, 116, 0.18);
+  border-bottom: 2px solid transparent;
   border-radius: 0;
-  background: linear-gradient(180deg, rgba(93, 58, 27, 0.34), rgba(38, 24, 13, 0.38));
-  box-shadow: inset 0 1px rgba(255, 237, 195, 0.04);
-  font-family: "Times New Roman", Georgia, "Liberation Serif", serif;
-  font-size: 11px;
-  letter-spacing: 0.12em;
+  background: linear-gradient(180deg, rgba(93, 58, 27, 0.2), rgba(38, 24, 13, 0.18));
+  box-shadow: none;
+  font-family: "Share Tech Mono", "Courier New", monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.11em;
+}
+
+.stage .catActive {
+  border-bottom-color: #d6b274 !important;
+  background: linear-gradient(180deg, rgba(214, 178, 116, 0.14), rgba(66, 42, 20, 0.32));
+  box-shadow: inset 0 -3px rgba(214, 178, 116, 0.1);
 }
 
 .stage .recentCarousel {
   position: absolute;
-  top: clamp(278px, 31vh, 336px);
-  left: clamp(150px, 10.4vw, 200px);
-  width: min(42vw, 720px);
+  top: clamp(272px, 30vh, 324px);
+  left: clamp(48px, 6.5vw, 125px);
+  width: min(48vw, 900px);
   box-sizing: border-box;
   margin: 0;
-  padding: 8px 12px;
+  padding: 7px 12px 10px;
   z-index: 10;
-  border-radius: 4px;
-  background: linear-gradient(90deg, rgba(35, 22, 12, 0.42), rgba(68, 42, 19, 0.34), rgba(35, 22, 12, 0.38));
-  border-color: rgba(214, 178, 116, 0.24);
-  box-shadow: 0 9px 20px rgba(0, 0, 0, 0.2);
+  border: 0;
+  border-radius: 0;
+  border-bottom: 2px solid rgba(126, 79, 35, 0.54);
+  background: linear-gradient(90deg, transparent, rgba(32, 22, 13, 0.28) 12%, rgba(51, 33, 17, 0.24) 88%, transparent);
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.14);
 }
 
 .stage .wheelArea {
   position: absolute;
-  top: clamp(348px, 38vh, 410px);
-  left: clamp(126px, 8.3vw, 160px);
-  width: min(47vw, 850px);
-  height: clamp(300px, 34vh, 368px);
+  top: clamp(356px, 38.5vh, 416px);
+  left: clamp(42px, 5vw, 96px);
+  width: min(50vw, 940px);
+  height: clamp(302px, 34vh, 368px);
   z-index: 8;
   overflow: hidden;
-  border-radius: 4px 4px 12px 12px;
+  border-radius: 0 0 10px 10px;
   background:
-    linear-gradient(180deg, rgba(94, 59, 27, 0.14), rgba(54, 34, 17, 0.27) 72%, rgba(22, 15, 9, 0.38)),
-    repeating-linear-gradient(90deg, rgba(214, 178, 116, 0.035) 0 1px, transparent 1px 14%);
-  border: 1px solid rgba(214, 178, 116, 0.2);
+    radial-gradient(ellipse 48% 62% at 50% 58%, rgba(214, 178, 116, 0.09), transparent 72%),
+    linear-gradient(180deg, transparent 0 8%, rgba(49, 31, 16, 0.16) 70%, rgba(22, 15, 9, 0.3));
+  border: 0;
   border-bottom: 3px solid rgba(126, 79, 35, 0.72);
   box-shadow:
-    inset 0 1px rgba(255, 237, 195, 0.06),
     inset 0 -18px 38px rgba(0, 0, 0, 0.22),
-    0 14px 26px rgba(0, 0, 0, 0.22);
+    0 14px 26px rgba(0, 0, 0, 0.16);
 }
 
 .stage .cardTrack {
-  transform: scale(0.74);
+  transform: scale(0.68);
   transform-origin: center 58%;
 }
 
@@ -328,32 +336,69 @@
 
 .stage .infoPanel {
   position: absolute;
-  left: clamp(300px, 19vw, 365px);
-  bottom: clamp(36px, 4.2vh, 46px);
-  width: min(35vw, 620px);
-  min-height: 104px;
+  left: clamp(96px, 8vw, 154px);
+  bottom: clamp(52px, 5.7vh, 62px);
+  width: min(46vw, 780px);
+  min-height: 108px;
   box-sizing: border-box;
   display: flex;
   align-items: center;
-  padding: 14px 22px;
-  border: 1px solid rgba(214, 178, 116, 0.34);
-  border-radius: 8px 2px 8px 2px;
-  background: linear-gradient(155deg, rgba(39, 27, 14, 0.86), rgba(19, 15, 10, 0.88));
+  gap: 24px;
+  padding: 15px 20px 15px 24px;
+  border: 1px solid rgba(214, 178, 116, 0.28);
+  border-radius: 6px 2px 6px 2px;
+  background: linear-gradient(155deg, rgba(35, 25, 15, 0.78), rgba(15, 14, 10, 0.84));
   box-shadow:
-    0 16px 34px rgba(0, 0, 0, 0.38),
-    inset 0 0 0 1px rgba(214, 178, 116, 0.08);
+    0 14px 28px rgba(0, 0, 0, 0.3),
+    inset 0 1px rgba(255, 237, 195, 0.04);
 }
 
 .stage .marqueeWrap {
   font-family: "Times New Roman", Georgia, "Liberation Serif", serif;
-  font-size: 18px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  color: #f3dfb7;
+  font-size: clamp(20px, 1.45vw, 27px);
+  font-weight: 700;
+  letter-spacing: 0.055em;
+  color: #f7ead0;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.78);
+}
+
+.stage .infoMeta {
+  gap: 8px;
+  margin: 2px 0 4px;
+}
+
+.stage .tagSystem,
+.stage .tagPerfect,
+.stage .tagGreat,
+.stage .tagUnverified {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-family: "Share Tech Mono", "Courier New", monospace;
+}
+
+.stage .infoMetaDivider {
+  color: rgba(214, 178, 116, 0.42);
+}
+
+.stage .infoSummary {
+  color: rgba(232, 220, 195, 0.48);
+  font-family: "Share Tech Mono", "Courier New", monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.stage .infoRight {
+  align-self: stretch;
+  padding-left: 22px;
+  border-left: 1px solid rgba(214, 178, 116, 0.2);
 }
 
 .stage .launchBtn {
   font-family: "Times New Roman", Georgia, "Liberation Serif", serif;
+  padding: 11px 26px;
+  font-size: 13px;
   border-radius: 3px;
 }
 
@@ -362,29 +407,28 @@
   top: clamp(190px, 21vh, 228px);
   right: clamp(48px, 4.2vw, 80px);
   z-index: 7;
-  width: clamp(390px, 34vw, 560px);
+  width: clamp(360px, 30.5vw, 504px);
   box-sizing: border-box;
-  padding: 13px 15px 14px;
+  padding: 11px 12px 12px;
   color: #f4e7ca;
-  border: 1px solid rgba(214, 178, 116, 0.42);
-  border-radius: 4px 4px 10px 10px;
+  border: 1px solid rgba(214, 178, 116, 0.3);
+  border-radius: 3px 3px 8px 8px;
   background:
-    linear-gradient(145deg, rgba(78, 49, 23, 0.68), rgba(28, 20, 12, 0.72)),
-    rgba(18, 15, 10, 0.66);
+    linear-gradient(145deg, rgba(61, 40, 22, 0.54), rgba(24, 19, 13, 0.62)),
+    rgba(18, 15, 10, 0.52);
   box-shadow:
-    inset 0 0 0 2px rgba(53, 32, 15, 0.72),
-    inset 0 0 0 3px rgba(214, 178, 116, 0.12),
-    0 18px 38px rgba(0, 0, 0, 0.3);
+    inset 0 0 0 1px rgba(53, 32, 15, 0.62),
+    0 16px 30px rgba(0, 0, 0, 0.24);
 }
 
 .previewHeading {
-  padding: 0 2px 10px;
+  padding: 0 2px 8px;
   font-family: "Times New Roman", Georgia, "Liberation Serif", serif;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.24em;
   text-transform: uppercase;
-  color: #d6b274;
+  color: rgba(214, 178, 116, 0.76);
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
 }
 
@@ -392,11 +436,11 @@
   position: relative;
   aspect-ratio: 16 / 9;
   overflow: hidden;
-  border: 1px solid rgba(226, 195, 136, 0.42);
+  border: 1px solid rgba(226, 195, 136, 0.3);
   background: rgba(7, 11, 10, 0.72);
   box-shadow:
-    inset 0 0 30px rgba(0, 0, 0, 0.54),
-    0 0 0 4px rgba(31, 20, 11, 0.72);
+    inset 0 0 24px rgba(0, 0, 0, 0.48),
+    0 0 0 2px rgba(31, 20, 11, 0.62);
 }
 
 .previewScreen::after {
@@ -460,17 +504,6 @@
   opacity: 1;
 }
 
-.previewCaption {
-  margin-top: 12px;
-  overflow: hidden;
-  font-family: "Times New Roman", Georgia, "Liberation Serif", serif;
-  font-size: clamp(15px, 1.2vw, 20px);
-  font-weight: 600;
-  letter-spacing: 0.075em;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
 .departReservation {
   position: fixed;
   right: clamp(44px, 4vw, 76px);
@@ -522,17 +555,18 @@
 }
 
 @media (max-width: 1280px), (max-height: 760px) {
-  .stage .header,
-  .stage .categoryStrip,
-  .stage .recentCarousel {
-    left: 126px;
-    width: 570px;
+  .stage .header {
+    top: 76px;
+    left: 32px;
+    width: 700px;
+    grid-template-columns: 174px minmax(260px, 1fr) 132px;
+    column-gap: 18px;
   }
 
-  .stage .worldNav {
-    top: 80px;
-    left: 126px;
-    width: 174px;
+  .stage .categoryStrip,
+  .stage .recentCarousel {
+    left: 32px;
+    width: 700px;
   }
 
   .stage .returnHomeBtn {
@@ -542,29 +576,37 @@
     line-height: 1.15;
   }
 
+  .stage .categoryStrip {
+    top: 157px;
+  }
+
+  .stage .recentCarousel {
+    top: 205px;
+  }
+
   .stage .wheelArea {
-    left: 98px;
-    width: 640px;
-    top: 300px;
-    height: 264px;
+    left: 26px;
+    width: 730px;
+    top: 286px;
+    height: 268px;
   }
 
   .stage .cardTrack {
-    transform: scale(0.62);
+    transform: scale(0.57);
   }
 
   .stage .infoPanel {
-    left: 220px;
-    width: 490px;
-    min-height: 94px;
-    padding: 11px 18px;
-    bottom: 26px;
+    left: 64px;
+    width: 668px;
+    min-height: 96px;
+    padding: 10px 14px 10px 18px;
+    bottom: 52px;
   }
 
   .previewReservation {
-    top: 168px;
+    top: 162px;
     right: 28px;
-    width: 410px;
+    width: 370px;
     padding: 10px 12px 12px;
   }
 
@@ -572,6 +614,10 @@
     right: 28px;
     bottom: 27px;
     width: 180px;
+  }
+
+  .hintBar {
+    padding: 7px 20px;
   }
 }
 

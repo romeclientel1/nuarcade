@@ -134,20 +134,21 @@ test("Return to Sanctuary (worldNav) renders as a sibling of headerRight, uncond
   assert.match(jsx, /<div className=\{styles\.worldNav\}>\s*\n\s*<button className=\{styles\.returnHomeBtn/)
 })
 
-// -- 9. Game count still renders but is no longer part of the utility-button cluster --
+// -- 9. Game count remains within the calm place-context subtitle --
 
-test("gameCount now renders inside collectionStatus (under the place identity), not inside the console/utility cluster", () => {
+test("gameCount renders inside placeSubtitle under the identity, not inside the console/utility cluster", () => {
   const placeIdentityIdx = jsx.indexOf("<div className={styles.placeIdentity}>")
   const headerRightIdx = jsx.indexOf("<div className={styles.headerRight}>")
-  const collectionStatusIdx = jsx.indexOf("<div className={styles.collectionStatus}")
+  const placeSubtitleIdx = jsx.indexOf("<div className={styles.placeSubtitle}")
   const gameCountIdx = jsx.indexOf("<span className={styles.gameCount}>")
-  assert.ok(placeIdentityIdx > -1 && collectionStatusIdx > placeIdentityIdx && collectionStatusIdx < headerRightIdx, "collectionStatus must be inside placeIdentity, before headerRight")
-  assert.ok(gameCountIdx > collectionStatusIdx && gameCountIdx < headerRightIdx, "gameCount must render inside collectionStatus, before headerRight")
+  assert.ok(placeIdentityIdx > -1 && placeSubtitleIdx > placeIdentityIdx && placeSubtitleIdx < headerRightIdx, "placeSubtitle must be inside placeIdentity, before headerRight")
+  assert.ok(gameCountIdx > placeSubtitleIdx && gameCountIdx < headerRightIdx, "gameCount must render inside placeSubtitle, before headerRight")
 })
 
-test("collectionStatus is decorative (aria-hidden, pointer-events: none) -- status, not an interactive control", () => {
-  assert.match(jsx, /<div className=\{styles\.collectionStatus\} aria-hidden="true">/)
-  const rule = css.match(/\.collectionStatus\s*\{([^}]*)\}/)
+test("placeSubtitle is decorative and the redundant collectionStatus surface is inactive", () => {
+  assert.match(jsx, /<div className=\{styles\.placeSubtitle\} aria-hidden="true">/)
+  assert.doesNotMatch(jsx, /<div className=\{styles\.collectionStatus\}/)
+  const rule = css.match(/\.placeIdentity\s*\{([^}]*)\}/)
   assert.ok(rule)
   assert.match(rule[1], /pointer-events:\s*none/)
 })

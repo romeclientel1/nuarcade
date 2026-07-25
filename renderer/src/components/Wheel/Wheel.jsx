@@ -238,10 +238,9 @@ function KonamiCelebration({ onClose }) {
 export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange, activeProfile, onSwitchPlayer, onReturnHome, restorationRequest, uiSoundsEnabled, onUiSoundsChange, uiSoundVolume, onUiSoundVolumeChange }) {
   const { t } = useI18n()
   const {
-    games, stats, loading, libraryEmpty, config,
+    games, loading, libraryEmpty, config,
   toggleFavorite, isFavorite,
     recentlyPlayed, addRecentlyPlayed,
-    newGameCount,
     refreshVideoPaths,
   } = useGameLibrary()
 
@@ -1356,7 +1355,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
             />
           )}
         </div>
-        <div className={styles.previewCaption}>{current?.title || t("wheel.previewTitle")}</div>
       </aside>
 
       <AttractMode
@@ -1385,22 +1383,10 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
         <div className={styles.placeIdentity}>
           <img src={vesparaMicroMark} alt="" aria-hidden="true" className={styles.placeSeal} />
           <div className={styles.placeName}>{t("wheel.libraryPlaceName")}</div>
-          <div className={styles.placeSubtitle}>{t("wheel.libraryPlaceSubtitle")}</div>
-          <div className={styles.collectionStatus} aria-hidden="true">
-            {stats?.devMode && <span className={styles.devBadge}>DEV MODE</span>}
-            {attractMode && <span className={styles.attractBadge}>ATTRACT</span>}
-            {activeCategory.startsWith("col_") && collections[activeCategory] && (
-              <span className={styles.collectionBadge}>
-                [] {collections[activeCategory].name}
-              </span>
-            )}
-            {!activeCategory.startsWith("col_") && activeCategory !== "All" && activeCategory !== "Recent" && activeCategory !== "Favorites" && (
-              <span className={styles.filterBadge}>{activeCategory}</span>
-            )}
+          <div className={styles.placeSubtitle} aria-hidden="true">
+            <span>{t("wheel.libraryPlaceSubtitle")}</span>
+            <span className={styles.placeSubtitleDivider}>·</span>
             <span className={styles.gameCount}>{filteredGames.length} game{filteredGames.length !== 1 ? "s" : ""}</span>
-            {newGameCount > 0 && (
-              <span className={styles.newBadge}>+{newGameCount} new</span>
-            )}
           </div>
         </div>
         <div className={styles.headerRight}>
@@ -1738,7 +1724,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
             </div>
             <div className={styles.infoMeta}>
               <span className={styles.tagSystem}>{current.system}</span>
-              <span className={styles.tagGenre}>{current.genre}</span>
+              <span className={styles.infoMetaDivider} aria-hidden="true">·</span>
               <span className={
                 current.status === "Perfect" ? styles.tagPerfect :
                 current.status === "Great" || current.status === "Playable" ? styles.tagGreat :
@@ -1754,18 +1740,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
                 {isFavorite(current.id || current.profile) ? "<3" : "+"}
               </button>
             </div>
-            <div className={styles.infoExe}>
-              {current.emulator === 'mame' ? 'mame.exe ' + (current.romName || '') :
-               current.emulator === 'rpcs3' ? 'rpcs3.exe ' + (current.profile || '') :
-               current.emulator === 'xenia' ? 'xenia.exe ' + (current.romName || '') :
-               current.emulator === 'dolphin' ? 'Dolphin.exe ' + (current.romName || '') :
-               current.emulator === 'pcsx2' ? 'pcsx2-qt.exe ' + (current.romName || '') :
-               current.emulator === 'ryujinx' ? 'Ryujinx.exe ' + (current.romName || '') :
-               current.emulator === 'retroarch' ? 'retroarch.exe ' + (current.romName || '') :
-               current.isPinball ? 'VPXStarter.exe ' + (current.romName || '') :
-               current.system === 'MAME' ? 'mame.exe ' + (current.romName || '') :
-               'TeknoParrotUi.exe --profile=' + (current.profile || '')}
-            </div>
+            <div className={styles.infoSummary}>{current.genre}</div>
           </div>
           <div className={styles.infoRight}>
             <button className={styles.launchBtn + (focusZone === 3 ? " " + styles.barFocused : "")} onClick={launchGame} disabled={launching}>
