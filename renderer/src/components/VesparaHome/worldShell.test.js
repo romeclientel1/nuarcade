@@ -49,7 +49,7 @@ test("no Settings or Media destination is added", () => {
 test("destination controls retain explicit focus-visible styling", () => {
   assert.match(css, /\.actionBtn:focus-visible\s*\{/)
   assert.match(css, /\.recentCard:focus-visible\s*\{/)
-  assert.match(css, /\.departBtn:focus-visible\s*\{/)
+  assert.match(jsx, /className=\{styles\.actionBtn \+ " " \+ styles\[action \+ "Destination"\]/)
 })
 
 test("reduced motion neutralizes world animation without removing focus", () => {

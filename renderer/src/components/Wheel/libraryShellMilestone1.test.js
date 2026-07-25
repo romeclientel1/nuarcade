@@ -40,7 +40,7 @@ test("topMenuActions array and TOP_MENU_MAX are unchanged -- index-to-action map
   assert.match(jsx, /\(\) => setShowSort\(s => !s\),\s*\/\/ 0 Sort/)
   assert.match(jsx, /\(\) => \{ if \(onReturnHome\) onReturnHome\(\) \},\s*\/\/ 6 Home/)
   assert.match(jsx, /\(\) => \{ if \(onSwitchPlayer\) onSwitchPlayer\(\) \},\s*\/\/ 7 Player/)
-  assert.match(jsx, /\(\) => setShowExitPopup\(true\), \/\/ 11 Exit/)
+  assert.match(jsx, /\(\) => openDepart\(consoleDepartRef\.current\),\s*\/\/ 11 Depart/)
 })
 
 test("every button's topMenuIdx comparison value is unchanged (0-10 mapping preserved regardless of visual grouping)", () => {
@@ -90,7 +90,7 @@ test("Settings/Media/Player/Help/Exit controls are grouped in the new utilityGro
   assert.match(groupBlock, /onClick=\{\(\) => setShowMediaManager\(true\)\}/)
   assert.match(groupBlock, /onClick=\{\(\) => setShowSettings\(true\)\}/)
   assert.match(groupBlock, /onClick=\{\(\) => navigateTo\("help"\)\}/)
-  assert.match(groupBlock, /onClick=\{\(\) => setShowExitPopup\(true\)\}/)
+  assert.match(groupBlock, /onClick=\{openDepart\}/)
 })
 
 test("Sort/Random/Sets/Stats/Achievements are grouped in the new libraryToolsGroup wrapper, dispatching unchanged", () => {
@@ -107,7 +107,7 @@ test("Sort/Random/Sets/Stats/Achievements are grouped in the new libraryToolsGro
 // -- 5. All restyled interactive controls retain visible focus ----------------
 
 test("every restyled/regrouped control class still has its own :focus-visible rule, unremoved", () => {
-  for (const cls of [".catPill", ".settingsBtn", ".returnHomeBtn", ".exitBtn", ".mediaBtn", ".helpBtn", ".sortBtn", ".randBtn", ".colBtn", ".statsBtn", ".achieveBtn"]) {
+  for (const cls of [".catPill", ".settingsBtn", ".returnHomeBtn", ".consoleDepartBtn", ".mediaBtn", ".helpBtn", ".sortBtn", ".randBtn", ".colBtn", ".statsBtn", ".achieveBtn"]) {
     assert.match(css, new RegExp(cls.replace(".", "\\.") + ":focus-visible"), cls + " must still have a :focus-visible rule")
   }
 })

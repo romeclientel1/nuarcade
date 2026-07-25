@@ -62,7 +62,7 @@ test("every previously-exposed utility action is still present inside the consol
   assert.match(panel, /onClick=\{\(\) => setShowMediaManager\(true\)\}/, "Media")
   assert.match(panel, /onClick=\{\(\) => setShowSettings\(true\)\}/, "Settings")
   assert.match(panel, /onClick=\{\(\) => navigateTo\("help"\)\}/, "Help")
-  assert.match(panel, /onClick=\{\(\) => setShowExitPopup\(true\)\}/, "Exit")
+  assert.match(panel, /onClick=\{openDepart\}/, "Depart")
 })
 
 test("Search is exposed as a console menu item that reveals the existing search UI without a new query mechanism", () => {
@@ -76,7 +76,7 @@ test("topMenuActions array, TOP_MENU_MAX, and every topMenuIdx comparison are by
   assert.match(jsx, /\(\) => setShowSort\(s => !s\),\s*\/\/ 0 Sort/)
   assert.match(jsx, /\(\) => \{ if \(onReturnHome\) onReturnHome\(\) \},\s*\/\/ 6 Home/)
   assert.match(jsx, /\(\) => \{ if \(onSwitchPlayer\) onSwitchPlayer\(\) \},\s*\/\/ 7 Player/)
-  assert.match(jsx, /\(\) => setShowExitPopup\(true\), \/\/ 11 Exit/)
+  assert.match(jsx, /\(\) => openDepart\(consoleDepartRef\.current\),\s*\/\/ 11 Depart/)
   const idxByAction = { Sort: 0, RND: 1, Sets: 2, Stats: 3, Ach: 4, Home: 5, Player: 6, Media: 7, Settings: 8, Help: 9, Exit: 10 }
   for (const idx of Object.values(idxByAction)) {
     assert.match(jsx, new RegExp("topMenuIdx === " + idx + "\\b"))
@@ -176,7 +176,7 @@ test("the gamepad zone-0 (topMenu) system is completely untouched -- left/right/
 // -- 11. Existing focus-visible and reduced-motion rules remain intact -------
 
 test("every previously-restyled control class still has its own :focus-visible rule, unremoved", () => {
-  for (const cls of [".catPill", ".settingsBtn", ".returnHomeBtn", ".exitBtn", ".mediaBtn", ".helpBtn", ".sortBtn", ".randBtn", ".colBtn", ".statsBtn", ".achieveBtn"]) {
+  for (const cls of [".catPill", ".settingsBtn", ".returnHomeBtn", ".consoleDepartBtn", ".mediaBtn", ".helpBtn", ".sortBtn", ".randBtn", ".colBtn", ".statsBtn", ".achieveBtn"]) {
     assert.match(css, new RegExp(cls.replace(".", "\\.") + ":focus-visible"), cls + " must still have a :focus-visible rule")
   }
 })

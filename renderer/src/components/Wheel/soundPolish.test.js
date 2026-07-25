@@ -51,46 +51,45 @@ test("launchGame() itself still does not call any sound function directly -- the
 
 // -- Exit/RetroArch dialogs: left/right only sound on an actual choice change -
 
-test("RetroArch/Exit dialog Left/Right only sound when the choice actually changes (gamepad left)", () => {
+test("RetroArch dialog Left/Right only sound when the choice actually changes (gamepad left)", () => {
   const left = jsx.slice(jsx.indexOf("left: () => {"), jsx.indexOf("right: () => {"))
   assert.match(left, /if \(retroArchChoiceRef\.current !== 0\) \{ sounds\.navigate\(\); setRetroArchChoice\(0\) \}/)
-  assert.match(left, /if \(exitChoiceRef\.current !== 0\) \{ sounds\.navigate\(\); setExitChoice\(0\) \}/)
 })
 
-test("RetroArch/Exit dialog Left/Right only sound when the choice actually changes (gamepad right)", () => {
+test("RetroArch dialog Left/Right only sound when the choice actually changes (gamepad right)", () => {
   const right = jsx.slice(jsx.indexOf("right: () => {"), jsx.indexOf("up: () => {"))
   assert.match(right, /if \(retroArchChoiceRef\.current !== 1\) \{ sounds\.navigate\(\); setRetroArchChoice\(1\) \}/)
-  assert.match(right, /if \(exitChoiceRef\.current !== 1\) \{ sounds\.navigate\(\); setExitChoice\(1\) \}/)
 })
 
 // -- confirm: exactly one cue per branch, RetroArch launch-commit never double-sounds
 
 test("RetroArch dialog confirm: choosing Yes plays launch() only (never select() first) since it commits an external-app launch", () => {
   const block = jsx.slice(jsx.indexOf("confirm: () => {"), jsx.indexOf("settings: () => {"))
-  const retroArchBlock = block.slice(block.indexOf("showRetroArchPopupRef.current) {"), block.indexOf("if (showExitPopupRef.current) {"))
+  const retroArchBlock = block.slice(block.indexOf("showRetroArchPopupRef.current) {"), block.indexOf("if (consoleOpenRef.current"))
   assert.match(retroArchBlock, /if \(retroArchChoiceRef\.current === 0\) \{ sounds\.launch\(\); window\.nuarcade\?\.launchRetroArch\?\.\(\) \}/)
   assert.doesNotMatch(retroArchBlock, /sounds\.select\(\)/)
 })
 
 test("RetroArch dialog confirm: choosing No plays back() only", () => {
   const block = jsx.slice(jsx.indexOf("confirm: () => {"), jsx.indexOf("settings: () => {"))
-  const retroArchBlock = block.slice(block.indexOf("showRetroArchPopupRef.current) {"), block.indexOf("if (showExitPopupRef.current) {"))
+  const retroArchBlock = block.slice(block.indexOf("showRetroArchPopupRef.current) {"), block.indexOf("if (consoleOpenRef.current"))
   assert.match(retroArchBlock, /else \{ sounds\.back\(\) \}/)
 })
 
-test("Exit dialog confirm: choosing Yes (quit) plays select() once, choosing No plays back() once -- never both for one press", () => {
-  const block = jsx.slice(jsx.indexOf("confirm: () => {"), jsx.indexOf("settings: () => {"))
-  const exitBlock = block.slice(block.indexOf("if (showExitPopupRef.current) {"))
-  assert.match(exitBlock, /if \(exitChoiceRef\.current === 0\) \{ sounds\.select\(\); window\.nuarcade\?\.quit\?\.\(\) \}/)
-  assert.match(exitBlock, /else \{ sounds\.back\(\); setShowExitPopup\(false\); setExitChoice\(1\) \}/)
+test("Depart confirm and cancel each play exactly one cue", () => {
+  const accept = jsx.slice(jsx.indexOf("const acceptDepart"), jsx.indexOf("const declineDepart"))
+  const decline = jsx.slice(jsx.indexOf("const declineDepart"), jsx.indexOf("// Background music"))
+  assert.match(accept, /sounds\.select\(\)/)
+  assert.doesNotMatch(accept, /sounds\.back/)
+  assert.match(decline, /sounds\.back\(\)/)
+  assert.doesNotMatch(decline, /sounds\.select/)
 })
 
 // -- back (B button): exactly one cue per dialog -------------------------------
 
-test("Exit/RetroArch dialog back (B button) each play exactly one back() cue", () => {
+test("RetroArch dialog back (B button) plays exactly one back() cue", () => {
   const block = jsx.slice(jsx.indexOf("back: () => {"), jsx.indexOf("if (showDetailRef.current)"))
   assert.match(block, /if \(showRetroArchPopupRef\.current\) \{ sounds\.back\(\); setShowRetroArchPopup\(false\); setRetroArchChoice\(1\); return \}/)
-  assert.match(block, /if \(showExitPopupRef\.current\)\s*\{ sounds\.back\(\); setShowExitPopup\(false\); setExitChoice\(1\); return \}/)
 })
 
 // -- mouse click handlers on the dialog buttons mirror the same rules ---------
@@ -100,9 +99,11 @@ test("RetroArch dialog mouse click handlers use launch() for Yes and back() for 
   assert.match(jsx, /onClick=\{\(\) => \{ sounds\.back\(\); setShowRetroArchPopup\(false\); setRetroArchChoice\(1\) \}\}/)
 })
 
-test("Exit dialog mouse click handlers use select() for Yes (quit) and back() for No, matching the gamepad path", () => {
-  assert.match(jsx, /onClick=\{\(\) => \{ sounds\.select\(\); window\.nuarcade\?\.quit\?\.\(\) \}\}/)
-  assert.match(jsx, /onClick=\{\(\) => \{ sounds\.back\(\); setShowExitPopup\(false\); setExitChoice\(0\) \}\}/)
+test("Depart dialog delegates mouse/controller commits to one-cue shared callbacks", () => {
+  assert.match(jsx, /const acceptDepart = useCallback\(\(\) => \{\s*sounds\.select\(\)\s*window\.nuarcade\?\.quit\?\.\(\)/)
+  assert.match(jsx, /const declineDepart = useCallback\(\(\) => \{\s*sounds\.back\(\)\s*cancelDepart\(\)/)
+  assert.match(jsx, /onConfirm=\{acceptDepart\}/)
+  assert.match(jsx, /onCancel=\{declineDepart\}/)
 })
 
 // -- launch-error sound: deduplicated via seq (locale-safe), surface-scoped ---

@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef } from 'react'
+import { isGamepadNeutral } from './gamepadNeutral.js'
 
 const BTN = {
   A: 0, B: 1, X: 2, Y: 3,
@@ -25,6 +26,7 @@ export function useGamepad(handlers) {
   const rafRef      = useRef(null)
   const primedRef    = useRef(false)  // re-primes on every disabled->enabled transition, not just mount
   const prevEnabledRef = useRef(false)
+  const waitingForNeutralRef = useRef(false)
 
   // Sync handlers ref on every render -- no dependency array so RAF loop never restarts
   useLayoutEffect(() => { handlersRef.current = handlers })
@@ -35,10 +37,16 @@ export function useGamepad(handlers) {
       const h   = handlersRef.current || {}
       const now = Date.now()
 
-      const isEnabled = h.enabled !== false
+      const departDialogActive =
+        typeof document !== "undefined" &&
+        document.querySelector('[data-vespara-depart-dialog="true"]')
+      const isEnabled =
+        h.enabled !== false &&
+        (!departDialogActive || h.departDialog === true)
       if (!isEnabled) {
         primedRef.current = false       // force a fresh priming pass next time this becomes enabled
         prevEnabledRef.current = false
+        waitingForNeutralRef.current = true
         rafRef.current = requestAnimationFrame(poll)
         return
       }
@@ -48,6 +56,15 @@ export function useGamepad(handlers) {
       }
 
       const gp = getActiveGamepad()
+      if (waitingForNeutralRef.current) {
+        if (isGamepadNeutral(gp)) {
+          waitingForNeutralRef.current = false
+          primedRef.current = true
+          btnState.current = {}
+        }
+        rafRef.current = requestAnimationFrame(poll)
+        return
+      }
       if (gp) {
         // Timestamp-based press/repeat -- no timers, no leak
         const fire = (key, pressed, stateKey) => {

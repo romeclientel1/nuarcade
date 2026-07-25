@@ -1,47 +1,80 @@
 import { useEffect, useRef } from "react"
+import { isGamepadNeutral } from "./gamepadNeutral.js"
+
+export function createOverlayGamepadInputGate() {
+  let primed = false
+  let lastInput = 0
+  let waitingForNeutral = false
+
+  return {
+    suppress(now) {
+      primed = false
+      lastInput = now
+      waitingForNeutral = true
+    },
+
+    process(gamepad, handlers, now) {
+      if (waitingForNeutral) {
+        if (isGamepadNeutral(gamepad)) {
+          waitingForNeutral = false
+          primed = true
+          lastInput = 0
+        }
+        return
+      }
+
+      if (!gamepad) return
+
+      if (!primed) {
+        primed = true
+        lastInput = now
+        return
+      }
+
+      if (now - lastInput <= 180) return
+
+      if      (gamepad.buttons[1]?.pressed)                                                    { lastInput = now; handlers.onClose?.() }
+      else if (gamepad.buttons[0]?.pressed)                                                    { lastInput = now; handlers.onConfirm?.() }
+      else if (gamepad.axes[1] < -0.5 || gamepad.buttons[12]?.pressed)                         { lastInput = now; handlers.onUp?.() }
+      else if (gamepad.axes[1] >  0.5 || gamepad.buttons[13]?.pressed)                         { lastInput = now; handlers.onDown?.() }
+      else if (gamepad.axes[0] < -0.5 || gamepad.buttons[14]?.pressed || gamepad.buttons[4]?.pressed) { lastInput = now; handlers.onLeft?.() }
+      else if (gamepad.axes[0] >  0.5 || gamepad.buttons[15]?.pressed || gamepad.buttons[5]?.pressed) { lastInput = now; handlers.onRight?.() }
+    },
+
+    snapshot() {
+      return { primed, lastInput, waitingForNeutral }
+    },
+  }
+}
 
 // Lightweight gamepad hook for overlay panels
 // B=close, A=confirm, D-pad up/down=scroll, left/right=tab switch
 // Primed ref prevents the button that OPENED the overlay from instantly firing a handler
 export function useOverlayGamepad({ onClose, onUp, onDown, onLeft, onRight, onConfirm, enabled = true }) {
-  const lastInput   = useRef(0)
   const handlersRef = useRef({})
   const enabledRef  = useRef(enabled)
-  const primedRef   = useRef(false)   // true after first poll seeds held-button state
+  const inputGateRef = useRef(null)
+  if (!inputGateRef.current) inputGateRef.current = createOverlayGamepadInputGate()
 
   // Keep refs current every render -- stable RAF loop reads from here
   handlersRef.current = { onClose, onUp, onDown, onLeft, onRight, onConfirm }
   enabledRef.current  = enabled
 
-  const DEADZONE     = 0.5
-  const REPEAT_DELAY = 180
-
   useEffect(() => {
-    primedRef.current = false   // reset on mount so first poll is always a priming pass
     let animFrame
 
     const poll = () => {
-      if (enabledRef.current) {
+      const now = Date.now()
+      const departDialogActive =
+        typeof document !== "undefined" &&
+        document.querySelector('[data-vespara-depart-dialog="true"]')
+      if (enabledRef.current && !departDialogActive) {
         const gp = navigator.getGamepads()[0]
-        const h  = handlersRef.current
-        if (gp) {
-          const now       = Date.now()
-          const canRepeat = now - lastInput.current > REPEAT_DELAY
-
-          if (!primedRef.current) {
-            // Priming pass: seed button state without firing handlers.
-            // Prevents the button that opened this overlay from instantly re-firing.
-            primedRef.current = true
-            lastInput.current = now
-          } else if (canRepeat) {
-            if      (gp.buttons[1]?.pressed)                                                       { lastInput.current = now; h.onClose?.() }
-            else if (gp.buttons[0]?.pressed)                                                       { lastInput.current = now; h.onConfirm?.() }
-            else if (gp.axes[1] < -DEADZONE || gp.buttons[12]?.pressed)                           { lastInput.current = now; h.onUp?.() }
-            else if (gp.axes[1] >  DEADZONE || gp.buttons[13]?.pressed)                           { lastInput.current = now; h.onDown?.() }
-            else if (gp.axes[0] < -DEADZONE || gp.buttons[14]?.pressed || gp.buttons[4]?.pressed) { lastInput.current = now; h.onLeft?.() }
-            else if (gp.axes[0] >  DEADZONE || gp.buttons[15]?.pressed || gp.buttons[5]?.pressed) { lastInput.current = now; h.onRight?.() }
-          }
-        }
+        inputGateRef.current.process(gp, handlersRef.current, now)
+      } else {
+        // Depart and ordinary disabled transitions both require a full
+        // neutral controller frame before this overlay can receive input.
+        inputGateRef.current.suppress(now)
       }
       animFrame = requestAnimationFrame(poll)
     }

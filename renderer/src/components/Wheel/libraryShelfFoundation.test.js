@@ -212,7 +212,7 @@ test("no shelf layer introduces a @keyframes animation -- purely static/position
 // -- 11. Existing focus-visible rules remain intact --------------------------
 
 test("every previously-restyled control class still has its own :focus-visible rule, unremoved by the shelf pass", () => {
-  for (const cls of [".catPill", ".navBtn", ".launchBtn", ".settingsBtn", ".returnHomeBtn", ".exitBtn", ".consoleTrigger", ".consoleSearchItem"]) {
+  for (const cls of [".catPill", ".navBtn", ".launchBtn", ".settingsBtn", ".returnHomeBtn", ".consoleDepartBtn", ".consoleTrigger", ".consoleSearchItem"]) {
     assert.match(css, new RegExp(cls.replace(".", "\\.") + ":focus-visible"), cls + " must still have a :focus-visible rule")
   }
 })

@@ -157,7 +157,7 @@ test("launch, favorite, category, Return, Console, and Depart handlers remain pr
   assert.match(jsx, /onClick=\{\(\) => \{ setTabFocusIdx\(tabIdx\); setActiveCategory\(cat\) \}\}/)
   assert.match(jsx, /if \(onReturnHome\) onReturnHome\(\)/)
   assert.match(jsx, /onClick=\{\(\) => setConsoleOpen\(v => !v\)\}/)
-  assert.match(jsx, /className=\{styles\.departReservation\}[\s\S]*?setShowExitPopup\(true\)/)
+  assert.match(jsx, /className=\{styles\.departReservation\}[\s\S]*?onClick=\{openDepart\}/)
 })
 
 test("volume, launch pause, and return resume policies remain intact", () => {

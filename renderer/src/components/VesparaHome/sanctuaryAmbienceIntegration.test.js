@@ -64,7 +64,7 @@ test('confirmed Depart initiates fade before the existing quit bridge call', () 
 test('opening or cancelling Depart does not permanently silence a Sanctuary the Traveler remains in', () => {
   const runAction = jsx.slice(jsx.indexOf('const runAction'), jsx.indexOf('const activateAction'))
   assert.doesNotMatch(runAction, /fadeOutSanctuaryAmbience/)
-  assert.match(jsx, /sounds\.back\(\); setShowDepartConfirm\(false\)/)
+  assert.match(jsx, /const declineDepart = useCallback\(\(\) => \{\s*sounds\.back\(\)\s*cancelDepart\(\)/)
 })
 
 test('unmount cancels pending config start and cleans the controller', () => {

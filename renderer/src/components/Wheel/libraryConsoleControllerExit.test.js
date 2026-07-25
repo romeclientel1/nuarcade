@@ -111,7 +111,7 @@ test("topMenuActions array, TOP_MENU_MAX, and every topMenuIdx comparison are st
   assert.match(jsx, /\(\) => setShowSort\(s => !s\),\s*\/\/ 0 Sort/)
   assert.match(jsx, /\(\) => \{ if \(onReturnHome\) onReturnHome\(\) \},\s*\/\/ 6 Home/)
   assert.match(jsx, /\(\) => \{ if \(onSwitchPlayer\) onSwitchPlayer\(\) \},\s*\/\/ 7 Player/)
-  assert.match(jsx, /\(\) => setShowExitPopup\(true\), \/\/ 11 Exit/)
+  assert.match(jsx, /\(\) => openDepart\(consoleDepartRef\.current\),\s*\/\/ 11 Depart/)
   const idxByAction = { Sort: 0, RND: 1, Sets: 2, Stats: 3, Ach: 4, Home: 5, Player: 6, Media: 7, Settings: 8, Help: 9, Exit: 10 }
   for (const idx of Object.values(idxByAction)) {
     assert.match(jsx, new RegExp("topMenuIdx === " + idx + "\\b"))

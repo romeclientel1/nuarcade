@@ -223,7 +223,7 @@ test("representative Home strings switch between locales", () => {
   assert.equal(translate("en", "home.switchPlayer"), "Switch Player")
   assert.equal(translate("es", "home.switchPlayer"), "Cambiar jugador")
   assert.equal(translate("en", "home.depart"), "Depart")
-  assert.equal(translate("es", "home.depart"), "Salir")
+  assert.equal(translate("es", "home.depart"), "Partir")
 })
 
 test("representative Player Select strings switch between locales", () => {

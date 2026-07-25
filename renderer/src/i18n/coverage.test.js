@@ -109,8 +109,8 @@ test("common Yes/No/Back/Close/Cancel/Confirm translate correctly in both locale
 // -- Wheel and launch dialogs --------------------------------------------------
 
 test("Wheel exit dialog switches language", () => {
-  assert.equal(translate("en", "wheel.confirmExitTitle"), "EXIT VESPARA?")
-  assert.equal(translate("es", "wheel.confirmExitTitle"), "¿SALIR DE VESPARA?")
+  assert.equal(translate("en", "wheel.confirmExitTitle"), "LEAVE VESPARA?")
+  assert.equal(translate("es", "wheel.confirmExitTitle"), "¿ABANDONAR VESPARA?")
   assert.notEqual(translate("en", "wheel.confirmExitHint"), translate("es", "wheel.confirmExitHint"))
 })
 

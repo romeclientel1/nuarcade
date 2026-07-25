@@ -54,9 +54,9 @@ test("card click still dispatches selection vs. detail-open exactly as before (n
 
 // -- Dialog entrance classes were added without touching dialog logic ---------
 
-test("dialog entrance classNames were added to the Exit/RetroArch/launch-error overlays without changing their conditions or handlers", () => {
+test("dialog entrance remains on RetroArch/launch-error while Depart uses the shared world dialog", () => {
   assert.match(jsx, /\{showRetroArchPopup && \(\s*<div className=\{styles\.dialogOverlay\}/)
-  assert.match(jsx, /\{showExitPopup && \(\s*<div className=\{styles\.dialogOverlay\}/)
+  assert.match(jsx, /\{showExitPopup && \(\s*<DepartConfirmation/)
   const fadeOnlyMatches = jsx.match(/className=\{styles\.dialogFadeOnly\}/g) || []
   assert.equal(fadeOnlyMatches.length, 2, "both launchError renderings should use the fade-only (no transform) entrance")
 })

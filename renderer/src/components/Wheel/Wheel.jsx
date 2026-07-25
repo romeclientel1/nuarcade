@@ -28,6 +28,8 @@ import { useVersionCheck } from "../../hooks/useVersionCheck"
 import { getControllerHint } from "../../data/controllerHints"
 import ControllerPrompt from "../ControllerPrompt/ControllerPrompt"
 import { useI18n } from "../../i18n/I18nContext.js"
+import DepartConfirmation from "../Depart/DepartConfirmation.jsx"
+import { resolveDepartInvoker, restoreDepartFocus } from "../Depart/departInteraction.js"
 
 
 import styles from "./Wheel.module.css"
@@ -278,6 +280,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const [focusZone,    setFocusZone   ] = useState(2)
   const [showExitPopup, setShowExitPopup] = useState(false)
   const [exitChoice,    setExitChoice   ] = useState(1)  // 0=Yes, 1=No -- default NO
+  const departTriggerRef = useRef(null)
+  const departInvokerRef = useRef(null)
   const [retroArchChoice, setRetroArchChoice] = useState(1)  // 0=Yes, 1=No -- default NO
   const [topMenuIdx,   setTopMenuIdx  ] = useState(0)   // index within zone 0
   const [tabFocusIdx,  setTabFocusIdx ] = useState(0)   // index within zone 1
@@ -307,8 +311,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const showRetroArchPopupRef  = useRef(false)
   const retroArchChoiceRef     = useRef(1)
   const exitConfirmRef         = useRef(false)
-  const showExitPopupRef       = useRef(false)
-  const exitChoiceRef          = useRef(0)
   const velocityTimerRef = useRef(null)
   const lastNavTime = useRef(0)
   // Velocity-based navigation with elastic overshoot
@@ -510,6 +512,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const consoleOpenRef = useRef(false)
   const consoleTriggerRef = useRef(null)
   const consoleFirstItemRef = useRef(null)
+  const consoleDepartRef = useRef(null)
   // True whenever the panel is actually shown, for either reason above --
   // computed here (not just near its render use) so the effects below can
   // read it.
@@ -562,6 +565,37 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   // single normalization/conversion boundary (0-100 percent -> 0-1 gain
   // scale); pre-converting here would be a second, redundant conversion.
   const sounds = useArcadeSounds({ enabled: uiSoundsEnabled, volume: uiSoundVolume })
+
+  const openDepart = useCallback((eventOrElement) => {
+    departInvokerRef.current = resolveDepartInvoker(
+      eventOrElement,
+      consoleVisible ? consoleDepartRef.current : null,
+      departTriggerRef.current
+    )
+    setExitChoice(1)
+    setShowExitPopup(true)
+  }, [consoleVisible])
+
+  const cancelDepart = useCallback(() => {
+    setShowExitPopup(false)
+    setExitChoice(1)
+    restoreDepartFocus(departInvokerRef.current)
+  }, [])
+
+  const chooseDepart = useCallback((nextChoice) => {
+    sounds.navigate()
+    setExitChoice(nextChoice)
+  }, [sounds])
+
+  const acceptDepart = useCallback(() => {
+    sounds.select()
+    window.nuarcade?.quit?.()
+  }, [sounds])
+
+  const declineDepart = useCallback(() => {
+    sounds.back()
+    cancelDepart()
+  }, [sounds, cancelDepart])
 
   // Background music
   const hasBgVideo = !!(bgVideoA || bgVideoB)
@@ -832,6 +866,19 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     originContext: buildLibraryOriginContext({ activeCategory, selectedIndex }),
   })
 
+  const departOverlayActive =
+    showDetail ||
+    currentDestination === "help" ||
+    currentDestination === "stats" ||
+    showAchievements ||
+    showCollections ||
+    showSettings ||
+    showMediaManager ||
+    showCoach ||
+    showOperator ||
+    !!needsControllerPrompt
+  const showUniversalDepart = !showExitPopup && (departOverlayActive || !consoleVisible)
+
   // Surface-scoped launch-error sound: plays sounds.error() once when a
   // genuinely new, non-empty launchError appears -- never on an ordinary
   // rerender while the same message is still showing, and never merely
@@ -1006,7 +1053,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     () => setShowMediaManager(true),                             // 8 Media
     () => setShowSettings(true),                                 // 9 Settings
     () => navigateTo("help"),                                    // 10 ?
-    () => setShowExitPopup(true), // 11 Exit -- show Yes/No popup
+    () => openDepart(consoleDepartRef.current),                   // 11 Depart
   ]
   const TOP_MENU_MAX = 10
 
@@ -1038,18 +1085,15 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     showRetroArchPopupRef.current  = showRetroArchPopup
     retroArchChoiceRef.current     = retroArchChoice
     exitConfirmRef.current         = exitConfirm
-    showExitPopupRef.current       = showExitPopup
-    exitChoiceRef.current          = exitChoice
     focusZoneRef.current           = focusZone
     activeCategoryRef.current      = activeCategory
     collectionsRef.current         = collections
   })
 
   useGamepad({
-    enabled: !showDetailRef.current && !showMediaManagerRef.current && !showSettingsRef.current && currentDestinationRef.current !== "help" && currentDestinationRef.current !== "stats" && !attractMode  && !showVirtualKeyboardRef.current && !showSortRef.current && !showCollectionsRef.current && !showAchievementsRef.current && !showCoachRef.current && !showOperatorRef.current ,
+    enabled: !showDetailRef.current && !showMediaManagerRef.current && !showSettingsRef.current && currentDestinationRef.current !== "help" && currentDestinationRef.current !== "stats" && !attractMode && !needsControllerPrompt && !showVirtualKeyboardRef.current && !showSortRef.current && !showCollectionsRef.current && !showAchievementsRef.current && !showCoachRef.current && !showOperatorRef.current ,
     left: () => {
       if (showRetroArchPopupRef.current) { if (retroArchChoiceRef.current !== 0) { sounds.navigate(); setRetroArchChoice(0) } return }
-      if (showExitPopupRef.current) { if (exitChoiceRef.current !== 0) { sounds.navigate(); setExitChoice(0) } return }
       // Console-local focus (2.2 correction) -- while the Library Console
       // is visible (mouse-opened, or the pre-existing gamepad zone-0
       // focus), D-pad left/right moves consoleFocusIdx, never topMenuIdx.
@@ -1066,7 +1110,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     },
     right: () => {
       if (showRetroArchPopupRef.current) { if (retroArchChoiceRef.current !== 1) { sounds.navigate(); setRetroArchChoice(1) } return }
-      if (showExitPopupRef.current) { if (exitChoiceRef.current !== 1) { sounds.navigate(); setExitChoice(1) } return }
       if (consoleOpenRef.current || focusZoneRef.current === 0) { setConsoleFocusIdx(i => Math.min(CONSOLE_FOCUS_MAX, i + 1)); sounds.navigate(); return }
       const z = focusZoneRef.current
       if (z === 0) { setTopMenuIdx(i => Math.min(TOP_MENU_MAX, i + 1)); sounds.navigate(); return }
@@ -1076,7 +1119,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       if (z === 4) { setBarFocusIdx(i => Math.min(HINT_BAR_MAX, i + 1)); sounds.navigate(); return }
     },
     up: () => {
-      if (showExitPopupRef.current) return
       // Documented boundary (2.2 correction) -- Up while the console is
       // visible is a deliberate no-op, not a silent trap: the console is
       // already the top-level header, exactly like the pre-existing
@@ -1091,7 +1133,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       if (z === 1) { setFocusZone(0); sounds.navigate(); return }  // tabs -> topMenu
     },
     down: () => {
-      if (showExitPopupRef.current) return
       // Down exits the console the same way the pre-existing zone-0 ->
       // tabs transition did -- close the popover (if mouse-opened) and
       // land in the category/tab zone, which already shows visible
@@ -1114,11 +1155,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
         else { sounds.back() }
         setShowRetroArchPopup(false)
         setRetroArchChoice(1)
-        return
-      }
-      if (showExitPopupRef.current) {
-        if (exitChoiceRef.current === 0) { sounds.select(); window.nuarcade?.quit?.() }
-        else { sounds.back(); setShowExitPopup(false); setExitChoice(1) }
         return
       }
       if (consoleOpenRef.current || focusZoneRef.current === 0) {
@@ -1147,7 +1183,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     settings: () => { if (!showSettingsRef.current) setShowSettings(true) },
     back: () => {
       if (showRetroArchPopupRef.current) { sounds.back(); setShowRetroArchPopup(false); setRetroArchChoice(1); return }
-      if (showExitPopupRef.current)   { sounds.back(); setShowExitPopup(false); setExitChoice(1); return }
       if (showDetailRef.current)      { setShowDetail(false); return }
       if (showSettingsRef.current)    { setShowSettings(false); return }
       if (showSearchRef.current)      { sounds.back(); setShowSearch(false); setShowVirtualKeyboard(false); setSearch(""); setDebouncedSearch(""); return }
@@ -1181,6 +1216,14 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       }
     },
     // settings handled above
+  })
+
+  // START remains a direct Depart path while a full-screen Library
+  // destination owns controller navigation. Ordinary overlay controls
+  // continue to own D-pad, confirm, and back.
+  useGamepad({
+    enabled: departOverlayActive && !showExitPopup,
+    settings: openDepart,
   })
 
 
@@ -1482,13 +1525,16 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
                         {installing ? (progress != null ? t("settings.installing", { progress }) : t("settings.installingEllipsis")) : t("settings.updateNow")}
                       </button>
                     )}
-                    <button
-                      className={styles.exitBtn + ((focusZone === 0 && topMenuIdx === 10) || (consoleVisible && consoleFocusIdx === 10) ? " " + styles.barFocused : "")}
-                      onClick={() => setShowExitPopup(true)}
-                      title={t("wheel.exitTitle")}
-                    >
-                      {t("wheel.exit")}
-                    </button>
+                    {!departOverlayActive && (
+                      <button
+                        ref={consoleDepartRef}
+                        className={styles.consoleDepartBtn + ((focusZone === 0 && topMenuIdx === 10) || (consoleVisible && consoleFocusIdx === 10) ? " " + styles.barFocused : "")}
+                        onClick={openDepart}
+                        title={t("wheel.exitTitle")}
+                      >
+                        {t("wheel.depart")}
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
@@ -1497,14 +1543,18 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
         </div>
       </div>
 
-      <button
-        className={styles.departReservation}
-        onClick={() => setShowExitPopup(true)}
-        title={t("wheel.exitTitle")}
-      >
-        <span>{t("wheel.depart")}</span>
-        <small>{t("wheel.departSubtitle")}</small>
-      </button>
+      {showUniversalDepart && (
+        <button
+          ref={departTriggerRef}
+          className={styles.departReservation}
+          onClick={openDepart}
+          title={t("wheel.exitTitle")}
+          aria-label={`${t("wheel.depart")} — ${t("wheel.departSubtitle")}`}
+        >
+          <span>{t("wheel.depart")}</span>
+          <small aria-hidden="true">{t("wheel.departSubtitle")}</small>
+        </button>
+      )}
 
       <div className={styles.categoryStrip}>
         {_visibleTabs.map((cat, tabIdx) => {
@@ -1859,40 +1909,17 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       )}
 
       {showExitPopup && (
-        <div className={styles.dialogOverlay} style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 9999, flexDirection: 'column', gap: 24,
-        }}>
-          <div style={{ color: '#fff', fontFamily: 'Orbitron, monospace', fontSize: 22, letterSpacing: 2 }}>
-            {t("wheel.confirmExitTitle")}
-          </div>
-          <div style={{ display: 'flex', gap: 20 }}>
-            <button
-              onClick={() => { sounds.select(); window.nuarcade?.quit?.() }}
-              style={{
-                padding: '12px 36px', fontFamily: 'Orbitron, monospace', fontSize: 16, textTransform: 'uppercase',
-                background: exitChoice === 0 ? 'rgba(0,255,255,0.2)' : 'rgba(255,255,255,0.05)',
-                border: exitChoice === 0 ? '2px solid #0ff' : '2px solid rgba(255,255,255,0.2)',
-                color: exitChoice === 0 ? '#0ff' : '#fff', cursor: 'pointer', borderRadius: 6,
-                boxShadow: exitChoice === 0 ? '0 0 16px rgba(0,255,255,0.5)' : 'none',
-              }}
-            >{t("common.yes")}</button>
-            <button
-              onClick={() => { sounds.back(); setShowExitPopup(false); setExitChoice(0) }}
-              style={{
-                padding: '12px 36px', fontFamily: 'Orbitron, monospace', fontSize: 16, textTransform: 'uppercase',
-                background: exitChoice === 1 ? 'rgba(0,255,255,0.2)' : 'rgba(255,255,255,0.05)',
-                border: exitChoice === 1 ? '2px solid #0ff' : '2px solid rgba(255,255,255,0.2)',
-                color: exitChoice === 1 ? '#0ff' : '#fff', cursor: 'pointer', borderRadius: 6,
-                boxShadow: exitChoice === 1 ? '0 0 16px rgba(0,255,255,0.5)' : 'none',
-              }}
-            >{t("common.no")}</button>
-          </div>
-          <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11, fontFamily: 'monospace' }}>
-            {t("wheel.confirmExitHint")}
-          </div>
-        </div>
+        <DepartConfirmation
+          eyebrow={t("home.worldName")}
+          title={t("wheel.confirmExitTitle")}
+          hint={t("wheel.confirmExitHint")}
+          yesLabel={t("common.yes")}
+          noLabel={t("common.no")}
+          choice={exitChoice}
+          onChoiceChange={chooseDepart}
+          onConfirm={acceptDepart}
+          onCancel={declineDepart}
+        />
       )}
 {/* Achievement toasts */}
       <AchievementToastContainer toasts={achieveToasts} onDismiss={dismissToast} />

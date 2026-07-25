@@ -173,7 +173,7 @@ test("all 11 top-menu utility controls (Sort..Exit) are still present with their
 })
 
 test("every utility/tool button in the header keeps a :focus-visible rule", () => {
-  for (const cls of [".mediaBtn", ".settingsBtn", ".helpBtn", ".exitBtn", ".sortBtn", ".randBtn", ".colBtn", ".statsBtn", ".achieveBtn", ".returnHomeBtn"]) {
+  for (const cls of [".mediaBtn", ".settingsBtn", ".helpBtn", ".consoleDepartBtn", ".sortBtn", ".randBtn", ".colBtn", ".statsBtn", ".achieveBtn", ".returnHomeBtn"]) {
     assert.match(wheelCss, new RegExp(cls.replace(".", "\\.") + ":focus-visible"))
   }
 })

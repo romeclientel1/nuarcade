@@ -78,7 +78,7 @@ test("the information pedestal sits below the shelf and does not cover the colle
 })
 
 test("return, console, and the visible Depart plaque use integrated live controls", () => {
-  assert.match(jsx, /className=\{styles\.departReservation\}[\s\S]*?onClick=\{\(\) => setShowExitPopup\(true\)\}/)
+  assert.match(jsx, /className=\{styles\.departReservation\}[\s\S]*?onClick=\{openDepart\}/)
   assert.match(jsx, /\{t\("wheel\.depart"\)\}[\s\S]*?\{t\("wheel\.departSubtitle"\)\}/)
   assert.match(css, /\.stage \.returnHomeBtn\s*\{[^}]*border-top:[^}]*border-bottom:[^}]*border-radius:\s*0/s)
   assert.match(css, /\.stage \.consoleTrigger\s*\{[^}]*border-top:[^}]*border-bottom:[^}]*border-radius:\s*0/s)
@@ -88,10 +88,10 @@ test("return, console, and the visible Depart plaque use integrated live control
 })
 
 test("focus, reduced motion, launch, favorite and Library navigation contracts remain present", () => {
-  assert.match(css, /\.catPill:focus-visible,[\s\S]*?\.returnHomeBtn:focus-visible,[\s\S]*?\.exitBtn:focus-visible/)
+  assert.match(css, /\.catPill:focus-visible,[\s\S]*?\.returnHomeBtn:focus-visible,[\s\S]*?\.consoleDepartBtn:focus-visible/)
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/)
   assert.match(jsx, /onClick=\{launchGame\} disabled=\{launching\}/)
   assert.match(jsx, /onClick=\{\(\) => toggleFavorite\(current\.id \|\| current\.profile\)\}/)
   assert.match(jsx, /if \(onReturnHome\) onReturnHome\(\)/)
-  assert.match(jsx, /\(\) => setShowExitPopup\(true\), \/\/ 11 Exit/)
+  assert.match(jsx, /\(\) => openDepart\(consoleDepartRef\.current\),\s*\/\/ 11 Depart/)
 })

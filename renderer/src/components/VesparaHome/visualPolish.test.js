@@ -104,10 +104,10 @@ test("reduced-motion overrides remove transform/transition/animation but never r
   }
 })
 
-test(":focus-visible treatments exist on recentCard, actionBtn, and departBtn, reusing the cyan focus language rather than removing the native outline", () => {
+test(":focus-visible treatments exist on recentCard and every action destination, including Depart", () => {
   assert.match(css, /\.recentCard:focus-visible\s*\{/)
   assert.match(css, /\.actionBtn:focus-visible\s*\{/)
-  assert.match(css, /\.departBtn:focus-visible\s*\{/)
+  assert.match(jsx, /className=\{styles\.actionBtn \+ " " \+ styles\[action \+ "Destination"\]/)
 })
 
 test("mouse hover styling is visually distinct from (weaker than) the focus/focus-visible treatment", () => {

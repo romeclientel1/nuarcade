@@ -20,6 +20,7 @@ import { consumeRestorationRequest } from "../../launchSession/restorationReques
 import { shouldConsumeRestoration, resolveHomeFocus } from "../../launchSession/restorationResolution.js"
 import { useI18n } from "../../i18n/I18nContext.js"
 import { useSanctuaryAmbience } from "./useSanctuaryAmbience.js"
+import DepartConfirmation from "../Depart/DepartConfirmation.jsx"
 import styles from "./VesparaHome.module.css"
 import sanctuaryArrivalHall from "./assets/sanctuary-arrival-hall.png"
 import vesparaSealAsset from "../../assets/brand/vespara-symbol-simplified.svg"
@@ -223,6 +224,7 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
 
   const [showDepartConfirm, setShowDepartConfirm] = useState(false)
   const [departChoice, setDepartChoice] = useState(1) // 0 = Yes, 1 = No (default safe)
+  const departTriggerRef = useRef(null)
 
   const runAction = useCallback((action) => {
     if (action === "library") onEnterLibrary?.()
@@ -242,6 +244,27 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
     fadeOutSanctuaryAmbience()
     window.nuarcade?.quit?.()
   }, [fadeOutSanctuaryAmbience])
+
+  const cancelDepart = useCallback(() => {
+    setShowDepartConfirm(false)
+    setDepartChoice(1)
+    requestAnimationFrame(() => departTriggerRef.current?.focus())
+  }, [])
+
+  const chooseDepart = useCallback((nextChoice) => {
+    sounds.navigate()
+    setDepartChoice(nextChoice)
+  }, [sounds])
+
+  const acceptDepart = useCallback(() => {
+    sounds.select()
+    confirmDepart()
+  }, [sounds, confirmDepart])
+
+  const declineDepart = useCallback(() => {
+    sounds.back()
+    cancelDepart()
+  }, [sounds, cancelDepart])
 
   const launchFocused = useCallback(() => {
     if (focusZone === "recents" && displayedRecentGames[recentIndex]) {
@@ -289,35 +312,12 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
     onClose: () => { acceptManualFocus(); setFocusZone("actions"); setActionIndex(0) },
   })
 
-  // Depart confirmation's own small Left/Right/Confirm/Back handling,
-  // active only while it's showing -- mirrors the same pattern Wheel uses
-  // for its own inline Exit confirmation.
-  useOverlayGamepad({
-    enabled: showDepartConfirm,
-    onLeft:  () => { if (departChoice !== 0) { sounds.navigate(); setDepartChoice(0) } },
-    onRight: () => { if (departChoice !== 1) { sounds.navigate(); setDepartChoice(1) } },
-    onConfirm: () => {
-      if (departChoice === 0) { sounds.select(); confirmDepart() }
-      else { sounds.back(); setShowDepartConfirm(false) }
-    },
-    onClose: () => { sounds.back(); setShowDepartConfirm(false) },
-  })
-
   // Keyboard parity -- mouse and keyboard must remain functional
   // alongside the controller.
   useEffect(() => {
     const handler = (e) => {
       if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return
-      if (showDepartConfirm) {
-        if (e.key === "ArrowLeft" && departChoice !== 0)  { sounds.navigate(); setDepartChoice(0) }
-        if (e.key === "ArrowRight" && departChoice !== 1) { sounds.navigate(); setDepartChoice(1) }
-        if (e.key === "Enter") {
-          if (departChoice === 0) { sounds.select(); confirmDepart() }
-          else { sounds.back(); setShowDepartConfirm(false) }
-        }
-        if (e.key === "Escape") { sounds.back(); setShowDepartConfirm(false) }
-        return
-      }
+      if (showDepartConfirm) return
       if (needsControllerPrompt) return
       if (e.key === "ArrowLeft") {
         acceptManualFocus()
@@ -342,7 +342,7 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
     }
     window.addEventListener("keydown", handler)
     return () => window.removeEventListener("keydown", handler)
-  }, [focusZone, recentIndex, actionIndex, displayedRecentGames.length, hasRecents, showDepartConfirm, departChoice, needsControllerPrompt, launchFocused, acceptManualFocus, confirmDepart, sounds])
+  }, [focusZone, recentIndex, actionIndex, displayedRecentGames.length, hasRecents, showDepartConfirm, needsControllerPrompt, launchFocused, acceptManualFocus, sounds])
 
   const isSetupFocus = installationReadiness === "unconfigured"
   const emptyStateText = isSetupFocus
@@ -457,6 +457,7 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
                 return (
                   <button
                     key={action}
+                    ref={action === "depart" ? departTriggerRef : undefined}
                     className={styles.actionBtn + " " + styles[action + "Destination"] + (focused ? " " + styles.focused : "")}
                     onClick={() => { acceptManualFocus(); setFocusZone("actions"); setActionIndex(i); sounds.select(); activateAction(action) }}
                   >
@@ -465,7 +466,7 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
                       <span className={styles.destinationName}>
                         {action === "library" && isSetupFocus ? t("home.setUp") : ACTION_LABELS[action]}
                       </span>
-                      <span className={styles.destinationDetail}>{detail}</span>
+                      <span className={styles.destinationDetail} aria-hidden="true">{detail}</span>
                     </span>
                   </button>
                 )
@@ -483,25 +484,17 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
       )}
 
       {showDepartConfirm && (
-        <div className={styles.departOverlay}>
-          <div className={styles.departChamber}>
-            <div className={styles.departEyebrow}>{t("home.worldName")}</div>
-            <div className={styles.departTitle}>{t("home.confirmDepartTitle")}</div>
-            <div className={styles.departHint}>{t("home.confirmDepartHint")}</div>
-            <div className={styles.departChoices}>
-              <button
-                className={styles.departBtn + (departChoice === 0 ? " " + styles.departBtnActive : "")}
-                style={{ textTransform: 'uppercase' }}
-                onClick={() => { sounds.select(); confirmDepart() }}
-              >{t("common.yes")}</button>
-              <button
-                className={styles.departBtn + (departChoice === 1 ? " " + styles.departBtnActive : "")}
-                style={{ textTransform: 'uppercase' }}
-                onClick={() => { sounds.back(); setShowDepartConfirm(false) }}
-              >{t("common.no")}</button>
-            </div>
-          </div>
-        </div>
+        <DepartConfirmation
+          eyebrow={t("home.worldName")}
+          title={t("home.confirmDepartTitle")}
+          hint={t("home.confirmDepartHint")}
+          yesLabel={t("common.yes")}
+          noLabel={t("common.no")}
+          choice={departChoice}
+          onChoiceChange={chooseDepart}
+          onConfirm={acceptDepart}
+          onCancel={declineDepart}
+        />
       )}
 
       <ErrorToastContainer toasts={errorToasts} onDismiss={dismissError} />

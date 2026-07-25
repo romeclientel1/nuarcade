@@ -101,21 +101,23 @@ test("keyboard handler mirrors the same boundary-gated navigate() guards as the 
 // -- depart dialog: exactly one cue per action, launch-style commit rules -----
 
 test("depart dialog Left/Right only sound when the choice actually changes", () => {
-  const block = jsx.slice(jsx.indexOf("Depart confirmation's own"), jsx.indexOf("// Keyboard parity"))
-  assert.match(block, /onLeft:\s*\(\) => \{ if \(departChoice !== 0\) \{ sounds\.navigate\(\); setDepartChoice\(0\) \} \}/)
-  assert.match(block, /onRight:\s*\(\) => \{ if \(departChoice !== 1\) \{ sounds\.navigate\(\); setDepartChoice\(1\) \} \}/)
+  const block = jsx.slice(jsx.indexOf("const chooseDepart"), jsx.indexOf("const acceptDepart"))
+  assert.match(block, /sounds\.navigate\(\)/)
+  assert.match(block, /setDepartChoice\(nextChoice\)/)
 })
 
 test("depart dialog confirm plays exactly one cue per branch -- select() for quitting, back() for cancelling, never both", () => {
-  const block = jsx.slice(jsx.indexOf("Depart confirmation's own"), jsx.indexOf("// Keyboard parity"))
-  const onConfirmBlock = block.slice(block.indexOf("onConfirm:"), block.indexOf("onClose:"))
-  assert.match(onConfirmBlock, /sounds\.select\(\); confirmDepart\(\)/)
-  assert.match(onConfirmBlock, /sounds\.back\(\); setShowDepartConfirm\(false\)/)
+  const accept = jsx.slice(jsx.indexOf("const acceptDepart"), jsx.indexOf("const declineDepart"))
+  const decline = jsx.slice(jsx.indexOf("const declineDepart"), jsx.indexOf("const launchFocused"))
+  assert.match(accept, /sounds\.select\(\)\s*confirmDepart\(\)/)
+  assert.doesNotMatch(accept, /sounds\.back/)
+  assert.match(decline, /sounds\.back\(\)\s*cancelDepart\(\)/)
+  assert.doesNotMatch(decline, /sounds\.select/)
 })
 
 test("depart dialog close (B button) plays exactly one back() cue", () => {
-  const block = jsx.slice(jsx.indexOf("Depart confirmation's own"), jsx.indexOf("// Keyboard parity"))
-  assert.match(block, /onClose:\s*\(\) => \{ sounds\.back\(\); setShowDepartConfirm\(false\) \}/)
+  assert.match(jsx, /onCancel=\{declineDepart\}/)
+  assert.match(jsx, /const declineDepart = useCallback\(\(\) => \{\s*sounds\.back\(\)\s*cancelDepart\(\)/)
 })
 
 // -- restoration / initial focus / mount stay silent ---------------------------
@@ -171,8 +173,8 @@ test("the action-button click handler plays exactly one select() cue, matching t
 })
 
 test("depart dialog mouse click handlers use select() for quit and back() for cancel, matching the gamepad/keyboard paths", () => {
-  assert.match(jsx, /onClick=\{\(\) => \{ sounds\.select\(\); confirmDepart\(\) \}\}/)
-  assert.match(jsx, /onClick=\{\(\) => \{ sounds\.back\(\); setShowDepartConfirm\(false\) \}\}/)
+  assert.match(jsx, /onConfirm=\{acceptDepart\}/)
+  assert.match(jsx, /onCancel=\{declineDepart\}/)
 })
 
 // -- extraction-helper safety net -----------------------------------------------

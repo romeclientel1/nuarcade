@@ -44,7 +44,7 @@ test("topMenuActions array, TOP_MENU_MAX, and every topMenuIdx comparison are st
   assert.match(jsx, /\(\) => setShowSort\(s => !s\),\s*\/\/ 0 Sort/)
   assert.match(jsx, /\(\) => \{ if \(onReturnHome\) onReturnHome\(\) \},\s*\/\/ 6 Home/)
   assert.match(jsx, /\(\) => \{ if \(onSwitchPlayer\) onSwitchPlayer\(\) \},\s*\/\/ 7 Player/)
-  assert.match(jsx, /\(\) => setShowExitPopup\(true\), \/\/ 11 Exit/)
+  assert.match(jsx, /\(\) => openDepart\(consoleDepartRef\.current\),\s*\/\/ 11 Depart/)
   const idxByAction = { Sort: 0, RND: 1, Sets: 2, Stats: 3, Ach: 4, Home: 5, Player: 6, Media: 7, Settings: 8, Help: 9, Exit: 10 }
   for (const idx of Object.values(idxByAction)) {
     assert.match(jsx, new RegExp("topMenuIdx === " + idx + "\\b"))
@@ -108,13 +108,13 @@ test("opening the console resets consoleFocusIdx to 0 (Search) every time it bec
 
 // -- 5. Existing controller behavior outside the console is unchanged --------
 
-test("RetroArch/Exit popup handling still takes priority over every gamepad handler, unchanged", () => {
+test("RetroArch handling remains local while Depart input is owned by the shared modal", () => {
   for (const fn of ["left: () => {", "right: () => {", "confirm: () => {", "back: () => {"]) {
     const idx = jsx.indexOf(fn)
     assert.ok(idx > -1, fn + " must exist")
   }
   assert.match(jsx, /if \(showRetroArchPopupRef\.current\) \{ if \(retroArchChoiceRef\.current !== 0\) \{ sounds\.navigate\(\); setRetroArchChoice\(0\) \} return \}/)
-  assert.match(jsx, /if \(showExitPopupRef\.current\) \{ if \(exitChoiceRef\.current !== 0\) \{ sounds\.navigate\(\); setExitChoice\(0\) \} return \}/)
+  assert.match(jsx, /<DepartConfirmation[\s\S]*?onChoiceChange=\{chooseDepart\}[\s\S]*?onCancel=\{declineDepart\}/)
 })
 
 test("wheel navigation (zone 2), launch zone (3), and hintBar zone (4) D-pad/confirm handling are untouched", () => {
