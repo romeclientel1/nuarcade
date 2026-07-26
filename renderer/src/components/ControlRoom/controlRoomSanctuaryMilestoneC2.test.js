@@ -161,9 +161,47 @@ test("App threads a one-shot focus hint so Sanctuary re-focuses the Control Room
 // default. Reproduced live: returning from Control Room landed focus on
 // THE LIBRARY instead of THE CONTROL ROOM tile.
 test("the derived-default-focus effect also yields to a pending focus hint, closing a real race with the hint effect", () => {
-  const effectBlock = homeJsx.slice(homeJsx.indexOf("useEffect(() => {\n    if (hasAcceptedInitialFocus) return"), homeJsx.indexOf("setActionIndex(0)\n  }, ["))
+  // Normalized first (per the platform-independence contract below), then
+  // isolated via two single-line, structurally-unique anchors rather than
+  // a literal multi-line string -- a literal "X\n    Y" anchor breaks on a
+  // CRLF checkout (Windows) since the actual byte sequence between those
+  // two lines is "\r\n", not "\n", so indexOf silently returns -1 and the
+  // slice becomes "" (this is exactly what broke in CI). Neither anchor
+  // used here embeds a newline of its own, so both are immune to line-
+  // ending style regardless of normalization, and normalizing besides is
+  // just defense in depth.
+  const normalized = homeJsx.replace(/\r\n/g, "\n")
+
+  const startAnchor = "if (hasAcceptedInitialFocus) return"
+  // The effect's own closing dependency array -- unique in the file and
+  // therefore an unambiguous right edge for exactly this effect, not
+  // "wherever the next occurrence of some generic token happens to be".
+  const endAnchor = "}, [hasAcceptedInitialFocus, initialFocusHint, loading, initialFocus, displayedRecentGames])"
+
+  const startIdx = normalized.indexOf(startAnchor)
+  const endIdx = normalized.indexOf(endAnchor)
+  assert.ok(startIdx !== -1, "could not locate the derived-default-focus effect's start anchor")
+  assert.ok(endIdx !== -1, "could not locate the derived-default-focus effect's own dependency array")
+  assert.ok(endIdx > startIdx, "the dependency array must close AFTER the effect body starts")
+
+  const effectBlock = normalized.slice(startIdx, endIdx)
+  assert.ok(effectBlock.length > 0, "extracted effect block must not be empty")
   assert.match(effectBlock, /if \(initialFocusHint\) return/)
-  assert.match(homeJsx, /\}, \[hasAcceptedInitialFocus, initialFocusHint, loading, initialFocus, displayedRecentGames\]\)/)
+
+  // Simulated-CRLF regression check: the same extraction, run against a
+  // CRLF copy of the source, must produce the same non-empty, guard-
+  // containing block -- this is what would have caught the original bug
+  // before it ever reached CI.
+  const crlfSource = normalized.replace(/\n/g, "\r\n")
+  const crlfNormalized = crlfSource.replace(/\r\n/g, "\n")
+  const crlfStart = crlfNormalized.indexOf(startAnchor)
+  const crlfEnd = crlfNormalized.indexOf(endAnchor)
+  assert.ok(crlfStart !== -1 && crlfEnd !== -1 && crlfEnd > crlfStart, "extraction must also succeed against a CRLF copy of the source")
+  const crlfEffectBlock = crlfNormalized.slice(crlfStart, crlfEnd)
+  assert.ok(crlfEffectBlock.length > 0)
+  assert.match(crlfEffectBlock, /if \(initialFocusHint\) return/)
+
+  assert.match(normalized, /\}, \[hasAcceptedInitialFocus, initialFocusHint, loading, initialFocus, displayedRecentGames\]\)/)
 })
 
 test("VesparaHome consumes the focus hint exactly once and focuses the matching ACTIONS entry", () => {
