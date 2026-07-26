@@ -46,9 +46,9 @@ test('the ambience remains a standalone Vite asset rather than an inline payload
   assert.equal(statSync(ambiencePath).size, 1441196)
 })
 
-test('Library and Switch Player initiate the non-blocking fade before unchanged route dispatch', () => {
+test('Library, Control Room, and Switch Player initiate the non-blocking fade before unchanged route dispatch', () => {
   const block = jsx.slice(jsx.indexOf('const activateAction'), jsx.indexOf('const confirmDepart'))
-  assert.match(block, /if \(action === "library" \|\| action === "switchPlayer"\) fadeOutSanctuaryAmbience\(\)/)
+  assert.match(block, /if \(action === "library" \|\| action === "controlRoom" \|\| action === "switchPlayer"\) fadeOutSanctuaryAmbience\(\)/)
   assert.match(block, /runAction\(action\)/)
   assert.ok(block.indexOf('fadeOutSanctuaryAmbience()') < block.indexOf('runAction(action)'))
   assert.doesNotMatch(block, /await|setTimeout|Promise/)

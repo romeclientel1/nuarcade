@@ -25,13 +25,18 @@ test("Home presents Vespara and the Sanctuary through localized keys", () => {
   assert.match(es, /"home\.worldName":\s*"VESPARA"/)
 })
 
-test("existing action IDs and order remain unchanged", () => {
-  assert.match(jsx, /const ACTIONS = \["library", "switchPlayer", "depart"\]/)
+// Updated for Control Room Milestone C2, which adds "controlRoom" as a
+// fourth, authorized Sanctuary destination between library and
+// switchPlayer -- library/switchPlayer/depart's own IDs, order relative to
+// each other, and handlers are otherwise unchanged.
+test("existing action IDs and order remain unchanged, plus the new Control Room destination", () => {
+  assert.match(jsx, /const ACTIONS = \["library", "controlRoom", "switchPlayer", "depart"\]/)
   assert.match(jsx, /ACTIONS\.map\(\(action, i\) =>/)
 })
 
-test("existing action handlers remain unchanged", () => {
+test("existing action handlers remain unchanged, plus the new Control Room handler", () => {
   assert.match(jsx, /if \(action === "library"\) onEnterLibrary\?\.\(\)/)
+  assert.match(jsx, /else if \(action === "controlRoom"\) onEnterControlRoom\?\.\(\)/)
   assert.match(jsx, /else if \(action === "switchPlayer"\) onSwitchPlayer\?\.\(\)/)
   assert.match(jsx, /else if \(action === "depart"\) \{ setDepartChoice\(1\); setShowDepartConfirm\(true\) \}/)
 })

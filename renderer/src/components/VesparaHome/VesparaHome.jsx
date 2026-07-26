@@ -26,14 +26,23 @@ import sanctuaryArrivalHall from "./assets/sanctuary-arrival-hall.png"
 import vesparaSealAsset from "../../assets/brand/vespara-symbol-simplified.svg"
 
 const RECENT_LIMIT = 8
-const ACTIONS = ["library", "switchPlayer", "depart"]
+const ACTIONS = ["library", "controlRoom", "switchPlayer", "depart"]
 
 // VesparaHome -------------------------------------------------------------
 // Vespara's central arrival space after Traveler Recognition: identify the
 // active Traveler, revisit a recent game, or continue deeper into Library.
-export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restorationRequest, uiSoundsEnabled, uiSoundVolume }) {
+export default function VesparaHome({
+  onEnterLibrary, onEnterControlRoom, onSwitchPlayer, restorationRequest,
+  initialFocusHint, onFocusHintConsumed,
+  uiSoundsEnabled, uiSoundVolume,
+}) {
   const { t } = useI18n()
-  const ACTION_LABELS = { library: t("home.libraryDestination"), switchPlayer: t("home.switchPlayer"), depart: t("home.depart") }
+  const ACTION_LABELS = {
+    library: t("home.libraryDestination"),
+    controlRoom: t("home.controlRoomDestination"),
+    switchPlayer: t("home.switchPlayer"),
+    depart: t("home.depart"),
+  }
   const { activeProfile } = useProfiles()
   const { recentGamesRaw, games, addRecentlyPlayed, loading } = useRecentGames(RECENT_LIMIT)
   const { startSession, endSession, recordLaunch } = usePlaytime()
@@ -163,6 +172,17 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
 
   useEffect(() => {
     if (hasAcceptedInitialFocus) return
+    // A pending returning-destination hint (see below) always wins over the
+    // derived default, regardless of which effect's state update actually
+    // commits first -- without this, a real race is reachable: `loading`
+    // resolving asynchronously can re-run this effect in a render where
+    // hasAcceptedInitialFocus hasn't yet reflected the hint effect's own
+    // setHasAcceptedInitialFocus(true) from the very same mount, letting
+    // this effect win the last write and silently override the hint back
+    // to the Library default. Reproduced live during this milestone's own
+    // preview verification (Return from Control Room landed focus on
+    // Library instead of the Control Room tile).
+    if (initialFocusHint) return
     if (loading) return // wait for the async library load to settle first
     if (initialFocus.type === "recent-game") {
       const idx = displayedRecentGames.findIndex(g => (g.id || g.profile) === initialFocus.gameId)
@@ -175,7 +195,7 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
     // new one.
     setFocusZone("actions")
     setActionIndex(0)
-  }, [hasAcceptedInitialFocus, loading, initialFocus, displayedRecentGames])
+  }, [hasAcceptedInitialFocus, initialFocusHint, loading, initialFocus, displayedRecentGames])
 
   useEffect(() => {
     if (!hasRecents && focusZone === "recents") setFocusZone("actions")
@@ -200,6 +220,25 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
       setHasAcceptedInitialFocus(true)
     }
   }, [restorationRequest, loading, displayedRecentGames])
+
+  // Returning-destination focus hint -- App passes this when the Traveler
+  // just came back from a live in-session destination (currently: Control
+  // Room) rather than a fresh arrival, so focus lands back on that
+  // destination's own tile instead of the usual derived default. Distinct
+  // from restorationRequest above (that one is startup/crash recovery);
+  // this is same-session navigation. Declared after both prior focus
+  // effects so it wins the same-commit ordering, consumed exactly once via
+  // onFocusHintConsumed so a later, unrelated Home mount (e.g. after
+  // switching players) never sees a stale hint.
+  useEffect(() => {
+    if (!initialFocusHint) return
+    const idx = ACTIONS.indexOf(initialFocusHint)
+    if (idx < 0) return
+    setFocusZone("actions")
+    setActionIndex(idx)
+    setHasAcceptedInitialFocus(true)
+    onFocusHintConsumed?.()
+  }, [initialFocusHint, onFocusHintConsumed])
 
   // Visual-only correction: if the focused recent-game tile lies outside
   // the row's currently visible horizontal bounds (row is overflow-x:auto),
@@ -228,15 +267,16 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
 
   const runAction = useCallback((action) => {
     if (action === "library") onEnterLibrary?.()
+    else if (action === "controlRoom") onEnterControlRoom?.()
     else if (action === "switchPlayer") onSwitchPlayer?.()
     else if (action === "depart") { setDepartChoice(1); setShowDepartConfirm(true) }
-  }, [onEnterLibrary, onSwitchPlayer])
+  }, [onEnterLibrary, onEnterControlRoom, onSwitchPlayer])
 
   // Navigation remains immediate; the ambience controller owns its short
   // non-blocking fade after Home unmounts. Depart only leaves the world after
   // confirmation, so opening/cancelling its safe-default dialog stays audible.
   const activateAction = useCallback((action) => {
-    if (action === "library" || action === "switchPlayer") fadeOutSanctuaryAmbience()
+    if (action === "library" || action === "controlRoom" || action === "switchPlayer") fadeOutSanctuaryAmbience()
     runAction(action)
   }, [fadeOutSanctuaryAmbience, runAction])
 
@@ -285,6 +325,24 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
   // confirmation or a controller hint prompt is showing, matching the
   // same "exactly one active listener" discipline Wheel already uses for
   // its own overlays.
+  //
+  // Mirrored into refs (updated on every render, not inside an effect) so
+  // the native keydown handler below can be registered exactly once and
+  // still always read current values -- registering it with a dependency
+  // array that includes focusZone/actionIndex/etc instead (as this used
+  // to) re-subscribes on every navigation, and two keydown events close
+  // enough together can land before that resubscription completes,
+  // reading a stale actionIndex. This is the same class of bug Control
+  // Room Milestone C1 found and fixed in its own root navigation.
+  const focusZoneRef = useRef(focusZone); focusZoneRef.current = focusZone
+  const recentIndexRef = useRef(recentIndex); recentIndexRef.current = recentIndex
+  const actionIndexRef = useRef(actionIndex); actionIndexRef.current = actionIndex
+  const hasRecentsRef = useRef(hasRecents); hasRecentsRef.current = hasRecents
+  const showDepartConfirmRef = useRef(showDepartConfirm); showDepartConfirmRef.current = showDepartConfirm
+  const needsControllerPromptRef = useRef(needsControllerPrompt); needsControllerPromptRef.current = needsControllerPrompt
+  const displayedRecentGamesRef = useRef(displayedRecentGames); displayedRecentGamesRef.current = displayedRecentGames
+  const launchFocusedRef = useRef(launchFocused); launchFocusedRef.current = launchFocused
+
   useOverlayGamepad({
     enabled: !showDepartConfirm && !needsControllerPrompt,
     onLeft: () => {
@@ -313,13 +371,20 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
   })
 
   // Keyboard parity -- mouse and keyboard must remain functional
-  // alongside the controller.
+  // alongside the controller. Registered once (empty deps); every value it
+  // reads comes from the refs mirrored above, so it never goes stale --
+  // see the comment on those refs for why that matters.
   useEffect(() => {
     const handler = (e) => {
       if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return
-      if (showDepartConfirm) return
-      if (needsControllerPrompt) return
+      if (showDepartConfirmRef.current) return
+      if (needsControllerPromptRef.current) return
+      const focusZone = focusZoneRef.current
+      const recentIndex = recentIndexRef.current
+      const actionIndex = actionIndexRef.current
+      const displayedRecentGames = displayedRecentGamesRef.current
       if (e.key === "ArrowLeft") {
+        e.preventDefault()
         acceptManualFocus()
         if (focusZone === "recents") {
           if (recentIndex > 0) { sounds.navigate(); setRecentIndex(i => Math.max(0, i - 1)) }
@@ -328,6 +393,7 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
         }
       }
       if (e.key === "ArrowRight") {
+        e.preventDefault()
         acceptManualFocus()
         if (focusZone === "recents") {
           if (recentIndex < displayedRecentGames.length - 1) { sounds.navigate(); setRecentIndex(i => Math.min(displayedRecentGames.length - 1, i + 1)) }
@@ -335,14 +401,20 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
           sounds.navigate(); setActionIndex(i => Math.min(ACTIONS.length - 1, i + 1))
         }
       }
-      if (e.key === "ArrowUp")   { acceptManualFocus(); if (hasRecents && focusZone !== "recents") { sounds.navigate(); setFocusZone("recents") } }
-      if (e.key === "ArrowDown") { acceptManualFocus(); if (focusZone === "recents") { sounds.navigate(); setFocusZone("actions") } }
-      if (e.key === "Enter") launchFocused()
-      if (e.key === "Escape") { acceptManualFocus(); setFocusZone("actions"); setActionIndex(0) }
+      if (e.key === "ArrowUp")   { e.preventDefault(); acceptManualFocus(); if (hasRecentsRef.current && focusZone !== "recents") { sounds.navigate(); setFocusZone("recents") } }
+      if (e.key === "ArrowDown") { e.preventDefault(); acceptManualFocus(); if (focusZone === "recents") { sounds.navigate(); setFocusZone("actions") } }
+      // preventDefault matters here specifically: without it, if this Enter
+      // press navigates to Control Room (which moves real DOM focus onto
+      // its own Return button on mount), the browser's own default action
+      // for an unprevented Enter keydown can synthesize a click on
+      // whatever element now holds focus -- immediately bouncing back out.
+      // Reproduced live during this milestone's own preview verification.
+      if (e.key === "Enter") { e.preventDefault(); launchFocusedRef.current() }
+      if (e.key === "Escape") { e.preventDefault(); acceptManualFocus(); setFocusZone("actions"); setActionIndex(0) }
     }
     window.addEventListener("keydown", handler)
     return () => window.removeEventListener("keydown", handler)
-  }, [focusZone, recentIndex, actionIndex, displayedRecentGames.length, hasRecents, showDepartConfirm, needsControllerPrompt, launchFocused, acceptManualFocus, sounds])
+  }, [])
 
   const isSetupFocus = installationReadiness === "unconfigured"
   const emptyStateText = isSetupFocus
@@ -451,9 +523,11 @@ export default function VesparaHome({ onEnterLibrary, onSwitchPlayer, restoratio
                 const focused = focusZone === "actions" && i === actionIndex
                 const detail = action === "library"
                   ? t("home.librarySubtitle")
-                  : action === "switchPlayer"
-                    ? t("home.switchPlayerSubtitle")
-                    : t("home.departSubtitle")
+                  : action === "controlRoom"
+                    ? t("controlRoom.subtitle")
+                    : action === "switchPlayer"
+                      ? t("home.switchPlayerSubtitle")
+                      : t("home.departSubtitle")
                 return (
                   <button
                     key={action}

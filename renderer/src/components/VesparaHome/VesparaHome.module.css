@@ -483,11 +483,13 @@
 .destinationAxis span:nth-child(2) { left: 50%; }
 .destinationAxis span:nth-child(3) { right: 16%; }
 
-/* Library commands the composition; Switch Player is a quieter side
-   threshold; Depart recedes to barely more than a label. */
+/* Library commands the composition; the Control Room is a real second
+   place, quieter than the Library but a genuine destination, not a menu
+   item; Switch Player is a quieter side threshold; Depart recedes to
+   barely more than a label. */
 .actionRow {
   display: grid;
-  grid-template-columns: minmax(0, 2.3fr) minmax(0, 1fr) minmax(120px, 0.5fr);
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1.3fr) minmax(0, 0.9fr) minmax(110px, 0.5fr);
   align-items: end;
   gap: clamp(14px, 1.8vw, 26px);
   padding-top: 18px;
@@ -601,6 +603,33 @@
   border-left-color: rgba(232, 196, 132, 0.6);
 }
 
+/* The Control Room: a real second place within Vespara -- restrained
+   brass/blue instead of the Library's warm gold, quieter than the Library
+   but still a genuine threshold, not a settings menu item. */
+.controlRoomDestination {
+  min-height: clamp(96px, 11vh, 138px);
+  padding: clamp(18px, 2.2vh, 26px) 24px;
+  background:
+    radial-gradient(circle at 80% 18%, rgba(140, 190, 214, 0.1), transparent 42%),
+    linear-gradient(145deg, rgba(15, 22, 27, 0.8), rgba(7, 11, 15, 0.86));
+  border-color: rgba(140, 190, 214, 0.16);
+}
+
+.controlRoomDestination .destinationName {
+  font-size: clamp(15px, 1.5vw, 21px);
+  letter-spacing: 2.5px;
+  -webkit-text-stroke: 0.6px rgba(140, 190, 214, 0.5);
+}
+
+.controlRoomDestination .destinationDetail {
+  color: rgba(196, 214, 222, 0.5);
+}
+
+.controlRoomDestination .destinationMarker {
+  height: 48px;
+  border-left-color: rgba(140, 190, 214, 0.55);
+}
+
 /* Switch Player: present, but a quiet side path -- a person, not a menu
    item -- smaller and more muted than the Library beside it. */
 .switchPlayerDestination {
@@ -673,7 +702,7 @@
   }
 
   .actionRow {
-    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(110px, 0.6fr);
+    grid-template-columns: minmax(0, 1.8fr) minmax(0, 1.1fr) minmax(0, 0.9fr) minmax(100px, 0.6fr);
     gap: 10px;
   }
 
@@ -685,6 +714,11 @@
   .libraryDestination {
     min-height: 84px;
     padding: 14px 16px;
+  }
+
+  .controlRoomDestination {
+    min-height: 74px;
+    padding: 12px 14px;
   }
 
   .switchPlayerDestination {
@@ -719,6 +753,7 @@
 
   .actionBtn,
   .libraryDestination,
+  .controlRoomDestination,
   .switchPlayerDestination,
   .departDestination {
     min-height: 66px;

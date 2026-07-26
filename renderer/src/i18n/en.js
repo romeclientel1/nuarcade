@@ -148,6 +148,7 @@ export default {
   "home.library": "Library",
   "home.libraryDestination": "The Library",
   "home.librarySubtitle": "Enter the collection hall",
+  "home.controlRoomDestination": "The Control Room",
   "home.setUp": "Set Up",
   "home.switchPlayer": "Switch Player",
   "home.switchPlayerSubtitle": "Welcome another traveler",

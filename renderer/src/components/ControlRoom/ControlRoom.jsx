@@ -125,8 +125,16 @@ export default function ControlRoom({
     else activateRootItem()
   }
 
+  // One level at a time: root wings back out to the header row; the header
+  // row is the top of Control Room's own graph, so a further Back there
+  // leaves the room entirely via the same path as the Return button --
+  // matching Sanctuary's own contract that Escape/B always resolves to
+  // somewhere, never a dead end. Never fires while a station or Depart is
+  // open (both suppress this listener entirely -- see the two effects
+  // below).
   const back = () => {
     if (focusZoneRef.current === "root") { setFocusZone("header"); return }
+    if (focusZoneRef.current === "header") { if (onReturnHome) onReturnHome(); return }
   }
 
   const openDepart = (invoker) => {
@@ -170,11 +178,19 @@ export default function ControlRoom({
     return () => window.removeEventListener("keydown", handler)
   }, [])
 
+  // While a station is open, the room behind it becomes a visible-but-
+  // inactive backdrop: dimmed and non-interactive, so a mouse can't reach
+  // Return/Depart/the other wing through the now-constrained (not
+  // full-bleed) station frame and accidentally navigate away while
+  // Settings/MediaManager is still mounted underneath.
+  const stationOpen = !!activeModule
+  const activeWing = activeModule === "settings" ? "systems" : activeModule === "media" ? "archives" : null
+
   return (
     <div className={styles.stage}>
       <img src={controlRoomEnvironment} alt="" aria-hidden="true" className={styles.environment} />
 
-      <div className={styles.globalHeader}>
+      <div className={styles.globalHeader + (stationOpen ? " " + styles.roomInactive : "")}>
         <div className={styles.worldNav}>
           <button
             ref={returnBtnRef}
@@ -203,14 +219,19 @@ export default function ControlRoom({
         </div>
       </div>
 
-      <div className={styles.titleRow}>
+      <div className={styles.titleRow + (stationOpen ? " " + styles.roomInactive : "")}>
         <div className={styles.placeName}>{t("controlRoom.title")}</div>
         <div className={styles.placeSubtitle}>{t("controlRoom.subtitle")}</div>
       </div>
 
-      <div className={styles.chamber}>
+      <div className={styles.chamber + (stationOpen ? " " + styles.roomInactive : "")}>
         <div
-          className={styles.wing + (column === "systems" ? " " + styles.wingActive : "")}
+          className={
+            styles.wing
+            + (column === "systems" && !stationOpen ? " " + styles.wingActive : "")
+            + (activeWing === "systems" ? " " + styles.wingActive : "")
+            + (activeWing === "archives" ? " " + styles.wingDimmed : "")
+          }
           role="group"
           aria-label={t("controlRoom.systemsWing")}
         >
@@ -236,7 +257,12 @@ export default function ControlRoom({
         </div>
 
         <div
-          className={styles.wing + (column === "archives" ? " " + styles.wingActive : "")}
+          className={
+            styles.wing
+            + (column === "archives" && !stationOpen ? " " + styles.wingActive : "")
+            + (activeWing === "archives" ? " " + styles.wingActive : "")
+            + (activeWing === "systems" ? " " + styles.wingDimmed : "")
+          }
           role="group"
           aria-label={t("controlRoom.archivesWing")}
         >
@@ -258,21 +284,25 @@ export default function ControlRoom({
       </div>
 
       {activeModule === "settings" && (
-        <Settings
-          games={games}
-          onClose={closeStation}
-          onCRTChange={onCRTChange}
-          crtEnabled={crtEnabled}
-          themeId={themeId}
-          onThemeChange={onThemeChange}
-          uiSoundsEnabled={uiSoundsEnabled}
-          onUiSoundsChange={onUiSoundsChange}
-          uiSoundVolume={uiSoundVolume}
-          onUiSoundVolumeChange={onUiSoundVolumeChange}
-        />
+        <div className={styles.stationFrame} data-active-wing="systems">
+          <Settings
+            games={games}
+            onClose={closeStation}
+            onCRTChange={onCRTChange}
+            crtEnabled={crtEnabled}
+            themeId={themeId}
+            onThemeChange={onThemeChange}
+            uiSoundsEnabled={uiSoundsEnabled}
+            onUiSoundsChange={onUiSoundsChange}
+            uiSoundVolume={uiSoundVolume}
+            onUiSoundVolumeChange={onUiSoundVolumeChange}
+          />
+        </div>
       )}
       {activeModule === "media" && (
-        <MediaManager onClose={closeStation} onVideosUpdated={() => {}} onArtworkUpdated={() => {}} />
+        <div className={styles.stationFrame} data-active-wing="archives">
+          <MediaManager onClose={closeStation} onVideosUpdated={() => {}} onArtworkUpdated={() => {}} />
+        </div>
       )}
 
       {showDepart && (

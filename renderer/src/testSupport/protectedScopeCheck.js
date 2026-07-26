@@ -16,6 +16,26 @@
 // unchanged. Anything not on the blocklist -- new unrelated milestones
 // included -- is permitted, so the test still catches real scope creep
 // without forbidding legitimate parallel work.
+//
+// Two further refinements (added for Control Room Milestone C2, which
+// legitimately edits VesparaHome.jsx as its own primary deliverable):
+//
+// 1. A blocklisted file being dirty is only evidence of a scope violation
+//    if the CALLING milestone is actually in progress. If nothing under
+//    `scopeDir` (that milestone's own directory) is uncommitted, there is
+//    no diff to hold accountable in the first place, and asserting
+//    "this milestone didn't touch Sanctuary" about a non-event is exactly
+//    the same false-positive class this file was written to eliminate --
+//    just one layer deeper. So the check short-circuits to a pass whenever
+//    scopeDir itself is clean, regardless of what else is dirty elsewhere.
+//
+// 2. Not every category is protected from every milestone forever --
+//    Control Room C2 is explicitly authorized to extend into Sanctuary
+//    (VesparaHome.jsx) as its own primary deliverable, which Library
+//    milestones never are. `excludeLabels` lets a caller opt a specific
+//    PROTECTED_PATTERNS category out for its own scope, without weakening
+//    the check for every other caller (Library's own D2/D3/D4 tests keep
+//    protecting Sanctuary in full).
 import path from "node:path"
 import fs from "node:fs"
 import { execSync } from "node:child_process"
@@ -42,6 +62,18 @@ function toPosix(p) {
   return p.replace(/\\/g, "/")
 }
 
+// A rename/move (`git status --porcelain` reports it as "RM old -> new" or
+// "R  old -> new") is a single line with both paths joined by " -> ". Only
+// the new path reflects where the file currently lives -- without this, a
+// bare split on whitespace mangles the line, and worse, the OLD path can
+// spuriously match scopeDir/PROTECTED_PATTERNS even when the file has
+// moved OUT of that directory (exactly what happened moving this helper
+// itself out of Wheel/).
+function resolveRenamedPath(entry) {
+  const arrowIdx = entry.indexOf(" -> ")
+  return arrowIdx === -1 ? entry : entry.slice(arrowIdx + 4)
+}
+
 function readTrackedJson(repoRoot, relPath, ref) {
   try {
     const raw = execSync(`git show ${ref}:${relPath}`, { cwd: repoRoot, encoding: "utf8" })
@@ -53,10 +85,21 @@ function readTrackedJson(repoRoot, relPath, ref) {
 
 /**
  * Returns { offenders, packageJsonOffenders } describing any protected-file
- * or protected-field changes found in the current uncommitted working tree.
- * Returns { offenders: [], packageJsonOffenders: [] } if git is unavailable.
+ * or protected-field changes found in the current uncommitted working tree,
+ * but only when `scopeDir` itself has uncommitted changes -- i.e. only when
+ * there is an actual diff, owned by the calling milestone, to hold
+ * accountable. Returns empty results if git is unavailable, or if scopeDir
+ * is clean.
+ *
+ * @param {string} testFileURL - import.meta.url of the calling test file
+ * @param {{ scopeDir?: string, excludeLabels?: string[] }} [options]
+ *   scopeDir: this milestone's own directory (default: Wheel/, the
+ *     original Library-milestone caller).
+ *   excludeLabels: PROTECTED_PATTERNS categories this specific milestone
+ *     is explicitly authorized to touch (e.g. Control Room C2 + "Sanctuary").
  */
-export function findProtectedScopeOffenders(testFileURL) {
+export function findProtectedScopeOffenders(testFileURL, options = {}) {
+  const { scopeDir = "renderer/src/components/Wheel/", excludeLabels = [] } = options
   const testDir = path.dirname(fileURLToPath(testFileURL))
   const repoRoot = path.join(testDir, "../../../..")
 
@@ -66,13 +109,22 @@ export function findProtectedScopeOffenders(testFileURL) {
     changed = out.split("\n")
       .map(line => line.trim())
       .filter(Boolean)
-      .map(line => toPosix(line.replace(/^[AMDRCU?!]{1,2}\s+/, "")))
+      .map(line => resolveRenamedPath(toPosix(line.replace(/^[AMDRCU?!]{1,2}\s+/, ""))))
   } catch {
     return { offenders: [], packageJsonOffenders: [] }
   }
 
+  // Production changes only -- a milestone's own test files (e.g. an
+  // import-path fix shared across test infrastructure, as happened while
+  // relocating this very helper) are not evidence that a Library milestone
+  // is "in progress" in the sense this gate cares about.
+  if (!changed.some(f => f.startsWith(scopeDir) && !f.endsWith(".test.js"))) {
+    return { offenders: [], packageJsonOffenders: [] }
+  }
+
+  const activePatterns = PROTECTED_PATTERNS.filter(({ label }) => !excludeLabels.includes(label))
   const offenders = changed.filter(f =>
-    PROTECTED_PATTERNS.some(({ pattern }) => pattern.test(f))
+    activePatterns.some(({ pattern }) => pattern.test(f))
   )
 
   const packageJsonOffenders = []

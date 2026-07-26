@@ -71,9 +71,10 @@ test('the background contains no baked interface and all identity/actions remain
   assert.match(jsx, /\{ACTIONS\.map\(\(action, i\) => \{/)
 })
 
-test('ACTIONS order and the existing runAction route handlers remain unchanged', () => {
-  assert.match(jsx, /const ACTIONS = \["library", "switchPlayer", "depart"\]/)
+test('ACTIONS order and the existing runAction route handlers remain unchanged, plus the Control Room destination Milestone C2 added', () => {
+  assert.match(jsx, /const ACTIONS = \["library", "controlRoom", "switchPlayer", "depart"\]/)
   assert.match(jsx, /if \(action === "library"\) onEnterLibrary\?\.\(\)/)
+  assert.match(jsx, /else if \(action === "controlRoom"\) onEnterControlRoom\?\.\(\)/)
   assert.match(jsx, /else if \(action === "switchPlayer"\) onSwitchPlayer\?\.\(\)/)
   assert.match(jsx, /else if \(action === "depart"\) \{ setDepartChoice\(1\); setShowDepartConfirm\(true\) \}/)
 })

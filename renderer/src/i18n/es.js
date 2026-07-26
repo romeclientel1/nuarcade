@@ -147,6 +147,7 @@ export default {
   "home.library": "Biblioteca",
   "home.libraryDestination": "La Biblioteca",
   "home.librarySubtitle": "Entra en la sala de la colección",
+  "home.controlRoomDestination": "La Sala de Control",
   "home.setUp": "Configurar",
   "home.switchPlayer": "Cambiar jugador",
   "home.switchPlayerSubtitle": "Recibe a otro viajero",

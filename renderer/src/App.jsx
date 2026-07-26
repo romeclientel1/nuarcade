@@ -243,6 +243,14 @@ export default function App() {
   // down) invalidates it first.
   const [restorationRequest, setRestorationRequest] = useState(null)
   const appliedRestorationRef = useRef(false)
+  // One-shot hint for which Sanctuary destination tile should receive
+  // focus on the next Home mount -- distinct from restorationRequest
+  // (startup/crash recovery); this is same-session "just came back from
+  // Control Room" navigation. Cleared by VesparaHome once consumed, and
+  // explicitly cleared whenever the Traveler deliberately navigates
+  // elsewhere first (handleEnterLibrary/handleEnterControlRoom above) so
+  // it can never apply to an unrelated later Home visit.
+  const [homeFocusHint, setHomeFocusHint] = useState(null)
   useEffect(() => {
     if (!pendingRestoration) return
     if (phase !== "main") return
@@ -297,13 +305,21 @@ export default function App() {
     // Reset the surface to Home so selecting a different player next
     // cannot land them directly inside the previous player's Library view.
     clearPendingRestoration()
+    setHomeFocusHint(null)
     goToSurfaceRoot()
     setPhase("playerSelect")
   }
 
   const handleEnterLibrary = () => {
     clearPendingRestoration()
+    setHomeFocusHint(null)
     navigateSurface("library")
+  }
+
+  const handleEnterControlRoom = () => {
+    clearPendingRestoration()
+    setHomeFocusHint(null)
+    navigateSurface("controlRoom")
   }
 
   const handleReturnHomeFromWheel = () => {
@@ -311,8 +327,13 @@ export default function App() {
     goToSurfaceRoot()
   }
 
+  // Same-session return from Control Room: unlike handleReturnHomeFromWheel,
+  // this also leaves a one-shot hint so Sanctuary focuses the Control Room
+  // tile it was entered from, rather than its usual derived default. See
+  // VesparaHome's "Returning-destination focus hint" effect.
   const handleReturnHomeFromControlRoom = () => {
     clearPendingRestoration()
+    setHomeFocusHint("controlRoom")
     goToSurfaceRoot()
   }
 
@@ -376,10 +397,13 @@ export default function App() {
           ) : (
             <VesparaHome
               onEnterLibrary={handleEnterLibrary}
+              onEnterControlRoom={handleEnterControlRoom}
               onSwitchPlayer={handleReturnToPlayerSelect}
               uiSoundsEnabled={uiSoundsEnabled}
               uiSoundVolume={uiSoundVolume}
               restorationRequest={restorationRequest?.destination === "home" ? restorationRequest : null}
+              initialFocusHint={homeFocusHint}
+              onFocusHintConsumed={() => setHomeFocusHint(null)}
             />
           )
         )}

@@ -3,7 +3,7 @@ import assert from "node:assert/strict"
 import fs from "node:fs"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
-import { findProtectedScopeOffenders } from "./protectedScopeCheck.js"
+import { findProtectedScopeOffenders } from "../../testSupport/protectedScopeCheck.js"
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url))
 const jsx = fs.readFileSync(path.join(ROOT, "Wheel.jsx"), "utf8")

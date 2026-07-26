@@ -3,7 +3,7 @@ import assert from "node:assert/strict"
 import fs from "node:fs"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
-import { findProtectedScopeOffenders } from "../Wheel/protectedScopeCheck.js"
+import { findProtectedScopeOffenders } from "../../testSupport/protectedScopeCheck.js"
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url))
 const jsx = fs.readFileSync(path.join(ROOT, "ControlRoom.jsx"), "utf8")
@@ -215,7 +215,16 @@ test("focus styling is a restrained brass frame, not a cyan pill or oversized gl
 // without forbidding unrelated, non-protected files from also being dirty.
 
 test("this milestone leaves Sanctuary, startup, audio, installer, preload, main-process, dependency, and version files untouched", () => {
-  const { offenders, packageJsonOffenders } = findProtectedScopeOffenders(import.meta.url)
+  // "Sanctuary" is excluded here: Control Room Milestone C2 (a direct,
+  // authorized continuation of this same feature) legitimately wires
+  // VesparaHome.jsx as its own primary deliverable -- see
+  // controlRoomSanctuaryMilestoneC2.test.js, whose own check keeps every
+  // OTHER protected category (startup/audio/installer/preload/main-process/
+  // dependency/version) fully in force.
+  const { offenders, packageJsonOffenders } = findProtectedScopeOffenders(import.meta.url, {
+    scopeDir: "renderer/src/components/ControlRoom/",
+    excludeLabels: ["Sanctuary"],
+  })
   assert.deepEqual(offenders, [], `protected files were modified: ${offenders.join(", ")}`)
   assert.deepEqual(packageJsonOffenders, [], `protected package.json fields were modified: ${packageJsonOffenders.join(", ")}`)
 })

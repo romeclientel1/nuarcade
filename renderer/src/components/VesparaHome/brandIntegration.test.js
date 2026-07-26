@@ -39,8 +39,8 @@ test("the seal is decorative only: aria-hidden in JSX, pointer-events: none in C
   assert.doesNotMatch(rule[1], /transition/)
 })
 
-test("ACTIONS array, runAction dispatch, and focus state identifiers are unchanged by the brand pass", () => {
-  assert.match(jsx, /const ACTIONS = \["library", "switchPlayer", "depart"\]/)
+test("ACTIONS array, runAction dispatch, and focus state identifiers are unchanged by the brand pass (ACTIONS itself was later, separately extended by Control Room Milestone C2)", () => {
+  assert.match(jsx, /const ACTIONS = \["library", "controlRoom", "switchPlayer", "depart"\]/)
   assert.match(jsx, /if \(action === "library"\) onEnterLibrary\?\.\(\)/)
   assert.match(jsx, /const \[focusZone, setFocusZone\] = useState/)
   assert.match(jsx, /const \[recentIndex, setRecentIndex\] = useState/)

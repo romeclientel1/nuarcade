@@ -92,10 +92,10 @@ test("keyboard handler mirrors the same boundary-gated navigate() guards as the 
   // 'if (e.key === "ArrowLeft") {' (bare, no "&&") is unique to the main
   // keydown handler -- the depart-dialog branch uses
   // 'e.key === "ArrowLeft" && departChoice !== 0', a different string.
-  const kb = sliceBetween(jsx, 'if (e.key === "ArrowLeft") {', 'if (e.key === "Enter") launchFocused()', "Home keyboard handler block")
+  const kb = sliceBetween(jsx, 'if (e.key === "ArrowLeft") {', 'if (e.key === "Enter")', "Home keyboard handler block")
   assert.match(kb, /if \(recentIndex > 0\) \{ sounds\.navigate\(\); setRecentIndex\(/)
   assert.match(kb, /else if \(actionIndex > 0\) \{\s*sounds\.navigate\(\); setActionIndex\(/)
-  assert.match(kb, /if \(hasRecents && focusZone !== "recents"\) \{ sounds\.navigate\(\)/)
+  assert.match(kb, /if \(hasRecentsRef\.current && focusZone !== "recents"\) \{ sounds\.navigate\(\)/)
 })
 
 // -- depart dialog: exactly one cue per action, launch-style commit rules -----
