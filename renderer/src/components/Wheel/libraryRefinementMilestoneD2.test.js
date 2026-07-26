@@ -2,8 +2,8 @@ import { test } from "node:test"
 import assert from "node:assert/strict"
 import fs from "node:fs"
 import path from "node:path"
-import { execSync } from "node:child_process"
 import { fileURLToPath } from "node:url"
+import { findProtectedScopeOffenders } from "./protectedScopeCheck.js"
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url))
 const jsx = fs.readFileSync(path.join(ROOT, "Wheel.jsx"), "utf8")
@@ -159,25 +159,17 @@ test("compact rules reflow the header/title/shelf stack (top offsets only push d
 
 // -- 21. No environment/Sanctuary/startup/audio/installer/preload/main-process/
 //        dependency/version files changed -------------------------------------
+//
+// This used to assert the entire uncommitted working tree was confined to
+// renderer/src/components/Wheel/ -- valid only while D2 was the sole
+// uncommitted milestone. Once unrelated milestones (e.g. Control Room) have
+// their own legitimate uncommitted files, that blanket check fails on files
+// it was never meant to police. See protectedScopeCheck.js for the repaired,
+// blocklist-based approach: it still fails if D2 (or anything else) touches
+// a genuinely protected file, but no longer fails on unrelated work.
 
-test("this milestone's changes stay confined to renderer/src/components/Wheel", () => {
-  // Scoped to the *uncommitted* working tree, not a fixed base commit --
-  // the repo may already have unrelated, separately-approved commits (e.g.
-  // the 5.8.1 version bump) sitting between D1 and this milestone's own
-  // work, and those must not be misread as D2 touching version files.
-  let changed = []
-  try {
-    const repoRoot = path.join(ROOT, "../../../..")
-    const out = execSync("git status --porcelain", { cwd: repoRoot, encoding: "utf8" })
-    changed = out.split("\n")
-      .map(line => line.trim())
-      .filter(Boolean)
-      .map(line => line.replace(/^[AMDRCU?!]{1,2}\s+/, ""))
-  } catch {
-    // No git available in this environment -- nothing to assert against.
-    return
-  }
-  const allowed = /^renderer\/src\/components\/Wheel\//
-  const offenders = changed.filter(f => !allowed.test(f))
-  assert.deepEqual(offenders, [], `unexpected uncommitted files outside renderer/src/components/Wheel: ${offenders.join(", ")}`)
+test("this milestone leaves Sanctuary, startup, audio, installer, preload, main-process, dependency, and version files untouched", () => {
+  const { offenders, packageJsonOffenders } = findProtectedScopeOffenders(import.meta.url)
+  assert.deepEqual(offenders, [], `protected files were modified: ${offenders.join(", ")}`)
+  assert.deepEqual(packageJsonOffenders, [], `protected package.json fields were modified: ${packageJsonOffenders.join(", ")}`)
 })

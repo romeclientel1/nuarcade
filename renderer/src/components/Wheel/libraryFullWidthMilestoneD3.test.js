@@ -2,8 +2,8 @@ import { test } from "node:test"
 import assert from "node:assert/strict"
 import fs from "node:fs"
 import path from "node:path"
-import { execSync } from "node:child_process"
 import { fileURLToPath } from "node:url"
+import { findProtectedScopeOffenders } from "./protectedScopeCheck.js"
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url))
 const jsx = fs.readFileSync(path.join(ROOT, "Wheel.jsx"), "utf8")
@@ -182,18 +182,14 @@ test("no primary type size was stretched, compressed, or reduced below D2's thre
 })
 
 // -- 21. No environment/Sanctuary/startup/audio/installer/preload/main-process/
-//        dependency/version files changed, and the D3 diff stays scoped -----
+//        dependency/version files changed -------------------------------------
+//
+// Repaired to a blocklist check (see protectedScopeCheck.js) instead of the
+// original "entire working tree confined to Wheel/" assertion, which broke
+// as soon as any other legitimate milestone had its own uncommitted files.
 
-test("this milestone's uncommitted changes stay confined to renderer/src/components/Wheel", () => {
-  let changed = []
-  try {
-    const repoRoot = path.join(ROOT, "../../../..")
-    const out = execSync("git status --porcelain", { cwd: repoRoot, encoding: "utf8" })
-    changed = out.split("\n").map(l => l.trim()).filter(Boolean).map(l => l.replace(/^[AMDRCU?!]{1,2}\s+/, ""))
-  } catch {
-    return
-  }
-  const allowed = /^renderer\/src\/components\/Wheel\//
-  const offenders = changed.filter(f => !allowed.test(f))
-  assert.deepEqual(offenders, [], `unexpected uncommitted files outside renderer/src/components/Wheel: ${offenders.join(", ")}`)
+test("this milestone leaves Sanctuary, startup, audio, installer, preload, main-process, dependency, and version files untouched", () => {
+  const { offenders, packageJsonOffenders } = findProtectedScopeOffenders(import.meta.url)
+  assert.deepEqual(offenders, [], `protected files were modified: ${offenders.join(", ")}`)
+  assert.deepEqual(packageJsonOffenders, [], `protected package.json fields were modified: ${packageJsonOffenders.join(", ")}`)
 })

@@ -354,4 +354,15 @@ export default {
   "volumeOverlay.mute": "MUDO",
   "volumeOverlay.low": "BAJO",
   "volumeOverlay.volume": "VOL",
+
+  "controlRoom.title": "LA SALA DE CONTROL",
+  "controlRoom.subtitle": "Sistemas · Archivos · Restauración",
+  "controlRoom.systemsWing": "Ala de Sistemas",
+  "controlRoom.archivesWing": "Ala de Archivos",
+  "controlRoom.settingsLabel": "Ajustes",
+  "controlRoom.settingsHint": "Emuladores, controles, rutas, pantalla y preferencias",
+  "controlRoom.mediaLabel": "Archivos Multimedia",
+  "controlRoom.mediaHint": "Arte, videos, marcos y metadatos",
+  "controlRoom.workstationIdle": "Selecciona una estación para comenzar",
+  "controlRoom.workstationHint": "Izquierda/Derecha para elegir un ala · Arriba/Abajo para elegir una estación · A para abrir",
 }

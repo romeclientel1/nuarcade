@@ -3,6 +3,7 @@ import Intro from "./components/Intro/Intro"
 import IntroVideo from "./components/Wheel/IntroVideo"
 import Wheel from "./components/Wheel/Wheel"
 import VesparaHome from "./components/VesparaHome/VesparaHome"
+import ControlRoom from "./components/ControlRoom/ControlRoom"
 import CRT from "./components/CRT/CRT"
 import PlayerSelect from "./components/PlayerSelect/PlayerSelect"
 import { useProfiles } from "./context/ProfileContext"
@@ -310,6 +311,11 @@ export default function App() {
     goToSurfaceRoot()
   }
 
+  const handleReturnHomeFromControlRoom = () => {
+    clearPendingRestoration()
+    goToSurfaceRoot()
+  }
+
   return (
     <ErrorBoundary>
       <div style={{ position: 'relative', width: '100vw', height: '100vh', background: '#000', overflow: 'hidden' }}>
@@ -353,6 +359,19 @@ export default function App() {
               uiSoundVolume={uiSoundVolume}
               onUiSoundVolumeChange={setUiSoundVolume}
               restorationRequest={restorationRequest?.destination === "library" ? restorationRequest : null}
+            />
+          ) : currentSurface === "controlRoom" ? (
+            <ControlRoom
+              activeProfile={activeProfile}
+              onReturnHome={handleReturnHomeFromControlRoom}
+              crtEnabled={crtEnabled}
+              onCRTChange={setCrtEnabled}
+              themeId={themeId}
+              onThemeChange={setTheme}
+              uiSoundsEnabled={uiSoundsEnabled}
+              onUiSoundsChange={setUiSoundsEnabled}
+              uiSoundVolume={uiSoundVolume}
+              onUiSoundVolumeChange={setUiSoundVolume}
             />
           ) : (
             <VesparaHome

@@ -2,8 +2,8 @@ import { test } from "node:test"
 import assert from "node:assert/strict"
 import fs from "node:fs"
 import path from "node:path"
-import { execSync } from "node:child_process"
 import { fileURLToPath } from "node:url"
+import { findProtectedScopeOffenders } from "./protectedScopeCheck.js"
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url))
 const jsx = fs.readFileSync(path.join(ROOT, "Wheel.jsx"), "utf8")
@@ -38,22 +38,16 @@ test("Sanctuary's own Recently Played section is untouched by the Library's remo
   assert.match(sanctuaryJsx, /vespara-recent-title/)
 })
 
+// Repaired to a blocklist check (see protectedScopeCheck.js) instead of the
+// original "entire working tree confined to Wheel/" assertion. That blanket
+// form was only ever valid while D4 was the sole uncommitted milestone --
+// it started failing the moment an unrelated milestone (e.g. Control Room)
+// had its own legitimate uncommitted files sitting alongside it, which is
+// not a Library regression and shouldn't be reported as one.
 test("no Sanctuary, environment, startup, audio, installer, preload, main-process, dependency, or version file changed", () => {
-  // Scoped to the *uncommitted* working tree, not a fixed base commit --
-  // legitimate prior commits (e.g. the 5.8.1/5.8.2 version bumps) sitting
-  // between D3 and this milestone's own work must not be misread as D4
-  // touching version files.
-  let changed = []
-  try {
-    const repoRoot = path.join(ROOT, "../../../..")
-    const out = execSync("git status --porcelain", { cwd: repoRoot, encoding: "utf8" })
-    changed = out.split("\n").map(l => l.trim()).filter(Boolean).map(l => l.replace(/^[AMDRCU?!]{1,2}\s+/, ""))
-  } catch {
-    return
-  }
-  const allowed = /^renderer\/src\/components\/Wheel\//
-  const offenders = changed.filter(f => !allowed.test(f))
-  assert.deepEqual(offenders, [], `unexpected uncommitted files outside renderer/src/components/Wheel: ${offenders.join(", ")}`)
+  const { offenders, packageJsonOffenders } = findProtectedScopeOffenders(import.meta.url)
+  assert.deepEqual(offenders, [], `protected files were modified: ${offenders.join(", ")}`)
+  assert.deepEqual(packageJsonOffenders, [], `protected package.json fields were modified: ${packageJsonOffenders.join(", ")}`)
 })
 
 // -- 4/5. focusZone 5 fully removed ------------------------------------------

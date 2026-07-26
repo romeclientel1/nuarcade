@@ -355,4 +355,15 @@ export default {
   "volumeOverlay.mute": "MUTE",
   "volumeOverlay.low": "LOW",
   "volumeOverlay.volume": "VOL",
+
+  "controlRoom.title": "THE CONTROL ROOM",
+  "controlRoom.subtitle": "Systems · Archives · Restoration",
+  "controlRoom.systemsWing": "Systems Wing",
+  "controlRoom.archivesWing": "Archives Wing",
+  "controlRoom.settingsLabel": "Settings",
+  "controlRoom.settingsHint": "Emulators, controllers, paths, display, and preferences",
+  "controlRoom.mediaLabel": "Media Archives",
+  "controlRoom.mediaHint": "Artwork, videos, bezels, and metadata",
+  "controlRoom.workstationIdle": "Select a station to begin",
+  "controlRoom.workstationHint": "Left/Right to choose a wing · Up/Down to choose a station · A to open",
 }
