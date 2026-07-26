@@ -60,7 +60,12 @@ test("real NSIS build: renderer builds and electron-builder --win --x64 succeeds
   // assistedInstaller.nsh's base flow (install-mode, directory, instfiles,
   // finish) is 4 pages; folders.nsh's customPageAfterChangeDir hook adds
   // exactly one more. "Install: 5 pages" is makensis's own real compile
-  // report, not a source-text guess.
+  // report, not a source-text guess. This must stay exactly 5 even after
+  // adding VesparaDirectoryPageLeave -- that's a Leave callback attached to
+  // the existing Directory page, not a new page. makensis ran with -WX
+  // (warnings-as-errors), so a clean exit also proves there was no
+  // duplicate-include compile collision from the shared StrContains.nsh
+  // helper (assistedInstaller.nsh re-includes it unconditionally later).
   assert.match(output, /Install:\s*5 pages/, "expected the real compiled installer to report exactly 5 pages (4 base assisted-installer pages + the custom shortcut-choice page)")
 
   // -- Identity-critical defines reaching the real compiler --
@@ -75,6 +80,7 @@ test("real NSIS build: renderer builds and electron-builder --win --x64 succeeds
   assert.ok(fs.existsSync(debugYml), "expected electron-builder's debug log at dist/builder-debug.yml (DEBUG=electron-builder should always emit it)")
   const debugContent = fs.readFileSync(debugYml, "utf8")
   assert.match(debugContent, /!include "[^"]*assets\/installer\/folders\.nsh"/)
+  assert.match(output, /Install:\s*5 pages/, "adding the Directory-page Leave hook must not add or remove a page")
 
   // -- A real, named installer artifact exists --
   const expectedArtifact = path.join(ROOT, "dist", `Vespara Setup ${pkg.version}.exe`)

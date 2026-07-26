@@ -3,6 +3,60 @@
 
 !ifndef BUILD_UNINSTALLER
 
+# NSIS's classic Directory-page "Browse..." button can only target an
+# EXISTING folder (a native Windows folder-picker limitation, not an NSIS
+# scripting issue) -- so a user who browses to a parent location (e.g.
+# "D:\Games") rather than typing a full path must never be required to
+# pre-create "D:\Games\NuArcade" themselves first. electron-builder's own
+# stock instFilesPre (installer.nsi) already does an append-if-missing
+# fixup, but only right before the INSTFILES page -- AFTER our own
+# VesparaDesktopShortcutPageCreate below has already read $INSTDIR. Doing
+# the same fixup here, on the Directory page's own Leave (a standard,
+# supported MUI2 hook: MUI_PAGE_CUSTOMFUNCTION_LEAVE), means every later
+# page always sees a complete, dedicated, already-created Vespara
+# application directory, whatever the user typed or browsed to. This is
+# skipped entirely on upgrades along with the rest of the Directory page
+# (see electron-builder's skipPageIfUpdated), so an existing installation
+# directory read from the registry is never touched or renamed.
+#
+# Implemented with plain StrLen/StrCpy suffix comparison rather than the
+# shared StrContains.nsh helper -- assistedInstaller.nsh unconditionally
+# !includes that same file later (it has no include guard of its own), so
+# including it a second time here would redefine its Function/Vars and
+# fail the compile.
+#
+# A trailing separator (e.g. a bare drive root "D:\" returned by the native
+# folder-browse dialog, or "D:\Games\NuArcade\" typed by hand) is trimmed
+# before the suffix check, so it can never throw off the length comparison
+# and produce a doubled separator or a re-appended "\NuArcade\NuArcade".
+# The suffix comparison itself (LogicLib's != / ==) is case-insensitive by
+# default (StrCmp, not StrCmpS) -- intentional, since Windows paths are
+# themselves case-insensitive and "D:\Games\nuarcade" must be recognized as
+# already-suffixed, not doubled into "nuarcade\NuArcade".
+!define MUI_PAGE_CUSTOMFUNCTION_LEAVE VesparaDirectoryPageLeave
+
+Function VesparaDirectoryPageLeave
+  StrLen $4 $INSTDIR
+  IntOp $4 $4 - 1
+  StrCpy $5 $INSTDIR 1 $4
+  ${If} $5 == "\"
+    StrCpy $INSTDIR $INSTDIR $4
+  ${EndIf}
+
+  StrLen $0 "${APP_FILENAME}"
+  StrLen $1 $INSTDIR
+  IntOp $2 $1 - $0
+  ${If} $2 < 0
+    StrCpy $INSTDIR "$INSTDIR\${APP_FILENAME}"
+  ${Else}
+    StrCpy $3 $INSTDIR $0 $2
+    ${If} $3 != "${APP_FILENAME}"
+      StrCpy $INSTDIR "$INSTDIR\${APP_FILENAME}"
+    ${EndIf}
+  ${EndIf}
+  CreateDirectory "$INSTDIR"
+FunctionEnd
+
 Var VesparaDesktopShortcutCheckbox
 Var VesparaDesktopShortcutState
 
