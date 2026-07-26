@@ -55,17 +55,16 @@ test("FADE_DURATION and buildVideoUrl (the cinematic timing/path contract) are u
 
 // -- 11. Library Console structure and controller behavior remain unchanged --
 
-test("the Collection Hall seal is a new, additive, decorative element -- it does not replace THE LIBRARY place name", () => {
-  assert.match(wheelJsx, /import vesparaMicroMark from "\.\.\/\.\.\/assets\/brand\/vespara-symbol-micro\.svg"/)
-  assert.match(wheelJsx, /<img src=\{vesparaMicroMark\} alt="" aria-hidden="true" className=\{styles\.placeSeal\} \/>/)
+test("D4: THE LIBRARY renders as a clean destination title with no local doorway glyph -- the approved lockup already appears once, in the global header", () => {
+  assert.doesNotMatch(wheelJsx, /styles\.placeSeal/)
+  assert.doesNotMatch(wheelCss, /\.placeSeal\s*\{/)
   assert.match(wheelJsx, /<div className=\{styles\.placeName\}>\{t\("wheel\.libraryPlaceName"\)\}<\/div>/)
 })
 
-test("the seal sits inside placeIdentity, which is already pointer-events: none and decorative", () => {
+test("placeIdentity (THE LIBRARY's wrapper) remains pointer-events: none and decorative", () => {
   const placeIdentityIdx = wheelJsx.indexOf("<div className={styles.placeIdentity}>")
-  const sealIdx = wheelJsx.indexOf("styles.placeSeal")
   const placeNameIdx = wheelJsx.indexOf("styles.placeName")
-  assert.ok(placeIdentityIdx > -1 && sealIdx > placeIdentityIdx && placeNameIdx > sealIdx, "seal must render before placeName, inside placeIdentity")
+  assert.ok(placeIdentityIdx > -1 && placeNameIdx > placeIdentityIdx)
   const rule = wheelCss.match(/\.placeIdentity\s*\{([^}]*)\}/)
   assert.ok(rule)
   assert.match(rule[1], /pointer-events:\s*none/)

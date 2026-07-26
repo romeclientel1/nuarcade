@@ -126,8 +126,8 @@ test("Archive View is decorative with no native controls or tab stop", () => {
   assert.match(archiveMarkup, /<img src=\{previewStill\} alt=""/)
 })
 
-test("Archive View keeps a framed, centered lower-band geometry and framed cover crop (D3: moved out of the permanent right-side column)", () => {
-  assert.match(css, /\.previewReservation\s*\{[^}]*left:\s*50%[^}]*transform:\s*translateX\(-50%\)[^}]*z-index:\s*7[^}]*width:\s*clamp\(440px,\s*29vw,\s*560px\)/s)
+test("Archive View keeps a framed, centered lower-band geometry and framed cover crop (D4: moved further up/grown modestly to fully clear the viewport)", () => {
+  assert.match(css, /\.previewReservation\s*\{[^}]*left:\s*50%[^}]*transform:\s*translateX\(-50%\)[^}]*z-index:\s*7[^}]*width:\s*clamp\(440px,\s*28\.1vw,\s*540px\)/s)
   assert.match(css, /\.previewScreen\s*\{[^}]*aspect-ratio:\s*16 \/ 9[^}]*overflow:\s*hidden/s)
   assert.match(css, /\.archiveVideo\s*\{[^}]*object-fit:\s*cover[^}]*pointer-events:\s*none/s)
 })

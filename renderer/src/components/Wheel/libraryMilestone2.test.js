@@ -200,12 +200,9 @@ test("Settings and Media buttons still dispatch their unchanged handlers from th
 
 // -- Continue Playing: data/click behavior preserved, visual integration improved --
 
-test("Continue Playing carousel still resolves click-to-select the same way, only its container styling changed", () => {
-  assert.match(wheelJsx, /const idxInWheel = filteredGames\.findIndex\(fg =>\s*\n\s*\(fg\.id && fg\.id === g\.id\) \|\| \(fg\.profile && fg\.profile === g\.profile\)\s*\n\s*\)/)
-  assert.match(wheelJsx, /if \(idxInWheel >= 0\) \{ setSelectedIndex\(idxInWheel\); sounds\.navigate\(\) \}/)
-  const block = wheelCss.match(/\.recentCarousel\s*\{([^}]*)\}/)
-  assert.ok(block)
-  assert.match(block[1], /border-radius/, "expected the carousel to gain a framed backdrop tying it to the hall")
+test("D4: the Continue Playing carousel (recentCarousel/recentCard and its click-to-select handler) is gone from the Library -- Sanctuary owns quick-return/recent games now", () => {
+  assert.doesNotMatch(wheelJsx, /recentCarousel|recentCard|recentThumb|recentFallback|recentTitle|recentTrack|recentLabel/)
+  assert.doesNotMatch(wheelCss, /\.recentCarousel|\.recentCard|\.recentThumb|\.recentFallback|\.recentTitle|\.recentTrack|\.recentLabel/)
 })
 
 // -- No new runtime dependency, no `transition: all` reintroduced -----------

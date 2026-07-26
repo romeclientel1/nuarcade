@@ -37,8 +37,12 @@ test("the lockup lettering is not stretched or compressed -- live text, no non-u
   assert.doesNotMatch(css, /\.libraryBrand\s*\{[^}]*transform:\s*scale[XY]?\(/s)
 })
 
-test("placeSeal (the small local-title glyph) keeps using vespara-symbol-micro.svg -- it was never the lockup claim, only the header mark switched", () => {
-  assert.match(jsx, /<img src=\{vesparaMicroMark\} alt="" aria-hidden="true" className=\{styles\.placeSeal\}/)
+test("D4: placeSeal is gone entirely (removed, not swapped) -- THE LIBRARY no longer shows a second doorway glyph beside the global lockup", () => {
+  assert.doesNotMatch(jsx, /styles\.placeSeal/)
+  assert.doesNotMatch(css, /\.placeSeal\s*\{/)
+  // vesparaMicroMark stays imported for the Archive View no-artwork fallback,
+  // a different, non-simultaneous context.
+  assert.match(jsx, /import vesparaMicroMark from "\.\.\/\.\.\/assets\/brand\/vespara-symbol-micro\.svg"/)
 })
 
 // -- 3. No permanent right-side collection column for Archive View -----------
@@ -64,24 +68,9 @@ test("tab geometry (SLOT_WIDTH, opacity falloff) is untouched -- more systems be
   assert.match(jsx, /opacity = signed === 0 \? 1 : Math\.max\(0\.35, 1 - absPos \* 0\.11\)/)
 })
 
-// -- 6. Continue Playing spans the expanded width -----------------------------
-
-test("Continue Playing spans the expanded width and can show significantly more than 6 entries", () => {
-  const recent = block(css, ".stage .recentCarousel")
-  assert.match(recent, /left:\s*clamp\(24px,\s*3vw,\s*56px\)/)
-  assert.match(recent, /right:\s*clamp\(24px,\s*3vw,\s*56px\)/)
-  assert.doesNotMatch(recent, /\bwidth:\s*min\(/)
-  assert.match(jsx, /const continuePlayingItems = recentlyPlayed\.slice\(0,\s*12\)/)
-})
-
-test("recentCard/recentThumb keep their exact D2 cover proportions -- the extra width alone increases visible count, nothing was shrunk to fit more", () => {
-  const cardMatch = css.match(/\n\.recentCard \{([^}]*)\}/)
-  assert.ok(cardMatch)
-  assert.match(cardMatch[1], /width:\s*84px/)
-  const thumb = block(css, ".recentThumb")
-  assert.match(thumb, /width:\s*84px/)
-  assert.match(thumb, /height:\s*62px/)
-})
+// -- 6. Continue Playing removed from the Library (D4) -----------------------
+// See libraryLibraryOnlyMilestoneD4.test.js for the full removal contract.
+// This file's own D3-era Continue Playing assertions were retired there.
 
 // -- 7/8/9. Main collection spans the expanded width, flat shelf, aspect ratio
 
@@ -119,29 +108,16 @@ test("D2's selected-card focus cues (.center, .centerActive) are unchanged by th
   assert.match(jsx, /isNavFocused=\{focusZone === 2\}/)
 })
 
-test("D2's Continue Playing focus cues (.recentCardFocused, .recentLabelFocused) are unchanged by the D3 width pass", () => {
-  assert.match(jsx, /const isFocused = focusZone === 5 && continueFocusIdx === idx/)
-  assert.match(jsx, /styles\.recentCard \+ \(isFocused \? " " \+ styles\.recentCardFocused : ""\)/)
-  assert.match(block(css, ".recentCardFocused"), /box-shadow:/)
-  assert.match(jsx, /styles\.recentLabel \+ \(focusZone === 5 \? " " \+ styles\.recentLabelFocused : ""\)/)
-})
-
-// -- 12. D2 vertical navigation remains exact --------------------------------
-
-test("D2's exact focus-zone graph (filters -> continue -> wheel -> launch, and reverse) is untouched by the D3 layout pass", () => {
-  assert.match(jsx, /if \(z === 1\) \{ setFocusZone\(continuePlayingVisibleRef\.current \? 5 : 2\); sounds\.navigate\(\); return \}/)
-  assert.match(jsx, /if \(z === 5\) \{ setFocusZone\(2\); sounds\.navigate\(\); return \}\s*\/\/ continue playing -> wheel/)
-  assert.match(jsx, /if \(z === 2\) \{ setFocusZone\(3\); sounds\.navigate\(\); return \}\s*\/\/ wheel -> launch/)
-  assert.match(jsx, /if \(z === 2\) \{ setFocusZone\(continuePlayingVisibleRef\.current \? 5 : 1\); sounds\.navigate\(\); return \}/)
-  assert.match(jsx, /if \(z === 5\) \{ setFocusZone\(1\); sounds\.navigate\(\); return \}\s*\/\/ continue playing -> tabs/)
-})
+// D2's Continue Playing focus cues (.recentCardFocused/.recentLabelFocused,
+// zone 5) were removed along with the row itself in D4 -- see
+// libraryLibraryOnlyMilestoneD4.test.js for the simplified focus-zone graph.
 
 // -- 13. Selected-game strip is compact and retains handlers/data -----------
 
-test("the selected-game strip is a full-width top-anchored shallow row retaining title, meta, genre, and Launch's handler", () => {
+test("the selected-game strip is a top-anchored shallow row retaining title, meta, genre, and Launch's handler (D4: bounded width -- see libraryLibraryOnlyMilestoneD4.test.js for the geometry contract)", () => {
   const panel = block(css, ".stage .infoPanel")
-  assert.match(panel, /top:\s*clamp\(556px,\s*55\.5vh,\s*602px\)/)
-  assert.match(panel, /min-height:\s*52px/)
+  assert.match(panel, /top:\s*clamp\(498px,\s*49vh,\s*530px\)/)
+  assert.match(panel, /min-height:\s*44px/)
   assert.doesNotMatch(panel, /\bbottom:/)
   const panelJsx = jsx.slice(jsx.indexOf("<div className={styles.infoPanel"), jsx.indexOf("{showSort &&"))
   assert.match(panelJsx, /styles\.marqueeWrap[\s\S]*current\.title/)
@@ -155,7 +131,7 @@ test("the selected-game strip is a full-width top-anchored shallow row retaining
 
 test("Archive View is positioned beneath the collection (top offset after .infoPanel, not beside it)", () => {
   const preview = block(css, ".previewReservation")
-  assert.match(preview, /top:\s*clamp\(650px,\s*63\.5vh,\s*696px\)/)
+  assert.match(preview, /top:\s*clamp\(576px,\s*58vh,\s*626px\)/)
 })
 
 test("Archive View remains a real 16:9 frame", () => {
@@ -176,22 +152,23 @@ test("no duplicate selected-game caption returns beneath Archive View", () => {
 
 // -- 18/19. Whole composition fits at both target resolutions ---------------
 
-test("the full stack (header through Archive View) fits within a 1080px-tall viewport without any element relying on scrolling", () => {
+test("the full stack (header through Archive View) fits within a 1080px-tall viewport without any element relying on scrolling (D4: reclaimed Continue Playing's space)", () => {
   assert.doesNotMatch(css, /\.stage\s*\{[^}]*overflow-y:\s*auto/s)
   assert.match(css, /\.stage\s*\{[^}]*overflow:\s*hidden/s)
-  // Spot-check the cumulative top-down budget stays comfortably inside 1080:
-  // globalHeader(~24) -> libraryTitleRow(~92) -> categoryStrip(~136) ->
-  // recentCarousel(~182) -> wheelArea(top 290 + height 310 = 600) ->
-  // infoPanel(top 602 + ~52 = 654) -> previewReservation(top 696 + ~315 = ~1011).
-  assert.match(css, /\.stage \.wheelArea\s*\{[^}]*top:\s*clamp\(246px,\s*27vh,\s*290px\)[^}]*right:[^}]*height:\s*clamp\(270px,\s*29vh,\s*310px\)/s)
-  assert.match(css, /\.previewReservation\s*\{[^}]*top:\s*clamp\(650px,\s*63\.5vh,\s*696px\)/s)
+  // Verified live via headless Chrome + CDP getBoundingClientRect() at exactly
+  // 1920x1080: wheelArea 186-515, infoPanel 529-603, archiveFrame 626-957,
+  // depart 978-1037, hintBar 1041-1080 -- 14px+ clearance at every boundary.
+  assert.match(css, /\.stage \.wheelArea\s*\{[^}]*top:\s*clamp\(158px,\s*17\.2vh,\s*186px\)[^}]*right:[^}]*height:\s*clamp\(290px,\s*30\.5vh,\s*330px\)/s)
+  assert.match(css, /\.previewReservation\s*\{[^}]*top:\s*clamp\(576px,\s*58vh,\s*626px\)/s)
 })
 
 test("the compact 1280x720 stack reflows without overlap and Archive View stays visible (smaller, not hidden)", () => {
   const compact = css.slice(css.indexOf("@media (max-width: 1280px), (max-height: 760px)"), css.indexOf("/* Restrained entrance", css.indexOf("@media (max-width: 1280px), (max-height: 760px)")))
-  assert.match(compact, /\.stage \.wheelArea\s*\{[^}]*top:\s*218px[^}]*height:\s*192px/s)
-  assert.match(compact, /\.stage \.infoPanel\s*\{[^}]*top:\s*418px/s)
-  assert.match(compact, /\.previewReservation\s*\{[^}]*top:\s*470px[^}]*width:\s*300px/s)
+  // Verified live via CDP at exactly 1280x720: wheelArea 150-360, infoPanel
+  // 368-434, archiveFrame 448-620, depart 638-693, hintBar 681-720.
+  assert.match(compact, /\.stage \.wheelArea\s*\{[^}]*top:\s*150px[^}]*height:\s*210px/s)
+  assert.match(compact, /\.stage \.infoPanel\s*\{[^}]*top:\s*368px/s)
+  assert.match(compact, /\.previewReservation\s*\{[^}]*top:\s*448px[^}]*width:\s*260px/s)
 })
 
 // -- 20. Primary typography integrity ----------------------------------------

@@ -78,8 +78,8 @@ test("the local title's subtitle contains only Collection Hall + count, no activ
 
 // -- 6. Selected-game pedestal is compact and retains all required data -----
 
-test("the pedestal's footprint is cut roughly a third while keeping title, platform/readiness/favorite, genre, and Launch (D3: now a full-width top-anchored strip, min-height cut further to 52px)", () => {
-  assert.match(block(css, ".stage .infoPanel"), /top:\s*clamp\(556px,\s*55\.5vh,\s*602px\)[\s\S]*min-height:\s*52px/)
+test("the pedestal's footprint is cut roughly a third while keeping title, platform/readiness/favorite, genre, and Launch (D4: bounded compact strip, min-height cut further to 44px)", () => {
+  assert.match(block(css, ".stage .infoPanel"), /top:\s*clamp\(498px,\s*49vh,\s*530px\)[\s\S]*width:\s*clamp\(700px,\s*60vw,\s*1150px\)[\s\S]*min-height:\s*44px/)
   const panel = jsx.slice(jsx.indexOf("<div className={styles.infoPanel"), jsx.indexOf("{showSort &&"))
   assert.match(panel, /styles\.marqueeWrap[\s\S]*current\.title/)
   assert.match(panel, /styles\.infoMeta[\s\S]*current\.system[\s\S]*current\.status/)
@@ -112,84 +112,17 @@ test("the selected card combines a shape/border cue with a position/scale cue, n
   assert.match(jsx, /isNavFocused=\{focusZone === 2\}/)
 })
 
-// -- 9. Continue Playing focused items have an explicit visual state --------
+// -- 9. Continue Playing removed (D4) -- superseded by
+//       libraryLibraryOnlyMilestoneD4.test.js's focus-graph contract.
 
-test("a focused Continue Playing item gets a distinct frame/lift/title-brighten, separate from plain hover", () => {
-  assert.match(jsx, /const isFocused = focusZone === 5 && continueFocusIdx === idx/)
-  assert.match(jsx, /styles\.recentCard \+ \(isFocused \? " " \+ styles\.recentCardFocused : ""\)/)
-  const focused = block(css, ".recentCardFocused")
-  assert.match(focused, /box-shadow:/)
-  assert.match(focused, /transform:\s*translateY/)
-  assert.match(block(css, ".recentCardFocused .recentTitle"), /color:/)
-  // Row-level cue is separate from any one item's cue.
-  assert.match(jsx, /styles\.recentLabel \+ \(focusZone === 5 \? " " \+ styles\.recentLabelFocused : ""\)/)
-})
+// -- 10-14. D2's Continue Playing zone-5 navigation was removed wholesale in
+// D4 (Sanctuary owns quick-return games now); the new simplified graph
+// (filters -> wheel -> launch, and exact reverse) is covered by
+// libraryLibraryOnlyMilestoneD4.test.js.
 
-// -- 10. Down from filters enters Continue Playing when it has items --------
-
-test("Down from the platform filters enters Continue Playing when it's visible", () => {
-  assert.match(jsx, /if \(z === 1\) \{ setFocusZone\(continuePlayingVisibleRef\.current \? 5 : 2\); sounds\.navigate\(\); return \}/)
-})
-
-// -- 11. Down from Continue Playing enters the main collection --------------
-
-test("Down from Continue Playing lands in the main collection (zone 2)", () => {
-  assert.match(jsx, /if \(z === 5\) \{ setFocusZone\(2\); sounds\.navigate\(\); return \}\s*\/\/ continue playing -> wheel/)
-})
-
-// -- 12. Down from main collection reaches Launch Game/action focus ---------
-
-test("Down from the main collection still reaches Launch Game (zone 3), unchanged from D1", () => {
-  assert.match(jsx, /if \(z === 2\) \{ setFocusZone\(3\); sounds\.navigate\(\); return \}\s*\/\/ wheel -> launch/)
-})
-
-// -- 13. Upward navigation reverses the path predictably ---------------------
-
-test("Up reverses the exact same path: launch -> wheel -> continue playing (or tabs) -> tabs -> topMenu", () => {
-  assert.match(jsx, /if \(z === 3\) \{ setFocusZone\(2\); sounds\.navigate\(\); return \}\s*\/\/ launch -> wheel/)
-  assert.match(jsx, /if \(z === 2\) \{ setFocusZone\(continuePlayingVisibleRef\.current \? 5 : 1\); sounds\.navigate\(\); return \}/)
-  assert.match(jsx, /if \(z === 5\) \{ setFocusZone\(1\); sounds\.navigate\(\); return \}\s*\/\/ continue playing -> tabs/)
-  assert.match(jsx, /if \(z === 1\) \{ setFocusZone\(0\); sounds\.navigate\(\); return \}\s*\/\/ tabs -> topMenu/)
-})
-
-// -- 14. Empty Continue Playing safely skips to main collection -------------
-
-test("both Up (from wheel) and Down (from tabs) fall back to skipping Continue Playing when it's empty/hidden", () => {
-  assert.match(jsx, /setFocusZone\(continuePlayingVisibleRef\.current \? 5 : 1\)/)  // up: wheel -> continue or tabs
-  assert.match(jsx, /setFocusZone\(continuePlayingVisibleRef\.current \? 5 : 2\)/)  // down: tabs -> continue or wheel
-  // The visibility flag itself mirrors the recentCarousel's own render guard exactly.
-  assert.match(jsx, /const continuePlayingVisible = !libraryEmpty && !cabinetMode && !screenshotMode && continuePlayingItems\.length > 0 && activeCategory !== "Recent" && !debouncedSearch/)
-  assert.match(jsx, /\{continuePlayingVisible && \(\s*\n\s*<div className=\{styles\.recentCarousel\}>/)
-})
-
-// -- 15. Horizontal navigation remains within the active shelf --------------
-
-test("Left/Right while Continue Playing is focused only move continueFocusIdx, never focusZone", () => {
-  const leftBranch = jsx.match(/if \(z === 5\) \{ const n = continuePlayingItemsRef\.current\.length; if \(n > 0\) \{ setContinueFocusIdx\(i => \(i <= 0 \? n - 1 : i - 1\)\); sounds\.navigate\(\) \} return \}/)
-  const rightBranch = jsx.match(/if \(z === 5\) \{ const n = continuePlayingItemsRef\.current\.length; if \(n > 0\) \{ setContinueFocusIdx\(i => \(i >= n - 1 \? 0 : i \+ 1\)\); sounds\.navigate\(\) \} return \}/)
-  assert.ok(leftBranch, "left() must move continueFocusIdx within the row")
-  assert.ok(rightBranch, "right() must move continueFocusIdx within the row")
-  assert.doesNotMatch(leftBranch[0], /setFocusZone/)
-  assert.doesNotMatch(rightBranch[0], /setFocusZone/)
-})
-
-// -- 16. Focus is restored to the previous item in each shelf where applicable
-
-test("continueFocusIdx is never reset back to 0 on zone change -- only clamped when the list itself shrinks", () => {
-  assert.match(jsx, /useEffect\(\(\) => \{\s*\n\s*setContinueFocusIdx\(i => Math\.min\(i, Math\.max\(0, continuePlayingItems\.length - 1\)\)\)\s*\n\s*\}, \[continuePlayingItems\.length\]\)/)
-  assert.doesNotMatch(jsx, /setContinueFocusIdx\(0\)/)
-  // tabFocusIdx (filters) already persisted this way pre-D2 -- unchanged.
-  assert.doesNotMatch(jsx, /setTabFocusIdx\(0\)\s*$/m)
-})
-
-// -- 17. Held controller input does not leak across focus-zone transitions --
-
-test("the new zone-5 branches fire exactly once per press via the existing sounds.navigate() pattern, no bespoke repeat/hold logic added", () => {
-  assert.doesNotMatch(jsx, /continueFocusIdx[\s\S]{0,80}setInterval/)
-  assert.doesNotMatch(jsx, /continueFocusIdx[\s\S]{0,80}setTimeout/)
+test("held controller input does not leak across focus-zone transitions -- useGamepad's per-physical-button state machine is untouched", () => {
   // useGamepad's per-physical-button state machine (priming, firstAt/lastRepeatAt,
-  // neutral-frame waiting) is untouched -- Wheel.jsx only adds new zone
-  // branches inside the same up/down/left/right/confirm handlers it already had.
+  // neutral-frame waiting) is untouched by the D2-D4 Library focus-graph passes.
   const gamepadHook = fs.readFileSync(path.join(ROOT, "../../hooks/useGamepad.js"), "utf8")
   assert.match(gamepadHook, /waitingForNeutralRef/)
   assert.match(gamepadHook, /firstAt, lastRepeatAt/)
@@ -213,13 +146,13 @@ test("Console, Return, and Depart keep their existing onClick handlers", () => {
 
 // -- 20. 1920x1080 and 1280x720 layouts avoid overlap ------------------------
 
-test("compact rules reflow the header/title/shelf stack (top offsets only push down) without redefining primary type sizes (D3 full-width values)", () => {
+test("compact rules reflow the header/title/shelf stack (top offsets only push down) without redefining primary type sizes (D4: Continue Playing's slot reclaimed)", () => {
   const compact = css.slice(css.indexOf("@media (max-width: 1280px), (max-height: 760px)"), css.indexOf("/* Restrained entrance", css.indexOf("@media (max-width: 1280px), (max-height: 760px)")))
   assert.match(compact, /\.stage \.globalHeader\s*\{[^}]*top:\s*12px[^}]*padding:\s*0 20px/s)
   assert.match(compact, /\.stage \.libraryTitleRow\s*\{[^}]*top:\s*60px/s)
   assert.match(compact, /\.stage \.categoryStrip\s*\{[^}]*top:\s*106px/s)
-  assert.match(compact, /\.stage \.recentCarousel\s*\{[^}]*top:\s*146px/s)
-  assert.match(compact, /\.stage \.wheelArea\s*\{[^}]*top:\s*218px/s)
+  assert.doesNotMatch(compact, /\.stage \.recentCarousel/)
+  assert.match(compact, /\.stage \.wheelArea\s*\{[^}]*top:\s*150px[^}]*height:\s*210px/s)
   assert.doesNotMatch(compact, /\.placeName\s*\{[^}]*font-size:/s)
   assert.doesNotMatch(compact, /\.marqueeWrap\s*\{[^}]*font-size:/s)
 })

@@ -31,12 +31,13 @@ test("the environment plate is decorative and the interface remains live DOM", (
   assert.match(jsx, /<button className=\{styles\.launchBtn/)
 })
 
-test("the live top identity mirrors the concept hierarchy using Vespara serif language", () => {
+test("D4: the live top identity is a Vespara-only lockup (VESPARA, no THE SANCTUARY subtitle) -- Return to Sanctuary only reads logically if the header isn't also claiming the Traveler is already there", () => {
   assert.match(jsx, /<div className=\{styles\.libraryBrand\} aria-hidden="true">/)
   assert.match(jsx, /<div className=\{styles\.libraryBrandName\}>VESPARA<\/div>/)
-  assert.match(jsx, /<div className=\{styles\.libraryBrandWorld\}>THE SANCTUARY<\/div>/)
+  assert.doesNotMatch(jsx, /styles\.libraryBrandWorld/)
+  assert.doesNotMatch(jsx, />THE SANCTUARY</)
+  assert.doesNotMatch(css, /\.libraryBrandWorld\s*\{/)
   assert.match(css, /\.libraryBrandName\s*\{[^}]*"Times New Roman", Georgia, "Liberation Serif", serif[^}]*-webkit-text-stroke:/s)
-  assert.match(css, /\.libraryBrandWorld\s*\{[^}]*color:\s*#d6b274/s)
 })
 
 test("the Traveler greeting is live profile data and localized", () => {
@@ -68,15 +69,15 @@ test("the centered lower Archive View frame (D3) still owns the live presentatio
   assert.match(previewMarkup, /<video[\s\S]*?styles\.archiveVideo[\s\S]*?autoPlay/)
   assert.doesNotMatch(previewMarkup, /controls=/)
   assert.equal((previewMarkup.match(/tabIndex=\{-1\}/g) || []).length, 2)
-  assert.match(css, /\.previewReservation\s*\{[^}]*left:\s*50%[^}]*transform:\s*translateX\(-50%\)[^}]*z-index:\s*7[^}]*width:\s*clamp\(440px,\s*29vw,\s*560px\)/s)
+  assert.match(css, /\.previewReservation\s*\{[^}]*left:\s*50%[^}]*transform:\s*translateX\(-50%\)[^}]*z-index:\s*7[^}]*width:\s*clamp\(440px,\s*28\.1vw,\s*540px\)/s)
 })
 
-test("the compact selected-game strip sits below the shelf and does not cover the collection row", () => {
-  assert.match(css, /\.stage \.wheelArea\s*\{[^}]*top:\s*clamp\(246px,\s*27vh,\s*290px\)[^}]*height:\s*clamp\(270px,\s*29vh,\s*310px\)/s)
-  // D3: infoPanel is top-anchored (a full-width strip) instead of
-  // bottom-anchored, positioned right below .wheelArea's own bottom edge.
-  assert.match(css, /\.stage \.infoPanel\s*\{[^}]*top:\s*clamp\(556px,\s*55\.5vh,\s*602px\)[^}]*min-height:\s*52px/s)
-  assert.match(css, /@media \(max-width: 1280px\), \(max-height: 760px\)[\s\S]*?\.stage \.wheelArea\s*\{[^}]*top:\s*218px[^}]*height:\s*192px[\s\S]*?\.stage \.infoPanel\s*\{[^}]*top:\s*418px/s)
+test("the compact selected-game strip sits below the shelf and does not cover the collection row (D4: shelf moved up into Continue Playing's reclaimed space)", () => {
+  assert.match(css, /\.stage \.wheelArea\s*\{[^}]*top:\s*clamp\(158px,\s*17\.2vh,\s*186px\)[^}]*height:\s*clamp\(290px,\s*30\.5vh,\s*330px\)/s)
+  // D4: infoPanel is top-anchored and bounded-width (a compact strip, not a
+  // full-width slab), positioned right below .wheelArea's own bottom edge.
+  assert.match(css, /\.stage \.infoPanel\s*\{[^}]*top:\s*clamp\(498px,\s*49vh,\s*530px\)[^}]*width:\s*clamp\(700px,\s*60vw,\s*1150px\)[^}]*min-height:\s*44px/s)
+  assert.match(css, /@media \(max-width: 1280px\), \(max-height: 760px\)[\s\S]*?\.stage \.wheelArea\s*\{[^}]*top:\s*150px[^}]*height:\s*210px[\s\S]*?\.stage \.infoPanel\s*\{[^}]*top:\s*368px/s)
 })
 
 test("return, console, and the visible Depart plaque use integrated live controls", () => {

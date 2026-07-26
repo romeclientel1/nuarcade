@@ -47,12 +47,11 @@ test("platform filters retain counts, selected state, and the existing click han
   assert.match(block(css, ".stage .catActive"), /border-bottom-color:\s*#d6b274/)
 })
 
-test("Continue Playing remains a separate upper shelf before the main collection", () => {
-  const recentIndex = jsx.indexOf("<div className={styles.recentCarousel}>")
+test("D4: Continue Playing is gone -- the main collection shelf sits directly below the system row instead", () => {
+  assert.doesNotMatch(jsx, /styles\.recentCarousel/)
+  const categoryStripIdx = jsx.indexOf("<div className={styles.categoryStrip}>")
   const wheelIndex = jsx.indexOf("<div className={styles.wheelArea}>")
-  assert.ok(recentIndex > -1 && wheelIndex > recentIndex)
-  assert.match(jsx, /continuePlayingItems\.map/)
-  assert.match(block(css, ".stage .recentCarousel"), /border-bottom:\s*2px solid/)
+  assert.ok(categoryStripIdx > -1 && wheelIndex > categoryStripIdx)
 })
 
 test("shelf navigation handlers remain at the approved values (D3: flat-shelf geometry, see libraryFullWidthMilestoneD3.test.js)", () => {
@@ -76,7 +75,7 @@ test("Archive View keeps the A/B media lifecycle while removing duplicate game-t
   assert.match(jsx, /ref=\{bgVideoBRef\}[\s\S]*onCanPlay=\{\(\) => handleArchiveVideoReady\('b'/)
   assert.match(jsx, /preload="auto"[\s\S]*loop[\s\S]*playsInline[\s\S]*autoPlay/)
   assert.doesNotMatch(jsx, /styles\.previewCaption/)
-  assert.match(block(css, ".previewReservation"), /width:\s*clamp\(440px,\s*29vw,\s*560px\)/)
+  assert.match(block(css, ".previewReservation"), /width:\s*clamp\(440px,\s*28\.1vw,\s*540px\)/)
 })
 
 test("selected-game pedestal is authoritative and technical filenames leave the main view", () => {
@@ -96,14 +95,15 @@ test("Launch, favorite, Return, Console, and Depart handlers remain wired", () =
   assert.match(jsx, /if \(z === 3\) \{ launchGame\(\); return \}/)
 })
 
-test("D3: responsive rules preserve the full-width 1280 and desktop compositions without shrinking primary type", () => {
+test("D4: responsive rules preserve the full-width 1280 composition (Continue Playing's slot reclaimed) without shrinking primary type", () => {
   const compact = css.slice(css.indexOf("@media (max-width: 1280px), (max-height: 760px)"), css.indexOf("/* Restrained entrance", css.indexOf("@media (max-width: 1280px), (max-height: 760px)")))
   assert.doesNotMatch(compact, /\.stage \.globalHeader\s*\{[^}]*grid-template-columns:/s)
+  assert.doesNotMatch(compact, /\.stage \.recentCarousel/)
   assert.match(compact, /\.stage \.libraryTitleRow\s*\{[^}]*top:\s*60px[^}]*left:\s*22px[^}]*right:\s*22px/s)
   assert.match(compact, /\.stage \.categoryStrip\s*\{[^}]*top:\s*106px[^}]*left:\s*22px[^}]*right:\s*22px/s)
-  assert.match(compact, /\.stage \.recentCarousel\s*\{[^}]*top:\s*146px[^}]*left:\s*22px[^}]*right:\s*22px/s)
-  assert.match(compact, /\.previewReservation\s*\{[^}]*top:\s*470px[^}]*width:\s*300px/s)
-  assert.match(compact, /\.stage \.infoPanel\s*\{[^}]*left:\s*18px[^}]*right:\s*18px[^}]*top:\s*418px[^}]*min-height:\s*44px/s)
+  assert.match(compact, /\.stage \.wheelArea\s*\{[^}]*top:\s*150px[^}]*height:\s*210px/s)
+  assert.match(compact, /\.previewReservation\s*\{[^}]*top:\s*448px[^}]*width:\s*260px/s)
+  assert.match(compact, /\.stage \.infoPanel\s*\{[^}]*left:\s*50%[^}]*top:\s*368px[^}]*width:\s*720px[^}]*min-height:\s*38px/s)
   assert.doesNotMatch(compact, /\.placeName\s*\{[^}]*font-size:/s)
   assert.doesNotMatch(compact, /\.marqueeWrap\s*\{[^}]*font-size:/s)
 })

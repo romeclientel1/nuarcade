@@ -98,16 +98,6 @@
   text-shadow: 0 2px 12px rgba(0, 0, 0, 0.82);
 }
 
-.libraryBrandWorld {
-  margin-top: 7px;
-  font-family: "Times New Roman", Georgia, "Liberation Serif", serif;
-  font-size: clamp(9px, 0.72vw, 13px);
-  font-weight: 600;
-  letter-spacing: 0.38em;
-  color: #d6b274;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
-}
-
 /* D2 -- now a flex child of .headerRight, immediately after Console, so
    it stays the rightmost identity element without its own absolute
    corner position. */
@@ -221,13 +211,6 @@
   pointer-events: none;
 }
 
-.stage .placeSeal {
-  align-self: center;
-  width: 22px;
-  margin-bottom: 0;
-  opacity: 0.86;
-}
-
 .stage .placeName {
   font-family: "Times New Roman", Georgia, "Liberation Serif", serif;
   font-size: clamp(27px, 1.85vw, 35px);
@@ -304,40 +287,18 @@
   box-shadow: inset 0 -3px rgba(214, 178, 116, 0.1);
 }
 
-/* D3 -- full-width memory shelf. recentCard/recentThumb keep their exact
-   D2 pixel dimensions (cover proportions untouched); the extra width
-   alone is what lets significantly more than 6 entries sit in view
-   without crowding or shrinking anything. */
-.stage .recentCarousel {
-  position: absolute;
-  top: clamp(154px, 18vh, 182px);
-  left: clamp(24px, 3vw, 56px);
-  right: clamp(24px, 3vw, 56px);
-  box-sizing: border-box;
-  margin: 0;
-  padding: 7px 12px 10px;
-  z-index: 10;
-  border: 0;
-  border-radius: 0;
-  border-bottom: 2px solid rgba(126, 79, 35, 0.54);
-  background: linear-gradient(90deg, transparent, rgba(32, 22, 13, 0.28) 12%, rgba(51, 33, 17, 0.24) 88%, transparent);
-  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.14);
-}
-
-/* D3 -- the main shelf now spans nearly the full viewport. ARC_RADIUS/
-   ANGLE_STEP (Wheel.jsx getCardStyle) are completely untouched -- the
-   protected carousel-geometry constants every prior milestone's tests
-   check -- so widening the container is what stops .wheelArea's own
-   overflow:hidden from clipping the outer cards the arc math already
-   positions, rather than changing the arc itself. cardTrack's scale gets
-   a tiny CSS-only bump (0.68 -> 0.74, same allowance D2 used on the
-   card's own .center scale) for extra legibility now that there's room. */
+/* Milestone D4 -- Continue Playing removed from the Library entirely
+   (Sanctuary owns quick-return/recent games); the main shelf moves up
+   into the reclaimed vertical space, right below the system row, and
+   grows modestly now that there's genuine room. ARC_RADIUS/ANGLE_STEP
+   (Wheel.jsx getCardStyle) remain completely untouched -- only this
+   container's top/height changed, not the carousel geometry itself. */
 .stage .wheelArea {
   position: absolute;
-  top: clamp(246px, 27vh, 290px);
+  top: clamp(158px, 17.2vh, 186px);
   left: clamp(16px, 2.2vw, 40px);
   right: clamp(16px, 2.2vw, 40px);
-  height: clamp(270px, 29vh, 310px);
+  height: clamp(290px, 30.5vh, 330px);
   z-index: 8;
   overflow: hidden;
   border-radius: 0 0 10px 10px;
@@ -399,18 +360,27 @@
    same flex:1 -- "aligned on the right" falls out of the existing flex
    layout, no new alignment rule needed. One line of the three D2 had
    (infoSummary/genre) now folds onto the meta line via JSX (see Wheel.jsx)
-   instead of its own row, cutting the strip's height further. */
+   instead of its own row, cutting the strip's height further.
+   D4 -- top offset follows the main shelf's new (higher) position, and
+   min-height is cut further (52 -> 44, ~15%) now that Archive View below
+   needs the room to be fully visible in the same viewport. Second D4 pass:
+   no longer full-width (left+right) -- a full-width strip here read as an
+   empty slab competing with both the shelf and Archive View. Centered,
+   bounded to ~60vw (55-65% target at 1080p), so it visually belongs to the
+   selected game beneath the shelf's own center rather than reading as a
+   global footer bar. */
 .stage .infoPanel {
   position: absolute;
-  left: clamp(16px, 2.2vw, 40px);
-  right: clamp(16px, 2.2vw, 40px);
-  top: clamp(556px, 55.5vh, 602px);
-  min-height: 52px;
+  left: 50%;
+  transform: translateX(-50%);
+  top: clamp(498px, 49vh, 530px);
+  width: clamp(700px, 60vw, 1150px);
+  min-height: 44px;
   box-sizing: border-box;
   display: flex;
   align-items: center;
   gap: 20px;
-  padding: 8px 22px;
+  padding: 6px 22px;
   border: 1px solid rgba(214, 178, 116, 0.28);
   border-radius: 6px 2px 6px 2px;
   background: linear-gradient(155deg, rgba(35, 25, 15, 0.78), rgba(15, 14, 10, 0.84));
@@ -476,14 +446,19 @@
    real 16:9 aspect ratio (.previewScreen below) and the entire A/B
    playback lifecycle are untouched -- only this wrapper's position and
    width changed; height still derives from width via aspect-ratio, exactly
-   as it always has. */
+   as it always has.
+   D4 -- moved up into the space Continue Playing's removal reclaimed, and
+   grown modestly (max width 560 -> 600) now that the whole frame -- label,
+   outer border, and full 16:9 gameplay area -- has genuine room to sit
+   fully inside the viewport above the hint bar/Depart instead of clipping
+   at the bottom edge. */
 .previewReservation {
   position: absolute;
-  top: clamp(650px, 63.5vh, 696px);
+  top: clamp(576px, 58vh, 626px);
   left: 50%;
   transform: translateX(-50%);
   z-index: 7;
-  width: clamp(440px, 29vw, 560px);
+  width: clamp(440px, 28.1vw, 540px);
   box-sizing: border-box;
   padding: 9px 11px 10px;
   color: #f4e7ca;
@@ -664,35 +639,14 @@
     height: 36px;
   }
 
-  .stage .recentCarousel {
-    top: 146px;
-    left: 22px;
-    right: 22px;
-    padding: 5px 10px 6px;
-  }
-
-  /* Thumbnails only -- not typography -- shrink a little in the tighter
-     compact budget so the row's own height leaves enough room below for
-     the shelf and Archive View without overlap. .stage-qualified so this
-     outranks the base .recentCard/.recentThumb/.recentFallback/.recentTitle
-     rules declared later in this file (equal specificity would otherwise
-     let source order override the media query). */
-  .stage .recentCard,
-  .stage .recentThumb,
-  .stage .recentFallback {
-    width: 68px;
-  }
-  .stage .recentThumb,
-  .stage .recentFallback {
-    height: 50px;
-  }
-  .stage .recentTitle { width: 68px; }
-
+  /* D4 -- Continue Playing removed; the shelf moves up right behind the
+     system row, and the reclaimed space grows it (192 -> 210) and Archive
+     View (300 -> 330 wide) modestly, same as the desktop rule above. */
   .stage .wheelArea {
     left: 18px;
     right: 18px;
-    top: 218px;
-    height: 192px;
+    top: 150px;
+    height: 210px;
   }
 
   .stage .cardTrack {
@@ -700,17 +654,19 @@
   }
 
   .stage .infoPanel {
-    left: 18px;
-    right: 18px;
-    top: 418px;
-    min-height: 44px;
-    padding: 6px 16px;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    top: 368px;
+    width: 720px;
+    min-height: 38px;
+    padding: 5px 16px;
     gap: 12px;
   }
 
   .previewReservation {
-    top: 470px;
-    width: 300px;
+    top: 448px;
+    width: 260px;
     padding: 7px 9px 8px;
   }
 
@@ -821,17 +777,6 @@
   justify-self: center;
   text-align: center;
   pointer-events: none;
-}
-
-/* Quiet Collection Hall seal (Brand Identity Milestone 2) -- a small
-   architectural insignia above "THE LIBRARY", not a replacement for it.
-   Decorative only: already inert via .placeIdentity's own
-   pointer-events: none above. */
-.placeSeal {
-  width: 18px;
-  height: auto;
-  opacity: 0.7;
-  margin-bottom: 1px;
 }
 
 .placeName {
@@ -1949,97 +1894,6 @@
 /* Recently played carousel -- given a quiet framed backdrop so it reads as
    part of the collection hall rather than a floating, detached strip, and
    sized up slightly so it isn't lost beneath the main carousel. */
-.recentCarousel {
-  flex-shrink: 0;
-  margin: 6px 16px 0;
-  padding: 6px 14px 5px;
-  border-radius: 10px;
-  background: rgba(214, 178, 116, 0.04);
-  border: 1px solid rgba(214, 178, 116, 0.1);
-  z-index: 6;
-}
-.recentLabel {
-  font-size: 9px;
-  font-weight: 700;
-  color: rgba(232, 210, 165, 0.45);
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  margin-bottom: 4px;
-  transition: color 0.15s ease;
-}
-/* D2 -- the row-level focus cue (distinct from any one item's own
-   .recentCardFocused ring below): brightens once controller focus enters
-   zone 5, so "the row is active" reads even before an item is scanned. */
-.recentLabelFocused {
-  color: rgba(232, 210, 165, 0.9);
-}
-.recentTrack {
-  display: flex;
-  gap: 10px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  padding-bottom: 2px;
-}
-.recentTrack::-webkit-scrollbar { display: none; }
-.recentCard {
-  flex-shrink: 0;
-  width: 84px;
-  background: transparent;
-  border-radius: 8px;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  transition: transform 0.15s, box-shadow 0.15s, background-color 0.15s;
-}
-.recentCard:hover { transform: translateY(-2px); }
-/* D2 -- explicit item-level focus: thin brass frame, a slight lift beyond
-   plain hover, an illuminated backing, and a brighter title -- the same
-   "not color alone" combination as the main collection's .centerActive. */
-.recentCardFocused {
-  transform: translateY(-3px);
-  background: rgba(214, 178, 116, 0.1);
-  box-shadow: 0 0 0 1px rgba(214, 178, 116, 0.6), 0 6px 16px rgba(0, 0, 0, 0.32);
-}
-@media (prefers-reduced-motion: reduce) {
-  .recentCardFocused { transform: none; }
-}
-.recentThumb {
-  width: 84px;
-  height: 62px;
-  object-fit: cover;
-  border-radius: 6px;
-  border: 1px solid rgba(214, 178, 116, 0.14);
-}
-.recentCardFocused .recentThumb,
-.recentCardFocused .recentFallback {
-  border-color: rgba(214, 178, 116, 0.7);
-}
-.recentFallback {
-  width: 84px;
-  height: 62px;
-  border-radius: 6px;
-  border: 1px solid;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.recentIcon { font-size: 20px; }
-.recentTitle {
-  font-size: 9px;
-  color: rgba(232, 220, 195, 0.5);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  text-align: left;
-  width: 84px;
-  transition: color 0.15s ease;
-}
-.recentCardFocused .recentTitle {
-  color: rgba(248, 237, 210, 0.95);
-}
 .achieveBtn {
   padding: 0 8px; height: 26px;
   border: 1px solid rgba(255,255,255,0.25);
