@@ -10,13 +10,18 @@ import { useGameLibrary } from "../../hooks/useGameLibrary"
 import { useI18n } from "../../i18n/I18nContext.js"
 
 // Root-level navigation graph:
-//   zone "header" -- items: return, depart (Left/Right between them, Down into root)
+//   zone "header" -- items: return, depart (Left/Right between them, Down
+//                    into root, restoring the exact wing/station the header
+//                    was entered from)
 //   zone "root"   -- columns: systems, archives (Left/Right between columns,
-//                    Up/Down within the focused column's station list, Up
-//                    from the top of a list returns to "header")
-// The center Workstation displays whichever wing is focused but is not
-// itself a navigable stop -- it hosts no station of its own until one is
-// opened, and a focus stop with nothing to focus would be a dead end.
+//                    Up/Down within the focused column's station list; Up
+//                    from the top of Systems enters Return, Up from the top
+//                    of Archives enters Depart -- see enterHeaderFromColumn)
+// The center Workstation (Milestone C3) is a real readiness readout, not a
+// navigable stop of its own -- Continue Setup is a second, mouse/Tab-
+// reachable door onto the same action the Systems Wing's Settings station
+// already performs, not a parallel entry in the arrow-key graph (see the
+// comment on continueSetup() below for why).
 // Each wing currently maps to exactly one real station -- Settings and Media
 // Archives are the only two destinations the existing Console exposes. No
 // additional stations are invented; see the Milestone C1 audit for why.
@@ -27,13 +32,27 @@ const ARCHIVES_STATIONS = [
   { id: "media", labelKey: "controlRoom.mediaLabel", hintKey: "controlRoom.mediaHint" },
 ]
 
+// Contextual-return contract (Milestone C3, Part 7): ControlRoom can be
+// entered from more than one place. Today only "sanctuary" is ever passed
+// (App.jsx's <ControlRoom> call site has no origin prop yet, so the default
+// below is what actually runs) -- "library" is accepted so a later
+// milestone can wire Library -> Control Room without touching this
+// component again, but nothing currently produces that value. Any other/
+// unrecognized origin falls back to "sanctuary" rather than rendering a
+// broken label.
+const RETURN_LABEL_BY_ORIGIN = {
+  sanctuary: "wheel.navHome",
+  library: "controlRoom.returnLibrary",
+}
+
 export default function ControlRoom({
-  activeProfile, onReturnHome,
+  activeProfile, onReturnHome, entryOrigin = "sanctuary",
   crtEnabled, onCRTChange, themeId, onThemeChange,
   uiSoundsEnabled, onUiSoundsChange, uiSoundVolume, onUiSoundVolumeChange,
 }) {
   const { t } = useI18n()
-  const { games } = useGameLibrary()
+  const { games, config, loading } = useGameLibrary()
+  const returnLabelKey = RETURN_LABEL_BY_ORIGIN[entryOrigin] || RETURN_LABEL_BY_ORIGIN.sanctuary
 
   const [focusZone, setFocusZone] = useState("header")       // "header" | "root"
   const [headerIdx, setHeaderIdx] = useState(0)               // 0 = return, 1 = depart
@@ -41,6 +60,19 @@ export default function ControlRoom({
   const [systemsIdx, setSystemsIdx] = useState(0)
   const [archivesIdx, setArchivesIdx] = useState(0)
   const [activeModule, setActiveModule] = useState(null)      // null | "settings" | "media"
+  // True only while Continue Setup genuinely holds real DOM focus (native
+  // Tab, not the arrow-key graph). Continue Setup deliberately has no
+  // onFocus handler of its own (see continueSetup()'s comment) -- but that
+  // means Tab-ing INTO it from the Settings station (whose onFocus DOES
+  // fire and sets focusZone/column/systemsIdx) leaves that station's
+  // derived-state "focused" class stuck on even though real focus has
+  // since moved elsewhere. This flag is the fix: it's the one piece of
+  // state that tracks real focus rather than the arrow-key graph's
+  // intent, and suppresses the station's focused class while it's true --
+  // caught live during Milestone C3 review (Blocker 1) by Tab-ing past the
+  // Settings station on the way to Continue Setup and seeing both lit at
+  // once.
+  const [continueSetupFocused, setContinueSetupFocused] = useState(false)
 
   // Every value a keydown/gamepad handler reads is mirrored into a ref on
   // every render. The root input listeners below are registered once (empty
@@ -59,6 +91,7 @@ export default function ControlRoom({
   const departBtnRef = useRef(null)
   const systemsBtnRef = useRef(null)
   const archivesBtnRef = useRef(null)
+  const continueSetupBtnRef = useRef(null) // mouse/Tab entry point only -- see continueSetup() comment
   const restoreFocusRef = useRef(null) // { zone, column } to restore when a module closes
 
   const [showDepart, setShowDepart] = useState(false)
@@ -104,8 +137,17 @@ export default function ControlRoom({
     setColumn(dir < 0 ? "systems" : "archives")
   }
 
-  const moveUp = () => {
-    if (focusZoneRef.current === "root") { setFocusZone("header"); return }
+  // Up from the top of a wing's station list enters the header -- landing
+  // on the header item that sits above THAT wing (Systems -> Return,
+  // Archives -> Depart), never on whatever header item happened to be
+  // focused last. Down from the header always restores the exact wing/
+  // station the header was entered from, because `column`/`systemsIdx`/
+  // `archivesIdx` are never mutated by header navigation (Left/Right only
+  // ever touches `headerIdx`) -- so "restore" is just "go back to root",
+  // the underlying state never moved.
+  const enterHeaderFromColumn = () => {
+    setHeaderIdx(columnRef.current === "archives" ? 1 : 0)
+    setFocusZone("header")
   }
 
   const moveDown = () => {
@@ -117,7 +159,7 @@ export default function ControlRoom({
   const moveUpWithinColumn = () => {
     if (columnRef.current === "systems" && systemsIdxRef.current > 0) { setSystemsIdx(i => i - 1); return }
     if (columnRef.current === "archives" && archivesIdxRef.current > 0) { setArchivesIdx(i => i - 1); return }
-    moveUp()
+    if (focusZoneRef.current === "root") { enterHeaderFromColumn(); return }
   }
 
   const confirm = () => {
@@ -186,6 +228,97 @@ export default function ControlRoom({
   const stationOpen = !!activeModule
   const activeWing = activeModule === "settings" ? "systems" : activeModule === "media" ? "archives" : null
 
+  // Readiness workstation (Milestone C3, Part 3/4; revised per the review
+  // Blocker 2 audit). Every row reads real state already available to this
+  // component -- config.load()'s actual on-disk config (via
+  // useGameLibrary's `config`) and the actual scanned library (`games`) --
+  // never an invented number. No IPC call, no Settings/MediaManager
+  // internals reached into.
+  //
+  // `config` is only ever populated on win32 (see useGameLibrary's own
+  // platform gate) and only after its async getConfig() call resolves --
+  // so there are two states this component must not confuse with "the user
+  // hasn't set anything up": platform-unsupported (config will NEVER
+  // arrive) and still-loading (config hasn't arrived YET). Collapsing
+  // either into "Needs setup" would show a permanent or false-urgent
+  // warning to someone who did nothing wrong -- a Mac user, or anyone
+  // mid-scan on first launch.
+  //
+  // Essential-completion gate, in priority order (readinessState):
+  //   1. setupComplete === true  -> "ready"       (explicit positive
+  //      override -- if the user's own saved config says setup is done,
+  //      that always wins, regardless of anything else below)
+  //   2. platform unsupported    -> "unavailable"  (config can't exist
+  //      here; reviewing readiness isn't a meaningful action to offer)
+  //   3. still loading           -> "unknown"      (config/library haven't
+  //      resolved yet -- honest "checking", not "not configured")
+  //   4. gamesDiscovered === 0   -> "needsSetup"   (the one signal that
+  //      can be verified truthfully and distinguished from a placeholder:
+  //      an actual scan either found something or it didn't)
+  //   5. otherwise               -> "ready"
+  // Controllers are deliberately NOT part of this gate -- they're optional
+  // for keyboard/mouse play (Part 5.C), so their absence is informational
+  // only, never a blocker. Game paths are likewise not independently
+  // checked -- default placeholder paths (see src/main/config.js) can't be
+  // truthfully distinguished from real ones without a scan, and the scan
+  // result is exactly what `gamesDiscovered` already reports (Part 5.B).
+  const platformSupported = typeof window !== "undefined" && window.nuarcade?.platform === "win32"
+  const controllersConfigured = Object.values(config?.controllers || {}).filter(Boolean).length
+  const gamesDiscovered = games.length
+  const setupComplete = !!config?.setupComplete
+
+  const readinessState =
+    setupComplete ? "ready"
+    : !platformSupported ? "unavailable"
+    : loading ? "unknown"
+    : gamesDiscovered === 0 ? "needsSetup"
+    : "ready"
+
+  const readinessRows = readinessState === "unavailable" || readinessState === "unknown"
+    ? [{
+        key: "status",
+        labelKey: "controlRoom.readinessStatus",
+        statusKey: readinessState === "unavailable" ? "controlRoom.statusUnavailable" : "controlRoom.statusChecking",
+      }]
+    : [
+        {
+          key: "emulators",
+          labelKey: "controlRoom.readinessEmulators",
+          statusKey: setupComplete ? "controlRoom.statusConfigured" : "controlRoom.statusNeedsSetup",
+        },
+        {
+          key: "controllers",
+          labelKey: "controlRoom.readinessControllers",
+          statusKey: controllersConfigured > 0 ? "controlRoom.statusReady" : "controlRoom.statusOptionalNotConfigured",
+        },
+        {
+          key: "paths",
+          labelKey: "controlRoom.readinessPaths",
+          statusKey: gamesDiscovered > 0 ? "controlRoom.statusConnected" : "controlRoom.statusNoPaths",
+        },
+        {
+          key: "games",
+          labelKey: "controlRoom.readinessGames",
+          statusKey: gamesDiscovered > 0 ? null : "controlRoom.statusNotScanned",
+          // A real count, not a fabricated one -- `games.length` is the
+          // actual scanned library size. Only shown once something was
+          // actually found.
+          statusText: gamesDiscovered > 0 ? t("controlRoom.statusDiscoveredCount", { count: gamesDiscovered }) : null,
+        },
+      ]
+
+  // Continue Setup opens the exact same station as the Systems Wing's
+  // Settings entry -- it is a second door onto one action, not a second
+  // implementation of it. It's reachable by mouse click and by native
+  // Tab/Enter (a real <button>, no keydown interception of its own -- see
+  // the C2 "native form controls unaffected" contract this milestone
+  // doesn't touch). Controller/arrow-key users reach the identical result
+  // via the already-fully-reachable Systems Wing -> Settings station; no
+  // second, parallel entry was added to the Left/Right/Up/Down graph,
+  // which would risk exactly the double-focus-owner problem Part 2 exists
+  // to eliminate.
+  const continueSetup = () => { setFocusZone("root"); setColumn("systems"); setSystemsIdx(0); openStation("settings") }
+
   return (
     <div className={styles.stage}>
       <img src={controlRoomEnvironment} alt="" aria-hidden="true" className={styles.environment} />
@@ -194,15 +327,15 @@ export default function ControlRoom({
         <div className={styles.worldNav}>
           <button
             ref={returnBtnRef}
-            className={styles.returnHomeBtn}
+            className={styles.returnHomeBtn + " " + styles.goldTrim}
             onClick={() => { if (onReturnHome) onReturnHome() }}
             onFocus={() => { setFocusZone("header"); setHeaderIdx(0) }}
           >
-            {t("wheel.navHome")}
+            {t(returnLabelKey)}
           </button>
         </div>
         <div className={styles.brand} aria-hidden="true">
-          <div className={styles.brandName}>VESPARA</div>
+          <div className={styles.brandName + " " + styles.goldTrim}>VESPARA</div>
         </div>
         <div className={styles.headerRight}>
           <div className={styles.travelerGreeting}>
@@ -210,7 +343,7 @@ export default function ControlRoom({
           </div>
           <button
             ref={departBtnRef}
-            className={styles.departBtn}
+            className={styles.departBtn + " " + styles.goldTrim}
             onClick={() => openDepart(departBtnRef.current)}
             onFocus={() => { setFocusZone("header"); setHeaderIdx(1) }}
           >
@@ -220,7 +353,7 @@ export default function ControlRoom({
       </div>
 
       <div className={styles.titleRow + (stationOpen ? " " + styles.roomInactive : "")}>
-        <div className={styles.placeName}>{t("controlRoom.title")}</div>
+        <div className={styles.placeName + " " + styles.goldTrim}>{t("controlRoom.title")}</div>
         <div className={styles.placeSubtitle}>{t("controlRoom.subtitle")}</div>
       </div>
 
@@ -228,22 +361,23 @@ export default function ControlRoom({
         <div
           className={
             styles.wing
-            + (column === "systems" && !stationOpen ? " " + styles.wingActive : "")
-            + (activeWing === "systems" ? " " + styles.wingActive : "")
+            + (column === "systems" && !stationOpen ? " " + styles.wingSelected : "")
+            + (activeWing === "systems" ? " " + styles.wingSelected : "")
             + (activeWing === "archives" ? " " + styles.wingDimmed : "")
           }
           role="group"
           aria-label={t("controlRoom.systemsWing")}
         >
-          <div className={styles.wingTitle}>{t("controlRoom.systemsWing")}</div>
+          <div className={styles.wingTitle + " " + styles.goldTrim}>{t("controlRoom.systemsWing")}</div>
+          <div className={styles.wingPurpose}>{t("controlRoom.systemsPurpose")}</div>
           {SYSTEMS_STATIONS.map((s, i) => (
             <button
               key={s.id}
               ref={i === 0 ? systemsBtnRef : null}
-              className={styles.station + (focusZone === "root" && column === "systems" && systemsIdx === i ? " " + styles.stationFocused : "")}
-              aria-current={focusZone === "root" && column === "systems" && systemsIdx === i}
+              className={styles.station + (focusZone === "root" && column === "systems" && systemsIdx === i && !continueSetupFocused ? " " + styles.stationFocused : "")}
+              aria-current={focusZone === "root" && column === "systems" && systemsIdx === i && !continueSetupFocused}
               onClick={() => { setFocusZone("root"); setColumn("systems"); setSystemsIdx(i); openStation(s.id) }}
-              onFocus={() => { setFocusZone("root"); setColumn("systems"); setSystemsIdx(i) }}
+              onFocus={() => { setFocusZone("root"); setColumn("systems"); setSystemsIdx(i); setContinueSetupFocused(false) }}
             >
               <div className={styles.stationLabel}>{t(s.labelKey)}</div>
               <div className={styles.stationHint}>{t(s.hintKey)}</div>
@@ -252,21 +386,49 @@ export default function ControlRoom({
         </div>
 
         <div className={styles.workstation}>
-          <div className={styles.workstationIdle}>{t("controlRoom.workstationIdle")}</div>
-          <div className={styles.workstationHint}>{t("controlRoom.workstationHint")}</div>
+          <div className={styles.readinessTitle + " " + styles.goldTrim}>{t("controlRoom.readinessTitle")}</div>
+          <div className={styles.readinessRows}>
+            {readinessRows.map(row => (
+              <div key={row.key} className={styles.readinessRow}>
+                <span className={styles.readinessLabel}>{t(row.labelKey)}</span>
+                <span className={styles.readinessValue}>{row.statusText || t(row.statusKey)}</span>
+              </div>
+            ))}
+          </div>
+          {readinessState === "needsSetup" && (
+            <button
+              ref={continueSetupBtnRef}
+              className={styles.readinessAction}
+              onClick={continueSetup}
+              onFocus={() => setContinueSetupFocused(true)}
+              onBlur={() => setContinueSetupFocused(false)}
+            >
+              {t("controlRoom.continueSetup")}
+            </button>
+          )}
+          {readinessState === "ready" && (
+            <div className={styles.readinessComplete}>{t("controlRoom.vesparaReady")}</div>
+          )}
+          {readinessState === "unavailable" && (
+            <div className={styles.readinessNeutral}>{t("controlRoom.readinessUnavailable")}</div>
+          )}
+          {readinessState === "unknown" && (
+            <div className={styles.readinessNeutral}>{t("controlRoom.readinessChecking")}</div>
+          )}
         </div>
 
         <div
           className={
             styles.wing
-            + (column === "archives" && !stationOpen ? " " + styles.wingActive : "")
-            + (activeWing === "archives" ? " " + styles.wingActive : "")
+            + (column === "archives" && !stationOpen ? " " + styles.wingSelected : "")
+            + (activeWing === "archives" ? " " + styles.wingSelected : "")
             + (activeWing === "systems" ? " " + styles.wingDimmed : "")
           }
           role="group"
           aria-label={t("controlRoom.archivesWing")}
         >
-          <div className={styles.wingTitle}>{t("controlRoom.archivesWing")}</div>
+          <div className={styles.wingTitle + " " + styles.goldTrim}>{t("controlRoom.archivesWing")}</div>
+          <div className={styles.wingPurpose}>{t("controlRoom.archivesPurpose")}</div>
           {ARCHIVES_STATIONS.map((s, i) => (
             <button
               key={s.id}

@@ -64,12 +64,43 @@
   background: rgba(20, 26, 32, 0.7);
 }
 
+/* -- Gold trim: restrained edging reserved for major world/place labels --
+   Same treatment VesparaHome's .worldName uses (thin gold stroke + a small,
+   warm text-shadow, never a full glow). Never applied to descriptions,
+   readiness values, technical status, or hint text -- see Part 6. */
+.goldTrim {
+  -webkit-text-stroke: 0.6px rgba(214, 178, 116, 0.65);
+  paint-order: stroke fill;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.75), 0 0 18px rgba(230, 195, 130, 0.18);
+}
+
+/* -- One true focus owner (Part 2) --------------------------------------
+   `:focus-visible` is a browser-enforced singleton -- exactly one element
+   in the document can match it at a time -- so building the "current
+   controller/keyboard focus" treatment on it, rather than on a derived
+   React state class, makes "never two controls with equal focus
+   prominence" true by construction instead of by careful bookkeeping.
+   Brighter than the quiet .wingSelected marker below, with a small local
+   lift/illumination -- unmistakable, but not a glow or a color-only cue. */
 .returnHomeBtn:focus-visible,
 .departBtn:focus-visible,
 .station:focus-visible {
   outline: none;
   border-color: #a8823f;
-  box-shadow: 0 0 0 2px rgba(168, 130, 63, 0.35);
+  background: rgba(28, 32, 38, 0.8);
+  box-shadow: 0 0 0 2px rgba(168, 130, 63, 0.45), 0 4px 14px rgba(0, 0, 0, 0.4);
+  transform: translateY(-2px);
+}
+
+/* Same true-focus treatment, kept as its own rule (rather than folded into
+   the shared selector list above) so the pre-existing focus-visible
+   contract's exact selector shape stays intact for regression checks. */
+.readinessAction:focus-visible {
+  outline: none;
+  border-color: #a8823f;
+  background: rgba(28, 32, 38, 0.8);
+  box-shadow: 0 0 0 2px rgba(168, 130, 63, 0.45), 0 4px 14px rgba(0, 0, 0, 0.4);
+  transform: translateY(-2px);
 }
 
 .travelerGreeting {
@@ -132,8 +163,14 @@
   overflow-y: auto;
 }
 
-.wingActive {
-  border-color: #4d3a20;
+/* Selected/open wing (Part 2): a quiet, persistent marker -- a thin brass
+   left accent and a barely-lifted background, nothing that competes with
+   the true-focus treatment above. Stays visible when real focus moves to
+   the header (the class is driven by `column`, never by `focusZone`), and
+   never grows a box-shadow or lift, so it can never be mistaken for "this
+   is what A activates right now." */
+.wingSelected {
+  border-left: 3px solid #6b5227;
   background: rgba(12, 14, 18, 0.68);
 }
 
@@ -163,7 +200,15 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: #8a7350;
-  margin-bottom: 4px;
+}
+
+/* Wing purpose line (Part 5) -- plain description text, deliberately not
+   gold-trimmed (see Part 6: descriptions never carry the world-label
+   treatment). */
+.wingPurpose {
+  font-size: 12px;
+  color: #9aa6ae;
+  margin-bottom: 6px;
 }
 
 .station {
@@ -188,6 +233,10 @@
 .stationLabel { font-size: 14px; }
 .stationHint { margin-top: 4px; font-size: 11px; color: #7c8890; }
 
+/* -- Readiness workstation (Part 3/4): fills the previously-empty center
+   area with a truthful setup/status readout instead of static instruction
+   copy. Every value here comes from readinessRows in ControlRoom.jsx,
+   itself derived from real config/library state -- never a literal here. */
 .workstation {
   border: 1px solid #232a32;
   border-radius: 6px;
@@ -196,13 +245,69 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 14px;
   text-align: center;
   padding: 24px;
+  min-height: 0;
+  overflow-y: auto;
 }
 
-.workstationIdle { font-size: 15px; color: #9aa6ae; letter-spacing: 0.04em; }
-.workstationHint { font-size: 12px; color: #5f6a72; }
+.readinessTitle {
+  font-size: 15px;
+  letter-spacing: 0.14em;
+  color: #cbd8e2;
+  text-transform: uppercase;
+}
+
+.readinessRows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 320px;
+}
+
+.readinessRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  padding: 6px 10px;
+  border: 1px solid #232a32;
+  border-radius: 4px;
+  background: rgba(20, 24, 30, 0.4);
+}
+
+/* Plain technical status text -- never gold-trimmed (Part 6). */
+.readinessLabel { color: #9aa6ae; }
+.readinessValue { color: #cbd8e2; }
+
+.readinessAction {
+  background: rgba(107, 82, 39, 0.28);
+  border: 1px solid #6b5227;
+  color: #f3ead1;
+  padding: 10px 22px;
+  border-radius: 4px;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+}
+.readinessAction:hover { border-color: #8a7350; }
+
+.readinessComplete {
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  color: #7c9a7c;
+}
+
+/* Neutral (unavailable/unknown) readiness state -- honest, but deliberately
+   not styled as either success (readinessComplete's green) or an urgent
+   call-to-action (readinessAction's brass button). */
+.readinessNeutral {
+  font-size: 12px;
+  color: #7c8890;
+}
 
 /* -- Station frame: the existing Settings/MediaManager overlay, constrained --
    Settings.jsx/MediaManager.jsx are untouched -- both still render their own
@@ -231,8 +336,12 @@
 /* -- Reduced motion -- */
 
 @media (prefers-reduced-motion: reduce) {
-  .station { transition: none; }
-  .stationFocused { transform: none; }
+  .station, .readinessAction { transition: none; }
+  .stationFocused,
+  .returnHomeBtn:focus-visible,
+  .departBtn:focus-visible,
+  .station:focus-visible,
+  .readinessAction:focus-visible { transform: none; }
 }
 
 /* -- Compact layout (1280x720 and below) -- */
@@ -250,7 +359,11 @@
     gap: 14px;
   }
   .wing { padding: 12px; }
+  .wingPurpose { font-size: 11px; }
   .brandName { font-size: 17px; }
+  .workstation { padding: 14px; gap: 10px; }
+  .readinessTitle { font-size: 13px; }
+  .readinessRow { font-size: 11px; padding: 5px 8px; }
   .stationFrame {
     inset: 10px 24px;
     border-radius: 8px;

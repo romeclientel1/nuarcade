@@ -75,7 +75,14 @@ test("global header shows a Vespara-only lockup and never claims to be inside th
 test("Return to Sanctuary and Depart both render with working handlers", () => {
   assert.match(jsx, /onClick=\{\(\) => \{ if \(onReturnHome\) onReturnHome\(\) \}\}/)
   assert.match(jsx, /onClick=\{\(\) => openDepart\(departBtnRef\.current\)\}/)
-  assert.match(jsx, /t\("wheel\.navHome"\)/)
+  // Milestone C3, Part 7 introduced the contextual-return label lookup --
+  // the Sanctuary entry (today's only real path) still resolves to the
+  // exact same "wheel.navHome" key, just via RETURN_LABEL_BY_ORIGIN instead
+  // of a literal t("wheel.navHome") call. See
+  // controlRoomReadinessMilestoneC3.test.js for the full origin-contract
+  // coverage.
+  assert.match(jsx, /t\(returnLabelKey\)/)
+  assert.match(jsx, /sanctuary:\s*"wheel\.navHome"/)
   assert.match(jsx, /t\("wheel\.depart"\)/)
 })
 
@@ -109,7 +116,12 @@ test("each wing lists exactly one real station -- no fabricated controls for fun
 
 test("root-level navigation moves between header and the three wings predictably", () => {
   assert.match(jsx, /const moveLeftRight = \(dir\) => \{/)
-  assert.match(jsx, /const moveUp = \(\) => \{/)
+  // Milestone C3, Part 1 replaced the original unconditional `moveUp` (which
+  // always landed on whatever header item was last focused) with
+  // `enterHeaderFromColumn`, so Up from Systems reliably reaches Return and
+  // Up from Archives reliably reaches Depart -- see
+  // controlRoomReadinessMilestoneC3.test.js for the dedicated coverage.
+  assert.match(jsx, /const enterHeaderFromColumn = \(\) => \{/)
   assert.match(jsx, /const moveDown = \(\) => \{/)
   assert.match(jsx, /const confirm = \(\) => \{/)
   assert.match(jsx, /const back = \(\) => \{/)
@@ -166,7 +178,11 @@ test("closing a station restores focus to the exact wing/column it was opened fr
 // -- 13. Real semantic controls, aria-current on the focused station --
 
 test("stations are real buttons with aria-current reflecting focus, not decorative divs", () => {
-  assert.match(jsx, /aria-current=\{focusZone === "root" && column === "systems" && systemsIdx === i\}/)
+  // Milestone C3 added `&& !continueSetupFocused` to the Systems station's
+  // aria-current (see continueSetupFocused's own comment) -- a real focus-
+  // tracking fix, not a relaxation of this contract: aria-current still
+  // reflects exactly which element holds real focus.
+  assert.match(jsx, /aria-current=\{focusZone === "root" && column === "systems" && systemsIdx === i && !continueSetupFocused\}/)
   assert.match(jsx, /aria-current=\{focusZone === "root" && column === "archives" && archivesIdx === i\}/)
 })
 
