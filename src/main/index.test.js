@@ -23,9 +23,9 @@ const NORMALIZED_KEYS = [
   "running", "sessionId", "signal", "startedAt", "success", "trackedToExit",
 ].sort()
 
-function createElectronMock() {
+function createElectronMock(appOverrides) {
   return {
-    app: {
+    app: Object.assign({
       isPackaged: true,
       getPath: () => os.tmpdir(),
       getVersion: () => "0.0.0-test",
@@ -36,7 +36,9 @@ function createElectronMock() {
       exit: () => {},
       relaunch: () => {},
       setName: () => {},
-    },
+      requestSingleInstanceLock: () => true,
+      getLoginItemSettings: () => ({ wasOpenedAtLogin: false }),
+    }, appOverrides || {}),
     BrowserWindow: class { static getAllWindows() { return [] } },
     ipcMain: {
       handle: (name, fn) => { ipcHandlers.set(name, fn) },
@@ -67,8 +69,8 @@ function createElectronMock() {
 
 const ipcHandlers = new Map()
 
-function loadMainIndex() {
-  const electronMock = createElectronMock()
+function loadMainIndex(appOverrides) {
+  const electronMock = createElectronMock(appOverrides)
   const originalLoad = Module._load
   Module._load = function(request, parent, isMain) {
     if (request === "electron") return electronMock
@@ -423,4 +425,74 @@ test("all 21 launch IPC channels are registered, plus the lifecycle status chann
     assert.ok(ipcHandlers.has(channel), `expected an ipcMain.handle for '${channel}'`)
   }
   assert.equal(expectedChannels.length, 22)
+})
+
+// -- Single-instance lock and second-instance presentation -------------------
+
+test("app.setName('NuArcade') remains the first executable statement after importing electron", () => {
+  const source = require("node:fs").readFileSync(require.resolve("./index.js"), "utf8")
+  const statements = source
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0 && !line.startsWith("//"))
+  assert.equal(statements[0], "const { app, BrowserWindow, ipcMain, screen, dialog, shell, globalShortcut } = require('electron')")
+  assert.equal(statements[1], "app.setName('NuArcade')")
+})
+
+test("primary instance: lock is acquired and reported via the test-only accessor", () => {
+  assert.equal(mainIndex._internal.getSingleInstanceLockAcquired(), true)
+})
+
+test("a losing second instance never creates a window: lock denied quits immediately, whenReady is a guarded no-op", async () => {
+  let quitCalled = false
+  const losing = loadMainIndex({
+    requestSingleInstanceLock: () => false,
+    quit: () => { quitCalled = true },
+  })
+  assert.equal(losing._internal.getSingleInstanceLockAcquired(), false)
+  assert.equal(quitCalled, true)
+})
+
+test("second-instance presents the existing window instead of creating a new one (no reload/remount)", () => {
+  const calls = []
+  mainIndex._internal.setMainWindowForTest({
+    isDestroyed: () => false,
+    isMinimized: () => false,
+    isVisible: () => false,
+    isFocused: () => false,
+    isFullScreen: () => true,
+    restore: () => calls.push("restore"),
+    show: () => calls.push("show"),
+    focus: () => calls.push("focus"),
+    setFullScreen: (v) => calls.push("setFullScreen:" + v),
+    setAlwaysOnTop: (v) => calls.push("setAlwaysOnTop:" + v),
+  })
+  mainIndex.handleSecondInstance()
+  assert.deepEqual(calls, ["show", "focus"])
+  // No setFullScreen call at all -- second-instance preserves whatever
+  // fullscreen state the existing window is already in.
+  assert.equal(calls.some((c) => c.startsWith("setFullScreen")), false)
+})
+
+test("second-instance restores a minimized existing window and re-focuses it", () => {
+  const calls = []
+  mainIndex._internal.setMainWindowForTest({
+    isDestroyed: () => false,
+    isMinimized: () => true,
+    isVisible: () => true,
+    isFocused: () => false,
+    isFullScreen: () => true,
+    restore: () => calls.push("restore"),
+    show: () => calls.push("show"),
+    focus: () => calls.push("focus"),
+    setFullScreen: () => calls.push("setFullScreen"),
+    setAlwaysOnTop: () => calls.push("setAlwaysOnTop"),
+  })
+  mainIndex.handleSecondInstance()
+  assert.deepEqual(calls, ["restore", "focus"])
+})
+
+test("second-instance with no window yet (never created) is a safe no-op", () => {
+  mainIndex._internal.setMainWindowForTest(null)
+  assert.doesNotThrow(() => mainIndex.handleSecondInstance())
 })

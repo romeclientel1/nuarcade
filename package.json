@@ -13,7 +13,8 @@
     "build:renderer": "cd renderer && npm run build",
     "build:win": "npm run build:renderer && electron-builder --win",
     "preview": "electron .",
-    "test": "node --test src/main/*.test.js src/preload/*.test.js scripts/*.test.js && cd renderer && npm test"
+    "test": "node --test src/main/*.test.js src/preload/*.test.js scripts/*.test.js && cd renderer && npm test",
+    "test:nsis": "node --test scripts/nsisGeneratedBehavior.slowtest.js"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",

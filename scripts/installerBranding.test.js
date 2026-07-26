@@ -62,13 +62,34 @@ test('the ICO contains all required Windows sizes and preserves an alpha-capable
   }
 })
 
-test('assisted fresh installs show a default-checked desktop shortcut option', () => {
+// This is a SOURCE-level assertion against assets/installer/folders.nsh --
+// it proves the file itself says the right thing. It does not prove the
+// real electron-builder build actually compiles this file in as a genuine
+// extra wizard page; scripts/nsisGeneratedBehavior.slowtest.js proves that
+// against a real `electron-builder --win --x64` build (real makensis
+// compile, page-count assertion, generated-script inspection).
+//
+// This checkbox is only ever visible for a FRESH, MANUAL install (the user
+// downloads and double-clicks the installer themselves). It has no bearing
+// on the app's own in-app updater, which always launches the installer
+// with the NSIS `/S` silent flag (see src/main/index.js's 'install-update'
+// handler) -- `/S` intentionally skips every wizard page, this one
+// included, and silently applies the checked-by-default outcome below.
+test('assisted fresh manual installs show a default-checked desktop shortcut option', () => {
   assert.equal(pkg.build.nsis.oneClick, false)
   assert.equal(pkg.build.nsis.createDesktopShortcut, true)
   assert.match(nsis, /customPageAfterChangeDir/)
   assert.match(nsis, /Create a Vespara desktop shortcut/)
   assert.match(nsis, /\$\{NSD_Check\} \$VesparaDesktopShortcutCheckbox/)
   assert.match(nsis, /VesparaDesktopShortcutPageLeave/)
+})
+
+test('silent /S installs (the in-app updater path) skip the page entirely and default to checked', () => {
+  assert.match(updater, /\['\/S'\]/, "the in-app updater must keep launching the installer silently -- updates must not become interactive")
+  // customInit runs during Function .onInit, before any page (including
+  // ours) is ever shown -- this is what makes the checked default apply
+  // uniformly whether or not the page itself is ever displayed.
+  assert.match(nsis, /!macro customInit\s*\n\s*StrCpy \$VesparaDesktopShortcutState \$\{BST_CHECKED\}\s*\n!macroend/)
 })
 
 test('desktop opt-out removes the installer-created Vespara link, while upgrade installs skip the page and preserve electron-builder shortcut migration', () => {

@@ -14,6 +14,14 @@ app.setName('NuArcade')
 
 const path = require('path')
 const { exec, spawn } = require('child_process')
+const { presentWindow, detectAutoLaunch } = require('./windowPresentation')
+
+// Single-instance lock -- requested immediately, before config/media modules
+// run any file I/O, so a losing second launch never touches shared state and
+// simply hands off to the already-running instance (see handleSecondInstance
+// below). Must stay this early in the lifecycle to be effective.
+const singleInstanceLockAcquired = app.requestSingleInstanceLock()
+
 const config = require('./config')
 const { scanMedia } = require('./mediaScanner')
 const launchRegistry = require('./launchRegistry')
@@ -21,6 +29,38 @@ const launchRegistry = require('./launchRegistry')
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged
 
 let mainWin = null
+let startupFallbackTimer = null
+
+function logLifecycle(message) {
+  console.log('[vespara:lifecycle] ' + message)
+}
+
+function cancelStartupFallback() {
+  if (startupFallbackTimer) {
+    clearTimeout(startupFallbackTimer)
+    startupFallbackTimer = null
+  }
+}
+
+// A second launch attempt while an instance already holds the lock: bring
+// the existing window forward instead of creating a new one. No reload, no
+// remount -- route, Library state, Control Room state, and any in-progress
+// game session stay exactly as they were. Fullscreen intent is intentionally
+// omitted here so a window deliberately un-fullscreened for a running game
+// isn't forced back.
+function handleSecondInstance() {
+  logLifecycle('second-instance received -- presenting existing window')
+  presentWindow(mainWin, { reason: 'second-instance', log: logLifecycle })
+}
+
+if (!singleInstanceLockAcquired) {
+  logLifecycle('primary instance lock denied -- quitting')
+  app.quit()
+} else {
+  logLifecycle('primary instance lock acquired')
+  app.on('second-instance', handleSecondInstance)
+  app.on('before-quit', cancelStartupFallback)
+}
 
 // -- Launch lifecycle registry integration -----------------------------------
 // Wires the in-memory main-process launch registry (launchRegistry.js) into
@@ -184,6 +224,8 @@ function launchWithReturn(exe, args, options) {
 
 function createWindow() {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize
+  const launchReason = detectAutoLaunch(app, process.argv) ? 'auto-launch' : 'startup'
+  logLifecycle('launch mode: ' + launchReason)
 
   const win = new BrowserWindow({
     width,
@@ -202,10 +244,32 @@ function createWindow() {
   })
 
   mainWin = win
+  logLifecycle('BrowserWindow created')
+
+  let presented = false
+  function presentOnce(reason) {
+    if (presented) return
+    presented = true
+    cancelStartupFallback()
+    presentWindow(win, {
+      reason,
+      fullscreen: !isDev,
+      foregroundAssist: !isDev && reason.indexOf('auto-launch') === 0,
+      log: logLifecycle,
+    })
+  }
+
   win.once('ready-to-show', () => {
-    win.show()
-    if (!isDev) win.setFullScreen(true)
+    logLifecycle('ready-to-show received')
+    presentOnce(launchReason)
   })
+
+  // Bounded fallback in case ready-to-show never fires (e.g. the renderer
+  // never signals readiness). Short, and cancelled the instant real
+  // presentation happens (presentOnce) or the window/app is closing, so it
+  // can never fire twice or race a real presentation.
+  startupFallbackTimer = setTimeout(() => presentOnce(launchReason + '-fallback'), 4000)
+  win.once('closed', cancelStartupFallback)
 
   if (isDev) {
     win.loadURL('http://localhost:5173')
@@ -731,6 +795,7 @@ ipcMain.handle('get-displays', () => {
 })
 
 app.whenReady().then(() => {
+  if (!singleInstanceLockAcquired) return
   ensureCabinetFolders()
   if (process.platform === 'darwin') {
     app.dock.setIcon(path.join(__dirname, '../../assets/icons/icon.png'))
@@ -2607,7 +2672,9 @@ module.exports = {
   registerLaunchSession,
   trackLaunchLifecycle,
   emitLaunchLifecycleTerminal,
+  handleSecondInstance,
   _internal: {
     setMainWindowForTest: (win) => { mainWin = win },
+    getSingleInstanceLockAcquired: () => singleInstanceLockAcquired,
   },
 }

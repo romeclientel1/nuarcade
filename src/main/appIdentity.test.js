@@ -35,6 +35,8 @@ function createTrackingElectronMock(callLog) {
       quit: () => {},
       exit: () => {},
       relaunch: () => {},
+      requestSingleInstanceLock: () => true,
+      getLoginItemSettings: () => ({ wasOpenedAtLogin: false }),
     },
     BrowserWindow: class { static getAllWindows() { return [] } },
     ipcMain: {
