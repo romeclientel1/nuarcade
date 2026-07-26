@@ -31,8 +31,6 @@ test("all production Library destinations keep a visible fixed Depart control", 
     'currentDestination === "stats"',
     "showAchievements",
     "showCollections",
-    "showSettings",
-    "showMediaManager",
     "showCoach",
     "showOperator",
     "!!needsControllerPrompt",
@@ -44,17 +42,21 @@ test("all production Library destinations keep a visible fixed Depart control", 
   assert.match(wheelCss, /\.departReservation\s*\{[^}]*position:\s*fixed[^}]*z-index:\s*900/s)
 })
 
-test("Library Console exposes Depart without a duplicate software-style Exit control", () => {
-  assert.match(wheel, /\{!departOverlayActive && \(\s*<button[\s\S]*?className=\{styles\.consoleDepartBtn[\s\S]*?onClick=\{openDepart\}[\s\S]*?\{t\("wheel\.depart"\)\}/)
+// D5, Part 8: Depart is no longer duplicated inside Library Tools -- the
+// one universal fixed Depart plaque (departReservation, tested above) is
+// the only Depart control in the Library now.
+test("Library Tools does not duplicate Depart inside the drawer", () => {
+  const panelIdx = wheel.indexOf('id="library-tools-panel"')
+  const panelEndIdx = wheel.indexOf('<div className={styles.travelerGreeting}')
+  const panel = wheel.slice(panelIdx, panelEndIdx)
+  assert.doesNotMatch(panel, /openDepart/)
+  assert.doesNotMatch(wheel, /styles\.consoleDepartBtn/)
   assert.doesNotMatch(wheel, /className=\{styles\.exitBtn/)
-  assert.match(wheelCss, /\.consoleDepartBtn\s*\{[^}]*rgba\(214,\s*178,\s*116[^}]*"Times New Roman"/s)
-  assert.doesNotMatch(wheelCss, /\.consoleDepartBtn\s*\{[^}]*255,\s*80,\s*80/s)
 })
 
 test("all Depart entry points converge on the same safe confirmation and existing quit bridge", () => {
   assert.match(wheel, /const openDepart = useCallback\([\s\S]*?setExitChoice\(1\)[\s\S]*?setShowExitPopup\(true\)/)
   assert.match(wheel, /onClick=\{openDepart\}/)
-  assert.match(wheel, /\(\) => openDepart\(consoleDepartRef\.current\),\s*\/\/ 11 Depart/)
   assert.match(wheel, /const acceptDepart = useCallback\(\(\) => \{[\s\S]*?window\.nuarcade\?\.quit\?\.\(\)/)
   assert.match(home, /const confirmDepart = useCallback\(\(\) => \{[\s\S]*?window\.nuarcade\?\.quit\?\.\(\)/)
   assert.match(dialog, /if \(choice === 0\) confirmOnce\(\)\s*\n\s*else onCancel\(\)/)
@@ -63,9 +65,9 @@ test("all Depart entry points converge on the same safe confirmation and existin
 test("cancel defaults to No and restores focus to the exact invoking control", () => {
   assert.match(dialog, /const noButtonRef = useRef\(null\)/)
   assert.match(dialog, /noButtonRef\.current\?\.focus\(\)/)
-  assert.match(wheel, /departInvokerRef\.current = resolveDepartInvoker\([\s\S]*?consoleDepartRef\.current[\s\S]*?departTriggerRef\.current/)
+  assert.match(wheel, /departInvokerRef\.current = resolveDepartInvoker\(eventOrElement, departTriggerRef\.current\)/)
   assert.match(wheel, /restoreDepartFocus\(departInvokerRef\.current\)/)
-  assert.match(wheel, /ref=\{consoleDepartRef\}/)
+  assert.match(wheel, /ref=\{departTriggerRef\}/)
   assert.match(home, /requestAnimationFrame\(\(\) => departTriggerRef\.current\?\.focus\(\)\)/)
   assert.match(home, /ref=\{action === "depart" \? departTriggerRef : undefined\}/)
 })

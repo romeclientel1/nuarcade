@@ -3,8 +3,6 @@ import { useGamepad } from "../../hooks/useGamepad"
 import { useGameLibrary } from "../../hooks/useGameLibrary"
 import GameCard from "./GameCard"
 import AttractMode from "./AttractMode"
-import MediaManager from "../MediaManager/MediaManager"
-import Settings from "../Settings/Settings"
 import GameDetail from "../GameDetail/GameDetail"
 import Help from "../Help/Help"
 import Collections, { useCollections } from "../Collections/Collections"
@@ -250,7 +248,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     games, loading, libraryEmpty, config,
   toggleFavorite, isFavorite,
     recentlyPlayed, addRecentlyPlayed,
-    refreshVideoPaths,
   } = useGameLibrary()
 
   // Completes any Recently Played credit a startup-recovered launch session
@@ -308,10 +305,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const collectionsRef     = useRef(null)
   const currentRef         = useRef(null)
   const showDetailRef      = useRef(false)
-  const showSettingsRef    = useRef(false)
   const showSearchRef      = useRef(false)
   const currentDestinationRef = useRef(null)
-  const showMediaManagerRef = useRef(false)
   const showVirtualKeyboardRef = useRef(false)
   const showSortRef            = useRef(false)
   const showCollectionsRef     = useRef(false)
@@ -360,8 +355,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const [showRetroArchPopup, setShowRetroArchPopup] = useState(false)
   const [attractMode, setAttractMode] = useState(false)
   const [isSnapping, setIsSnapping] = useState(false)
-  const [showMediaManager, setShowMediaManager] = useState(false)
-  const [showSettings, setShowSettings] = useState(false)
   const [showDetail, setShowDetail] = useState(false)
   const { currentDestination, navigate: navigateTo, back } = useDestination()
   const [showCoach,      setShowCoach     ] = useState(false)
@@ -508,40 +501,40 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     searchDebounce.current = setTimeout(() => setDebouncedSearch(val), 120)
   }
 
-  // Library Console (Milestone 2.2) -- the single upper-right control that
-  // now houses the utilities previously spread across statsRow/
-  // libraryToolsGroup/utilityGroup. consoleOpen is the mouse/keyboard-
-  // driven popover state; the panel is ALSO shown whenever the pre-
-  // existing gamepad zone-0 (topMenu) focus is active, so a controller
-  // user moving focus into that zone still sees the buttons it's cycling
-  // through. Deliberately its own state, not derived from focusZone, so
-  // opening/closing it never touches the existing zone system's behavior
-  // contracts (topMenuActions, TOP_MENU_MAX, zone transitions all stay
-  // exactly as they were).
+  // Library Tools (Milestone D5, Parts 7-9 -- replaces the old "Library
+  // Console"). consoleOpen is the ONLY thing that decides whether the
+  // drawer is visible now -- it no longer opens as a side effect of
+  // controller focus merely arriving on the trigger (that was the
+  // reported "opens automatically but isn't controller-mapped" bug: a
+  // D-pad Up into zone 0 used to reveal the panel with no explicit A
+  // press). Zone 0 (topMenuIdx) now has exactly two stops -- Home (0) and
+  // the Tools trigger (1) -- and Confirm on the trigger is what opens it;
+  // see topMenuActions/TOP_MENU_MAX below.
   const [consoleOpen, setConsoleOpen] = useState(false)
   const consoleOpenRef = useRef(false)
   const consoleTriggerRef = useRef(null)
   const consoleFirstItemRef = useRef(null)
-  const consoleDepartRef = useRef(null)
-  // True whenever the panel is actually shown, for either reason above --
-  // computed here (not just near its render use) so the effects below can
-  // read it.
-  const consoleVisible = consoleOpen || focusZone === 0
+  // toolsItemRefs[1..6] hold the Sort/Random/Collections/Stats/
+  // Achievements/Help buttons (indices matching consoleFocusIdx, which
+  // itself is Search=0, actions=1..6) -- see the focus-sync effect below.
+  const toolsItemRefs = useRef([])
+  const consoleVisible = consoleOpen
 
-  // Console-local controller focus model (2.2 correction pass) -- Search
-  // was previously unreachable by controller because it isn't one of the
-  // existing topMenuActions, and that array's indices/order must never
-  // shift or be renumbered (compatibility contract). Rather than touch
-  // topMenuActions, the console owns its OWN focus index (consoleFocusIdx)
-  // while it's visible: index 0 is Search, indices 1..10 map onto the
-  // existing topMenuActions indices below (skipping 5/Home, which lives
-  // in worldNav, not the console). The gamepad handlers intercept D-pad/
-  // confirm/back BEFORE the old zone-0 branches whenever the console is
-  // visible, so those older branches are left completely intact in source
-  // (satisfying every existing index/ordering test) but simply never run
-  // while the console owns navigation.
-  const CONSOLE_ACTION_INDICES = [0, 1, 2, 3, 4, 6, 7, 8, 9, 10]
-  const CONSOLE_FOCUS_MAX = CONSOLE_ACTION_INDICES.length // Search is 0, actions are 1..10
+  // Tools-drawer controller focus model: index 0 is Search, indices 1..6
+  // map onto toolsActions[0..5] (Sort/Random/Collections/Stats/
+  // Achievements/Help). Settings/Media/Switch Player/Depart are gone --
+  // Settings and Media now live in the Control Room (Milestone C3),
+  // Switch Player in Sanctuary, and Depart is reached only through the
+  // one universal Depart action, never duplicated here.
+  const toolsActions = [
+    () => setShowSort(s => !s),                                  // 0 Sort
+    () => { if (filteredGamesRef.current.length > 0) { setSelectedIndex(Math.floor(Math.random() * filteredGamesRef.current.length)); sounds.navigate() } }, // 1 Random
+    () => setShowCollections(true),                              // 2 Collections
+    () => navigateTo("stats"),                                   // 3 Stats
+    () => setShowAchievements(true),                             // 4 Achievements
+    () => navigateTo("help"),                                    // 5 Help
+  ]
+  const TOOLS_FOCUS_MAX = toolsActions.length // Search is 0, actions are 1..6
   const [consoleFocusIdx, setConsoleFocusIdx] = useState(0)
   const consoleFocusIdxRef = useRef(0)
 
@@ -550,16 +543,34 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     consoleTriggerRef.current?.focus()
   }, [])
 
-  // Focus moves into the panel on open (mouse/keyboard path only -- the
-  // gamepad zone system manages its own visual focus via barFocused/
-  // consoleFocusIdx and never needs real DOM focus moved for it).
+  // Real DOM focus follows consoleFocusIdx while the drawer is open --
+  // caught live during D5 review: without this, gamepad Left/Right only
+  // ever updated the barFocused CSS class, leaving real focus (and Search's
+  // own :focus-visible ring) stuck on whichever item last received a real
+  // .focus() call, so Search kept its cyan ring even after Sort/RND/etc.
+  // became the barFocused item -- two controls visibly "focused" at once.
   useEffect(() => {
-    if (consoleOpen) consoleFirstItemRef.current?.focus()
-  }, [consoleOpen])
+    if (!consoleOpen) return
+    const target = consoleFocusIdx === 0 ? consoleFirstItemRef.current : toolsItemRefs.current[consoleFocusIdx]
+    target?.focus()
+  }, [consoleOpen, consoleFocusIdx])
 
-  // Whenever the console becomes visible (by either path), controller
-  // focus starts on a valid item -- Search, matching the mouse/keyboard
-  // entry point's own first-item focus above.
+  // Same class of fix, one level up: closeConsole() (B/Escape) correctly
+  // moves real DOM focus onto the Tools trigger -- but if the Traveler
+  // then presses Down (leaving zone 0 for the tab strip), nothing
+  // previously cleared that real focus, so the trigger's own
+  // :focus-visible ring kept showing alongside the tab's barFocused ring.
+  // Caught live in the same D5 review pass as the Tools-item fix above.
+  useEffect(() => {
+    if (focusZone !== 0 && document.activeElement === consoleTriggerRef.current) {
+      consoleTriggerRef.current.blur()
+    }
+  }, [focusZone])
+
+  // Opening always starts on a valid item (Search) -- never mid-list, and
+  // never pre-activating anything (Part 9: "no item opens automatically
+  // on drawer open" means nothing is ACTIVATED, and a freshly-highlighted
+  // first item is not an activation).
   useEffect(() => {
     if (consoleVisible) setConsoleFocusIdx(0)
   }, [consoleVisible])
@@ -576,15 +587,14 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   // scale); pre-converting here would be a second, redundant conversion.
   const sounds = useArcadeSounds({ enabled: uiSoundsEnabled, volume: uiSoundVolume })
 
+  // D5, Part 8: Depart is no longer duplicated inside Library Tools -- the
+  // one universal Depart plaque (departTriggerRef, rendered separately
+  // below) is the only invoker resolveDepartInvoker ever needs now.
   const openDepart = useCallback((eventOrElement) => {
-    departInvokerRef.current = resolveDepartInvoker(
-      eventOrElement,
-      consoleVisible ? consoleDepartRef.current : null,
-      departTriggerRef.current
-    )
+    departInvokerRef.current = resolveDepartInvoker(eventOrElement, departTriggerRef.current)
     setExitChoice(1)
     setShowExitPopup(true)
-  }, [consoleVisible])
+  }, [])
 
   const cancelDepart = useCallback(() => {
     setShowExitPopup(false)
@@ -618,13 +628,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   const [artwork, setArtwork] = useState(() => {
     try { return JSON.parse(localStorage.getItem("nuarcade_artwork") || "{}") } catch { return {} }
   })
-  // Media Manager writes new artwork straight to localStorage while this
-  // component stays mounted underneath it as an overlay -- without this,
-  // newly fetched/imported artwork would sit there correctly saved but never
-  // show up until a full restart forced a fresh read.
-  const refreshArtwork = () => {
-    try { setArtwork(JSON.parse(localStorage.getItem("nuarcade_artwork") || "{}")) } catch {}
-  }
   const { updateAvailable, remoteVersion, handleUpdateNow, installing, progress } = useVersionCheck()
   const sgdbKey = config?.sgdbApiKey || null
   const { fetchArtworkForGame } = useSteamGridDB(sgdbKey)
@@ -694,12 +697,10 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   activeCategoryRef.current    = activeCategory
   collectionsRef.current       = collections
   showDetailRef.current        = showDetail
-  showSettingsRef.current      = showSettings
   showSearchRef.current        = showSearch
   consoleOpenRef.current        = consoleOpen
   consoleFocusIdxRef.current    = consoleFocusIdx
   currentDestinationRef.current = currentDestination
-  showMediaManagerRef.current  = showMediaManager
   showVirtualKeyboardRef.current = showVirtualKeyboard
     showSortRef.current            = showSort
     showCollectionsRef.current     = showCollections
@@ -882,8 +883,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     currentDestination === "stats" ||
     showAchievements ||
     showCollections ||
-    showSettings ||
-    showMediaManager ||
     showCoach ||
     showOperator ||
     !!needsControllerPrompt
@@ -986,9 +985,9 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
 
       if (e.key === "ArrowLeft")  { sounds.navigate(); navigate(-1) }
       if (e.key === "ArrowRight") { sounds.navigate(); navigate(1) }
-      if (e.key === "Enter") { if (!showDetail && currentDestination !== "help" && currentDestination !== "stats" && !showAchievements && !showCollections && !showSettings && !showMediaManager && !showCoach) { sounds.select(); resetLaunching(); setShowDetail(true) } else if (showDetail) { if (current) launchGame() } }
-      if ((e.key === "c" || e.key === "C") && !showDetail && currentDestination !== "help" && currentDestination !== "stats" && !showCoach && !showSettings && !showMediaManager) { sounds.select?.(); setShowCoach(true) }
-      if ((e.key === "o" || e.key === "O") && !showDetail && currentDestination !== "help" && currentDestination !== "stats" && !showCoach && !showSettings && !showMediaManager) { sounds.select?.(); setShowOperator(true) }
+      if (e.key === "Enter") { if (!showDetail && currentDestination !== "help" && currentDestination !== "stats" && !showAchievements && !showCollections && !showCoach) { sounds.select(); resetLaunching(); setShowDetail(true) } else if (showDetail) { if (current) launchGame() } }
+      if ((e.key === "c" || e.key === "C") && !showDetail && currentDestination !== "help" && currentDestination !== "stats" && !showCoach) { sounds.select?.(); setShowCoach(true) }
+      if ((e.key === "o" || e.key === "O") && !showDetail && currentDestination !== "help" && currentDestination !== "stats" && !showCoach) { sounds.select?.(); setShowOperator(true) }
       if (e.key === "Escape") {
         sounds.back()
         setShowDetail(false)
@@ -1001,7 +1000,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       }
 
       // Single-key shortcuts only fire when no overlay is open
-      const anyOverlay = showDetail || currentDestination === "help" || currentDestination === "stats" || showAchievements || showCollections || showSettings || showMediaManager || showCoach || showOperator || !!needsControllerPrompt
+      const anyOverlay = showDetail || currentDestination === "help" || currentDestination === "stats" || showAchievements || showCollections || showCoach || showOperator || !!needsControllerPrompt
       if (anyOverlay) return
 
       // Backspace: direct keyboard path to Return to Sanctuary from the
@@ -1043,29 +1042,21 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     }
     window.addEventListener("keydown", handler)
     return () => window.removeEventListener("keydown", handler)
-  }, [filteredGames, selectedIndex, showSearch, showVirtualKeyboard, showDetail, currentDestination, showAchievements, showCollections, showSettings, showMediaManager, showCoach, showOperator, current, onReturnHome])
+  }, [filteredGames, selectedIndex, showSearch, showVirtualKeyboard, showDetail, currentDestination, showAchievements, showCollections, showCoach, showOperator, current, onReturnHome])
 
   // search focus effect removed
 
   
-  // Top menu actions indexed 0-10
-  // Named search opener -- ensures both states set for controller
-  // Search removed -- use LB/RB and tabs to filter games
-
+  // Zone-0 (topMenu) actions, D5-narrowed to just the two real stops in
+  // the header: Home and the Tools trigger. Confirm on index 1 opens
+  // Library Tools (setConsoleOpen(true)) -- the drawer's own items
+  // (Sort/Random/Collections/Stats/Achievements/Help) live in
+  // toolsActions above and are only reachable once it's open.
   const topMenuActions = [
-    () => setShowSort(s => !s),                                  // 0 Sort
-    () => { if (filteredGamesRef.current.length > 0) { setSelectedIndex(Math.floor(Math.random() * filteredGamesRef.current.length)); sounds.navigate() } }, // 2 RND
-    () => setShowCollections(true),                              // 3 []
-    () => navigateTo("stats"),                                   // 4 #
-    () => setShowAchievements(true),                             // 5 *
-    () => { if (onReturnHome) onReturnHome() },                  // 6 Home
-    () => { if (onSwitchPlayer) onSwitchPlayer() },              // 7 Player
-    () => setShowMediaManager(true),                             // 8 Media
-    () => setShowSettings(true),                                 // 9 Settings
-    () => navigateTo("help"),                                    // 10 ?
-    () => openDepart(consoleDepartRef.current),                   // 11 Depart
+    () => { if (onReturnHome) onReturnHome() },  // 0 Home
+    () => setConsoleOpen(true),                  // 1 Tools trigger
   ]
-  const TOP_MENU_MAX = 10
+  const TOP_MENU_MAX = 1
 
   // Hint bar actions indexed 0-12
   const hintBarActions = [
@@ -1082,10 +1073,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   // Sync overlay refs synchronously before every paint -- fixes GameDetail controller conflict
   useLayoutEffect(() => {
     showDetailRef.current          = showDetail
-    showSettingsRef.current        = showSettings
     showSearchRef.current          = showSearch
     currentDestinationRef.current  = currentDestination
-    showMediaManagerRef.current    = showMediaManager
     showVirtualKeyboardRef.current = showVirtualKeyboard
     showSortRef.current            = showSort
     showCollectionsRef.current     = showCollections
@@ -1101,16 +1090,17 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   })
 
   useGamepad({
-    enabled: !showDetailRef.current && !showMediaManagerRef.current && !showSettingsRef.current && currentDestinationRef.current !== "help" && currentDestinationRef.current !== "stats" && !attractMode && !needsControllerPrompt && !showVirtualKeyboardRef.current && !showSortRef.current && !showCollectionsRef.current && !showAchievementsRef.current && !showCoachRef.current && !showOperatorRef.current ,
+    enabled: !showDetailRef.current && currentDestinationRef.current !== "help" && currentDestinationRef.current !== "stats" && !attractMode && !needsControllerPrompt && !showVirtualKeyboardRef.current && !showSortRef.current && !showCollectionsRef.current && !showAchievementsRef.current && !showCoachRef.current && !showOperatorRef.current ,
     left: () => {
       if (showRetroArchPopupRef.current) { if (retroArchChoiceRef.current !== 0) { sounds.navigate(); setRetroArchChoice(0) } return }
-      // Console-local focus (2.2 correction) -- while the Library Console
-      // is visible (mouse-opened, or the pre-existing gamepad zone-0
-      // focus), D-pad left/right moves consoleFocusIdx, never topMenuIdx.
-      // The old z===0 branch below is left completely intact but
-      // unreachable in this state, since it's the same condition this
-      // check already covers.
-      if (consoleOpenRef.current || focusZoneRef.current === 0) { setConsoleFocusIdx(i => Math.max(0, i - 1)); sounds.navigate(); return }
+      // D5, Part 9: this branch now fires ONLY while the Tools drawer is
+      // actually open (consoleOpenRef), never merely because focus sits
+      // on the trigger (focusZone 0) -- that's what makes opening an
+      // explicit, controller-mapped action instead of a side effect of
+      // arriving in the zone. While closed, focusZone===0's Left/Right
+      // falls through to the real topMenuIdx branch below (Home <-> Tools
+      // trigger, TOP_MENU_MAX=1).
+      if (consoleOpenRef.current) { setConsoleFocusIdx(i => Math.max(0, i - 1)); sounds.navigate(); return }
       const z = focusZoneRef.current
       if (z === 0) { setTopMenuIdx(i => Math.max(0, i - 1)); sounds.navigate(); return }
       if (z === 1) { const tabs = visibleTabsRef.current; const newIdx = tabFocusIdxRef.current <= 0 ? tabs.length - 1 : tabFocusIdxRef.current - 1; setTabFocusIdx(newIdx); setActiveCategory(tabs[newIdx]); sounds.navigate(); return }
@@ -1120,7 +1110,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     },
     right: () => {
       if (showRetroArchPopupRef.current) { if (retroArchChoiceRef.current !== 1) { sounds.navigate(); setRetroArchChoice(1) } return }
-      if (consoleOpenRef.current || focusZoneRef.current === 0) { setConsoleFocusIdx(i => Math.min(CONSOLE_FOCUS_MAX, i + 1)); sounds.navigate(); return }
+      if (consoleOpenRef.current) { setConsoleFocusIdx(i => Math.min(TOOLS_FOCUS_MAX, i + 1)); sounds.navigate(); return }
       const z = focusZoneRef.current
       if (z === 0) { setTopMenuIdx(i => Math.min(TOP_MENU_MAX, i + 1)); sounds.navigate(); return }
       if (z === 1) { const tabs = visibleTabsRef.current; const newIdx = tabFocusIdxRef.current >= tabs.length - 1 ? 0 : tabFocusIdxRef.current + 1; setTabFocusIdx(newIdx); setActiveCategory(tabs[newIdx]); sounds.navigate(); return }
@@ -1129,13 +1119,12 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       if (z === 4) { setBarFocusIdx(i => Math.min(HINT_BAR_MAX, i + 1)); sounds.navigate(); return }
     },
     up: () => {
-      // Documented boundary (2.2 correction) -- Up while the console is
-      // visible is a deliberate no-op, not a silent trap: the console is
-      // already the top-level header, exactly like the pre-existing
-      // zone-0 (topMenu) had no further "up" target either. Left/Right/
-      // Confirm/Back all remain fully live; Down (below) is the live
-      // spatial exit.
-      if (consoleOpenRef.current || focusZoneRef.current === 0) return
+      // Up inside the open drawer is a deliberate no-op (Left/Right is
+      // the drawer's primary axis; B is the explicit close). Up while
+      // merely on the trigger (focusZone 0, drawer closed) falls through
+      // below and finds no z===0 case either, so it's a no-op there too
+      // -- zone 0 is the top of the graph either way.
+      if (consoleOpenRef.current) return
       const z = focusZoneRef.current
       if (z === 4) { setFocusZone(3); sounds.navigate(); return }  // hintBar -> launch
       if (z === 3) { setFocusZone(2); sounds.navigate(); return }  // launch -> wheel
@@ -1143,12 +1132,9 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       if (z === 1) { setFocusZone(0); sounds.navigate(); return }  // tabs -> topMenu
     },
     down: () => {
-      // Down exits the console the same way the pre-existing zone-0 ->
-      // tabs transition did -- close the popover (if mouse-opened) and
-      // land in the category/tab zone, which already shows visible
-      // controller focus via its own existing
-      // `focusZone === 1 && ...catFocused` condition (unchanged).
-      if (consoleOpenRef.current || focusZoneRef.current === 0) { setConsoleOpen(false); setFocusZone(1); sounds.navigate(); return }
+      // Down while the drawer is open closes it and lands in the
+      // category/tab zone -- a second, spatial way out alongside B.
+      if (consoleOpenRef.current) { setConsoleOpen(false); setFocusZone(1); sounds.navigate(); return }
       const z = focusZoneRef.current
       if (z === 0) { setFocusZone(1); sounds.navigate(); return }  // topMenu -> tabs
       if (z === 1) { setFocusZone(2); sounds.navigate(); return }  // tabs -> wheel
@@ -1167,17 +1153,18 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
         setRetroArchChoice(1)
         return
       }
-      if (consoleOpenRef.current || focusZoneRef.current === 0) {
+      if (consoleOpenRef.current) {
         // consoleFocusIdx 0 is Search -- reveal/focus it exactly like the
         // mouse-driven consoleSearchItem button does. Every other index
-        // maps onto the existing topMenuActions array via
-        // CONSOLE_ACTION_INDICES, so the same unchanged handlers fire.
+        // maps onto toolsActions.
         if (consoleFocusIdxRef.current === 0) { setShowSearch(true); setConsoleOpen(false); return }
-        const actionIdx = CONSOLE_ACTION_INDICES[consoleFocusIdxRef.current - 1]
-        topMenuActions[actionIdx]?.()
+        toolsActions[consoleFocusIdxRef.current - 1]?.()
         return
       }
       const z = focusZoneRef.current
+      // z===0, topMenuIdx 1 (Tools trigger) calls topMenuActions[1], i.e.
+      // setConsoleOpen(true) -- the one explicit action that opens the
+      // drawer. No item inside it is auto-activated by this.
       if (z === 0) { topMenuActions[topMenuIdxRef.current]?.(); return }
       if (z === 1) {
         // Apply the highlighted tab
@@ -1190,14 +1177,16 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
       if (z === 3) { launchGame(); return }
       if (z === 4) { hintBarActions[barFocusIdxRef.current]?.(); return }
     },
-    settings: () => { if (!showSettingsRef.current) setShowSettings(true) },
+    // D5, Part 8: Settings is no longer a Library feature -- it lives in
+    // the Control Room's Systems Wing (Milestone C3). The physical START
+    // button that used to jump straight to it from anywhere in the
+    // Library is retired along with the drawer's own Settings entry and
+    // all Settings/MediaManager state.
     back: () => {
       if (showRetroArchPopupRef.current) { sounds.back(); setShowRetroArchPopup(false); setRetroArchChoice(1); return }
       if (showDetailRef.current)      { setShowDetail(false); return }
-      if (showSettingsRef.current)    { setShowSettings(false); return }
       if (showSearchRef.current)      { sounds.back(); setShowSearch(false); setShowVirtualKeyboard(false); setSearch(""); setDebouncedSearch(""); return }
       if (currentDestinationRef.current === "help") { back(); return }
-      if (showMediaManagerRef.current){ setShowMediaManager(false); return }
       // Mouse-opened console: close it and restore focus to its trigger
       // predictably, same as Escape/backdrop-click.
       if (consoleOpenRef.current)     { closeConsole(); return }
@@ -1253,7 +1242,15 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
     const signed = wrapped > n / 2 ? wrapped - n : wrapped
     const absPos = Math.abs(signed)
     if (absPos > 4) return { display: 'none' }
-    const CARD_SLOT_WIDTH = 230  // px between adjacent card centers on the flat shelf
+    // Milestone D5, Part 1 -- widened from 230: at the previous spacing,
+    // the center card's on-screen edge (240px card * cardTrack's 0.74
+    // desktop scale * this getCardStyle's own scale=1 at signed=0 =
+    // 177.6px wide) and its immediate neighbor's edge (240 * 0.74 * 0.935
+    // falloff scale = 166px wide, centered 230*0.74=170.2px away) actually
+    // overlapped by ~1.6px -- the reported "too close together" collision.
+    // 252 restores a genuine ~15px gap at desktop and ~10px at the 1280x720
+    // compact scale (0.52), with no change to the falloff formula itself.
+    const CARD_SLOT_WIDTH = 252  // px between adjacent card centers on the flat shelf
     const x = signed * CARD_SLOT_WIDTH
     const scale = signed === 0 ? 1 : Math.max(0.74, 1 - absPos * 0.065)
     const opacity = signed === 0 ? 1 : Math.max(0.5, 1 - absPos * 0.12)
@@ -1377,7 +1374,7 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
 
       <div className={styles.globalHeader}>
         <div className={styles.worldNav}>
-          <button className={styles.returnHomeBtn + (focusZone === 0 && topMenuIdx === 5 ? " " + styles.barFocused : "")} onClick={() => { if (onReturnHome) onReturnHome() }} title={t("wheel.returnHomeTitle")}>{t("wheel.navHome")}</button>
+          <button className={styles.returnHomeBtn + (focusZone === 0 && topMenuIdx === 0 ? " " + styles.barFocused : "")} onClick={() => { if (onReturnHome) onReturnHome() }} title={t("wheel.returnHomeTitle")}>{t("wheel.navHome")}</button>
         </div>
         {/* D4: Vespara-only lockup for the Library specifically -- "Return
             to Sanctuary" only reads logically if the header isn't also
@@ -1441,17 +1438,22 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
             </div>
           ) : (
             <div className={styles.consoleWrap}>
+              {/* D5, Parts 7/9: opening is now an explicit action (click,
+                  or A while this trigger holds zone-0 focus) -- it never
+                  opens as a side effect of focus merely arriving here.
+                  consoleVisible === consoleOpen now (see its own
+                  declaration comment). */}
               <button
                 ref={consoleTriggerRef}
-                className={styles.consoleTrigger + (consoleVisible ? " " + styles.consoleTriggerActive : "")}
+                className={styles.consoleTrigger + (consoleVisible ? " " + styles.consoleTriggerActive : "") + (focusZone === 0 && topMenuIdx === 1 ? " " + styles.barFocused : "")}
                 onClick={() => setConsoleOpen(v => !v)}
                 aria-haspopup="true"
                 aria-expanded={consoleVisible}
-                aria-controls="library-console-panel"
-                title={updateAvailable ? t("wheel.libraryConsoleUpdateTitle") : t("wheel.libraryConsoleTitle")}
-                aria-label={updateAvailable ? t("wheel.libraryConsoleUpdateTitle") : undefined}
+                aria-controls="library-tools-panel"
+                title={updateAvailable ? t("wheel.libraryToolsUpdateTitle") : t("wheel.libraryToolsTitle")}
+                aria-label={updateAvailable ? t("wheel.libraryToolsUpdateTitle") : undefined}
               >
-                {t("wheel.libraryConsole")}
+                {t("wheel.libraryTools")}
                 {updateAvailable && (
                   <span className={styles.consoleUpdateBadge} aria-hidden="true">{t("wheel.updateBadge")}</span>
                 )}
@@ -1460,7 +1462,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
                 <div className={styles.consoleBackdrop} onClick={closeConsole} aria-hidden="true" />
               )}
               {consoleVisible && (
-                <div id="library-console-panel" role="menu" className={styles.consolePanel}>
+                <div id="library-tools-panel" role="menu" className={styles.consolePanel}>
+                  <div className={styles.consolePanelTitle}>{t("wheel.libraryToolsPanelTitle")}</div>
                   <button
                     ref={consoleFirstItemRef}
                     className={styles.consoleSearchItem + (consoleVisible && consoleFocusIdx === 0 ? " " + styles.barFocused : "")}
@@ -1470,38 +1473,21 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
                   </button>
                   <div className={styles.consoleDivider} aria-hidden="true" />
                   <div className={styles.libraryToolsGroup}>
-                    <button className={(sortBy !== "default" ? styles.sortActive : styles.sortBtn) + ((focusZone === 0 && topMenuIdx === 0) || (consoleVisible && consoleFocusIdx === 1) ? " " + styles.barFocused : "")} onClick={() => setShowSort(s => !s)}>Sort</button>
-                    <button className={styles.randBtn + ((focusZone === 0 && topMenuIdx === 1) || (consoleVisible && consoleFocusIdx === 2) ? " " + styles.barFocused : "")} onClick={() => {
+                    <button ref={el => toolsItemRefs.current[1] = el} className={(sortBy !== "default" ? styles.sortActive : styles.sortBtn) + (consoleVisible && consoleFocusIdx === 1 ? " " + styles.barFocused : "")} onClick={() => setShowSort(s => !s)}>Sort</button>
+                    <button ref={el => toolsItemRefs.current[2] = el} className={styles.randBtn + (consoleVisible && consoleFocusIdx === 2 ? " " + styles.barFocused : "")} onClick={() => {
                       if (filteredGames.length > 0) {
                         setSelectedIndex(Math.floor(Math.random() * filteredGames.length))
                         sounds.navigate()
                       }
                     }} title={t("wheel.randomTitle")}>RND</button>
-                    <button className={styles.colBtn + ((focusZone === 0 && topMenuIdx === 2) || (consoleVisible && consoleFocusIdx === 3) ? " " + styles.barFocused : "")} onClick={() => setShowCollections(true)} title={t("wheel.collectionsTitle")}>Sets</button>
-                    <button className={styles.statsBtn + ((focusZone === 0 && topMenuIdx === 3) || (consoleVisible && consoleFocusIdx === 4) ? " " + styles.barFocused : "")} onClick={() => navigateTo("stats")} title={t("wheel.statsTitle")}>Stats</button>
-                    <button className={styles.achieveBtn + ((focusZone === 0 && topMenuIdx === 4) || (consoleVisible && consoleFocusIdx === 5) ? " " + styles.barFocused : "")} onClick={() => setShowAchievements(true)} title={t("wheel.achievementsTitle")}>Ach.</button>
+                    <button ref={el => toolsItemRefs.current[3] = el} className={styles.colBtn + (consoleVisible && consoleFocusIdx === 3 ? " " + styles.barFocused : "")} onClick={() => setShowCollections(true)} title={t("wheel.collectionsTitle")}>Sets</button>
+                    <button ref={el => toolsItemRefs.current[4] = el} className={styles.statsBtn + (consoleVisible && consoleFocusIdx === 4 ? " " + styles.barFocused : "")} onClick={() => navigateTo("stats")} title={t("wheel.statsTitle")}>Stats</button>
+                    <button ref={el => toolsItemRefs.current[5] = el} className={styles.achieveBtn + (consoleVisible && consoleFocusIdx === 5 ? " " + styles.barFocused : "")} onClick={() => setShowAchievements(true)} title={t("wheel.achievementsTitle")}>Ach.</button>
+                    <button ref={el => toolsItemRefs.current[6] = el} className={styles.helpBtn + (consoleVisible && consoleFocusIdx === 6 ? " " + styles.barFocused : "")} onClick={() => navigateTo("help")}>?</button>
                   </div>
-                  <div className={styles.consoleDivider} aria-hidden="true" />
-                  <div className={styles.utilityGroup}>
-                    {activeProfile && (
-                      <button
-                        className={styles.settingsBtn}
-                        style={{ borderColor: activeProfile.color + '44', color: activeProfile.color }}
-                        onClick={onSwitchPlayer}
-                        title={t("wheel.switchPlayerTitle")}
-                      >
-                        {activeProfile.name[0]} {activeProfile.name}
-                      </button>
-                    )}
-                    {!activeProfile && onSwitchPlayer && (
-                      <button className={styles.settingsBtn + ((focusZone === 0 && topMenuIdx === 6) || (consoleVisible && consoleFocusIdx === 6) ? " " + styles.barFocused : "")} onClick={onSwitchPlayer} title={t("wheel.selectPlayerTitle")}>
-                        {t("wheel.guestCta")}
-                      </button>
-                    )}
-                    <button className={styles.mediaBtn + ((focusZone === 0 && topMenuIdx === 7) || (consoleVisible && consoleFocusIdx === 7) ? " " + styles.barFocused : "")} onClick={() => setShowMediaManager(true)}>{t("wheel.navMedia")}</button>
-                    <button className={styles.settingsBtn + ((focusZone === 0 && topMenuIdx === 8) || (consoleVisible && consoleFocusIdx === 8) ? " " + styles.barFocused : "")} onClick={() => setShowSettings(true)}>{t("wheel.navSettings")}</button>
-                    <button className={styles.helpBtn + ((focusZone === 0 && topMenuIdx === 9) || (consoleVisible && consoleFocusIdx === 9) ? " " + styles.barFocused : "")} onClick={() => navigateTo("help")}>?</button>
-                    {updateAvailable && (
+                  {updateAvailable && (
+                    <>
+                      <div className={styles.consoleDivider} aria-hidden="true" />
                       <button
                         className={styles.settingsBtn}
                         style={{ borderColor: 'rgba(255,170,0,0.5)', color: '#ffaa00' }}
@@ -1511,18 +1497,8 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
                       >
                         {installing ? (progress != null ? t("settings.installing", { progress }) : t("settings.installingEllipsis")) : t("settings.updateNow")}
                       </button>
-                    )}
-                    {!departOverlayActive && (
-                      <button
-                        ref={consoleDepartRef}
-                        className={styles.consoleDepartBtn + ((focusZone === 0 && topMenuIdx === 10) || (consoleVisible && consoleFocusIdx === 10) ? " " + styles.barFocused : "")}
-                        onClick={openDepart}
-                        title={t("wheel.exitTitle")}
-                      >
-                        {t("wheel.depart")}
-                      </button>
-                    )}
-                  </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -1792,8 +1768,10 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
           resultCount={filteredGames.length}
         />
       )}
-      {showMediaManager && <MediaManager onClose={() => setShowMediaManager(false)} onVideosUpdated={refreshVideoPaths} onArtworkUpdated={refreshArtwork} />}
-      {showSettings && <Settings games={games} onClose={() => setShowSettings(false)} onCRTChange={onCRTChange} crtEnabled={crtEnabled} themeId={themeId} onThemeChange={onThemeChange} uiSoundsEnabled={uiSoundsEnabled} onUiSoundsChange={onUiSoundsChange} uiSoundVolume={uiSoundVolume} onUiSoundVolumeChange={onUiSoundVolumeChange} />}
+      {/* D5, Part 8: Settings/MediaManager no longer render from the
+          Library -- both remain fully available from the Control Room
+          (Systems/Archives Wings, Milestone C3), which already receives
+          the identical CRT/theme/sound props this component used to. */}
       {showDetail && current && (
         <GameDetail
           game={current}

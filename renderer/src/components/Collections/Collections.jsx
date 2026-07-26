@@ -15,11 +15,17 @@ function saveCollections(data) {
 export function useCollections() {
   const getCollections = useCallback(() => loadCollections(), [])
 
+  // Returns the new collection's id on success, or a string error code
+  // ("empty" | "duplicate") the caller can turn into user-facing feedback --
+  // never a silent no-op (Milestone D5, Part 6).
   const createCollection = useCallback((name) => {
-    if (!name.trim()) return false
+    const trimmed = name.trim()
+    if (!trimmed) return "empty"
     const cols = loadCollections()
+    const isDuplicate = Object.values(cols).some(c => c.name.toLowerCase() === trimmed.toLowerCase())
+    if (isDuplicate) return "duplicate"
     const id = "col_" + Date.now()
-    cols[id] = { id, name: name.trim(), games: [], created: Date.now() }
+    cols[id] = { id, name: trimmed, games: [], created: Date.now() }
     saveCollections(cols)
     return id
   }, [])
@@ -63,16 +69,27 @@ export default function Collections({ games, currentGame, onClose }) {
   // -- All state hooks in one block ------------------------------------------
   const [cols, setCols]         = useState(() => getCollections())
   const [newName, setNewName]   = useState("")
+  // "empty" | "duplicate" | null -- cleared the moment the Traveler edits
+  // the field again, so it never lingers as stale feedback for a since-
+  // corrected name.
+  const [createError, setCreateError] = useState(null)
   const [activeCol, setActiveCol] = useState(null)
   const [renaming, setRenaming] = useState(null)
   const [renameVal, setRenameVal] = useState("")
   const [zone, setZone]         = useState(0)   // 0=sidebar, 1=main panel
+  // sideIdx 0 is always the "new collection" row -- collections themselves
+  // occupy sideIdx 1..colList.length. This is what makes the create field
+  // reachable by controller (Part 6) without inventing a fake on-screen
+  // keyboard: a controller can navigate to and *activate* the field/+
+  // action, but typing the name itself still requires a real keyboard --
+  // see the honest helper text rendered next to the input below.
   const [sideIdx, setSideIdx]   = useState(0)
   const [mainIdx, setMainIdx]   = useState(0)
 
   // -- All ref hooks in one block ---------------------------------------------
   const sideRef         = useRef(null)
   const mainRef         = useRef(null)
+  const newInputRef     = useRef(null)
   const zoneRef         = useRef(0)
   const sideIdxRef      = useRef(0)
   const mainIdxRef      = useRef(0)
@@ -84,10 +101,19 @@ export default function Collections({ games, currentGame, onClose }) {
   const refresh = () => setCols(getCollections())
 
   const handleCreate = () => {
-    if (!newName.trim()) return
-    createCollection(newName)
+    const result = createCollection(newName)
+    if (result === "empty" || result === "duplicate") { setCreateError(result); return }
+    // Success: id string. Clear the field (so a held controller confirm's
+    // repeat-fire re-runs handleCreate against an empty name and no-ops,
+    // never creating a second collection -- see createError's own comment
+    // for why sideIdx 0 is the field's stable focus slot), select/focus
+    // the new collection, and drop any stale validation message.
     setNewName("")
+    setCreateError(null)
     refresh()
+    setActiveCol(result)
+    setZone(1)
+    setMainIdx(0)
   }
 
   const handleToggleGame = (colId, game) => {
@@ -146,20 +172,23 @@ export default function Collections({ games, currentGame, onClose }) {
   })
 
   // -- Gamepad: single instance, correct hook placement ----------------------
+  // sideIdx 0 = the new-collection row, sideIdx 1..N = colList[0..N-1] --
+  // see sideIdx's own declaration comment.
   useGamepad({
     up: () => {
       if (zoneRef.current === 0) setSideIdx(i => Math.max(0, i - 1))
       else setMainIdx(i => Math.max(0, i - 1))
     },
     down: () => {
-      if (zoneRef.current === 0) setSideIdx(i => Math.min(Math.max(0, colListRef.current.length - 1), i + 1))
+      if (zoneRef.current === 0) setSideIdx(i => Math.min(colListRef.current.length, i + 1))
       else setMainIdx(i => Math.min(Math.max(0, mainItemsRef.current.length - 1), i + 1))
     },
     left:  () => { if (zoneRef.current === 1) setZone(0) },
     right: () => { if (zoneRef.current === 0 && activeColRef.current) setZone(1) },
     confirm: () => {
       if (zoneRef.current === 0) {
-        const col = colListRef.current[sideIdxRef.current]
+        if (sideIdxRef.current === 0) { handleCreate(); return }
+        const col = colListRef.current[sideIdxRef.current - 1]
         if (col) {
           setActiveCol(col.id === activeColRef.current ? null : col.id)
           setZone(1)
@@ -188,16 +217,29 @@ export default function Collections({ games, currentGame, onClose }) {
 
         <div className={styles.body}>
           <div className={styles.sidebar}>
-            <div className={styles.newRow}>
+            <div
+              className={styles.newRow + (zone === 0 && sideIdx === 0 ? " " + styles.gamepadFocused : "")}
+            >
               <input
+                ref={newInputRef}
                 className={styles.newInput}
                 value={newName}
-                onChange={e => setNewName(e.target.value)}
+                onChange={e => { setNewName(e.target.value); setCreateError(null) }}
                 onKeyDown={e => { if (e.key === "Enter") handleCreate() }}
                 placeholder={t("collections.newPlaceholder")}
               />
-              <button className={styles.createBtn} onClick={handleCreate}>+</button>
+              <button className={styles.createBtn} onClick={handleCreate} title={t("collections.createTitle")}>+</button>
             </div>
+            {/* Honest controller affordance (Part 6): a controller can
+                navigate to and activate this row (A = same as clicking +),
+                but typing the name itself genuinely requires a keyboard --
+                no fake on-screen keyboard is invented for it. */}
+            <div className={styles.newHint}>{t("collections.newHint")}</div>
+            {createError && (
+              <div className={styles.newError}>
+                {createError === "empty" ? t("collections.errorEmpty") : t("collections.errorDuplicate")}
+              </div>
+            )}
             <div className={styles.colList} ref={sideRef}>
               {colList.length === 0 && (
                 <div className={styles.emptyHint}>{t("collections.empty")}</div>
@@ -208,11 +250,11 @@ export default function Collections({ games, currentGame, onClose }) {
                   className={
                     styles.colItem +
                     (activeCol === col.id ? " " + styles.colActive : "") +
-                    (zone === 0 && sideIdx === ci ? " " + styles.gamepadFocused : "")
+                    (zone === 0 && sideIdx === ci + 1 ? " " + styles.gamepadFocused : "")
                   }
                   onClick={() => {
                     setActiveCol(col.id === activeCol ? null : col.id)
-                    setSideIdx(ci)
+                    setSideIdx(ci + 1)
                     setZone(1)
                     setMainIdx(0)
                   }}

@@ -58,8 +58,8 @@ test("focusZone 5 is absent from Library production code -- no state, refs, or l
 })
 
 test("no Library navigation branch (left/right/up/down/confirm) targets focusZone 5", () => {
-  const handlers = jsx.slice(jsx.indexOf("left: () => {"), jsx.indexOf("settings: () => {"))
-  assert.doesNotMatch(handlers, /\b5\b/, "no remaining zone handler should reference the removed zone id 5")
+  const handlers = jsx.slice(jsx.indexOf("left: () => {"), jsx.indexOf("back: () => {"))
+  assert.doesNotMatch(handlers, /\bz === 5\b|\bfocusZone === 5\b/, "no remaining zone handler should reference the removed zone id 5")
 })
 
 // -- 6/7/8. Simplified focus graph: filters -> wheel -> launch, and reverse -
@@ -96,7 +96,7 @@ test("the main shelf remains a flat, full-width horizontal line -- untouched by 
   const wheelArea = block(css, ".stage .wheelArea")
   assert.match(wheelArea, /left:\s*clamp\(16px,\s*2\.2vw,\s*40px\)/)
   assert.match(wheelArea, /right:\s*clamp\(16px,\s*2\.2vw,\s*40px\)/)
-  assert.match(jsx, /const CARD_SLOT_WIDTH = 230/)
+  assert.match(jsx, /const CARD_SLOT_WIDTH = 252/)
   assert.doesNotMatch(jsx, /rotateY\(|ARC_RADIUS|ANGLE_STEP/)
 })
 
@@ -105,7 +105,7 @@ test("the main shelf remains a flat, full-width horizontal line -- untouched by 
 test("D3's selected-card focus cues (.center, .centerActive) are unchanged by the Continue Playing removal", () => {
   const center = cardCss.match(/(?<!\.card)\.center\s*\{([^}]*)\}/) || cardCss.match(/\n\.center \{([^}]*)\}/)
   assert.ok(center)
-  assert.match(center[1], /border:\s*1px solid #d6b274/)
+  assert.match(center[1], /border:\s*2px solid #d6b274/)
   assert.match(center[1], /transform:\s*scale\(1\.07\) translateY\(-5px\)/)
   assert.match(block(cardCss, ".centerActive"), /border-color:\s*#f0d29c/)
   assert.match(jsx, /isNavFocused=\{focusZone === 2\}/)
@@ -146,7 +146,7 @@ test("Launch Game remains inside the same compact composition as the selected-ga
 
 test("Archive View is positioned beneath the selected-game strip", () => {
   const preview = block(css, ".previewReservation")
-  assert.match(preview, /top:\s*clamp\(576px,\s*58vh,\s*626px\)/)
+  assert.match(preview, /top:\s*clamp\(546px,\s*54vh,\s*582px\)/)
   // Sanity: this top offset is numerically after infoPanel's own top+min-height.
 })
 
@@ -174,15 +174,15 @@ test("Archive View's A/B media lifecycle -- refs, readiness, crossfade, fallback
 
 test("Archive View is fully within the viewport at 1920x1080 -- measured live: frame 626-957, hintBar starts 1041, depart starts 978", () => {
   assert.match(css, /\.stage \.wheelArea\s*\{[^}]*top:\s*clamp\(158px,\s*17\.2vh,\s*186px\)[^}]*right:[^}]*height:\s*clamp\(290px,\s*30\.5vh,\s*330px\)/s)
-  assert.match(css, /\.stage \.infoPanel\s*\{[^}]*top:\s*clamp\(498px,\s*49vh,\s*530px\)/s)
-  assert.match(css, /\.previewReservation\s*\{[^}]*top:\s*clamp\(576px,\s*58vh,\s*626px\)[^}]*width:\s*clamp\(440px,\s*28\.1vw,\s*540px\)/s)
+  assert.match(css, /\.stage \.infoPanel\s*\{[^}]*top:\s*clamp\(462px,\s*45.5vh,\s*494px\)/s)
+  assert.match(css, /\.previewReservation\s*\{[^}]*top:\s*clamp\(546px,\s*54vh,\s*582px\)[^}]*width:\s*clamp\(440px,\s*28\.1vw,\s*540px\)/s)
 })
 
 test("Archive View is fully within the viewport at 1280x720 -- measured live: frame 448-620, hintBar starts 681, depart starts 638", () => {
   const compact = css.slice(css.indexOf("@media (max-width: 1280px), (max-height: 760px)"), css.indexOf("/* Restrained entrance", css.indexOf("@media (max-width: 1280px), (max-height: 760px)")))
   assert.match(compact, /\.stage \.wheelArea\s*\{[^}]*top:\s*150px[^}]*height:\s*210px/s)
-  assert.match(compact, /\.stage \.infoPanel\s*\{[^}]*top:\s*368px/s)
-  assert.match(compact, /\.previewReservation\s*\{[^}]*top:\s*448px[^}]*width:\s*260px/s)
+  assert.match(compact, /\.stage \.infoPanel\s*\{[^}]*top:\s*372px/s)
+  assert.match(compact, /\.previewReservation\s*\{[^}]*top:\s*456px[^}]*width:\s*260px/s)
 })
 
 // -- 19/20. Controller hints and Depart do not overlap Archive View ---------

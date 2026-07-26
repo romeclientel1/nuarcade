@@ -79,7 +79,7 @@ test("the local title's subtitle contains only Collection Hall + count, no activ
 // -- 6. Selected-game pedestal is compact and retains all required data -----
 
 test("the pedestal's footprint is cut roughly a third while keeping title, platform/readiness/favorite, genre, and Launch (D4: bounded compact strip, min-height cut further to 44px)", () => {
-  assert.match(block(css, ".stage .infoPanel"), /top:\s*clamp\(498px,\s*49vh,\s*530px\)[\s\S]*width:\s*clamp\(700px,\s*60vw,\s*1150px\)[\s\S]*min-height:\s*44px/)
+  assert.match(block(css, ".stage .infoPanel"), /top:\s*clamp\(462px,\s*45.5vh,\s*494px\)[\s\S]*width:\s*clamp\(700px,\s*60vw,\s*1150px\)[\s\S]*min-height:\s*40px/)
   const panel = jsx.slice(jsx.indexOf("<div className={styles.infoPanel"), jsx.indexOf("{showSort &&"))
   assert.match(panel, /styles\.marqueeWrap[\s\S]*current\.title/)
   assert.match(panel, /styles\.infoMeta[\s\S]*current\.system[\s\S]*current\.status/)
@@ -102,7 +102,7 @@ test("the selected card combines a shape/border cue with a position/scale cue, n
   const centerMatch = cardCss.match(/(?<!\.card)\.center\s*\{([^}]*)\}/) || cardCss.match(/\n\.center \{([^}]*)\}/)
   assert.ok(centerMatch)
   const center = centerMatch[1]
-  assert.match(center, /border:\s*1px solid #d6b274/)      // shape cue
+  assert.match(center, /border:\s*2px solid #d6b274/)      // shape cue
   assert.match(center, /transform:\s*scale\(1\.07\) translateY\(-5px\)/)  // position/scale cue
   assert.match(center, /box-shadow:/)                       // contrast/glow cue
   // A further, distinct emphasis layer while controller focus actually

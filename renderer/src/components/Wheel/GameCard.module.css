@@ -30,9 +30,16 @@
    this combines with the brighter title/system rules below and the
    neighbor desaturation, so no single cue (color, scale, or contrast
    alone) carries the whole signal. */
+/* Milestone D5, Part 2 -- widened border (1px -> 2px) and an explicit drop
+   shadow (a genuine local-backing/contrast cue, distinct from the glow
+   above, which reads as a lift off the shelf rather than a glow around the
+   card) added on top of the pre-existing border+glow+scale+lift+brighter-
+   title+neighbor-desaturation cues -- reported as still not unmistakable
+   enough at couch distance against busy hero art. */
 .center {
-  border: 1px solid #d6b274;
+  border: 2px solid #d6b274;
   box-shadow: 0 0 0 1px rgba(214, 178, 116, 0.3), 0 0 28px rgba(214, 178, 116, 0.3), 0 0 44px rgba(79, 209, 197, 0.12);
+  filter: drop-shadow(0 16px 22px rgba(0, 0, 0, 0.55));
   transform: scale(1.07) translateY(-5px);
 }
 

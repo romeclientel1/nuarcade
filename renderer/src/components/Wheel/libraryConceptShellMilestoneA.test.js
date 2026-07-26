@@ -76,8 +76,8 @@ test("the compact selected-game strip sits below the shelf and does not cover th
   assert.match(css, /\.stage \.wheelArea\s*\{[^}]*top:\s*clamp\(158px,\s*17\.2vh,\s*186px\)[^}]*height:\s*clamp\(290px,\s*30\.5vh,\s*330px\)/s)
   // D4: infoPanel is top-anchored and bounded-width (a compact strip, not a
   // full-width slab), positioned right below .wheelArea's own bottom edge.
-  assert.match(css, /\.stage \.infoPanel\s*\{[^}]*top:\s*clamp\(498px,\s*49vh,\s*530px\)[^}]*width:\s*clamp\(700px,\s*60vw,\s*1150px\)[^}]*min-height:\s*44px/s)
-  assert.match(css, /@media \(max-width: 1280px\), \(max-height: 760px\)[\s\S]*?\.stage \.wheelArea\s*\{[^}]*top:\s*150px[^}]*height:\s*210px[\s\S]*?\.stage \.infoPanel\s*\{[^}]*top:\s*368px/s)
+  assert.match(css, /\.stage \.infoPanel\s*\{[^}]*top:\s*clamp\(462px,\s*45.5vh,\s*494px\)[^}]*width:\s*clamp\(700px,\s*60vw,\s*1150px\)[^}]*min-height:\s*40px/s)
+  assert.match(css, /@media \(max-width: 1280px\), \(max-height: 760px\)[\s\S]*?\.stage \.wheelArea\s*\{[^}]*top:\s*150px[^}]*height:\s*210px[\s\S]*?\.stage \.infoPanel\s*\{[^}]*top:\s*372px/s)
 })
 
 test("return, console, and the visible Depart plaque use integrated live controls", () => {
@@ -100,5 +100,5 @@ test("focus, reduced motion, launch, favorite and Library navigation contracts r
   assert.match(jsx, /onClick=\{launchGame\} disabled=\{launching\}/)
   assert.match(jsx, /onClick=\{\(\) => toggleFavorite\(current\.id \|\| current\.profile\)\}/)
   assert.match(jsx, /if \(onReturnHome\) onReturnHome\(\)/)
-  assert.match(jsx, /\(\) => openDepart\(consoleDepartRef\.current\),\s*\/\/ 11 Depart/)
+  assert.match(jsx, /onClick=\{openDepart\}/)
 })

@@ -75,15 +75,12 @@ test("no consoleTrigger icon was added -- the Library Console trigger keeps its 
   assert.doesNotMatch(triggerBlock, /vesparaMicroMark|vesparaSeal/)
 })
 
-test("Library Console trigger/panel, consoleFocusIdx model, and topMenuActions/TOP_MENU_MAX are completely untouched by brand integration", () => {
-  assert.match(wheelJsx, /className=\{styles\.consoleTrigger \+ \(consoleVisible \? " " \+ styles\.consoleTriggerActive : ""\)\}/)
+test("Library Tools trigger/panel, consoleFocusIdx model, and topMenuActions/TOP_MENU_MAX are unaffected by brand integration", () => {
+  assert.match(wheelJsx, /className=\{styles\.consoleTrigger \+ \(consoleVisible \? " " \+ styles\.consoleTriggerActive : ""\) \+ \(focusZone === 0 && topMenuIdx === 1 \? " " \+ styles\.barFocused : ""\)\}/)
   assert.match(wheelJsx, /const \[consoleFocusIdx, setConsoleFocusIdx\] = useState\(0\)/)
-  assert.match(wheelJsx, /const CONSOLE_ACTION_INDICES = \[0, 1, 2, 3, 4, 6, 7, 8, 9, 10\]/)
-  assert.match(wheelJsx, /const TOP_MENU_MAX = 10/)
-  const idxByAction = { Sort: 0, RND: 1, Sets: 2, Stats: 3, Ach: 4, Home: 5, Player: 6, Media: 7, Settings: 8, Help: 9, Exit: 10 }
-  for (const idx of Object.values(idxByAction)) {
-    assert.match(wheelJsx, new RegExp("topMenuIdx === " + idx + "\\b"))
-  }
+  assert.match(wheelJsx, /const TOP_MENU_MAX = 1/)
+  assert.match(wheelJsx, /topMenuIdx === 0\b/)
+  assert.match(wheelJsx, /topMenuIdx === 1\b/)
 })
 
 test("shelf geometry, launch dispatch, category/tab behavior, and search filtering remain untouched", () => {
@@ -91,7 +88,7 @@ test("shelf geometry, launch dispatch, category/tab behavior, and search filteri
   // rotateY) was deliberately replaced with a flat horizontal shelf -- see
   // libraryFullWidthMilestoneD3.test.js for the full contract. Tab geometry
   // (SLOT_WIDTH, unrelated to the card shelf) is untouched.
-  assert.match(wheelJsx, /const CARD_SLOT_WIDTH = 230/)
+  assert.match(wheelJsx, /const CARD_SLOT_WIDTH = 252/)
   assert.doesNotMatch(wheelJsx, /rotateY\(/)
   assert.match(wheelJsx, /onClick=\{launchGame\} disabled=\{launching\}/)
   assert.match(wheelJsx, /const SLOT_WIDTH = 168/)

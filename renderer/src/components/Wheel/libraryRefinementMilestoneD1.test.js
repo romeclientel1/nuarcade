@@ -55,7 +55,7 @@ test("D4: Continue Playing is gone -- the main collection shelf sits directly be
 })
 
 test("shelf navigation handlers remain at the approved values (D3: flat-shelf geometry, see libraryFullWidthMilestoneD3.test.js)", () => {
-  assert.match(jsx, /const CARD_SLOT_WIDTH = 230/)
+  assert.match(jsx, /const CARD_SLOT_WIDTH = 252/)
   assert.match(jsx, /const x = signed \* CARD_SLOT_WIDTH/)
   assert.match(jsx, /<button className=\{styles\.navBtn\} onClick=\{\(\) => navigate\(-1\)\}/)
   assert.match(jsx, /<button className=\{styles\.navBtn\} onClick=\{\(\) => navigate\(1\)\}/)
@@ -102,8 +102,8 @@ test("D4: responsive rules preserve the full-width 1280 composition (Continue Pl
   assert.match(compact, /\.stage \.libraryTitleRow\s*\{[^}]*top:\s*60px[^}]*left:\s*22px[^}]*right:\s*22px/s)
   assert.match(compact, /\.stage \.categoryStrip\s*\{[^}]*top:\s*106px[^}]*left:\s*22px[^}]*right:\s*22px/s)
   assert.match(compact, /\.stage \.wheelArea\s*\{[^}]*top:\s*150px[^}]*height:\s*210px/s)
-  assert.match(compact, /\.previewReservation\s*\{[^}]*top:\s*448px[^}]*width:\s*260px/s)
-  assert.match(compact, /\.stage \.infoPanel\s*\{[^}]*left:\s*50%[^}]*top:\s*368px[^}]*width:\s*720px[^}]*min-height:\s*38px/s)
+  assert.match(compact, /\.previewReservation\s*\{[^}]*top:\s*456px[^}]*width:\s*260px/s)
+  assert.match(compact, /\.stage \.infoPanel\s*\{[^}]*left:\s*50%[^}]*top:\s*372px[^}]*width:\s*720px[^}]*min-height:\s*34px/s)
   assert.doesNotMatch(compact, /\.placeName\s*\{[^}]*font-size:/s)
   assert.doesNotMatch(compact, /\.marqueeWrap\s*\{[^}]*font-size:/s)
 })

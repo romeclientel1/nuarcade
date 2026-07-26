@@ -30,7 +30,7 @@ const cardCss = readFileSync(join(HERE, "GameCard.module.css"), "utf8").replace(
 // -- 1. Carousel geometry/math unchanged (re-affirmed once more here) --------
 
 test("getCardStyle's signed/absPos selection math and navigate() are unchanged by the card/pedestal pass (D3 replaced only the arc transform, not this architecture)", () => {
-  assert.match(wheelJsx, /const CARD_SLOT_WIDTH = 230/)
+  assert.match(wheelJsx, /const CARD_SLOT_WIDTH = 252/)
   assert.match(wheelJsx, /const wrapped = \(\(diff % n\) \+ n\) % n/)
   assert.match(wheelJsx, /const signed = wrapped > n \/ 2 \? wrapped - n : wrapped/)
   assert.match(wheelJsx, /const navigate = \(dir\) => \{/)
@@ -169,11 +169,15 @@ test("statsRow, libraryToolsGroup, and utilityGroup all wrap instead of overflow
   }
 })
 
-test("all 11 top-menu utility controls (Sort..Exit) are still present with their unchanged topMenuIdx mapping", () => {
-  const idxByAction = { Sort: 0, RND: 1, Sets: 2, Stats: 3, Ach: 4, Home: 5, Player: 6, Media: 7, Settings: 8, Help: 9, Exit: 10 }
-  for (const idx of Object.values(idxByAction)) {
-    assert.match(wheelJsx, new RegExp("topMenuIdx === " + idx + "\\b"))
-  }
+// D5, Parts 7-9: zone 0 (topMenuIdx) is narrowed to Home (0) and the
+// Tools trigger (1); the remaining tools (Sort/Random/Collections/Stats/
+// Achievements/Help) are reachable via consoleFocusIdx once the drawer is
+// open, not via topMenuIdx. Player/Media/Settings/Exit are gone from the
+// Library entirely (see libraryToolsDrawerMilestoneD5.test.js).
+test("zone 0 (topMenuIdx) has exactly two stops -- Home and the Tools trigger", () => {
+  assert.match(wheelJsx, /topMenuIdx === 0\b/)
+  assert.match(wheelJsx, /topMenuIdx === 1\b/)
+  assert.match(wheelJsx, /const TOP_MENU_MAX = 1\b/)
 })
 
 test("every utility/tool button in the header keeps a :focus-visible rule", () => {
@@ -191,11 +195,13 @@ test("Return to Sanctuary's button markup and worldNav placement are unchanged",
 
 // -- 12. Settings and Media compatibility access remains intact -------------
 
-test("Settings and Media buttons still dispatch their unchanged handlers from the utilityGroup", () => {
-  assert.match(wheelJsx, /onClick=\{\(\) => setShowMediaManager\(true\)\}/)
-  assert.match(wheelJsx, /onClick=\{\(\) => setShowSettings\(true\)\}/)
-  assert.match(wheelJsx, /\{showMediaManager && <MediaManager onClose=\{\(\) => setShowMediaManager\(false\)\}/)
-  assert.match(wheelJsx, /\{showSettings && <Settings games=\{games\}/)
+// D5, Part 8: Settings/Media are no longer a Library feature at all --
+// Control Room (Milestone C3) is the only place they're reachable now.
+test("Settings and Media are no longer reachable from the Library", () => {
+  assert.doesNotMatch(wheelJsx, /setShowMediaManager\(true\)/)
+  assert.doesNotMatch(wheelJsx, /setShowSettings\(true\)/)
+  assert.doesNotMatch(wheelJsx, /<MediaManager/)
+  assert.doesNotMatch(wheelJsx, /<Settings\b/)
 })
 
 // -- Continue Playing: data/click behavior preserved, visual integration improved --

@@ -79,7 +79,7 @@ test("the main shelf spans the expanded width and is a flat horizontal line -- n
   assert.match(wheelArea, /left:\s*clamp\(16px,\s*2\.2vw,\s*40px\)/)
   assert.match(wheelArea, /right:\s*clamp\(16px,\s*2\.2vw,\s*40px\)/)
   assert.doesNotMatch(wheelArea, /\bwidth:\s*min\(/)
-  assert.match(jsx, /const CARD_SLOT_WIDTH = 230/)
+  assert.match(jsx, /const CARD_SLOT_WIDTH = 252/)
   assert.match(jsx, /const x = signed \* CARD_SLOT_WIDTH/)
   assert.doesNotMatch(jsx, /rotateY\(/)
   assert.doesNotMatch(jsx, /Math\.sin\(|Math\.cos\(|ARC_RADIUS|ANGLE_STEP/)
@@ -102,7 +102,7 @@ test("cover art aspect ratio is preserved -- GameCard's .card box dimensions and
 test("D2's selected-card focus cues (.center, .centerActive) are unchanged by the D3 shelf geometry pass", () => {
   const center = cardCss.match(/(?<!\.card)\.center\s*\{([^}]*)\}/) || cardCss.match(/\n\.center \{([^}]*)\}/)
   assert.ok(center)
-  assert.match(center[1], /border:\s*1px solid #d6b274/)
+  assert.match(center[1], /border:\s*2px solid #d6b274/)
   assert.match(center[1], /transform:\s*scale\(1\.07\) translateY\(-5px\)/)
   assert.match(block(cardCss, ".centerActive"), /border-color:\s*#f0d29c/)
   assert.match(jsx, /isNavFocused=\{focusZone === 2\}/)
@@ -116,8 +116,8 @@ test("D2's selected-card focus cues (.center, .centerActive) are unchanged by th
 
 test("the selected-game strip is a top-anchored shallow row retaining title, meta, genre, and Launch's handler (D4: bounded width -- see libraryLibraryOnlyMilestoneD4.test.js for the geometry contract)", () => {
   const panel = block(css, ".stage .infoPanel")
-  assert.match(panel, /top:\s*clamp\(498px,\s*49vh,\s*530px\)/)
-  assert.match(panel, /min-height:\s*44px/)
+  assert.match(panel, /top:\s*clamp\(462px,\s*45.5vh,\s*494px\)/)
+  assert.match(panel, /min-height:\s*40px/)
   assert.doesNotMatch(panel, /\bbottom:/)
   const panelJsx = jsx.slice(jsx.indexOf("<div className={styles.infoPanel"), jsx.indexOf("{showSort &&"))
   assert.match(panelJsx, /styles\.marqueeWrap[\s\S]*current\.title/)
@@ -131,7 +131,7 @@ test("the selected-game strip is a top-anchored shallow row retaining title, met
 
 test("Archive View is positioned beneath the collection (top offset after .infoPanel, not beside it)", () => {
   const preview = block(css, ".previewReservation")
-  assert.match(preview, /top:\s*clamp\(576px,\s*58vh,\s*626px\)/)
+  assert.match(preview, /top:\s*clamp\(546px,\s*54vh,\s*582px\)/)
 })
 
 test("Archive View remains a real 16:9 frame", () => {
@@ -159,7 +159,7 @@ test("the full stack (header through Archive View) fits within a 1080px-tall vie
   // 1920x1080: wheelArea 186-515, infoPanel 529-603, archiveFrame 626-957,
   // depart 978-1037, hintBar 1041-1080 -- 14px+ clearance at every boundary.
   assert.match(css, /\.stage \.wheelArea\s*\{[^}]*top:\s*clamp\(158px,\s*17\.2vh,\s*186px\)[^}]*right:[^}]*height:\s*clamp\(290px,\s*30\.5vh,\s*330px\)/s)
-  assert.match(css, /\.previewReservation\s*\{[^}]*top:\s*clamp\(576px,\s*58vh,\s*626px\)/s)
+  assert.match(css, /\.previewReservation\s*\{[^}]*top:\s*clamp\(546px,\s*54vh,\s*582px\)/s)
 })
 
 test("the compact 1280x720 stack reflows without overlap and Archive View stays visible (smaller, not hidden)", () => {
@@ -167,8 +167,8 @@ test("the compact 1280x720 stack reflows without overlap and Archive View stays 
   // Verified live via CDP at exactly 1280x720: wheelArea 150-360, infoPanel
   // 368-434, archiveFrame 448-620, depart 638-693, hintBar 681-720.
   assert.match(compact, /\.stage \.wheelArea\s*\{[^}]*top:\s*150px[^}]*height:\s*210px/s)
-  assert.match(compact, /\.stage \.infoPanel\s*\{[^}]*top:\s*368px/s)
-  assert.match(compact, /\.previewReservation\s*\{[^}]*top:\s*448px[^}]*width:\s*260px/s)
+  assert.match(compact, /\.stage \.infoPanel\s*\{[^}]*top:\s*372px/s)
+  assert.match(compact, /\.previewReservation\s*\{[^}]*top:\s*456px[^}]*width:\s*260px/s)
 })
 
 // -- 20. Primary typography integrity ----------------------------------------

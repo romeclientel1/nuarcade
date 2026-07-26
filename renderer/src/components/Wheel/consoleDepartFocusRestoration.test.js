@@ -50,11 +50,14 @@ test("Console controller cancellation resolves its dedicated ref without fixed-p
   assert.equal(fixed.focusCalls, 0)
 })
 
-test("Wheel wires controller Console activation to the dedicated ref and leaves Console state intact", () => {
-  assert.match(wheel, /const consoleDepartRef = useRef\(null\)/)
-  assert.match(wheel, /ref=\{consoleDepartRef\}[\s\S]*?className=\{styles\.consoleDepartBtn/)
-  assert.match(wheel, /\(\) => openDepart\(consoleDepartRef\.current\),\s*\/\/ 11 Depart/)
-  assert.match(wheel, /consoleVisible \? consoleDepartRef\.current : null/)
+// D5, Part 8: Depart is no longer duplicated inside Library Tools, so
+// there is no separate console-Depart ref to resolve anymore -- the one
+// universal departTriggerRef (rendered outside the drawer) is now the
+// only invoker openDepart/resolveDepartInvoker ever sees.
+test("Wheel resolves Depart focus through the one universal departTriggerRef, with no console-local Depart ref left", () => {
+  assert.doesNotMatch(wheel, /consoleDepartRef/)
+  assert.doesNotMatch(wheel, /styles\.consoleDepartBtn/)
+  assert.match(wheel, /departInvokerRef\.current = resolveDepartInvoker\(eventOrElement, departTriggerRef\.current\)/)
   assert.match(wheel, /restoreDepartFocus\(departInvokerRef\.current\)/)
 
   const cancelBlock = wheel.slice(

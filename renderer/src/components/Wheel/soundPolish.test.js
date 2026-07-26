@@ -30,12 +30,13 @@ test("useArcadeSounds is wired with the raw ui-sound config props, never pre-con
   assert.doesNotMatch(jsx, /uiSoundVolumeToGainScale|normalizeUiSoundsEnabled/, "Wheel must not duplicate the conversion useArcadeSounds already performs")
 })
 
-test("the new uiSoundsEnabled/onUiSoundsChange/uiSoundVolume/onUiSoundVolumeChange props are threaded into Settings, mirroring the existing crtEnabled/onCRTChange pattern", () => {
-  const settingsLine = jsx.split("\n").find(l => l.includes("<Settings "))
-  assert.ok(settingsLine, "expected a <Settings ...> render line")
-  for (const attr of ["uiSoundsEnabled={uiSoundsEnabled}", "onUiSoundsChange={onUiSoundsChange}", "uiSoundVolume={uiSoundVolume}", "onUiSoundVolumeChange={onUiSoundVolumeChange}"]) {
-    assert.ok(settingsLine.includes(attr), "missing " + attr)
-  }
+// D5, Part 8: Wheel no longer mounts its own <Settings> (Control Room owns
+// it, Milestone C3, which receives the identical prop set) -- these props
+// remain on Wheel's own signature only because useArcadeSounds still
+// consumes uiSoundsEnabled/uiSoundVolume directly (see the test above).
+test("uiSoundsEnabled/onUiSoundsChange/uiSoundVolume/onUiSoundVolumeChange remain real Wheel props, with no local Settings render left to thread them into", () => {
+  assert.match(jsx, /export default function Wheel\(\{[^}]*uiSoundsEnabled[^}]*onUiSoundsChange[^}]*uiSoundVolume[^}]*onUiSoundVolumeChange/)
+  assert.doesNotMatch(jsx, /<Settings\b/)
 })
 
 // -- accepted launch: retains its existing single sound path -------------------

@@ -369,18 +369,23 @@
    bounded to ~60vw (55-65% target at 1080p), so it visually belongs to the
    selected game beneath the shelf's own center rather than reading as a
    global footer bar. */
+/* Milestone D5, Part 3 -- raised (top lowered by ~36px) and padding/
+   min-height trimmed slightly so Archive View below (Part 4) gets the
+   extra vertical room it needs to sit fully inside the viewport. Bounded
+   width/centering, title/meta/favorite/genre content, and Launch Game as
+   a distinct focus target are all unchanged. */
 .stage .infoPanel {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  top: clamp(498px, 49vh, 530px);
+  top: clamp(462px, 45.5vh, 494px);
   width: clamp(700px, 60vw, 1150px);
-  min-height: 44px;
+  min-height: 40px;
   box-sizing: border-box;
   display: flex;
   align-items: center;
   gap: 20px;
-  padding: 6px 22px;
+  padding: 5px 22px;
   border: 1px solid rgba(214, 178, 116, 0.28);
   border-radius: 6px 2px 6px 2px;
   background: linear-gradient(155deg, rgba(35, 25, 15, 0.78), rgba(15, 14, 10, 0.84));
@@ -452,9 +457,16 @@
    outer border, and full 16:9 gameplay area -- has genuine room to sit
    fully inside the viewport above the hint bar/Depart instead of clipping
    at the bottom edge. */
+/* Milestone D5, Part 4 -- raised further still (top lowered by ~50-60px
+   from D4) so the full frame -- label, outer border, and the entire 16:9
+   playback area -- sits comfortably inside the viewport with a real
+   bottom safe margin above the hint bar/Depart, at both 1920x1080 and the
+   1280x720 compact breakpoint below. A/B video slots, readiness,
+   crossfade, and every other Archive View lifecycle behavior are
+   untouched -- only this wrapper's top offset changed. */
 .previewReservation {
   position: absolute;
-  top: clamp(576px, 58vh, 626px);
+  top: clamp(546px, 54vh, 582px);
   left: 50%;
   transform: translateX(-50%);
   z-index: 7;
@@ -657,15 +669,15 @@
     left: 50%;
     right: auto;
     transform: translateX(-50%);
-    top: 368px;
+    top: 372px;
     width: 720px;
-    min-height: 38px;
-    padding: 5px 16px;
+    min-height: 34px;
+    padding: 4px 16px;
     gap: 12px;
   }
 
   .previewReservation {
-    top: 448px;
+    top: 456px;
     width: 260px;
     padding: 7px 9px 8px;
   }
@@ -978,6 +990,17 @@
 @keyframes consolePanelEnter {
   from { opacity: 0; transform: translateY(-6px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+/* D5, Part 7 -- the drawer's own visible title, distinct from the
+   trigger button's short "TOOLS" label. */
+.consolePanelTitle {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(214, 178, 116, 0.7);
 }
 
 .consoleSearchItem {

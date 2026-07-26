@@ -49,8 +49,12 @@ test("the console trigger is anchored to the upper-right (inside consoleWrap, in
 
 // -- 2 & 3. Existing Search/Settings/Media/Sort/RND/Sets/Stats/Ach/Player/Help/Exit remain available, unchanged handlers --
 
-test("every previously-exposed utility action is still present inside the console panel with its exact unchanged handler", () => {
-  const panelIdx = jsx.indexOf('id="library-console-panel"')
+// D5, Part 8 -- Player/Media/Settings/Depart are no longer in this panel
+// (Settings/Media -> Control Room, Player -> Sanctuary, Depart -> the one
+// universal action); see libraryToolsDrawerMilestoneD5.test.js for the
+// current, full item list.
+test("every remaining Library Tools action is still present inside the panel with its exact unchanged handler", () => {
+  const panelIdx = jsx.indexOf('id="library-tools-panel"')
   const panelEndIdx = jsx.indexOf("{showSort && <SortMenu")
   const panel = jsx.slice(panelIdx, panelEndIdx)
   assert.match(panel, /onClick=\{\(\) => setShowSort\(s => !s\)\}/, "Sort")
@@ -58,40 +62,37 @@ test("every previously-exposed utility action is still present inside the consol
   assert.match(panel, /onClick=\{\(\) => setShowCollections\(true\)\}/, "Sets")
   assert.match(panel, /onClick=\{\(\) => navigateTo\("stats"\)\}/, "Stats")
   assert.match(panel, /onClick=\{\(\) => setShowAchievements\(true\)\}/, "Achievements")
-  assert.match(panel, /onClick=\{onSwitchPlayer\}/, "Player")
-  assert.match(panel, /onClick=\{\(\) => setShowMediaManager\(true\)\}/, "Media")
-  assert.match(panel, /onClick=\{\(\) => setShowSettings\(true\)\}/, "Settings")
   assert.match(panel, /onClick=\{\(\) => navigateTo\("help"\)\}/, "Help")
-  assert.match(panel, /onClick=\{openDepart\}/, "Depart")
 })
 
-test("Search is exposed as a console menu item that reveals the existing search UI without a new query mechanism", () => {
+test("Search is exposed as a Tools menu item that reveals the existing search UI without a new query mechanism", () => {
   assert.match(jsx, /className=\{styles\.consoleSearchItem \+ \(consoleVisible && consoleFocusIdx === 0 \? " " \+ styles\.barFocused : ""\)\}\s*\n\s*onClick=\{\(\) => \{ setShowSearch\(true\); setConsoleOpen\(false\) \}\}/)
 })
 
-// -- 3 (cont). topMenuActions / TOP_MENU_MAX / index mapping are completely unchanged --
+// -- 3 (cont). topMenuActions / TOP_MENU_MAX -- D5 narrowed zone 0 to Home + Tools trigger --
 
-test("topMenuActions array, TOP_MENU_MAX, and every topMenuIdx comparison are byte-for-byte unchanged", () => {
-  assert.match(jsx, /const TOP_MENU_MAX = 10/)
+test("topMenuActions is Home + the Tools trigger (TOP_MENU_MAX=1); the drawer's own items live in toolsActions", () => {
+  assert.match(jsx, /const TOP_MENU_MAX = 1/)
+  assert.match(jsx, /\(\) => \{ if \(onReturnHome\) onReturnHome\(\) \},\s*\/\/ 0 Home/)
+  assert.match(jsx, /\(\) => setConsoleOpen\(true\),\s*\/\/ 1 Tools trigger/)
   assert.match(jsx, /\(\) => setShowSort\(s => !s\),\s*\/\/ 0 Sort/)
-  assert.match(jsx, /\(\) => \{ if \(onReturnHome\) onReturnHome\(\) \},\s*\/\/ 6 Home/)
-  assert.match(jsx, /\(\) => \{ if \(onSwitchPlayer\) onSwitchPlayer\(\) \},\s*\/\/ 7 Player/)
-  assert.match(jsx, /\(\) => openDepart\(consoleDepartRef\.current\),\s*\/\/ 11 Depart/)
-  const idxByAction = { Sort: 0, RND: 1, Sets: 2, Stats: 3, Ach: 4, Home: 5, Player: 6, Media: 7, Settings: 8, Help: 9, Exit: 10 }
-  for (const idx of Object.values(idxByAction)) {
-    assert.match(jsx, new RegExp("topMenuIdx === " + idx + "\\b"))
-  }
 })
 
 // -- 4 & 5. Opening/closing the console has predictable focus behavior; Escape restores trigger focus --
 
-test("consoleOpen is a dedicated state, independent of focusZone, so opening/closing it cannot alter the existing zone system", () => {
+test("consoleOpen is the sole source of drawer visibility -- opening no longer happens as a side effect of focusZone", () => {
   assert.match(jsx, /const \[consoleOpen, setConsoleOpen\] = useState\(false\)/)
-  assert.match(jsx, /const consoleVisible = consoleOpen \|\| focusZone === 0/)
+  assert.match(jsx, /const consoleVisible = consoleOpen$/m)
 })
 
-test("opening the console (consoleOpen becomes true) moves focus to the panel's first item", () => {
-  assert.match(jsx, /useEffect\(\(\) => \{\s*\n\s*if \(consoleOpen\) consoleFirstItemRef\.current\?\.focus\(\)\s*\n\s*\}, \[consoleOpen\]\)/)
+// D5 correction (live review round 2): real DOM focus now follows
+// consoleFocusIdx on every change while the drawer is open, not just on
+// the initial open -- see collectionsCreationMilestoneD5-adjacent fix in
+// libraryToolsDrawerMilestoneD5.test.js for the double-highlight bug this
+// closed (Search's own :focus-visible ring stayed lit after Left/Right
+// moved barFocused to a different item).
+test("opening the console (consoleOpen becomes true) moves focus to the panel's first item, and every subsequent consoleFocusIdx change moves it again", () => {
+  assert.match(jsx, /useEffect\(\(\) => \{\s*\n\s*if \(!consoleOpen\) return\s*\n\s*const target = consoleFocusIdx === 0 \? consoleFirstItemRef\.current : toolsItemRefs\.current\[consoleFocusIdx\]\s*\n\s*target\?\.focus\(\)\s*\n\s*\}, \[consoleOpen, consoleFocusIdx\]\)/)
 })
 
 test("closeConsole closes the panel and restores focus to its own trigger button", () => {
@@ -206,7 +207,7 @@ test("reduced motion neutralizes the new console panel entrance animation and it
 // -- 12. No unrelated Library behavior changed -------------------------------
 
 test("shelf geometry, launch dispatch, and Recently Played click-to-select are untouched", () => {
-  assert.match(jsx, /const CARD_SLOT_WIDTH = 230/)
+  assert.match(jsx, /const CARD_SLOT_WIDTH = 252/)
   assert.match(jsx, /onClick=\{launchGame\} disabled=\{launching\}/)
   assert.match(jsx, /const idx = filteredGames\.findIndex\(fg =>/)
 })
@@ -218,15 +219,19 @@ test("Library Console remains independent of the Archive View A/B lifecycle", ()
   assert.doesNotMatch(jsx.slice(jsx.indexOf("const closeConsole"), jsx.indexOf("// Search still reveals")), /bgVideo|archiveVideo/)
 })
 
-test("Settings and Media destinations mount with their unchanged props", () => {
-  assert.match(jsx, /\{showMediaManager && <MediaManager onClose=\{\(\) => setShowMediaManager\(false\)\} onVideosUpdated=\{refreshVideoPaths\} onArtworkUpdated=\{refreshArtwork\} \/>\}/)
-  assert.match(jsx, /\{showSettings && <Settings games=\{games\}/)
+// D5, Part 8: Settings/MediaManager no longer mount from the Library at
+// all -- both remain fully available from the Control Room (Milestone C3).
+test("Settings and MediaManager are no longer imported or mounted by the Library", () => {
+  assert.doesNotMatch(jsx, /import Settings from "\.\.\/Settings\/Settings"/)
+  assert.doesNotMatch(jsx, /import MediaManager from "\.\.\/MediaManager\/MediaManager"/)
+  assert.doesNotMatch(jsx, /<MediaManager/)
+  assert.doesNotMatch(jsx, /<Settings\b/)
 })
 
 test("new i18n keys exist in both locales, and no existing key's value was altered", () => {
-  assert.match(en, /"wheel\.libraryConsole":\s*"Console"/)
+  assert.match(en, /"wheel\.libraryTools":\s*"Tools"/)
   assert.match(en, /"wheel\.searchAction":\s*"Search"/)
-  assert.match(es, /"wheel\.libraryConsole":\s*"Consola"/)
+  assert.match(es, /"wheel\.libraryTools":\s*"Herramientas"/)
   assert.match(es, /"wheel\.searchAction":\s*"Buscar"/)
   assert.match(en, /"wheel\.navHome":\s*"Return to Sanctuary"/)
   assert.match(en, /"wheel\.searchPlaceholder":\s*"Search games, systems, ROM names\.\.\."/)

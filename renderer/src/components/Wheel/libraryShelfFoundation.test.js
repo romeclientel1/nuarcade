@@ -96,7 +96,7 @@ test("cardTrack still directly follows the shelf layers and the first nav button
 // -- 4. Existing carousel geometry constants and getCardStyle are unchanged --
 
 test("getCardStyle's zIndex/pointerEvents/transition contract is unchanged; D3 replaced only the transform's arc math with a flat shelf", () => {
-  assert.match(jsx, /const CARD_SLOT_WIDTH = 230/)
+  assert.match(jsx, /const CARD_SLOT_WIDTH = 252/)
   assert.match(jsx, /const scale = signed === 0 \? 1 : Math\.max\(0\.74, 1 - absPos \* 0\.065\)/)
   assert.match(jsx, /const opacity = signed === 0 \? 1 : Math\.max\(0\.5, 1 - absPos \* 0\.12\)/)
   assert.match(jsx, /pointerEvents: signed === 0 \? 'auto' : 'none'/)
@@ -155,28 +155,21 @@ test("infoPanel::before is decorative only (pointer-events: none), providing the
 
 // -- 8. Library Console structure and controller behavior are unchanged -----
 
-test("Library Console trigger/panel/consoleFocusIdx model and topMenuActions are completely untouched by the shelf pass", () => {
-  assert.match(jsx, /className=\{styles\.consoleTrigger \+ \(consoleVisible \? " " \+ styles\.consoleTriggerActive : ""\)\}/)
+test("Library Tools trigger/panel/consoleFocusIdx model are unaffected by the shelf pass", () => {
+  assert.match(jsx, /className=\{styles\.consoleTrigger \+ \(consoleVisible \? " " \+ styles\.consoleTriggerActive : ""\) \+ \(focusZone === 0 && topMenuIdx === 1 \? " " \+ styles\.barFocused : ""\)\}/)
   assert.match(jsx, /const \[consoleFocusIdx, setConsoleFocusIdx\] = useState\(0\)/)
-  assert.match(jsx, /const CONSOLE_ACTION_INDICES = \[0, 1, 2, 3, 4, 6, 7, 8, 9, 10\]/)
-  assert.match(jsx, /const TOP_MENU_MAX = 10/)
-  const idxByAction = { Sort: 0, RND: 1, Sets: 2, Stats: 3, Ach: 4, Home: 5, Player: 6, Media: 7, Settings: 8, Help: 9, Exit: 10 }
-  for (const idx of Object.values(idxByAction)) {
-    assert.match(jsx, new RegExp("topMenuIdx === " + idx + "\\b"))
-  }
+  assert.match(jsx, /const TOP_MENU_MAX = 1/)
 })
 
-test("console Down-exit and Up-boundary controller behavior are untouched by the shelf pass", () => {
+test("console Down-exit and Up-boundary controller behavior are unaffected by the shelf pass", () => {
   const downBlock = jsx.slice(jsx.indexOf("down: () => {"), jsx.indexOf("confirm: () => {"))
-  assert.match(downBlock, /if \(consoleOpenRef\.current \|\| focusZoneRef\.current === 0\) \{ setConsoleOpen\(false\); setFocusZone\(1\); sounds\.navigate\(\); return \}/)
+  assert.match(downBlock, /if \(consoleOpenRef\.current\) \{ setConsoleOpen\(false\); setFocusZone\(1\); sounds\.navigate\(\); return \}/)
 })
 
-// -- 9. Search, Settings, Media, Return to Sanctuary, category behavior intact --
+// -- 9. Search, Return to Sanctuary, category behavior intact --
 
-test("search filtering/clear, Settings/Media mount points, and Return to Sanctuary are unaffected by the shelf pass", () => {
+test("search filtering/clear and Return to Sanctuary are unaffected by the shelf pass", () => {
   assert.match(jsx, /if \(debouncedSearch\.trim\(\)\) \{/)
-  assert.match(jsx, /\{showMediaManager && <MediaManager onClose=\{\(\) => setShowMediaManager\(false\)\} onVideosUpdated=\{refreshVideoPaths\} onArtworkUpdated=\{refreshArtwork\} \/>\}/)
-  assert.match(jsx, /\{showSettings && <Settings games=\{games\}/)
   assert.match(jsx, /<div className=\{styles\.worldNav\}>\s*\n\s*<button className=\{styles\.returnHomeBtn/)
 })
 

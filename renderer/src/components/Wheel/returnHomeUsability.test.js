@@ -40,7 +40,7 @@ test("Backspace handling only fires after the anyOverlay early return -- primary
 })
 
 test("the keydown effect's dependency array includes onReturnHome", () => {
-  assert.match(jsx, /\}, \[filteredGames, selectedIndex, showSearch, showVirtualKeyboard, showDetail, currentDestination, showAchievements, showCollections, showSettings, showMediaManager, showCoach, showOperator, current, onReturnHome\]\)/)
+  assert.match(jsx, /\}, \[filteredGames, selectedIndex, showSearch, showVirtualKeyboard, showDetail, currentDestination, showAchievements, showCollections, showCoach, showOperator, current, onReturnHome\]\)/)
 })
 
 // -- Editable targets are excluded ---------------------------------------------
@@ -62,7 +62,7 @@ test("Escape's overlay-close behavior is unchanged (no onReturnHome call added t
 })
 
 test("Enter and Space handlers are unchanged", () => {
-  assert.match(jsx, /if \(e\.key === "Enter"\) \{ if \(!showDetail && currentDestination !== "help" && currentDestination !== "stats" && !showAchievements && !showCollections && !showSettings && !showMediaManager && !showCoach\) \{ sounds\.select\(\); resetLaunching\(\); setShowDetail\(true\) \} else if \(showDetail\) \{ if \(current\) launchGame\(\) \} \}/)
+  assert.match(jsx, /if \(e\.key === "Enter"\) \{ if \(!showDetail && currentDestination !== "help" && currentDestination !== "stats" && !showAchievements && !showCollections && !showCoach\) \{ sounds\.select\(\); resetLaunching\(\); setShowDetail\(true\) \} else if \(showDetail\) \{ if \(current\) launchGame\(\) \} \}/)
   assert.match(jsx, /if \(e\.key === " "\) \{ e\.preventDefault\(\); if \(current\) launchGame\(\) \}/)
 })
 
@@ -76,7 +76,7 @@ test("existing single-letter shortcuts (f/n/t/a/s/r) are unchanged", () => {
 // -- The control has its own visually distinct class ---------------------------
 
 test("the Return to Sanctuary button uses its own returnHomeBtn class, not settingsBtn", () => {
-  assert.match(jsx, /className=\{styles\.returnHomeBtn \+ \(focusZone === 0 && topMenuIdx === 5 \? " " \+ styles\.barFocused : ""\)\}/)
+  assert.match(jsx, /className=\{styles\.returnHomeBtn \+ \(focusZone === 0 && topMenuIdx === 0 \? " " \+ styles\.barFocused : ""\)\}/)
   assert.doesNotMatch(jsx, /styles\.settingsBtn.*onReturnHome/)
 })
 
@@ -109,13 +109,17 @@ test("wheel.navHome and wheel.returnHomeTitle are populated with Sanctuary-facin
 
 // -- Existing controller/mouse wiring to onReturnHome is unchanged ------------
 
-test("the controller top-menu path (topMenuActions[5]) still calls onReturnHome, unchanged", () => {
-  assert.match(jsx, /\(\) => \{ if \(onReturnHome\) onReturnHome\(\) \},\s*\/\/ 6 Home/)
+test("the controller top-menu path (topMenuActions[0]) still calls onReturnHome, unchanged", () => {
+  assert.match(jsx, /\(\) => \{ if \(onReturnHome\) onReturnHome\(\) \},\s*\/\/ 0 Home/)
 })
 
-test("onSwitchPlayer wiring is unchanged -- still present and reachable, only visually de-emphasized by contrast with the new returnHomeBtn styling", () => {
-  assert.match(jsx, /onClick=\{onSwitchPlayer\}/)
-  assert.match(jsx, /\{!activeProfile && onSwitchPlayer && \(/)
+// D5, Part 8: Switch Player is no longer surfaced from the Library --
+// it's reachable from Sanctuary's own action row. onSwitchPlayer remains
+// a prop Wheel receives (App.jsx still passes it, untouched by this
+// milestone) but nothing in the Library renders a control for it anymore.
+test("onSwitchPlayer is no longer rendered as a Library control", () => {
+  assert.doesNotMatch(jsx, /onClick=\{onSwitchPlayer\}/)
+  assert.match(jsx, /export default function Wheel\(\{[^}]*onSwitchPlayer/)
 })
 
 test("Wheel's own useDestination instance (Help/Stats) is untouched", () => {
