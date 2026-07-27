@@ -46,10 +46,18 @@ const EMULATOR_EXE_KEYWORDS = {
   pinballPath: 'vpinball',
 }
 
-export default function Settings({ games = [], onClose, onCRTChange, crtEnabled, themeId, onThemeChange, uiSoundsEnabled, onUiSoundsChange, uiSoundVolume, onUiSoundVolumeChange }) {
+export default function Settings({ games = [], onClose, onCRTChange, crtEnabled, themeId, onThemeChange, uiSoundsEnabled, onUiSoundsChange, uiSoundVolume, onUiSoundVolumeChange, scrollToSection }) {
   const { t, locale, setLocale, supportedLocales } = useI18n()
   const scrollRef = useRef(null)
   const saveRef    = useRef(null)
+  // Control Room direct-station navigation (R1): each station in the new
+  // Systems Wing scrolls this still-single, still-unified settings document
+  // to the anchor matching the destination the user picked, rather than
+  // splitting this component apart. `scrolledRef` guards against re-firing
+  // on every keystroke -- `config` (read below) is a new object reference
+  // on every edit via update(), so without this guard the page would jump
+  // back to the anchor every time a field changed.
+  const scrolledRef = useRef(false)
   useOverlayGamepad({
     onClose,
     onUp:      () => scrollRef.current?.scrollBy({ top: -200, behavior: 'smooth' }),
@@ -454,6 +462,12 @@ const handleSave = async () => {
     if (RESTART_KEYS.has(key)) changedPathKeysRef.current.add(key)
   }
 
+  useEffect(() => {
+    if (!scrollToSection || !config || scrolledRef.current) return
+    scrolledRef.current = true
+    document.getElementById(scrollToSection)?.scrollIntoView({ behavior: "smooth", block: "start" })
+  }, [scrollToSection, config])
+
   if (!config) return null
 
   return (
@@ -493,7 +507,7 @@ const handleSave = async () => {
 
           <div className={styles.section}>
             <div className={styles.section}>
-        <div className={styles.sectionTitle}>{t("settings.sectionEmulators")}</div>
+        <div className={styles.sectionTitle} id="section-emulators">{t("settings.sectionEmulators")}</div>
         <div className={styles.pathsNote}>
           {t("settings.emulatorsNote")}
         </div>
@@ -535,7 +549,7 @@ const handleSave = async () => {
         </div>
       </div>
 
-      <div className={styles.sectionTitle}>{t("settings.sectionPaths")}</div>
+      <div className={styles.sectionTitle} id="section-paths">{t("settings.sectionPaths")}</div>
             <div className={styles.pathsNote}>
               {t("settings.pathsNote")}
             </div>
@@ -598,6 +612,19 @@ const handleSave = async () => {
               </div>
             ))}
           </div>
+
+          <div className={styles.section}>
+            <div className={styles.sectionTitle} id="section-controllers">{t("settings.sectionControllers")}</div>
+            <div className={styles.pathsNote}>
+              {t("settings.controllersNote")}
+            </div>
+            <button className={styles.exportBtn} onClick={() => setShowControllerTest(true)}>
+              {t("settings.openControllerTest")}
+            </button>
+          </div>
+          {showControllerTest && (
+            <ControllerTest onClose={() => setShowControllerTest(false)} />
+          )}
 
           <div className={styles.section}>
             <div className={styles.sectionTitle}>{t("settings.sectionTpFolderRenamer")}</div>
@@ -677,7 +704,7 @@ const handleSave = async () => {
           )
         })}
 
-        <div className={styles.sectionTitle}>{t("settings.sectionDisplay")}</div>
+        <div className={styles.sectionTitle} id="section-display">{t("settings.sectionDisplay")}</div>
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>{t("settings.mode")}</label>
               <div className={styles.toggleGroup}>
@@ -725,7 +752,7 @@ const handleSave = async () => {
           </div>
 
           <div className={styles.section}>
-            <div className={styles.sectionTitle}>{t("settings.language")}</div>
+            <div className={styles.sectionTitle} id="section-language">{t("settings.language")}</div>
             <div className={styles.toggleGroup}>
               {supportedLocales.map(l => (
                 <button
@@ -859,7 +886,7 @@ const handleSave = async () => {
           </div>
 
           <div className={styles.section}>
-            <div className={styles.sectionTitle}>{t("settings.sectionAttract")}</div>
+            <div className={styles.sectionTitle} id="section-attract">{t("settings.sectionAttract")}</div>
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>{t("settings.idleTimeout")}</label>
               <div className={styles.sliderWrap}>
@@ -960,7 +987,7 @@ const handleSave = async () => {
           </div>
 
           <div className={styles.section}>
-            <div className={styles.sectionTitle}>{t("settings.sectionEmulators")}</div>
+            <div className={styles.sectionTitle}>{t("settings.sectionEmulatorBehavior")}</div>
             
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>{t("settings.autoConfigureTp")}</label>
@@ -1129,7 +1156,7 @@ const handleSave = async () => {
           )}
 
           <div className={styles.section}>
-            <div className={styles.sectionTitle}>{t("settings.sectionLibrary")}</div>
+            <div className={styles.sectionTitle} id="section-library">{t("settings.sectionLibrary")}</div>
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>{t("settings.rescanGames")}</label>
               <div style={{ display: 'flex', gap: 8 }}>
@@ -1227,7 +1254,7 @@ const handleSave = async () => {
               </div>
             )}
 
-            <div className={styles.inputRow}>
+            <div className={styles.inputRow} id="section-media-restoration">
               <label className={styles.inputLabel}>Orphaned media</label>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button className={styles.exportBtn} onClick={handleFindOrphans} disabled={orphanScanning}>

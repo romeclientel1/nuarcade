@@ -22,14 +22,32 @@ import { useI18n } from "../../i18n/I18nContext.js"
 // reachable door onto the same action the Systems Wing's Settings station
 // already performs, not a parallel entry in the arrow-key graph (see the
 // comment on continueSetup() below for why).
-// Each wing currently maps to exactly one real station -- Settings and Media
-// Archives are the only two destinations the existing Console exposes. No
-// additional stations are invented; see the Milestone C1 audit for why.
+// R1 -- direct-destination stations (replaces the one-station-per-wing
+// model from Milestone C1). Each wing now lists real, individually
+// selectable destinations instead of a single door onto one big folder.
+// Settings.jsx and MediaManager.jsx are still reused wholesale, unedited in
+// their save/apply/IPC logic -- a station is just {module, and either a
+// `section` anchor Settings.jsx scrolls to, or a `tab` MediaManager opens
+// directly on}. See the before-implementation report for why each station
+// maps where it does (in particular: Controllers finishes wiring an
+// existing-but-orphaned diagnostic rather than inventing a new feature, and
+// Media Restoration opens Settings -- not MediaManager -- because that is
+// where the real backup/restore/orphan-cleanup logic already lives).
 const SYSTEMS_STATIONS = [
-  { id: "settings", labelKey: "controlRoom.settingsLabel", hintKey: "controlRoom.settingsHint" },
+  { id: "emulators", module: "settings", section: "section-emulators", labelKey: "controlRoom.station.emulatorsLabel", hintKey: "controlRoom.station.emulatorsHint" },
+  { id: "gamePaths", module: "settings", section: "section-paths", labelKey: "controlRoom.station.gamePathsLabel", hintKey: "controlRoom.station.gamePathsHint" },
+  { id: "controllers", module: "settings", section: "section-controllers", labelKey: "controlRoom.station.controllersLabel", hintKey: "controlRoom.station.controllersHint" },
+  { id: "launchBehavior", module: "settings", section: "section-attract", labelKey: "controlRoom.station.launchBehaviorLabel", hintKey: "controlRoom.station.launchBehaviorHint" },
+  { id: "displayPerformance", module: "settings", section: "section-display", labelKey: "controlRoom.station.displayPerformanceLabel", hintKey: "controlRoom.station.displayPerformanceHint" },
+  { id: "preferences", module: "settings", section: "section-language", labelKey: "controlRoom.station.preferencesLabel", hintKey: "controlRoom.station.preferencesHint" },
+  { id: "systemsArchive", module: "settings", section: "section-library", labelKey: "controlRoom.station.systemsArchiveLabel", hintKey: "controlRoom.station.systemsArchiveHint", advanced: true },
 ]
 const ARCHIVES_STATIONS = [
-  { id: "media", labelKey: "controlRoom.mediaLabel", hintKey: "controlRoom.mediaHint" },
+  { id: "artwork", module: "media", tab: "artwork", labelKey: "controlRoom.station.artworkLabel", hintKey: "controlRoom.station.artworkHint" },
+  { id: "videos", module: "media", tab: "library", labelKey: "controlRoom.station.videosLabel", hintKey: "controlRoom.station.videosHint" },
+  { id: "scraping", module: "media", tab: "emumovies", labelKey: "controlRoom.station.scrapingLabel", hintKey: "controlRoom.station.scrapingHint" },
+  { id: "bezels", module: "media", tab: "bezels", labelKey: "controlRoom.station.bezelsLabel", hintKey: "controlRoom.station.bezelsHint" },
+  { id: "mediaRestoration", module: "settings", section: "section-media-restoration", labelKey: "controlRoom.station.mediaRestorationLabel", hintKey: "controlRoom.station.mediaRestorationHint", advanced: true },
 ]
 
 // Contextual-return contract (Milestone C3, Part 7): ControlRoom can be
@@ -60,6 +78,7 @@ export default function ControlRoom({
   const [systemsIdx, setSystemsIdx] = useState(0)
   const [archivesIdx, setArchivesIdx] = useState(0)
   const [activeModule, setActiveModule] = useState(null)      // null | "settings" | "media"
+  const [activeStationId, setActiveStationId] = useState(null) // which station within activeModule is open
   // True only while Continue Setup genuinely holds real DOM focus (native
   // Tab, not the arrow-key graph). Continue Setup deliberately has no
   // onFocus handler of its own (see continueSetup()'s comment) -- but that
@@ -111,13 +130,15 @@ export default function ControlRoom({
     }
   }, [focusZone, headerIdx, column, activeModule])
 
-  const openStation = (moduleId) => {
+  const openStation = (station) => {
     restoreFocusRef.current = { zone: "root", column: columnRef.current }
-    setActiveModule(moduleId)
+    setActiveModule(station.module)
+    setActiveStationId(station.id)
   }
 
   const closeStation = () => {
     setActiveModule(null)
+    setActiveStationId(null)
     const restore = restoreFocusRef.current
     if (restore) { setFocusZone(restore.zone); setColumn(restore.column) }
   }
@@ -128,8 +149,8 @@ export default function ControlRoom({
   }
 
   const activateRootItem = () => {
-    if (columnRef.current === "systems") openStation(SYSTEMS_STATIONS[systemsIdxRef.current].id)
-    else if (columnRef.current === "archives") openStation(ARCHIVES_STATIONS[archivesIdxRef.current].id)
+    if (columnRef.current === "systems") openStation(SYSTEMS_STATIONS[systemsIdxRef.current])
+    else if (columnRef.current === "archives") openStation(ARCHIVES_STATIONS[archivesIdxRef.current])
   }
 
   const moveLeftRight = (dir) => {
@@ -226,7 +247,13 @@ export default function ControlRoom({
   // full-bleed) station frame and accidentally navigate away while
   // Settings/MediaManager is still mounted underneath.
   const stationOpen = !!activeModule
-  const activeWing = activeModule === "settings" ? "systems" : activeModule === "media" ? "archives" : null
+  // Driven by which WING the station was opened from (captured in
+  // restoreFocusRef at openStation time), not by which underlying module
+  // ended up mounting. This matters because Media Restoration is an
+  // Archives Wing station that reuses the Settings module (its real content
+  // lives there) -- deriving this from activeModule alone would wrongly
+  // dim/select the Systems Wing while an Archives Wing station is open.
+  const activeWing = stationOpen ? restoreFocusRef.current?.column : null
 
   // Readiness workstation (Milestone C3, Part 3/4; revised per the review
   // Blocker 2 audit). Every row reads real state already available to this
@@ -317,7 +344,7 @@ export default function ControlRoom({
   // second, parallel entry was added to the Left/Right/Up/Down graph,
   // which would risk exactly the double-focus-owner problem Part 2 exists
   // to eliminate.
-  const continueSetup = () => { setFocusZone("root"); setColumn("systems"); setSystemsIdx(0); openStation("settings") }
+  const continueSetup = () => { setFocusZone("root"); setColumn("systems"); setSystemsIdx(0); openStation(SYSTEMS_STATIONS[0]) }
 
   return (
     <div className={styles.stage}>
@@ -376,7 +403,7 @@ export default function ControlRoom({
               ref={i === 0 ? systemsBtnRef : null}
               className={styles.station + (focusZone === "root" && column === "systems" && systemsIdx === i && !continueSetupFocused ? " " + styles.stationFocused : "")}
               aria-current={focusZone === "root" && column === "systems" && systemsIdx === i && !continueSetupFocused}
-              onClick={() => { setFocusZone("root"); setColumn("systems"); setSystemsIdx(i); openStation(s.id) }}
+              onClick={() => { setFocusZone("root"); setColumn("systems"); setSystemsIdx(i); openStation(s) }}
               onFocus={() => { setFocusZone("root"); setColumn("systems"); setSystemsIdx(i); setContinueSetupFocused(false) }}
             >
               <div className={styles.stationLabel}>{t(s.labelKey)}</div>
@@ -435,7 +462,7 @@ export default function ControlRoom({
               ref={i === 0 ? archivesBtnRef : null}
               className={styles.station + (focusZone === "root" && column === "archives" && archivesIdx === i ? " " + styles.stationFocused : "")}
               aria-current={focusZone === "root" && column === "archives" && archivesIdx === i}
-              onClick={() => { setFocusZone("root"); setColumn("archives"); setArchivesIdx(i); openStation(s.id) }}
+              onClick={() => { setFocusZone("root"); setColumn("archives"); setArchivesIdx(i); openStation(s) }}
               onFocus={() => { setFocusZone("root"); setColumn("archives"); setArchivesIdx(i) }}
             >
               <div className={styles.stationLabel}>{t(s.labelKey)}</div>
@@ -446,7 +473,7 @@ export default function ControlRoom({
       </div>
 
       {activeModule === "settings" && (
-        <div className={styles.stationFrame} data-active-wing="systems">
+        <div className={styles.stationFrame} data-active-wing={activeWing}>
           <Settings
             games={games}
             onClose={closeStation}
@@ -458,12 +485,21 @@ export default function ControlRoom({
             onUiSoundsChange={onUiSoundsChange}
             uiSoundVolume={uiSoundVolume}
             onUiSoundVolumeChange={onUiSoundVolumeChange}
+            scrollToSection={
+              (SYSTEMS_STATIONS.find(s => s.id === activeStationId)
+                || ARCHIVES_STATIONS.find(s => s.id === activeStationId))?.section
+            }
           />
         </div>
       )}
       {activeModule === "media" && (
-        <div className={styles.stationFrame} data-active-wing="archives">
-          <MediaManager onClose={closeStation} onVideosUpdated={() => {}} onArtworkUpdated={() => {}} />
+        <div className={styles.stationFrame} data-active-wing={activeWing}>
+          <MediaManager
+            onClose={closeStation}
+            onVideosUpdated={() => {}}
+            onArtworkUpdated={() => {}}
+            initialTab={ARCHIVES_STATIONS.find(s => s.id === activeStationId)?.tab}
+          />
         </div>
       )}
 

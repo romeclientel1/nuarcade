@@ -105,11 +105,24 @@ test("Systems Wing opens the existing Settings component and Archives Wing opens
   assert.doesNotMatch(mediaJsx, /ControlRoom/)
 })
 
-// -- 7. No invented stations: exactly one real station per wing --
+// -- 7. R1: direct-destination stations replace the one-station-per-wing --
+//         model. Each wing now lists real, individually selectable
+//         destinations backed by real existing content (see the R1
+//         before-implementation report for the exact mapping) -- still no
+//         fabricated controls for functionality that doesn't exist.
 
-test("each wing lists exactly one real station -- no fabricated controls for functionality that doesn't exist yet", () => {
-  assert.match(jsx, /const SYSTEMS_STATIONS = \[\s*\{ id: "settings"/)
-  assert.match(jsx, /const ARCHIVES_STATIONS = \[\s*\{ id: "media"/)
+test("each wing lists multiple real, direct-destination stations, each mapped to real existing content", () => {
+  const systemsIds = [...jsx.matchAll(/id:\s*"(\w+)",\s*module:\s*"settings"/g)].map(m => m[1])
+  assert.deepEqual(systemsIds, [
+    "emulators", "gamePaths", "controllers", "launchBehavior",
+    "displayPerformance", "preferences", "systemsArchive", "mediaRestoration",
+  ])
+  const archivesIds = [...jsx.matchAll(/id:\s*"(\w+)",\s*module:\s*"media"/g)].map(m => m[1])
+  assert.deepEqual(archivesIds, ["artwork", "videos", "scraping", "bezels"])
+  // Media Restoration is an Archives Wing station that reuses the Settings
+  // module (its real backup/restore/orphan-cleanup content already lives
+  // there) -- confirmed separately, not folded into either id list above.
+  assert.match(jsx, /id:\s*"mediaRestoration",\s*module:\s*"settings",\s*section:\s*"section-media-restoration"/)
 })
 
 // -- 8. Root-level Left/Right/Up/Down/A/B navigation graph --
@@ -171,7 +184,7 @@ test("Depart reuses the existing DepartConfirmation + departInteraction helpers 
 // -- 12. Focus restoration: closing a station returns focus to the wing it opened from --
 
 test("closing a station restores focus to the exact wing/column it was opened from", () => {
-  assert.match(jsx, /const openStation = \(moduleId\) => \{\s*restoreFocusRef\.current = \{ zone: "root", column: columnRef\.current \}/)
+  assert.match(jsx, /const openStation = \(station\) => \{\s*restoreFocusRef\.current = \{ zone: "root", column: columnRef\.current \}/)
   assert.match(jsx, /const closeStation = \(\) => \{[\s\S]*restoreFocusRef\.current/)
 })
 

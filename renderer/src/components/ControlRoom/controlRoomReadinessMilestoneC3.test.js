@@ -162,7 +162,7 @@ test("the only interpolated count in the readiness UI is the real scanned librar
 // -- 15. Continue Setup opens the correct existing Systems station --
 
 test("Continue Setup opens the real Settings station through the same openStation path stations use, not a second implementation", () => {
-  assert.match(crJsx, /const continueSetup = \(\) => \{ setFocusZone\("root"\); setColumn\("systems"\); setSystemsIdx\(0\); openStation\("settings"\) \}/)
+  assert.match(crJsx, /const continueSetup = \(\) => \{ setFocusZone\("root"\); setColumn\("systems"\); setSystemsIdx\(0\); openStation\(SYSTEMS_STATIONS\[0\]\) \}/)
 })
 
 // Regression test for a real bug caught live in this milestone's own
@@ -245,8 +245,8 @@ test("goldTrim itself is a restrained stroke + soft text-shadow, not a heavy glo
 // -- 20/21. Settings/Media close restores exact Systems/Archives focus (C1/C2 mechanism, re-verified) --
 
 test("closing a station still restores focus to the exact wing/column it was opened from", () => {
-  assert.match(crJsx, /const openStation = \(moduleId\) => \{\s*restoreFocusRef\.current = \{ zone: "root", column: columnRef\.current \}/)
-  assert.match(crJsx, /const closeStation = \(\) => \{\s*setActiveModule\(null\)\s*const restore = restoreFocusRef\.current\s*if \(restore\) \{ setFocusZone\(restore\.zone\); setColumn\(restore\.column\) \}/)
+  assert.match(crJsx, /const openStation = \(station\) => \{\s*restoreFocusRef\.current = \{ zone: "root", column: columnRef\.current \}/)
+  assert.match(crJsx, /const closeStation = \(\) => \{\s*setActiveModule\(null\)\s*setActiveStationId\(null\)\s*const restore = restoreFocusRef\.current\s*if \(restore\) \{ setFocusZone\(restore\.zone\); setColumn\(restore\.column\) \}/)
 })
 
 // -- 22. Root controls are inert while a station is open (C1/C2 mechanism, re-verified) --

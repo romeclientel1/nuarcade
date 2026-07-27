@@ -9,17 +9,24 @@
   backdrop-filter: blur(4px);
 }
 
+/* This panel is only ever mounted inside Control Room's .stationFrame
+   (see ControlRoom.jsx/.module.css), which already supplies the brass
+   console-frame border, corner radius, and depth shadow around the whole
+   station. Giving this inner panel its own competing border/glow made a
+   station read as "an app window inside a window" instead of a single
+   physically-activated surface -- so this panel now just fills that frame
+   with Vespara's own background tone, no second border or shadow. */
 .panel {
   width: 680px;
   max-width: 95vw;
   max-height: 85vh;
-  background: #050508;
-  border: 1px solid rgba(0,200,255,0.2);
-  border-radius: 8px;
+  background: #06070a;
+  border: none;
+  border-radius: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 0 60px rgba(0,200,255,0.1);
+  box-shadow: none;
 }
 
 .header {
@@ -27,39 +34,39 @@
   align-items: flex-start;
   justify-content: space-between;
   padding: 24px 28px 16px;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid #232a32;
   flex-shrink: 0;
 }
 
 .title {
-  font-family: 'Orbitron', sans-serif;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
   font-size: 18px;
-  font-weight: 900;
-  color: #fff;
+  font-weight: 700;
+  color: #cbd8e2;
   letter-spacing: 0.05em;
   margin-bottom: 4px;
 }
 
 .sub {
   font-size: 11px;
-  color: rgba(255,255,255,0.35);
+  color: #7c8890;
 }
 
 .closeBtn {
-  background: transparent;
-  border: 1px solid rgba(255,255,255,0.15);
-  color: rgba(255,255,255,0.4);
+  background: rgba(10, 12, 16, 0.55);
+  border: 1px solid #3a4854;
+  color: #cbd8e2;
   width: 32px;
   height: 32px;
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
-  transition: all 0.15s;
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
 
 .closeBtn:hover {
-  border-color: rgba(255,255,255,0.3);
-  color: #fff;
+  border-color: #6c8ea6;
+  background: rgba(20, 26, 32, 0.7);
 }
 
 .body {
@@ -79,10 +86,10 @@
 .section:last-child { border-bottom: none; }
 
 .sectionTitle {
-  font-family: 'Orbitron', sans-serif;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
   font-size: 11px;
   font-weight: 700;
-  color: rgba(0,200,255,0.7);
+  color: rgba(214, 178, 116, 0.7);
   letter-spacing: 0.15em;
   text-transform: uppercase;
   margin-bottom: 14px;
@@ -118,17 +125,17 @@
 .input {
   flex: 1;
   background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(0,200,255,0.2);
+  border: 1px solid rgba(168, 130, 63, 0.2);
   border-radius: 3px;
   padding: 8px 12px;
-  color: #fff;
+  color: #e8e2d4;
   font-size: 11px;
   outline: none;
   font-family: 'Share Tech Mono', monospace;
   transition: border-color 0.15s;
 }
 
-.input:focus { border-color: #00c8ff; }
+.input:focus { border-color: #d6b274; }
 
 .toggleGroup {
   display: flex;
@@ -148,14 +155,14 @@
 }
 
 .toggleBtn:hover {
-  border-color: rgba(0,200,255,0.3);
-  color: rgba(0,200,255,0.6);
+  border-color: rgba(168, 130, 63, 0.3);
+  color: rgba(214, 178, 116, 0.6);
 }
 
 .toggleActive {
-  border-color: #00c8ff !important;
-  color: #00c8ff !important;
-  background: rgba(0,200,255,0.08);
+  border-color: #d6b274 !important;
+  color: #d6b274 !important;
+  background: rgba(168, 130, 63, 0.08);
 }
 
 .sliderWrap {
@@ -167,15 +174,15 @@
 
 .slider {
   flex: 1;
-  accent-color: #00c8ff;
+  accent-color: #d6b274;
   height: 4px;
   cursor: pointer;
 }
 
 .sliderVal {
   font-size: 12px;
-  color: #00c8ff;
-  font-family: 'Orbitron', sans-serif;
+  color: #d6b274;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
   font-weight: 700;
   min-width: 40px;
 }
@@ -206,7 +213,7 @@
 
 .aboutVal {
   font-size: 11px;
-  color: rgba(0,200,255,0.6);
+  color: rgba(214, 178, 116, 0.6);
   font-family: 'Share Tech Mono', monospace;
 }
 
@@ -238,19 +245,19 @@
 
 .saveBtn {
   padding: 10px 28px;
-  border: 1px solid #00c8ff;
-  background: rgba(0,200,255,0.1);
-  color: #00c8ff;
+  border: 1px solid #d6b274;
+  background: rgba(168, 130, 63, 0.1);
+  color: #d6b274;
   font-size: 11px;
   cursor: pointer;
   border-radius: 3px;
-  font-family: 'Orbitron', sans-serif;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
   font-weight: 700;
   letter-spacing: 0.15em;
   transition: all 0.2s;
 }
 
-.saveBtn:hover { background: rgba(0,200,255,0.2); }
+.saveBtn:hover { background: rgba(168, 130, 63, 0.2); }
 .updateBanner {
   display: flex;
   align-items: center;
@@ -279,9 +286,9 @@
 
 .exportBtn {
   padding: 8px 18px;
-  border: 1px solid rgba(0,200,255,0.3);
+  border: 1px solid rgba(168, 130, 63, 0.3);
   background: transparent;
-  color: #00c8ff;
+  color: #d6b274;
   font-size: 11px;
   cursor: pointer;
   border-radius: 3px;
@@ -289,7 +296,7 @@
   font-family: Share Tech Mono, monospace;
 }
 
-.exportBtn:hover:not(:disabled) { background: rgba(0,200,255,0.1); }
+.exportBtn:hover:not(:disabled) { background: rgba(168, 130, 63, 0.1); }
 .exportBtn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .emuToggles {
@@ -364,9 +371,9 @@
 
 .communityLink {
   padding: 7px 16px;
-  border: 1px solid rgba(0,200,255,0.3);
+  border: 1px solid rgba(168, 130, 63, 0.3);
   border-radius: 3px;
-  color: #00c8ff;
+  color: #d6b274;
   text-decoration: none;
   font-size: 11px;
   font-family: Share Tech Mono, monospace;
@@ -374,7 +381,7 @@
   letter-spacing: 0.05em;
 }
 
-.communityLink:hover { background: rgba(0,200,255,0.08); }
+.communityLink:hover { background: rgba(168, 130, 63, 0.08); }
 .rescanResult {
   margin: 4px 0 8px;
   padding: 8px 12px;
@@ -406,8 +413,8 @@
   font-family: 'Share Tech Mono', monospace;
 }
 .browseBtn:hover {
-  border-color: rgba(0,200,255,0.3);
-  color: #00c8ff;
+  border-color: rgba(168, 130, 63, 0.3);
+  color: #d6b274;
 }
 .rescanTotal {
   font-size: 13px;
@@ -481,11 +488,11 @@
   align-items: center;
   justify-content: space-between;
   padding: 8px 12px;
-  background: rgba(0, 180, 255, 0.08);
-  border: 1px solid rgba(0, 180, 255, 0.2);
+  background: rgba(168, 130, 63, 0.08);
+  border: 1px solid rgba(168, 130, 63, 0.25);
   border-radius: 6px;
-  color: rgba(0, 200, 255, 0.9);
-  font-family: 'Orbitron', monospace;
+  color: rgba(214, 178, 116, 0.9);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
   font-size: 10px;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -493,9 +500,9 @@
 }
 
 .emulatorBtn:hover {
-  background: rgba(0, 180, 255, 0.18);
-  border-color: rgba(0, 180, 255, 0.5);
-  color: #fff;
+  background: rgba(168, 130, 63, 0.18);
+  border-color: rgba(168, 130, 63, 0.55);
+  color: #f3ead1;
   transform: translateY(-1px);
 }
 
