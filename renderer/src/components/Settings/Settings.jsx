@@ -1207,7 +1207,7 @@ const handleSave = async () => {
                 )}
               </div>
               <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>
-                Fills bezel gaps in three passes: native MAME artwork from your Bezel Source Folder (set above in Paths -- from your own EmuMovies Sync or Hyperspin downloads, never fetched or redistributed by NuArcade), RetroArch-style overlays in that same folder converted automatically, then NuArcade's own bundled placeholder art as a last resort. Never overwrites existing artwork. Preview first -- nothing installs until you confirm.
+                Fills bezel gaps in three passes: native MAME artwork from your Bezel Source Folder (set above in Paths -- from your own EmuMovies Sync or Hyperspin downloads, never fetched or redistributed by Vespara), RetroArch-style overlays in that same folder converted automatically, then Vespara's own bundled placeholder art as a last resort. Never overwrites existing artwork. Preview first -- nothing installs until you confirm.
               </div>
             </div>
             {localBezelResult && (
