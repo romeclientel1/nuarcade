@@ -80,8 +80,10 @@ test("useGameLauncher.js and every i18n-consuming component import useI18n from 
     "components/VolumeOverlay/VolumeOverlay.jsx",
     "components/Splash/Splash.jsx",
     "components/CoinCounter/CoinCounter.jsx",
+    // R0 Commit 5 (amended): UpdateBanner.jsx was removed -- it was dormant,
+    // unimported legacy code that reconstructed installer paths and
+    // download URLs by hand, the exact pattern this milestone eliminated.
     "components/Updater/Updater.jsx",
-    "components/UpdateBanner/UpdateBanner.jsx",
     "components/VirtualKeyboard/VirtualKeyboard.jsx",
     "components/GameCoach/GameCoach.jsx",
     "components/HighScoreBoard/HighScoreBoard.jsx",

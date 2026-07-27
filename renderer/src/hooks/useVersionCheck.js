@@ -5,24 +5,28 @@ const CURRENT_VERSION = "5.8.4"
 export function useVersionCheck() {
   const [updateAvailable, setUpdateAvailable] = useState(false)
   const [remoteVersion,   setRemoteVersion  ] = useState(null)
-  const [downloadUrl,     setDownloadUrl    ] = useState(null)
   const [installing,      setInstalling     ] = useState(false)
   const [progress,        setProgress       ] = useState(null)
   const [installError,    setInstallError   ] = useState(null)
 
   useEffect(() => {
+    // R0 Commit 5 (amended): the availability check itself is now main-
+    // owned. This hook no longer fetches GitHub, parses release JSON, or
+    // constructs any GitHub URL -- it only asks the main process "is
+    // anything newer than my current version" and receives back a plain
+    // { updateAvailable, version } display fact. The main process (see
+    // src/main/updater.js's checkForUpdate) independently queries the
+    // latest-release endpoint, validates the tag strictly (v<N>.<N>.<N>, no
+    // prerelease/path-like content), and compares versions numerically --
+    // none of that logic or its intermediate data (the release object,
+    // any asset, any URL) ever reaches here.
     const check = async () => {
       try {
-        const res  = await fetch('https://api.github.com/repos/romeclientel1/nuarcade/releases/latest')
-        const data = await res.json()
-        const tag  = (data.tag_name || '').replace(/^v/, '')
-        if (tag && tag !== CURRENT_VERSION) {
+        if (!window.nuarcade || !window.nuarcade.checkForUpdate) return
+        const result = await window.nuarcade.checkForUpdate({ currentVersion: CURRENT_VERSION })
+        if (result && result.success && result.updateAvailable && result.version) {
           setUpdateAvailable(true)
-          setRemoteVersion(tag)
-          const exeAsset = (data.assets || []).find(function(a) {
-            return a.name.toLowerCase().endsWith('.exe') && a.name.toLowerCase().includes('setup')
-          }) || (data.assets || [])[0]
-          if (exeAsset) setDownloadUrl(exeAsset.browser_download_url)
+          setRemoteVersion(result.version)
         }
       } catch (_) {}
     }
@@ -30,11 +34,14 @@ export function useVersionCheck() {
   }, [])
 
   const handleDownload = () => {
-    window.open('https://github.com/romeclientel1/nuarcade/releases/latest', '_blank')
+    // Plain repository homepage, not a releases/API URL -- this is a manual
+    // browser-navigation fallback for the Traveler to find the Releases
+    // tab themselves, not an in-app release lookup or asset selection.
+    window.open('https://github.com/romeclientel1/nuarcade', '_blank')
   }
 
   const handleUpdateNow = async () => {
-    if (!downloadUrl || !remoteVersion || !window.nuarcade || !window.nuarcade.downloadUpdate) {
+    if (!remoteVersion || !window.nuarcade || !window.nuarcade.downloadUpdate) {
       handleDownload()
       return
     }
@@ -45,13 +52,17 @@ export function useVersionCheck() {
       window.nuarcade.onUpdateProgress(function(data) { setProgress(data.pct) })
     }
     try {
-      const dl = await window.nuarcade.downloadUpdate({ version: remoteVersion, downloadUrl })
-      if (!dl || !dl.success) {
+      // Only the version is sent -- the main process independently looks
+      // up the release, selects the exact installer/checksum assets,
+      // verifies the download, and returns an opaque single-use token.
+      // Nothing about a URL or filesystem path ever passes through here.
+      const dl = await window.nuarcade.downloadUpdate({ version: remoteVersion })
+      if (!dl || !dl.success || !dl.token) {
         setInstallError((dl && dl.error) || 'Download failed')
         setInstalling(false)
         return
       }
-      const inst = await window.nuarcade.installUpdate({ installerPath: dl.installerPath })
+      const inst = await window.nuarcade.installUpdate({ token: dl.token })
       if (!inst || !inst.success) {
         setInstallError((inst && inst.error) || 'Install failed')
         setInstalling(false)

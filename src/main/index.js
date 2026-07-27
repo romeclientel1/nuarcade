@@ -2200,65 +2200,76 @@ ipcMain.handle('get-music-tracks', async () => {
   }
 })
 
-// -- Auto-updater: download installer and run it ----------------------------
-ipcMain.handle('download-update', async (event, { version, downloadUrl }) => {
-  const fs = require('fs')
-  const https = require('https')
-  const os = require('os')
+// -- Auto-updater: main-owned availability check, release lookup, exact-
+// asset selection, checksum verification, and token-bound install (R0
+// Commit 5, amended). The renderer supplies only { currentVersion } to ask
+// whether anything newer exists, { version } to start a download, and
+// { token } to install -- every URL, filesystem path, checksum comparison,
+// and process launch decision is made in ./updater.js, never trusted from
+// the renderer. See updater.js for the full implementation and
+// updater.test.js for its dedicated coverage.
+const updater = require('./updater')
 
-  const tmpDir = os.tmpdir()
-  const installerPath = path.join(tmpDir, 'Vespara-Setup-' + version + '.exe')
-
-  // If already downloaded, skip
-  if (fs.existsSync(installerPath)) {
-    return { success: true, installerPath, cached: true }
+// Exact-shape request validator, amended after source-level verification
+// found the prior Object.keys(...).every(...) gate, while functionally
+// adequate (nothing unlisted was ever read), was not itself provably safe
+// against inherited properties, accessor (getter/setter) properties, or an
+// unusual prototype -- and relied on that unprovenness only because
+// nothing read the extra data, not because the gate rejected it outright.
+// This version inspects the object shape directly:
+//   - must be a non-null, non-array object
+//   - prototype must be exactly Object.prototype or null (rejects class
+//     instances, Proxies with custom prototypes, etc.)
+//   - must have exactly the expected number of OWN property names
+//     (Object.getOwnPropertyNames, not Object.keys -- so a non-enumerable
+//     own property is not invisible to this check)
+//   - each expected key must exist as its OWN property (hasOwnProperty)
+//   - each expected key's property descriptor must be an ordinary data
+//     property (no 'get'/'set' -- an accessor is rejected outright, so a
+//     getter can never smuggle a value in that differs from what a later,
+//     independent read would see)
+// Value TYPE checking (e.g. "version must be a string") is intentionally
+// NOT done here -- that already happens downstream, in updater.js's own
+// isValidVersion/TOKEN_PATTERN checks, keeping shape validation and value
+// validation as separate, single-purpose steps.
+function isExactRequestShape(payload, expectedKeys) {
+  if (payload === null || typeof payload !== 'object' || Array.isArray(payload)) return false
+  const proto = Object.getPrototypeOf(payload)
+  if (proto !== Object.prototype && proto !== null) return false
+  const ownKeys = Object.getOwnPropertyNames(payload)
+  if (ownKeys.length !== expectedKeys.length) return false
+  for (const key of expectedKeys) {
+    if (!Object.prototype.hasOwnProperty.call(payload, key)) return false
+    const descriptor = Object.getOwnPropertyDescriptor(payload, key)
+    if (!descriptor || 'get' in descriptor || 'set' in descriptor || !('value' in descriptor)) return false
   }
+  return ownKeys.every((key) => expectedKeys.includes(key))
+}
 
-  return new Promise((resolve) => {
-    const downloadFile = (url, dest, hops = 0) => {
-      if (hops > 5) { resolve({ success: false, error: 'Too many redirects' }); return }
-      https.get(url, { headers: { 'User-Agent': 'NuArcade/' + app.getVersion() } }, (res) => {
-        if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-          downloadFile(res.headers.location, dest, hops + 1); return
-        }
-        if (res.statusCode !== 200) {
-          resolve({ success: false, error: 'HTTP ' + res.statusCode }); return
-        }
-        const out = fs.createWriteStream(dest)
-        let downloaded = 0
-        const total = parseInt(res.headers['content-length'] || '0')
-        res.on('data', chunk => {
-          downloaded += chunk.length
-          if (total > 0) {
-            const pct = Math.round((downloaded / total) * 100)
-            event.sender.send('update-progress', { pct, downloaded, total })
-          }
-        })
-        res.pipe(out)
-        out.on('finish', () => out.close(() => resolve({ success: true, installerPath: dest })))
-        out.on('error', e => resolve({ success: false, error: e.message }))
-        res.on('error', e => resolve({ success: false, error: e.message }))
-      }).on('error', e => resolve({ success: false, error: e.message }))
-    }
-    downloadFile(downloadUrl, installerPath)
+ipcMain.handle('check-update', async (event, payload) => {
+  if (!isExactRequestShape(payload, ['currentVersion'])) {
+    return { success: false, error: 'Invalid request.' }
+  }
+  return updater.checkForUpdate(payload.currentVersion)
+})
+
+ipcMain.handle('download-update', async (event, payload) => {
+  if (!isExactRequestShape(payload, ['version'])) {
+    return { success: false, error: 'Invalid request.' }
+  }
+  return updater.downloadUpdate(payload.version, {
+    userDataPath: app.getPath('userData'),
+    onProgress: (data) => event.sender.send('update-progress', data),
   })
 })
 
-ipcMain.handle('install-update', async (event, { installerPath }) => {
-  const fs = require('fs')
-  const { spawn } = require('child_process')
-  if (!fs.existsSync(installerPath)) {
-    return { success: false, error: 'Installer not found at ' + installerPath }
+ipcMain.handle('install-update', async (event, payload) => {
+  if (!isExactRequestShape(payload, ['token'])) {
+    return { success: false, error: 'Invalid request.' }
   }
-  // Run installer with /S for silent install -- NSIS silent flag
-  // The installer will close NuArcade as part of install process
-  spawn(installerPath, ['/S'], {
-    detached: true,
-    stdio: 'ignore',
-  }).unref()
-  // Give the installer a moment to start, then quit so it can replace files
-  setTimeout(() => app.quit(), 1500)
-  return { success: true }
+  return updater.installUpdate(payload.token, {
+    userDataPath: app.getPath('userData'),
+  })
 })
 
 // -- AI Natural Language Search ----------------------------------------------
@@ -2751,6 +2762,7 @@ module.exports = {
   handleSecondInstance,
   runAddExclusions,
   DEFENDER_EXCLUSION_SCRIPT,
+  isExactRequestShape,
   _internal: {
     setMainWindowForTest: (win) => { mainWin = win },
     getSingleInstanceLockAcquired: () => singleInstanceLockAcquired,

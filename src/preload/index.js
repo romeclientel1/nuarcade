@@ -120,6 +120,7 @@ contextBridge.exposeInMainWorld('nuarcade', {
   gameCoach:       (opts) => ipcRenderer.invoke('game-coach', opts),
   onCoachChunk:    (cb) => ipcRenderer.on('coach-chunk', (_, data) => cb(data)),
   aiSearch:        (opts) => ipcRenderer.invoke('ai-search', opts),
+  checkForUpdate:  (opts) => ipcRenderer.invoke('check-update', opts),
   downloadUpdate:  (opts) => ipcRenderer.invoke('download-update', opts),
   installUpdate:   (opts) => ipcRenderer.invoke('install-update', opts),
   onUpdateProgress: (cb) => ipcRenderer.on('update-progress', (_, data) => cb(data)),

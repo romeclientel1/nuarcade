@@ -747,3 +747,143 @@ test("add-exclusions is reachable via the real 'add-exclusions' IPC handler and 
   const result = await handler({}, [])
   assert.deepEqual(result, { success: true })
 })
+
+// -- Updater IPC boundary (R0 Commit 5) --------------------------------------
+// The hardened download/install logic itself lives in ./updater.js and has
+// its own dedicated coverage (updater.test.js). These tests only confirm
+// the thin IPC-boundary wiring in index.js: legacy renderer-authoritative
+// fields (url, downloadUrl, checksumUrl, installerPath, path, command) are
+// rejected before ever reaching updater.js, and window.nuarcade's exposed
+// channel names are unchanged.
+
+test("isExactRequestShape accepts only the exact expected keys and rejects arrays/non-objects", () => {
+  assert.equal(mainIndex.isExactRequestShape({ version: "5.8.4" }, ["version"]), true)
+  assert.equal(mainIndex.isExactRequestShape(null, ["version"]), false)
+  assert.equal(mainIndex.isExactRequestShape("5.8.4", ["version"]), false)
+  assert.equal(mainIndex.isExactRequestShape(["5.8.4"], ["version"]), false)
+  assert.equal(mainIndex.isExactRequestShape({ version: "5.8.4", downloadUrl: "https://evil.example" }, ["version"]), false)
+})
+
+// -- Hardened IPC-shape edge cases (amendment, item 3) -----------------------
+// These prove the gate is safe against tricks Object.keys(...).every(...)
+// (the prior implementation) was never actually proven safe against: an
+// inherited property is not an own key so must be rejected as "missing";
+// a getter can supply a plausible-looking value without ever being a real
+// own data property; a non-Object.prototype prototype must be rejected
+// outright; a non-enumerable own property must still be counted (this gate
+// uses getOwnPropertyNames, not keys/Object.keys).
+
+test("an inherited (prototype-chain) property is not treated as an own required key -- rejected as missing", () => {
+  const proto = { version: "5.8.4" }
+  const payload = Object.create(proto)
+  assert.equal(mainIndex.isExactRequestShape(payload, ["version"]), false)
+})
+
+test("an inherited property alongside an unrelated own property is still rejected", () => {
+  const proto = { token: "a".repeat(64) }
+  const payload = Object.create(proto)
+  payload.somethingElse = "x"
+  assert.equal(mainIndex.isExactRequestShape(payload, ["token"]), false)
+})
+
+test("a getter standing in for the expected key is rejected -- only ordinary data properties are accepted", () => {
+  const payload = {}
+  Object.defineProperty(payload, "version", { get: () => "5.8.4", enumerable: true, configurable: true })
+  assert.equal(mainIndex.isExactRequestShape(payload, ["version"]), false)
+})
+
+test("a getter standing in for the token key is rejected", () => {
+  const payload = {}
+  Object.defineProperty(payload, "token", { get: () => "a".repeat(64), enumerable: true, configurable: true })
+  assert.equal(mainIndex.isExactRequestShape(payload, ["token"]), false)
+})
+
+test("a payload with a custom (non-Object.prototype) prototype is rejected even with the exact right own keys", () => {
+  class Custom { constructor() { this.version = "5.8.4" } }
+  const payload = new Custom()
+  assert.equal(mainIndex.isExactRequestShape(payload, ["version"]), false)
+})
+
+test("a null-prototype object with a valid own data property is accepted -- Object.create(null) is not a class instance or Proxy trick", () => {
+  const payload = Object.create(null)
+  payload.version = "5.8.4"
+  assert.equal(mainIndex.isExactRequestShape(payload, ["version"]), true)
+})
+
+test("an extra non-enumerable own property is still counted and causes rejection (getOwnPropertyNames, not Object.keys)", () => {
+  const payload = { version: "5.8.4" }
+  Object.defineProperty(payload, "hidden", { value: "smuggled", enumerable: false, configurable: true })
+  assert.equal(mainIndex.isExactRequestShape(payload, ["version"]), false)
+})
+
+test("an array is rejected even if it happens to have the right length and an index matching the expected key name", () => {
+  const arr = ["5.8.4"]
+  assert.equal(mainIndex.isExactRequestShape(arr, ["0"]), false)
+})
+
+test("null is rejected", () => {
+  assert.equal(mainIndex.isExactRequestShape(null, ["version"]), false)
+})
+
+test("a payload missing the expected key (only an unrelated key present) is rejected", () => {
+  assert.equal(mainIndex.isExactRequestShape({ notVersion: "5.8.4" }, ["version"]), false)
+})
+
+test("a payload with the expected key plus one extra own key is rejected", () => {
+  assert.equal(mainIndex.isExactRequestShape({ version: "5.8.4", extra: "x" }, ["version"]), false)
+})
+
+test("check-update IPC handler is reachable and delegates to updater.checkForUpdate with only currentVersion", async () => {
+  const handler = ipcHandlers.get("check-update")
+  assert.equal(typeof handler, "function")
+  const result = await handler({}, { currentVersion: "5.8.4" })
+  // No real network access happens in this test process; updater.checkForUpdate
+  // will fail closed (no https available) -- this only proves the IPC gate
+  // itself accepted the well-shaped payload and reached updater.js rather
+  // than short-circuiting with "Invalid request."
+  assert.notEqual(result && result.error, "Invalid request.")
+})
+
+test("check-update IPC handler rejects a malformed payload (extra field) without reaching updater.js", async () => {
+  const handler = ipcHandlers.get("check-update")
+  const result = await handler({}, { currentVersion: "5.8.4", url: "https://evil.example" })
+  assert.equal(result.success, false)
+  assert.equal(result.error, "Invalid request.")
+})
+
+test("download-update IPC handler rejects a legacy downloadUrl field without reaching updater.js", async () => {
+  const handler = ipcHandlers.get("download-update")
+  assert.equal(typeof handler, "function")
+  const result = await handler({ sender: { send: () => {} } }, { version: "5.8.4", downloadUrl: "https://evil.example/steal.exe" })
+  assert.equal(result.success, false)
+})
+
+test("download-update IPC handler rejects other legacy authority fields (url, checksumUrl, path, command)", async () => {
+  const handler = ipcHandlers.get("download-update")
+  const event = { sender: { send: () => {} } }
+  for (const badPayload of [
+    { version: "5.8.4", url: "https://evil.example" },
+    { version: "5.8.4", checksumUrl: "https://evil.example" },
+    { version: "5.8.4", path: "C:\\evil.exe" },
+    { version: "5.8.4", command: "rm -rf /" },
+  ]) {
+    const result = await handler(event, badPayload)
+    assert.equal(result.success, false)
+  }
+})
+
+test("install-update IPC handler rejects a legacy installerPath field without reaching updater.js", async () => {
+  const handler = ipcHandlers.get("install-update")
+  assert.equal(typeof handler, "function")
+  const result = await handler({}, { token: "a".repeat(64), installerPath: "C:\\evil.exe" })
+  assert.equal(result.success, false)
+})
+
+test("install-update IPC handler accepts only { token } shaped payloads", async () => {
+  const handler = ipcHandlers.get("install-update")
+  const result = await handler({}, { token: "not-a-real-token" })
+  // Rejected downstream by updater.js's token-format/lookup check, but the
+  // IPC boundary itself must not reject a well-shaped { token } payload.
+  assert.equal(result.success, false)
+  assert.doesNotMatch(result.error || "", /Invalid request/)
+})

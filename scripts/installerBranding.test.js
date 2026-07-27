@@ -10,7 +10,9 @@ const nsis = fs.readFileSync(path.join(ROOT, 'assets', 'installer', 'folders.nsh
 const iconSvg = fs.readFileSync(path.join(ROOT, 'assets', 'icons', 'icon.svg'), 'utf8')
 const generator = fs.readFileSync(path.join(ROOT, 'scripts', 'generateInstallerBrandAssets.js'), 'utf8')
 const workflow = fs.readFileSync(path.join(ROOT, '.github', 'workflows', 'build.yml'), 'utf8')
-const updater = fs.readFileSync(path.join(ROOT, 'src', 'main', 'index.js'), 'utf8')
+// R0 Commit 5 moved the updater's download/install logic out of index.js
+// and into its own dedicated, independently-tested module.
+const updater = fs.readFileSync(path.join(ROOT, 'src', 'main', 'updater.js'), 'utf8')
 
 function icoSizes(file) {
   const data = fs.readFileSync(file)
@@ -133,7 +135,10 @@ test('upgrade and build discovery identities remain unchanged', () => {
   assert.equal('publish' in pkg.build, false)
   assert.match(workflow, /npm run build:win/)
   assert.match(workflow, /files: \|\s*\n\s*\$\{\{ steps\.assets\.outputs\.INSTALLER_PATH \}\}\s*\n\s*\$\{\{ steps\.assets\.outputs\.CHECKSUM_PATH \}\}/)
-  assert.match(updater, /Vespara-Setup-' \+ version \+ '\.exe/)
+  // R0 Commit 5: the updater now derives the exact Commit 4 installer
+  // basename convention ("Vespara Setup ${version}.exe") rather than the
+  // old hyphenated "Vespara-Setup-" + version string-concatenation form.
+  assert.match(updater, /installerName\(version\)\s*\{\s*\n\s*return `Vespara Setup \$\{version\}\.exe`/)
   assert.equal(
     crypto.createHash('sha256').update(pkg.build.appId).digest('hex'),
     crypto.createHash('sha256').update('com.nuarcade.app').digest('hex')
