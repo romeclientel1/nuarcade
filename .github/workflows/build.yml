@@ -66,11 +66,55 @@ jobs:
           # itself never attempts to create or update a release here.
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # Runs only after the installer above has actually been produced --
+      # hashes the exact expected file (never a glob), writes one
+      # conventional "<64 lowercase hex><two spaces><bare filename>" line in
+      # UTF-8 with no BOM and a single trailing LF, and exposes both exact
+      # paths as step outputs so nothing downstream ever needs to glob dist/.
+      - name: Generate installer checksum
+        id: checksum
+        shell: pwsh
+        run: |
+          $version = '${{ steps.version.outputs.VERSION }}'
+          $installerName = "Vespara Setup $version.exe"
+          $installerPath = Join-Path 'dist' $installerName
+          if (-not (Test-Path -LiteralPath $installerPath -PathType Leaf)) {
+            Write-Error "Expected installer not found at $installerPath"
+            exit 1
+          }
+
+          $actualHash = (Get-FileHash -LiteralPath $installerPath -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actualHash -notmatch '^[0-9a-f]{64}$') {
+            Write-Error "Computed SHA-256 digest is not 64 lowercase hex characters: $actualHash"
+            exit 1
+          }
+
+          $checksumName = "$installerName.sha256"
+          if ($checksumName -notmatch '^Vespara Setup .+\.exe\.sha256$') {
+            Write-Error "Computed checksum filename does not match the expected convention: $checksumName"
+            exit 1
+          }
+          $checksumPath = Join-Path 'dist' $checksumName
+
+          $line = "$actualHash  $installerName"
+          # UTF8Encoding($false) omits the BOM; the manually-appended "`n" is
+          # a bare LF with no OS-dependent newline translation, giving one
+          # conventional checksum line plus exactly one trailing newline.
+          $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+          [System.IO.File]::WriteAllText($checksumPath, "$line`n", $utf8NoBom)
+
+          echo "INSTALLER_PATH=$installerPath" >> $env:GITHUB_OUTPUT
+          echo "CHECKSUM_PATH=$checksumPath" >> $env:GITHUB_OUTPUT
+          Write-Output "Checksum written: $checksumPath"
+          Write-Output $line
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: NuArcade-Setup
-          path: dist/*.exe
+          path: |
+            ${{ steps.checksum.outputs.INSTALLER_PATH }}
+            ${{ steps.checksum.outputs.CHECKSUM_PATH }}
 
   # Public release publication. Structurally unreachable except for a manual
   # dispatch, with publish explicitly set to true, from main -- an ordinary
@@ -123,23 +167,77 @@ jobs:
           name: NuArcade-Setup
           path: dist
 
-      - name: Validate exactly one installer is present
-        id: installer
+      # Requires exactly one exact-name installer and exactly one exact-name
+      # checksum file (no directory-wildcard globbing, no first-match
+      # fallback), strictly parses the checksum line's format, then
+      # recomputes the installer's SHA-256 and compares it against the
+      # checksum file's digest before anything is exposed for publication.
+      - name: Validate installer and checksum assets
+        id: assets
         shell: pwsh
         run: |
-          $candidates = @(Get-ChildItem -Path dist -Filter 'Vespara Setup *.exe' -File)
-          if ($candidates.Count -eq 0) {
-            Write-Error "No installer matching 'Vespara Setup *.exe' was found in the downloaded artifact."
+          $version = '${{ needs.build-windows.outputs.version }}'
+          $installerName = "Vespara Setup $version.exe"
+          $checksumName = "$installerName.sha256"
+
+          $installerCandidates = @(Get-ChildItem -Path dist -Filter $installerName -File)
+          if ($installerCandidates.Count -eq 0) {
+            Write-Error "No installer named '$installerName' was found in the downloaded artifact."
             exit 1
           }
-          if ($candidates.Count -gt 1) {
-            $names = ($candidates | ForEach-Object { $_.Name }) -join ', '
-            Write-Error "Multiple installer candidates were found in the downloaded artifact; refusing to guess which to publish: $names"
+          if ($installerCandidates.Count -gt 1) {
+            Write-Error "Multiple files named '$installerName' were found in the downloaded artifact; refusing to guess which to publish."
             exit 1
           }
-          $path = $candidates[0].FullName
-          echo "PATH=$path" >> $env:GITHUB_OUTPUT
-          Write-Output "Validated installer: $path"
+          $installerPath = $installerCandidates[0].FullName
+
+          $checksumCandidates = @(Get-ChildItem -Path dist -Filter $checksumName -File)
+          if ($checksumCandidates.Count -eq 0) {
+            Write-Error "No checksum file named '$checksumName' was found in the downloaded artifact."
+            exit 1
+          }
+          if ($checksumCandidates.Count -gt 1) {
+            Write-Error "Multiple files named '$checksumName' were found in the downloaded artifact; refusing to guess which to publish."
+            exit 1
+          }
+          $checksumPath = $checksumCandidates[0].FullName
+
+          $rawLines = @(Get-Content -LiteralPath $checksumPath)
+          $nonEmptyLines = @($rawLines | Where-Object { $_.Length -gt 0 })
+          if ($nonEmptyLines.Count -ne 1) {
+            Write-Error "Checksum file must contain exactly one non-empty line; found $($nonEmptyLines.Count)."
+            exit 1
+          }
+
+          # 64 lowercase hex chars, exactly two spaces (the \S immediately
+          # after them rejects a third space), then a bare filename with no
+          # path separator.
+          $match = [regex]::Match($nonEmptyLines[0], '^([0-9a-f]{64})  (\S.*)$')
+          if (-not $match.Success) {
+            Write-Error "Checksum file content is not in the expected '<64 lowercase hex><two spaces><filename>' format."
+            exit 1
+          }
+          $expectedHash = $match.Groups[1].Value
+          $recordedName = $match.Groups[2].Value
+          if ($recordedName -match '[\\/]') {
+            Write-Error "Checksum file must reference a bare filename, not a path: '$recordedName'."
+            exit 1
+          }
+          if ($recordedName -ne $installerName) {
+            Write-Error "Checksum file names '$recordedName' but the installer being published is '$installerName'."
+            exit 1
+          }
+
+          $actualHash = (Get-FileHash -LiteralPath $installerPath -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actualHash -ne $expectedHash) {
+            Write-Error "Installer hash mismatch: checksum file says $expectedHash, recomputed hash is $actualHash."
+            exit 1
+          }
+
+          echo "INSTALLER_PATH=$installerPath" >> $env:GITHUB_OUTPUT
+          echo "CHECKSUM_PATH=$checksumPath" >> $env:GITHUB_OUTPUT
+          Write-Output "Validated installer: $installerPath"
+          Write-Output "Validated checksum: $checksumPath (sha256=$actualHash)"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -149,7 +247,9 @@ jobs:
           body: |
             NuArcade v${{ needs.build-windows.outputs.version }}
             Built automatically from main branch.
-          files: ${{ steps.installer.outputs.PATH }}
+          files: |
+            ${{ steps.assets.outputs.INSTALLER_PATH }}
+            ${{ steps.assets.outputs.CHECKSUM_PATH }}
           make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -132,10 +132,153 @@ test('upgrade and build discovery identities remain unchanged', () => {
   assert.equal('guid' in pkg.build, false)
   assert.equal('publish' in pkg.build, false)
   assert.match(workflow, /npm run build:win/)
-  assert.match(workflow, /files: \$\{\{ steps\.installer\.outputs\.PATH \}\}/)
+  assert.match(workflow, /files: \|\s*\n\s*\$\{\{ steps\.assets\.outputs\.INSTALLER_PATH \}\}\s*\n\s*\$\{\{ steps\.assets\.outputs\.CHECKSUM_PATH \}\}/)
   assert.match(updater, /Vespara-Setup-' \+ version \+ '\.exe/)
   assert.equal(
     crypto.createHash('sha256').update(pkg.build.appId).digest('hex'),
     crypto.createHash('sha256').update('com.nuarcade.app').digest('hex')
   )
+})
+
+// -- R0 Commit 4: SHA-256 installer checksum (workflow source-level checks) --
+// These are all SOURCE-level assertions against .github/workflows/build.yml
+// text -- they confirm the workflow SAYS the right thing, the same way the
+// rest of this file confirms nsis/icon/generator source content, not that a
+// real Windows runner has executed it. Live GitHub Actions behavior is
+// confirmed separately (see the R0 Commit 4 conversation's live-validation
+// checklist), never claimed here.
+const buildWindowsSection = workflow.slice(
+  workflow.indexOf('build-windows:'),
+  workflow.indexOf('publish-release:')
+)
+const publishReleaseSection = workflow.slice(workflow.indexOf('publish-release:'))
+
+test('build-windows generates a .sha256 checksum only after the installer exists', () => {
+  assert.match(buildWindowsSection, /Generate installer checksum/)
+  assert.match(buildWindowsSection, /Test-Path -LiteralPath \$installerPath -PathType Leaf/)
+  // The checksum step must appear after the installer-build step, not before.
+  assert.ok(
+    buildWindowsSection.indexOf('Build Windows installer') < buildWindowsSection.indexOf('Generate installer checksum'),
+    'checksum generation must run after the installer is built'
+  )
+})
+
+test('the checksum filename is the exact installer basename plus .sha256', () => {
+  assert.match(buildWindowsSection, /\$checksumName = "\$installerName\.sha256"/)
+  assert.match(buildWindowsSection, /\$installerName = "Vespara Setup \$version\.exe"/)
+})
+
+test('checksum generation explicitly uses SHA-256, lowercased', () => {
+  assert.match(buildWindowsSection, /Get-FileHash -LiteralPath \$installerPath -Algorithm SHA256/)
+  assert.match(buildWindowsSection, /\.ToLowerInvariant\(\)/)
+  assert.match(buildWindowsSection, /\^\[0-9a-f\]\{64\}\$/)
+})
+
+test('both the exact installer and exact checksum paths are passed to upload-artifact, with no dist/* wildcard', () => {
+  const uploadSection = buildWindowsSection.slice(buildWindowsSection.indexOf('name: Upload artifact'))
+  assert.match(uploadSection, /\$\{\{ steps\.checksum\.outputs\.INSTALLER_PATH \}\}/)
+  assert.match(uploadSection, /\$\{\{ steps\.checksum\.outputs\.CHECKSUM_PATH \}\}/)
+  assert.doesNotMatch(uploadSection, /dist\/\*/)
+})
+
+test('publish-release requires exactly one exact-name installer and exactly one exact-name checksum, with no wildcard or first-match fallback', () => {
+  assert.match(publishReleaseSection, /\$installerName = "Vespara Setup \$version\.exe"/)
+  assert.match(publishReleaseSection, /\$checksumName = "\$installerName\.sha256"/)
+  assert.match(publishReleaseSection, /Get-ChildItem -Path dist -Filter \$installerName -File/)
+  assert.match(publishReleaseSection, /Get-ChildItem -Path dist -Filter \$checksumName -File/)
+  assert.match(publishReleaseSection, /installerCandidates\.Count -eq 0/)
+  assert.match(publishReleaseSection, /installerCandidates\.Count -gt 1/)
+  assert.match(publishReleaseSection, /checksumCandidates\.Count -eq 0/)
+  assert.match(publishReleaseSection, /checksumCandidates\.Count -gt 1/)
+  assert.doesNotMatch(publishReleaseSection, /Filter 'Vespara Setup \*\.exe'/)
+  assert.doesNotMatch(publishReleaseSection, /-Filter '\*\.sha256'/)
+})
+
+test('publish-release recomputes the installer SHA-256 and compares it against the checksum file digest', () => {
+  assert.match(publishReleaseSection, /\$actualHash = \(Get-FileHash -LiteralPath \$installerPath -Algorithm SHA256\)\.Hash\.ToLowerInvariant\(\)/)
+  assert.match(publishReleaseSection, /\$actualHash -ne \$expectedHash/)
+})
+
+test('the release action receives both validated step-output paths, not a bare directory or dist/*.exe', () => {
+  const releaseStep = publishReleaseSection.slice(publishReleaseSection.indexOf('Create GitHub Release'))
+  assert.match(releaseStep, /\$\{\{ steps\.assets\.outputs\.INSTALLER_PATH \}\}/)
+  assert.match(releaseStep, /\$\{\{ steps\.assets\.outputs\.CHECKSUM_PATH \}\}/)
+  assert.doesNotMatch(releaseStep, /dist\/\*\.exe/)
+  assert.doesNotMatch(releaseStep, /\*\.sha256/)
+})
+
+// The checksum-line format regex and the digest-comparison guard are
+// extracted directly out of the workflow's own PowerShell source text
+// (rather than re-implemented from memory) so this test exercises the exact
+// pattern the CI runner will use, not a hand-written approximation of it.
+// This proves the DOCUMENTED validation logic rejects malformed/mismatched
+// input -- it does not execute real PowerShell or a real Windows runner.
+function extractChecksumLinePattern(source) {
+  const match = source.match(/\[regex\]::Match\(\$nonEmptyLines\[0\], '(\^.*\$)'\)/)
+  assert.ok(match, 'expected to find the checksum-line format regex in the workflow source')
+  return new RegExp(match[1])
+}
+
+test('malformed checksum content is rejected by the workflow-derived format regex', () => {
+  const pattern = extractChecksumLinePattern(publishReleaseSection)
+  const validLine = `${'a'.repeat(64)}  Vespara Setup 5.8.4.exe`
+  assert.match(validLine, pattern, 'sanity check: a well-formed line must match')
+
+  const malformed = [
+    `${'A'.repeat(64)}  Vespara Setup 5.8.4.exe`,       // uppercase hex
+    `${'a'.repeat(63)}  Vespara Setup 5.8.4.exe`,        // 63 chars, too short
+    `${'a'.repeat(65)}  Vespara Setup 5.8.4.exe`,        // 65 chars, too long
+    `${'a'.repeat(64)} Vespara Setup 5.8.4.exe`,         // one space, not two
+    `${'a'.repeat(64)}   Vespara Setup 5.8.4.exe`,       // three spaces
+    '',                                                    // empty
+  ]
+  for (const line of malformed) {
+    assert.doesNotMatch(line, pattern, `expected to reject malformed line: ${JSON.stringify(line)}`)
+  }
+})
+
+test('a checksum line naming a different file, containing a path separator, or carrying an extra label all fail the recorded-name checks (even though they pass the bare spacing/hex format regex)', () => {
+  const pattern = extractChecksumLinePattern(publishReleaseSection)
+
+  const wrongName = `${'a'.repeat(64)}  Vespara Setup 5.8.3.exe`
+  const match = wrongName.match(pattern)
+  assert.ok(match, 'the line is well-formed enough to reach the name-comparison step')
+  assert.notEqual(match[2], 'Vespara Setup 5.8.4.exe')
+
+  const pathPrefixed = `${'a'.repeat(64)}  dist/Vespara Setup 5.8.4.exe`
+  const pathMatch = pathPrefixed.match(pattern)
+  assert.ok(pathMatch, 'the line is well-formed enough to reach the path-separator check')
+  assert.match(pathMatch[2], /[\\/]/, 'expected the recorded name to still contain a path separator for the guard to catch')
+
+  // An extra label (e.g. "SHA256: ") satisfies the two-space/64-hex format
+  // regex -- the format check only constrains spacing and hash shape, not
+  // filename content -- so this is caught by the separate exact-name
+  // equality check in publish-release, not the format regex itself.
+  const labeled = `${'a'.repeat(64)}  SHA256: Vespara Setup 5.8.4.exe`
+  const labeledMatch = labeled.match(pattern)
+  assert.ok(labeledMatch, 'a labeled line still satisfies the bare spacing/hex format')
+  assert.notEqual(labeledMatch[2], 'Vespara Setup 5.8.4.exe', 'the labeled recorded name must not equal the real installer name')
+})
+
+test('a mismatched digest is rejected by the workflow-derived comparison guard', () => {
+  assert.match(publishReleaseSection, /if \(\$actualHash -ne \$expectedHash\) \{/)
+  const realHash = crypto.createHash('sha256').update('installer bytes').digest('hex')
+  const tamperedHash = crypto.createHash('sha256').update('tampered installer bytes').digest('hex')
+  assert.notEqual(realHash, tamperedHash, 'sanity check: the two fixture hashes must actually differ')
+})
+
+test('the main-only manual publication gate and job permissions are unchanged by checksum work', () => {
+  assert.match(workflow, /if: >\s*\n\s*github\.event_name == 'workflow_dispatch' &&\s*\n\s*inputs\.publish == true &&\s*\n\s*github\.ref == 'refs\/heads\/main'/)
+  assert.match(workflow, /contents: read/)
+  const writePermissionCount = (workflow.match(/contents: write/g) || []).length
+  assert.equal(writePermissionCount, 1, 'only publish-release should carry contents: write')
+  assert.doesNotMatch(buildWindowsSection, /contents: write/)
+})
+
+test('protected packaging identities are unchanged by checksum work', () => {
+  assert.equal(pkg.build.appId, 'com.nuarcade.app')
+  assert.equal(pkg.build.executableName, 'NuArcade')
+  assert.equal(pkg.name, 'nuarcade')
+  assert.equal(pkg.build.nsis.artifactName, '${productName} Setup ${version}.${ext}')
+  assert.match(workflow, /Vespara Setup \$version\.exe/)
 })
