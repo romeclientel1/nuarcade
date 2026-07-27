@@ -45,7 +45,13 @@ test("Sanctuary's own Recently Played section is untouched by the Library's remo
 // had its own legitimate uncommitted files sitting alongside it, which is
 // not a Library regression and shouldn't be reported as one.
 test("no Sanctuary, environment, startup, audio, installer, preload, main-process, dependency, or version file changed", () => {
-  const { offenders, packageJsonOffenders } = findProtectedScopeOffenders(import.meta.url)
+  // R0 Windows-validation regression fix (VES-R0-001/VES-R0-002): see the
+  // matching comment in libraryFullWidthMilestoneD3.test.js -- this specific
+  // change deliberately spans Wheel (Archive View preview clipping) and
+  // Sanctuary (ambience pause/resume around a launch), so Sanctuary alone is
+  // excluded here, following the same precedent Control Room C2 already
+  // established for this helper.
+  const { offenders, packageJsonOffenders } = findProtectedScopeOffenders(import.meta.url, { excludeLabels: ["Sanctuary"] })
   assert.deepEqual(offenders, [], `protected files were modified: ${offenders.join(", ")}`)
   assert.deepEqual(packageJsonOffenders, [], `protected package.json fields were modified: ${packageJsonOffenders.join(", ")}`)
 })
@@ -132,7 +138,7 @@ test("the selected-game strip has a bounded max-width and is centered -- it does
   assert.match(panel, /transform:\s*translateX\(-50%\)/)
   assert.match(panel, /width:\s*clamp\(700px,\s*60vw,\s*1150px\)/)
   assert.doesNotMatch(panel, /\bright:\s*clamp/, "must not also span via left+right, which would stretch it edge to edge")
-  const compact = css.slice(css.indexOf("@media (max-width: 1280px), (max-height: 760px)"), css.indexOf("/* Restrained entrance", css.indexOf("@media (max-width: 1280px), (max-height: 760px)")))
+  const compact = css.slice(css.indexOf("@media (max-width: 1280px), (max-height: 870px)"), css.indexOf("/* Restrained entrance", css.indexOf("@media (max-width: 1280px), (max-height: 870px)")))
   assert.match(compact, /\.stage \.infoPanel\s*\{[^}]*left:\s*50%[^}]*width:\s*720px/s)
 })
 
@@ -179,7 +185,7 @@ test("Archive View is fully within the viewport at 1920x1080 -- measured live: f
 })
 
 test("Archive View is fully within the viewport at 1280x720 -- measured live: frame 448-620, hintBar starts 681, depart starts 638", () => {
-  const compact = css.slice(css.indexOf("@media (max-width: 1280px), (max-height: 760px)"), css.indexOf("/* Restrained entrance", css.indexOf("@media (max-width: 1280px), (max-height: 760px)")))
+  const compact = css.slice(css.indexOf("@media (max-width: 1280px), (max-height: 870px)"), css.indexOf("/* Restrained entrance", css.indexOf("@media (max-width: 1280px), (max-height: 870px)")))
   assert.match(compact, /\.stage \.wheelArea\s*\{[^}]*top:\s*150px[^}]*height:\s*210px/s)
   assert.match(compact, /\.stage \.infoPanel\s*\{[^}]*top:\s*372px/s)
   assert.match(compact, /\.previewReservation\s*\{[^}]*top:\s*456px[^}]*width:\s*260px/s)
@@ -198,7 +204,7 @@ test("no primary type size was stretched, compressed, or reduced -- .placeName/.
   assert.match(css, /\.stage \.placeName\s*\{[^}]*font-size:\s*clamp\(27px,\s*1\.85vw,\s*35px\)/s)
   assert.match(css, /\.stage \.marqueeWrap\s*\{[^}]*font-size:\s*clamp\(17px,\s*1\.2vw,\s*22px\)/s)
   assert.match(css, /\.libraryBrandName\s*\{[^}]*font-size:\s*clamp\(23px,\s*1\.8vw,\s*34px\)/s)
-  const compact = css.slice(css.indexOf("@media (max-width: 1280px), (max-height: 760px)"), css.indexOf("/* Restrained entrance", css.indexOf("@media (max-width: 1280px), (max-height: 760px)")))
+  const compact = css.slice(css.indexOf("@media (max-width: 1280px), (max-height: 870px)"), css.indexOf("/* Restrained entrance", css.indexOf("@media (max-width: 1280px), (max-height: 870px)")))
   assert.doesNotMatch(compact, /font-size:/s)
 })
 

@@ -96,7 +96,7 @@ test("Launch, favorite, Return, Console, and Depart handlers remain wired", () =
 })
 
 test("D4: responsive rules preserve the full-width 1280 composition (Continue Playing's slot reclaimed) without shrinking primary type", () => {
-  const compact = css.slice(css.indexOf("@media (max-width: 1280px), (max-height: 760px)"), css.indexOf("/* Restrained entrance", css.indexOf("@media (max-width: 1280px), (max-height: 760px)")))
+  const compact = css.slice(css.indexOf("@media (max-width: 1280px), (max-height: 870px)"), css.indexOf("/* Restrained entrance", css.indexOf("@media (max-width: 1280px), (max-height: 870px)")))
   assert.doesNotMatch(compact, /\.stage \.globalHeader\s*\{[^}]*grid-template-columns:/s)
   assert.doesNotMatch(compact, /\.stage \.recentCarousel/)
   assert.match(compact, /\.stage \.libraryTitleRow\s*\{[^}]*top:\s*60px[^}]*left:\s*22px[^}]*right:\s*22px/s)

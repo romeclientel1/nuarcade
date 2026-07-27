@@ -46,5 +46,32 @@ export function useSanctuaryAmbience(src = SANCTUARY_AMBIENCE_SRC) {
     controllerRef.current?.fadeOutAndStop()
   }, [])
 
-  return { fadeOutAndStop }
+  // Temporary pause for an external game launch (see sanctuaryAmbienceEngine's
+  // pause()) -- distinct from fadeOutAndStop, which permanently releases the
+  // Howl instance for navigation/Depart. No config read is needed here: pausing
+  // only ever fades the current instance toward silence, never toward a target
+  // volume.
+  const pauseForLaunch = useCallback(() => {
+    controllerRef.current?.pause()
+  }, [])
+
+  // Reverses pauseForLaunch once the external game exits and Home regains
+  // focus. Re-reads the current config (mirroring the mount effect above) so
+  // a music-enabled/volume change made while the Traveler was away is
+  // respected on resume, rather than reusing whatever was true when Home
+  // first mounted.
+  const resumeFromLaunch = useCallback(() => {
+    const controller = controllerRef.current
+    if (!controller) return
+    const applyResume = (enabled, volume) => controller.resume(enabled, volume)
+    if (window.nuarcade?.getConfig) {
+      window.nuarcade.getConfig()
+        .then(cfg => applyResume(cfg?.musicEnabled !== false, cfg?.ambientVolume ?? cfg?.musicVolume ?? 35))
+        .catch(() => applyResume(true, 35))
+    } else {
+      applyResume(true, 35)
+    }
+  }, [])
+
+  return { fadeOutAndStop, pauseForLaunch, resumeFromLaunch }
 }

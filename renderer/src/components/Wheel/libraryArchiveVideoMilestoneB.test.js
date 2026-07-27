@@ -133,7 +133,7 @@ test("Archive View keeps a framed, centered lower-band geometry and framed cover
 })
 
 test("compact layout keeps Return, the Vespara lockup, and Console/Welcome Back in separate global-header columns, with the local Library title in its own row below, without shrinking Return's text", () => {
-  const compactStart = css.indexOf("@media (max-width: 1280px), (max-height: 760px)")
+  const compactStart = css.indexOf("@media (max-width: 1280px), (max-height: 870px)")
   const compact = css.slice(compactStart, css.indexOf("/* Restrained entrance", compactStart))
   // .stage .globalHeader (Return | lockup | Console+WelcomeBack) keeps its
   // desktop 3-column grid (minmax(0,1fr) auto minmax(0,1fr)) at every

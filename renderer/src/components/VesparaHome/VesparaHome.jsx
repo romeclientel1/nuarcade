@@ -51,7 +51,11 @@ export default function VesparaHome({
   // single normalization/conversion boundary (0-100 percent -> 0-1 gain
   // scale); pre-converting here would be a second, redundant conversion.
   const sounds = useArcadeSounds({ enabled: uiSoundsEnabled, volume: uiSoundVolume })
-  const { fadeOutAndStop: fadeOutSanctuaryAmbience } = useSanctuaryAmbience()
+  const {
+    fadeOutAndStop: fadeOutSanctuaryAmbience,
+    pauseForLaunch: pauseSanctuaryAmbienceForLaunch,
+    resumeFromLaunch: resumeSanctuaryAmbienceFromLaunch,
+  } = useSanctuaryAmbience()
 
   const activeProfileId = activeProfile?.id ?? null
 
@@ -64,9 +68,19 @@ export default function VesparaHome({
     startSession, endSession, recordLaunch,
     showError,
     playLaunchSound: sounds.launch,
-    // No background video in Home -- onLaunchStart/onReturn are optional
-    // and Wheel-specific (pausing/resuming its own bg video refs). Home
-    // has nothing equivalent, so both are simply omitted.
+    // VES-R0-001: Home has no background video the way Wheel does, but it
+    // does have the Sanctuary ambient loop -- the same category of
+    // Vespara-owned media Wheel already pauses/resumes around a launch via
+    // these same two callbacks. Wiring it here (rather than only through
+    // activateAction, which Recently Played never calls) means every launch
+    // path that goes through this single useGameLauncher instance -- the
+    // Recent row's click handler, its gamepad/keyboard confirm path, and any
+    // future Home launch surface -- silences ambience before the external
+    // game opens and restores it only once useGameLauncher itself confirms
+    // return (focus/visibilitychange), without needing to duplicate that
+    // logic at each call site.
+    onLaunchStart: pauseSanctuaryAmbienceForLaunch,
+    onReturn: resumeSanctuaryAmbienceFromLaunch,
     // Recently Played is no longer tagged/written here -- useGameLauncher
     // itself is now the single write authority, writing once on
     // confirmed return. See useGameLauncher.js and

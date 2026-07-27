@@ -95,3 +95,50 @@ test('Traveler Recognition retains its own unchanged gateway hook contract', () 
   assert.match(gatewayHook, /export function useGatewayMusic\(src\)/)
   assert.doesNotMatch(gatewayHook, /SanctuaryAmbience|sanctuary/i)
 })
+
+// -- VES-R0-001 regression: Sanctuary ambience must silence for a real game
+// launch (Recently Played and any future Home launch surface), not only for
+// in-app navigation and Depart, and must come back once the external game
+// exits -- without duplicating the ambience instance.
+
+test('the hook exposes pauseForLaunch/resumeFromLaunch distinct from fadeOutAndStop', () => {
+  assert.match(hook, /pauseForLaunch = useCallback\(\(\) => \{\s*controllerRef\.current\?\.pause\(\)/)
+  assert.match(hook, /resumeFromLaunch = useCallback\(\(\) => \{/)
+  assert.match(hook, /return \{ fadeOutAndStop, pauseForLaunch, resumeFromLaunch \}/)
+})
+
+test('resumeFromLaunch re-reads current config rather than reusing the mount-time value', () => {
+  const resumeBlock = hook.slice(hook.indexOf('const resumeFromLaunch'), hook.indexOf('return { fadeOutAndStop'))
+  assert.match(resumeBlock, /window\.nuarcade\?\.getConfig/)
+  assert.match(resumeBlock, /cfg\?\.musicEnabled !== false/)
+  assert.match(resumeBlock, /cfg\?\.ambientVolume \?\? cfg\?\.musicVolume \?\? 35/)
+})
+
+test('the engine exposes reversible pause/resume, separate from the permanent fadeOutAndStop/cleanup latch', () => {
+  assert.match(engine, /function pause\(\) \{/)
+  assert.match(engine, /function resume\(enabled, volumePercent\) \{/)
+  assert.match(engine, /return \{ start, fadeOutAndStop, pause, resume, cleanup \}/)
+  // pause()/resume() must never unload() the Howl instance -- only
+  // fadeOutAndStop/cleanup are allowed to do that.
+  const pauseBlock = engine.slice(engine.indexOf('function pause()'), engine.indexOf('function resume('))
+  assert.doesNotMatch(pauseBlock, /\.unload\(\)/)
+  const resumeBlock = engine.slice(engine.indexOf('function resume('), engine.indexOf('return { start,'))
+  assert.doesNotMatch(resumeBlock, /\.unload\(\)/)
+})
+
+test("VesparaHome wires the shared useGameLauncher onLaunchStart/onReturn callbacks to pause/resume Sanctuary ambience, so every Home launch path (including Recently Played) is covered", () => {
+  assert.match(jsx, /pauseForLaunch: pauseSanctuaryAmbienceForLaunch,\s*resumeFromLaunch: resumeSanctuaryAmbienceFromLaunch,/)
+  const launcherBlock = jsx.slice(jsx.indexOf('} = useGameLauncher({'), jsx.indexOf('originDestination: "home"'))
+  assert.match(launcherBlock, /onLaunchStart: pauseSanctuaryAmbienceForLaunch,/)
+  assert.match(launcherBlock, /onReturn: resumeSanctuaryAmbienceFromLaunch,/)
+  // The old comment claiming Home has "nothing equivalent" to Wheel's
+  // background video must be gone -- it described the exact gap this
+  // regression fix closes.
+  assert.doesNotMatch(jsx, /Home\s*\n\s*\/\/ has nothing equivalent, so both are simply omitted\./)
+})
+
+test('Recently Played launches (click and gamepad/keyboard confirm) both go through the single launch() call this useGameLauncher instance owns, so neither path can bypass the ambience pause', () => {
+  assert.match(jsx, /setRecentIndex\(i\); launch\(g\)/)
+  const launchFocusedBlock = jsx.slice(jsx.indexOf('const launchFocused'), jsx.indexOf('const launchFocusedRef'))
+  assert.match(launchFocusedBlock, /launch\(displayedRecentGames\[recentIndex\]\)/)
+})

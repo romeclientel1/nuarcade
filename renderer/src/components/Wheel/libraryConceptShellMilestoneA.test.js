@@ -77,7 +77,7 @@ test("the compact selected-game strip sits below the shelf and does not cover th
   // D4: infoPanel is top-anchored and bounded-width (a compact strip, not a
   // full-width slab), positioned right below .wheelArea's own bottom edge.
   assert.match(css, /\.stage \.infoPanel\s*\{[^}]*top:\s*clamp\(462px,\s*45.5vh,\s*494px\)[^}]*width:\s*clamp\(700px,\s*60vw,\s*1150px\)[^}]*min-height:\s*40px/s)
-  assert.match(css, /@media \(max-width: 1280px\), \(max-height: 760px\)[\s\S]*?\.stage \.wheelArea\s*\{[^}]*top:\s*150px[^}]*height:\s*210px[\s\S]*?\.stage \.infoPanel\s*\{[^}]*top:\s*372px/s)
+  assert.match(css, /@media \(max-width: 1280px\), \(max-height: 870px\)[\s\S]*?\.stage \.wheelArea\s*\{[^}]*top:\s*150px[^}]*height:\s*210px[\s\S]*?\.stage \.infoPanel\s*\{[^}]*top:\s*372px/s)
 })
 
 test("return, console, and the visible Depart plaque use integrated live controls", () => {

@@ -623,7 +623,25 @@
    reduction. No .placeName/.marqueeWrap/.libraryBrandName font-size rule
    exists anywhere in this block -- primary type stays full-size at every
    width, per spec. */
-@media (max-width: 1280px), (max-height: 760px) {
+/* VES-R0-002 fix -- the max-height threshold below was 760px, which put
+   1366x768 (and any other viewport in the ~760-870px-tall range,
+   including very common Windows display-scaling combinations such as a
+   1920x1080 panel at 125% scaling, effectively ~1536x864 in CSS px)
+   outside this compact ruleset. Those viewports instead used the desktop
+   .previewReservation/.infoPanel rules above, whose top offsets are
+   hand-tuned px floors (top: clamp(546px, 54vh, 582px), width floored at
+   440px) that stop shrinking below a certain vh and do not leave enough
+   room for the Archive View preview panel's full height above the hint
+   bar -- its bottom edge lands at floor-top(546) + panel content height
+   (~288px at the 440px width floor) = ~834px, clipped by .stage's
+   overflow:hidden on any viewport shorter than that. Raising the
+   threshold to 870px (with ~36px of margin above that ~834px worst case)
+   routes every viewport in that gap into this already-verified-safe
+   compact layout instead -- the same carousel/info-panel/preview set
+   scaled down together, exactly as designed for 1280x720, which has
+   generous headroom at anything up to 870px tall. No rule inside this
+   block changed; only the condition that decides when it applies. */
+@media (max-width: 1280px), (max-height: 870px) {
   .stage .globalHeader {
     top: 12px;
     padding: 0 20px;

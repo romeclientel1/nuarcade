@@ -147,7 +147,7 @@ test("Console, Return, and Depart keep their existing onClick handlers", () => {
 // -- 20. 1920x1080 and 1280x720 layouts avoid overlap ------------------------
 
 test("compact rules reflow the header/title/shelf stack (top offsets only push down) without redefining primary type sizes (D4: Continue Playing's slot reclaimed)", () => {
-  const compact = css.slice(css.indexOf("@media (max-width: 1280px), (max-height: 760px)"), css.indexOf("/* Restrained entrance", css.indexOf("@media (max-width: 1280px), (max-height: 760px)")))
+  const compact = css.slice(css.indexOf("@media (max-width: 1280px), (max-height: 870px)"), css.indexOf("/* Restrained entrance", css.indexOf("@media (max-width: 1280px), (max-height: 870px)")))
   assert.match(compact, /\.stage \.globalHeader\s*\{[^}]*top:\s*12px[^}]*padding:\s*0 20px/s)
   assert.match(compact, /\.stage \.libraryTitleRow\s*\{[^}]*top:\s*60px/s)
   assert.match(compact, /\.stage \.categoryStrip\s*\{[^}]*top:\s*106px/s)
@@ -169,7 +169,10 @@ test("compact rules reflow the header/title/shelf stack (top offsets only push d
 // a genuinely protected file, but no longer fails on unrelated work.
 
 test("this milestone leaves Sanctuary, startup, audio, installer, preload, main-process, dependency, and version files untouched", () => {
-  const { offenders, packageJsonOffenders } = findProtectedScopeOffenders(import.meta.url)
+  // R0 Windows-validation regression fix (VES-R0-001/VES-R0-002): see the
+  // matching comment in libraryFullWidthMilestoneD3.test.js -- deliberately
+  // spans Wheel and Sanctuary together, so Sanctuary alone is excluded here.
+  const { offenders, packageJsonOffenders } = findProtectedScopeOffenders(import.meta.url, { excludeLabels: ["Sanctuary"] })
   assert.deepEqual(offenders, [], `protected files were modified: ${offenders.join(", ")}`)
   assert.deepEqual(packageJsonOffenders, [], `protected package.json fields were modified: ${packageJsonOffenders.join(", ")}`)
 })
