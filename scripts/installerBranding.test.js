@@ -132,7 +132,7 @@ test('upgrade and build discovery identities remain unchanged', () => {
   assert.equal('guid' in pkg.build, false)
   assert.equal('publish' in pkg.build, false)
   assert.match(workflow, /npm run build:win/)
-  assert.match(workflow, /files: dist\/\*\.exe/)
+  assert.match(workflow, /files: \$\{\{ steps\.installer\.outputs\.PATH \}\}/)
   assert.match(updater, /Vespara-Setup-' \+ version \+ '\.exe/)
   assert.equal(
     crypto.createHash('sha256').update(pkg.build.appId).digest('hex'),

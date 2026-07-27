@@ -4,12 +4,24 @@ on:
   push:
     branches: [ main ]
   workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish a public GitHub Release
+        required: true
+        type: boolean
+        default: false
 
 jobs:
+  # Ordinary build/test/package job. Runs on every push to main and on every
+  # manual dispatch from any branch. Never has write access to the repo and
+  # never creates or touches a public GitHub Release -- it only produces a
+  # private workflow artifact that publish-release (below) may later consume.
   build-windows:
     runs-on: windows-latest
     permissions:
-      contents: write
+      contents: read
+    outputs:
+      version: ${{ steps.version.outputs.VERSION }}
 
     steps:
       - uses: actions/checkout@v4
@@ -44,23 +56,100 @@ jobs:
       - name: Build Windows installer
         run: npm run build:win
         env:
+          # electron-builder uses this to authenticate its own downloads
+          # (prebuilt Electron zip, code-signing tools, etc.) against
+          # GitHub's API so the build doesn't hit anonymous rate limits.
+          # This job's permissions are contents: read, so the token GitHub
+          # mints for it is read-only -- it cannot publish or write anything,
+          # regardless of this step. There is no "publish" provider
+          # configured in package.json's build block, so electron-builder
+          # itself never attempts to create or update a release here.
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ steps.version.outputs.VERSION }}
-          name: NuArcade v${{ steps.version.outputs.VERSION }}
-          body: |
-            NuArcade v${{ steps.version.outputs.VERSION }}
-            Built automatically from main branch.
-          files: dist/*.exe
-          make_latest: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: NuArcade-Setup
           path: dist/*.exe
+
+  # Public release publication. Structurally unreachable except for a manual
+  # dispatch, with publish explicitly set to true, from main -- an ordinary
+  # push, a dispatch with publish left at its false default, and a dispatch
+  # from any other branch (even with publish: true) all evaluate this job's
+  # own condition to false, so it never even starts, and a failed or skipped
+  # build-windows (via `needs`) blocks it the same way.
+  publish-release:
+    needs: build-windows
+    runs-on: windows-latest
+    if: >
+      github.event_name == 'workflow_dispatch' &&
+      inputs.publish == true &&
+      github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+
+    steps:
+      - name: Reject a duplicate release tag
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const version = '${{ needs.build-windows.outputs.version }}'
+            const tag = `v${version}`
+            try {
+              await github.rest.repos.getReleaseByTag({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag,
+              })
+              // The call above only resolves if a release for this tag
+              // already exists -- that is always a stop condition, never a
+              // success path for this job.
+              core.setFailed(`A release already exists for tag ${tag}. Refusing to overwrite, edit, or duplicate it.`)
+            } catch (error) {
+              if (error.status === 404) {
+                core.info(`No existing release found for tag ${tag}; continuing.`)
+                return
+              }
+              // Anything other than a genuine 404 (auth failure, rate limit,
+              // server error, malformed response, ...) must not be treated
+              // as "no release exists" -- rethrow so the job fails loudly
+              // instead of silently proceeding to publish.
+              throw error
+            }
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: NuArcade-Setup
+          path: dist
+
+      - name: Validate exactly one installer is present
+        id: installer
+        shell: pwsh
+        run: |
+          $candidates = @(Get-ChildItem -Path dist -Filter 'Vespara Setup *.exe' -File)
+          if ($candidates.Count -eq 0) {
+            Write-Error "No installer matching 'Vespara Setup *.exe' was found in the downloaded artifact."
+            exit 1
+          }
+          if ($candidates.Count -gt 1) {
+            $names = ($candidates | ForEach-Object { $_.Name }) -join ', '
+            Write-Error "Multiple installer candidates were found in the downloaded artifact; refusing to guess which to publish: $names"
+            exit 1
+          }
+          $path = $candidates[0].FullName
+          echo "PATH=$path" >> $env:GITHUB_OUTPUT
+          Write-Output "Validated installer: $path"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.build-windows.outputs.version }}
+          name: NuArcade v${{ needs.build-windows.outputs.version }}
+          body: |
+            NuArcade v${{ needs.build-windows.outputs.version }}
+            Built automatically from main branch.
+          files: ${{ steps.installer.outputs.PATH }}
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
