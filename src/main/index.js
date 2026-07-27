@@ -714,14 +714,90 @@ ipcMain.handle('update-marquee', (event, data) => {
 })
 
 // -- Config & misc -----------------------------------------------------------
-ipcMain.handle('add-exclusions', async (event, paths) => {
+// Fixed, path-independent PowerShell script for adding Windows Defender
+// exclusions. Configured paths are NEVER interpolated into this script text,
+// the -EncodedCommand payload, or the spawned process's argument array --
+// they are delivered exclusively as a JSON array written to the child
+// process's own stdin, read back inside the script via
+// [Console]::In.ReadToEnd() and parsed with ConvertFrom-Json. This binds
+// each path to $p as an inert PowerShell string VALUE (never re-entered into
+// PowerShell's own source-text parser), so a path containing double quotes,
+// semicolons, backticks, '$', embedded spaces, Unicode characters, or
+// embedded newlines round-trips unchanged and can never become executable
+// PowerShell syntax.
+const DEFENDER_EXCLUSION_SCRIPT = [
+  '$json = [Console]::In.ReadToEnd()',
+  '$paths = $json | ConvertFrom-Json',
+  'foreach ($p in $paths) {',
+  '  Add-MpPreference -ExclusionPath ([string]$p)',
+  '}',
+].join('\n')
+
+// spawnImpl is an optional test-only seam (defaults to the real spawn);
+// production call sites never pass it. Exported (below) so automated tests
+// can exercise every branch of this function without ever invoking a real
+// powershell.exe process or touching real Windows Defender state.
+function runAddExclusions(paths, spawnImpl) {
   return new Promise((resolve) => {
-    const ps = paths.map(p => `Add-MpPreference -ExclusionPath "${p}"`).join('; ')
-    exec(`powershell -Command "${ps}"`, (error) => {
-      resolve({ success: !error })
+    if (!Array.isArray(paths)) {
+      resolve({ success: false, error: 'Invalid input: expected an array of exclusion paths.' })
+      return
+    }
+    if (paths.some((p) => typeof p !== 'string')) {
+      resolve({ success: false, error: 'Invalid input: every exclusion path must be a string.' })
+      return
+    }
+    if (paths.length === 0) {
+      resolve({ success: true })
+      return
+    }
+
+    var settled = false
+    function settle(result) {
+      if (settled) return
+      settled = true
+      resolve(result)
+    }
+
+    var doSpawn = spawnImpl || spawn
+    var encodedCommand = Buffer.from(DEFENDER_EXCLUSION_SCRIPT, 'utf16le').toString('base64')
+
+    var child
+    try {
+      child = doSpawn('powershell.exe', [
+        '-NoProfile',
+        '-NonInteractive',
+        '-EncodedCommand',
+        encodedCommand,
+      ], { stdio: ['pipe', 'ignore', 'pipe'] })
+    } catch (e) {
+      settle({ success: false, error: 'Failed to start powershell.exe.' })
+      return
+    }
+
+    child.on('error', function () {
+      settle({ success: false, error: 'powershell.exe process error.' })
     })
+    child.on('exit', function (code) {
+      if (code === 0) settle({ success: true })
+      else settle({ success: false, error: 'powershell.exe exited with code ' + code + '.' })
+    })
+
+    if (child.stdin) {
+      child.stdin.on('error', function () {
+        settle({ success: false, error: 'Failed to write exclusion paths to powershell.exe.' })
+      })
+    }
+    try {
+      child.stdin.write(JSON.stringify(paths))
+      child.stdin.end()
+    } catch (e) {
+      settle({ success: false, error: 'Failed to write exclusion paths to powershell.exe.' })
+    }
   })
-})
+}
+
+ipcMain.handle('add-exclusions', async (event, paths) => runAddExclusions(paths))
 
 // -- Bundled Vespara cinematics ----------------------------------------------
 // The renderer may request only these product-owned files. Returning the
@@ -2673,6 +2749,8 @@ module.exports = {
   trackLaunchLifecycle,
   emitLaunchLifecycleTerminal,
   handleSecondInstance,
+  runAddExclusions,
+  DEFENDER_EXCLUSION_SCRIPT,
   _internal: {
     setMainWindowForTest: (win) => { mainWin = win },
     getSingleInstanceLockAcquired: () => singleInstanceLockAcquired,

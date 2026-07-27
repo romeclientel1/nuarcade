@@ -496,3 +496,254 @@ test("second-instance with no window yet (never created) is a safe no-op", () =>
   mainIndex._internal.setMainWindowForTest(null)
   assert.doesNotThrow(() => mainIndex.handleSecondInstance())
 })
+
+// -- Windows Defender exclusions (R0 Commit 2) --------------------------------
+// runAddExclusions never invokes real powershell.exe or touches real Windows
+// Defender state in any test below -- every case injects a fake spawnImpl
+// returning a fake ChildProcess-shaped EventEmitter with a recording stdin,
+// mirroring the fakeChild()/dependency-injection pattern already used above
+// for launchWithReturn/launchViaShellCommand.
+
+function fakeChildWithStdin() {
+  const emitter = new EventEmitter()
+  emitter.pid = 5150
+  const writes = []
+  emitter.stdin = {
+    writes,
+    write: (chunk) => { writes.push(chunk); return true },
+    end: () => { writes.push("__END__") },
+    on: () => {}, // no stdin error listener triggered by default
+  }
+  return emitter
+}
+
+test("add-exclusions rejects a string instead of an array, without spawning", async () => {
+  let spawnCalled = false
+  const result = await mainIndex.runAddExclusions("C:\\Games", () => { spawnCalled = true })
+  assert.equal(result.success, false)
+  assert.equal(spawnCalled, false)
+})
+
+test("add-exclusions rejects a number instead of an array, without spawning", async () => {
+  let spawnCalled = false
+  const result = await mainIndex.runAddExclusions(42, () => { spawnCalled = true })
+  assert.equal(result.success, false)
+  assert.equal(spawnCalled, false)
+})
+
+test("add-exclusions rejects null instead of an array, without spawning", async () => {
+  let spawnCalled = false
+  const result = await mainIndex.runAddExclusions(null, () => { spawnCalled = true })
+  assert.equal(result.success, false)
+  assert.equal(spawnCalled, false)
+})
+
+test("add-exclusions rejects a plain object instead of an array, without spawning", async () => {
+  let spawnCalled = false
+  const result = await mainIndex.runAddExclusions({ path: "C:\\Games" }, () => { spawnCalled = true })
+  assert.equal(result.success, false)
+  assert.equal(spawnCalled, false)
+})
+
+test("add-exclusions rejects undefined instead of an array, without spawning", async () => {
+  let spawnCalled = false
+  const result = await mainIndex.runAddExclusions(undefined, () => { spawnCalled = true })
+  assert.equal(result.success, false)
+  assert.equal(spawnCalled, false)
+})
+
+test("add-exclusions rejects an array containing a non-string member, without spawning", async () => {
+  let spawnCalled = false
+  const result = await mainIndex.runAddExclusions(["C:\\Games", 42, "C:\\Roms"], () => { spawnCalled = true })
+  assert.equal(result.success, false)
+  assert.equal(spawnCalled, false)
+})
+
+test("add-exclusions with an empty array succeeds without spawning", async () => {
+  let spawnCalled = false
+  const result = await mainIndex.runAddExclusions([], () => { spawnCalled = true })
+  assert.deepEqual(result, { success: true })
+  assert.equal(spawnCalled, false)
+})
+
+test("add-exclusions spawns exactly powershell.exe with the fixed argument shape", async () => {
+  let recordedExe = null
+  let recordedArgs = null
+  const spawnImpl = (exe, args) => {
+    recordedExe = exe
+    recordedArgs = args
+    const child = fakeChildWithStdin()
+    setImmediate(() => child.emit("exit", 0))
+    return child
+  }
+  await mainIndex.runAddExclusions(["C:\\Games"], spawnImpl)
+  assert.equal(recordedExe, "powershell.exe")
+  assert.deepEqual(recordedArgs.slice(0, 3), ["-NoProfile", "-NonInteractive", "-EncodedCommand"])
+  assert.equal(recordedArgs.length, 4)
+  assert.equal(typeof recordedArgs[3], "string")
+})
+
+test("add-exclusions produces an identical argument array and encoded script for different non-empty path arrays", async () => {
+  const captured = []
+  const spawnImpl = (exe, args) => {
+    captured.push(args)
+    const child = fakeChildWithStdin()
+    setImmediate(() => child.emit("exit", 0))
+    return child
+  }
+  await mainIndex.runAddExclusions(["C:\\Games"], spawnImpl)
+  await mainIndex.runAddExclusions(["D:\\Roms", "E:\\Other Folder", "F:\\Third"], spawnImpl)
+  assert.deepEqual(captured[0], captured[1])
+})
+
+test("decoding the -EncodedCommand payload as UTF-16LE reproduces the exact fixed script", async () => {
+  let recordedArgs = null
+  const spawnImpl = (exe, args) => {
+    recordedArgs = args
+    const child = fakeChildWithStdin()
+    setImmediate(() => child.emit("exit", 0))
+    return child
+  }
+  await mainIndex.runAddExclusions(["C:\\Games"], spawnImpl)
+  const encoded = recordedArgs[3]
+  const decoded = Buffer.from(encoded, "base64").toString("utf16le")
+  assert.equal(decoded, mainIndex.DEFENDER_EXCLUSION_SCRIPT)
+})
+
+test("no configured path appears in the script source, the decoded encoded-command payload, or the spawn argument array -- metacharacters, Unicode, and newlines survive only in the JSON stdin payload", async () => {
+  const trickyPaths = [
+    "C:\\Games With Spaces",
+    "C:\\Path\"With\"Quotes",
+    "C:\\Path;With;Semicolons",
+    "C:\\Path$With$Dollar",
+    "C:\\Path`With`Backtick",
+    "C:\\日本語\\ゲーム",
+    "C:\\Path\nWith\nNewlines",
+  ]
+  let recordedArgs = null
+  let stdinPayload = null
+  const spawnImpl = (exe, args) => {
+    recordedArgs = args
+    const child = fakeChildWithStdin()
+    setImmediate(() => {
+      stdinPayload = child.stdin.writes.filter((w) => w !== "__END__").join("")
+      child.emit("exit", 0)
+    })
+    return child
+  }
+  const result = await mainIndex.runAddExclusions(trickyPaths, spawnImpl)
+  assert.equal(result.success, true)
+
+  const decodedScript = Buffer.from(recordedArgs[3], "base64").toString("utf16le")
+  const argsAsText = JSON.stringify(recordedArgs)
+  for (const p of trickyPaths) {
+    assert.equal(decodedScript.includes(p), false, `path leaked into fixed script: ${p}`)
+    assert.equal(argsAsText.includes(p), false, `path leaked into spawn argument array: ${p}`)
+  }
+
+  // Every path is present, and only present, in the JSON stdin payload, and
+  // round-trips through JSON.parse unchanged.
+  const parsedBack = JSON.parse(stdinPayload)
+  assert.deepEqual(parsedBack, trickyPaths)
+})
+
+test("multiple paths are preserved in their original order in the JSON stdin payload", async () => {
+  const paths = ["C:\\First", "D:\\Second", "E:\\Third"]
+  let stdinPayload = null
+  const spawnImpl = () => {
+    const child = fakeChildWithStdin()
+    setImmediate(() => {
+      stdinPayload = child.stdin.writes.filter((w) => w !== "__END__").join("")
+      child.emit("exit", 0)
+    })
+    return child
+  }
+  await mainIndex.runAddExclusions(paths, spawnImpl)
+  assert.deepEqual(JSON.parse(stdinPayload), paths)
+})
+
+test("add-exclusions resolves {success:true} on exit code 0", async () => {
+  const spawnImpl = () => {
+    const child = fakeChildWithStdin()
+    setImmediate(() => child.emit("exit", 0))
+    return child
+  }
+  const result = await mainIndex.runAddExclusions(["C:\\Games"], spawnImpl)
+  assert.deepEqual(result, { success: true })
+})
+
+test("add-exclusions resolves {success:false} on a nonzero exit code", async () => {
+  const spawnImpl = () => {
+    const child = fakeChildWithStdin()
+    setImmediate(() => child.emit("exit", 1))
+    return child
+  }
+  const result = await mainIndex.runAddExclusions(["C:\\Games"], spawnImpl)
+  assert.equal(result.success, false)
+})
+
+test("add-exclusions resolves {success:false} on a child 'error' event", async () => {
+  const spawnImpl = () => {
+    const child = fakeChildWithStdin()
+    setImmediate(() => child.emit("error", new Error("spawn ENOENT")))
+    return child
+  }
+  const result = await mainIndex.runAddExclusions(["C:\\Games"], spawnImpl)
+  assert.equal(result.success, false)
+})
+
+test("add-exclusions resolves {success:false} when spawnImpl throws synchronously", async () => {
+  const spawnImpl = () => { throw new Error("spawn failed synchronously") }
+  const result = await mainIndex.runAddExclusions(["C:\\Games"], spawnImpl)
+  assert.equal(result.success, false)
+})
+
+test("add-exclusions resolves {success:false} when writing to stdin fails", async () => {
+  const spawnImpl = () => {
+    const child = new EventEmitter()
+    child.pid = 5150
+    child.stdin = {
+      write: () => { throw new Error("EPIPE") },
+      end: () => {},
+      on: () => {},
+    }
+    return child
+  }
+  const result = await mainIndex.runAddExclusions(["C:\\Games"], spawnImpl)
+  assert.equal(result.success, false)
+})
+
+test("add-exclusions resolves exactly once even if the fake child emits conflicting terminal events", async () => {
+  let resolveCount = 0
+  const spawnImpl = () => {
+    const child = fakeChildWithStdin()
+    setImmediate(() => {
+      child.emit("exit", 0)
+      child.emit("error", new Error("late spurious error"))
+      child.emit("exit", 1)
+    })
+    return child
+  }
+  const result = await mainIndex.runAddExclusions(["C:\\Games"], spawnImpl).then((r) => { resolveCount += 1; return r })
+  assert.equal(resolveCount, 1)
+  assert.deepEqual(result, { success: true })
+})
+
+test("add-exclusions error messages never include the supplied exclusion paths", async () => {
+  const secretPath = "C:\\Very\\Secret\\Traveler\\Path"
+  const spawnImpl = () => {
+    const child = fakeChildWithStdin()
+    setImmediate(() => child.emit("exit", 1))
+    return child
+  }
+  const result = await mainIndex.runAddExclusions([secretPath], spawnImpl)
+  assert.equal(result.success, false)
+  assert.equal((result.error || "").includes(secretPath), false)
+})
+
+test("add-exclusions is reachable via the real 'add-exclusions' IPC handler and preserves the {success} contract", async () => {
+  const handler = ipcHandlers.get("add-exclusions")
+  assert.equal(typeof handler, "function")
+  const result = await handler({}, [])
+  assert.deepEqual(result, { success: true })
+})
