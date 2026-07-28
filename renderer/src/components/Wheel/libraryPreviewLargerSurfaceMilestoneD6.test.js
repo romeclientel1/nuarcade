@@ -150,13 +150,16 @@ test("the archive video and its still-poster fallback both use object-fit: conta
 test("the carousel (wheelArea), selected-game info panel, and Launch Game control are untouched by this resize -- no overlap introduced", () => {
   const compact = compactBlock()
   assert.match(compact, /\.stage \.wheelArea\s*\{[^}]*top:\s*150px[^}]*height:\s*210px/s)
-  assert.match(compact, /\.stage \.infoPanel\s*\{[^}]*top:\s*372px/s)
+  // R2 raised infoPanel's compact top from 372 to 366 (see that rule's own
+  // comment in Wheel.module.css) -- still below previewReservation's own
+  // top, with more buffer than before, not less.
+  assert.match(compact, /\.stage \.infoPanel\s*\{[^}]*top:\s*366px/s)
   assert.match(jsx, /className=\{styles\.launchBtn[^>]*onClick=\{launchGame\}/)
-  // The new, larger previewReservation top (432px) still sits below
-  // infoPanel's compact top (372px) plus its own real content height --
-  // i.e. it was moved to reclaim slack, not to overlap the pedestal above it.
+  // The previewReservation top (432px) still sits below infoPanel's
+  // compact top (366px) plus its own real content height -- i.e. it was
+  // moved to reclaim slack, not to overlap the pedestal above it.
   assert.match(compact, /\.previewReservation\s*\{[^}]*top:\s*432px/s)
-  const infoPanelTop = 372
+  const infoPanelTop = 366
   const previewTop = 432
   assert.ok(previewTop > infoPanelTop, "previewReservation must still start below infoPanel's top")
 })

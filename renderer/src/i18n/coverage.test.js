@@ -151,7 +151,7 @@ test("Settings headings switch language", () => {
   const sectionKeys = [
     "settings.sectionEmulators", "settings.sectionPaths", "settings.sectionTpFolderRenamer",
     "settings.sectionDisplay", "settings.sectionAudio",
-    "settings.sectionCardArt", "settings.sectionMusic", "settings.sectionAttract",
+    "settings.sectionMusic", "settings.sectionAttract",
     "settings.sectionPixelcade", "settings.sectionLinks", "settings.sectionArtwork",
     "settings.sectionLibrary", "settings.sectionBios", "settings.sectionAbout",
   ]

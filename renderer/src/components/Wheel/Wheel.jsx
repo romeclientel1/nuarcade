@@ -264,7 +264,6 @@ export default function Wheel({ onCRTChange, crtEnabled, activeProfile, onSwitch
   }, [loading, games, addRecentlyPlayed])
 
   useMediaFolders()
-  const [artPref, setArtPref] = useState(() => localStorage.getItem('nuarcade_art_pref') || 'sgdb')
 
   const { getCollections } = useCollections()
   const [collections, setCollections] = useState(() => getCollections())
@@ -1654,7 +1653,6 @@ export default function Wheel({ onCRTChange, crtEnabled, activeProfile, onSwitch
                       isNavFocused={focusZone === 2}
                       isAttract={attractMode}
                       isFavorite={isFavorite(game.id || game.profile)}
-                      artPref={artPref}
                       artwork={artwork}
                       onClick={() => {
                         if (index === selectedIndex) { sounds.select(); resetLaunching(); setShowDetail(true) }

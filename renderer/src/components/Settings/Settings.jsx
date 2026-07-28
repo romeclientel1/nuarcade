@@ -124,8 +124,18 @@ const [showControllerTest, setShowControllerTest] = useState(false)
 const [rescanning, setRescanning] = useState(false)
 const [backingUp, setBackingUp] = useState(false)
 const [restoring, setRestoring] = useState(false)
-  const [artPref, setArtPref] = useState(() => localStorage.getItem('nuarcade_art_pref') || 'sgdb')
-  const updateArtPref = (val) => { setArtPref(val); localStorage.setItem('nuarcade_art_pref', val) }
+  // Card Art Type setting retired (R2 audit): it was architecturally
+  // orphaned exactly like the retired Theme Color setting (raw
+  // localStorage["nuarcade_art_pref"], never touched nuarcade-config.json/
+  // IPC, excluded from backup/restore) and its label ("What shows on wheel
+  // cards") overstated its real effect -- it only tinted GameCard.jsx's
+  // dimmed background-bleed layer behind the centered card, never the
+  // primary card art, search/collections (same GameCard), Sanctuary's
+  // Recently Played, or the Archive View preview. GameCard.jsx now uses
+  // the fixed 'sgdb'-equivalent priority order that was already the
+  // default, so this is not a visible change for anyone who left the
+  // setting untouched. Any pre-existing "nuarcade_art_pref" localStorage
+  // value is simply left inert, unread and unrepurposed.
 const [rescanResult, setRescanResult] = useState(null)
 const [pruneFetching, setPruneFetching] = useState(false)
 const [pruneResult, setPruneResult] = useState(null)
@@ -824,23 +834,6 @@ const handleSave = async () => {
             </div>
           </div>
 
-          <div className={styles.section}>
-            <div className={styles.sectionTitle}>{t("settings.sectionCardArt")}</div>
-            <div className={styles.inputRow}>
-              <label className={styles.inputLabel}>{t("settings.cardArtLabel")}</label>
-              <div className={styles.toggleGroup}>
-                {['snap','boxart','sgdb','none'].map(opt => (
-                  <button
-                    key={opt}
-                    className={styles.toggleBtn + (artPref === opt ? ' ' + styles.toggleBtnActive : '')}
-                    onClick={() => updateArtPref(opt)}
-                  >
-                    {opt === 'snap' ? 'SNAP' : opt === 'boxart' ? 'BOX' : opt === 'sgdb' ? 'SGDB' : 'OFF'}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
 
           <div className={styles.section}>
             <div className={styles.sectionTitle}>{t("settings.sectionMusic")}</div>

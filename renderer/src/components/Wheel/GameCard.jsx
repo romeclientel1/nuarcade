@@ -71,7 +71,7 @@ const STATUS_COLORS = {
 // card's background.
 const CARD_BG = "#142522"
 
-export default function GameCard({ game, isCenter, isNavFocused, onClick, isFavorite, artwork, artPref }) {
+export default function GameCard({ game, isCenter, isNavFocused, onClick, isFavorite, artwork }) {
   const { t } = useI18n()
   const [imgLoaded,   setImgLoaded  ] = useState(false)
   const [imgError,    setImgError   ] = useState(false)
@@ -113,18 +113,16 @@ export default function GameCard({ game, isCenter, isNavFocused, onClick, isFavo
 
   // Artwork sources
   const gameArt   = artwork?.[game.id || game.profile] || null
-  // pref: 'snap' | 'boxart' | 'sgdb' | 'none'  (default: 'sgdb')
-  const pref = artPref || 'sgdb'
   const sgdbHero   = gameArt?.hero    || null
   const localSnap  = game.snapPath    || null
   const localBox   = game.boxArtPath  || null
-  const heroUrl = (() => {
-    if (pref === 'none') return null
-    if (pref === 'snap')   return localSnap   || sgdbHero  || null
-    if (pref === 'boxart') return localBox    || sgdbHero  || null
-    // default 'sgdb'
-    return sgdbHero || localSnap || localBox || null
-  })()
+  // Card Art Type setting retired (R2 audit): it let this fall back through
+  // snap/boxart/sgdb/none, but only ever changed this one dimmed background
+  // layer, never the primary capsuleUrl art below -- a narrower, more
+  // misleading effect than its "What shows on wheel cards" label implied.
+  // This is now the fixed order that was already the default, so nothing
+  // visibly changes for anyone who left the setting untouched.
+  const heroUrl = sgdbHero || localSnap || localBox || null
   const capsuleUrl= gameArt?.capsule || null
   const logoUrl   = gameArt?.logo    || null
 
