@@ -20,10 +20,17 @@
 // The fix raises the media query's max-height threshold from 760px to
 // 870px -- routing every viewport in that gap into the existing compact
 // layout instead, which was already hand-tuned for 1280x720 and therefore
-// has generous headroom (its own previewReservation sits at a fixed
-// top:456px with a 260px-wide, ~146px-tall screen, bottom edge ≈ 636px)
-// at anything up to 870px tall. No rule inside the compact block changed;
-// only the condition that decides when it applies.
+// has generous headroom (its own previewReservation originally sat at a
+// fixed top:456px with a 260px-wide, ~146px-tall screen, bottom edge ≈
+// 636px) at anything up to 870px tall. No rule inside the compact block
+// changed at that time; only the condition that decides when it applies.
+//
+// D6 follow-up -- the fully-visible compact preview was reported as too
+// small to be useful. See libraryPreviewLargerSurfaceMilestoneD6.test.js
+// for that follow-up fix (a materially larger, vh-responsive 16:9 surface,
+// contain-fit so nothing is cropped) -- this file's own compact-value
+// assertion below was updated to match, since the old fixed 456/260 values
+// it checked are exactly what D6 replaced.
 
 import { test } from "node:test"
 import assert from "node:assert/strict"
@@ -54,9 +61,8 @@ test("a concretely common regressed resolution (1366x768) now falls inside the c
   assert.ok(!(viewportHeight <= 760), "768 was NOT caught by the old 760px threshold -- confirms this was a real gap, not a false alarm")
 })
 
-test("the compact layout's own previewReservation/previewScreen values are unchanged by this fix -- only the trigger condition moved", () => {
-  const compact = css.slice(css.indexOf("@media (max-width: 1280px), (max-height: 870px)"), css.indexOf("/* Restrained entrance", css.indexOf("@media (max-width: 1280px), (max-height: 870px)")))
-  assert.match(compact, /\.previewReservation\s*\{[^}]*top:\s*456px[^}]*width:\s*260px/s)
+test("the compact-breakpoint threshold itself (this fix's actual subject) is untouched by the later D6 preview-sizing follow-up", () => {
+  assert.match(css, /@media \(max-width: 1280px\), \(max-height: 870px\)/)
 })
 
 test("the desktop-mode previewReservation rule is untouched (same top/width clamp values as before this fix)", () => {

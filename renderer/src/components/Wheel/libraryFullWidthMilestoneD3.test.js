@@ -164,11 +164,17 @@ test("the full stack (header through Archive View) fits within a 1080px-tall vie
 
 test("the compact 1280x720 stack reflows without overlap and Archive View stays visible (smaller, not hidden)", () => {
   const compact = css.slice(css.indexOf("@media (max-width: 1280px), (max-height: 870px)"), css.indexOf("/* Restrained entrance", css.indexOf("@media (max-width: 1280px), (max-height: 870px)")))
-  // Verified live via CDP at exactly 1280x720: wheelArea 150-360, infoPanel
-  // 368-434, archiveFrame 448-620, depart 638-693, hintBar 681-720.
+  // Verified live via CDP at exactly 1280x720 (pre-D6): wheelArea 150-360,
+  // infoPanel 368-434, archiveFrame 448-620, depart 638-693, hintBar
+  // 681-720. D6 raised the preview's top from 456 to 432 and replaced the
+  // fixed 260px width with a vh-derived clamp() (see
+  // libraryPreviewViewportRegression.test.js for the worst-case math) --
+  // those live-measured archiveFrame/depart/hintBar coordinates have not
+  // been re-verified live since, and doing so is source-only work here;
+  // real on-screen confirmation is a remaining Windows validation step.
   assert.match(compact, /\.stage \.wheelArea\s*\{[^}]*top:\s*150px[^}]*height:\s*210px/s)
   assert.match(compact, /\.stage \.infoPanel\s*\{[^}]*top:\s*372px/s)
-  assert.match(compact, /\.previewReservation\s*\{[^}]*top:\s*456px[^}]*width:\s*260px/s)
+  assert.match(compact, /\.previewReservation\s*\{[^}]*top:\s*432px[^}]*width:\s*clamp\(340px, calc\(\(100vh - 509px\) \* 16 \/ 9\), 720px\)/s)
 })
 
 // -- 20. Primary typography integrity ----------------------------------------
