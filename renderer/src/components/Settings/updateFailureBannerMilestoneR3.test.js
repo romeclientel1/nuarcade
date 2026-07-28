@@ -20,7 +20,11 @@ import { fileURLToPath } from "node:url"
 import { dirname, join } from "node:path"
 
 const HERE = dirname(fileURLToPath(import.meta.url))
-const jsx = readFileSync(join(HERE, "Settings.jsx"), "utf8")
+// Normalized to LF up front so no downstream check can accidentally depend
+// on the checkout's line-ending style (a CRLF checkout, e.g. a Windows CI
+// runner with core.autocrlf enabled, previously broke every check in this
+// file that searched for a literal "\n"-joined multi-line fragment).
+const jsx = readFileSync(join(HERE, "Settings.jsx"), "utf8").replace(/\r\n/g, "\n")
 const en = readFileSync(join(HERE, "../../i18n/en.js"), "utf8")
 const es = readFileSync(join(HERE, "../../i18n/es.js"), "utf8")
 
@@ -28,22 +32,40 @@ test("Settings destructures installError from useVersionCheck", () => {
   assert.match(jsx, /const \{ updateAvailable, remoteVersion, handleUpdateNow, installing, progress, installError \} = useVersionCheck\(\)/)
 })
 
+// Finds the end of a `{cond && (<div>...</div>)}` block starting at
+// `fromIdx`, tolerant of indentation width and line-ending style. The
+// banner's own JSX contains a `})}"` substring (from the t(...) call's
+// object argument) that a naive search for the literal ")}" would match
+// too early, truncating the block before the retry button -- so this
+// anchors on the block's actual `</div>` closing tag instead, which is
+// unambiguous here (each conditional in this file renders exactly one
+// top-level <div>...</div>). Matching on `<\/div>\s*\)\}` (rather than a
+// literal "\n" + a fixed number of spaces) means neither the indentation
+// depth nor CRLF vs LF checkouts can break this.
+function findConditionalBlockEnd(fromIdx) {
+  const CLOSE = /<\/div>\s*\)\}/
+  const rest = jsx.slice(fromIdx)
+  const m = CLOSE.exec(rest)
+  assert.ok(m, `expected to find a </div> ... )} close after index ${fromIdx}`)
+  return fromIdx + m.index + m[0].length
+}
+
 // The banner's JSX contains its own "})}" (from the t(...) call) which a
 // naive search for the literal ")}" would match too early, truncating the
-// block before the retry button. </div>\n          )} is the actual,
-// unambiguous close of this conditional block.
+// block before the retry button -- see findConditionalBlockEnd above.
 function failureBannerBlock() {
   const idx = jsx.indexOf("{!installing && installError && (")
   assert.ok(idx > -1, "expected a standalone installError banner condition")
-  const closeIdx = jsx.indexOf("</div>\n          )}", idx)
-  assert.ok(closeIdx > idx, "expected to find the banner's closing </div>\\n          )}")
-  return { idx, block: jsx.slice(idx, closeIdx + "</div>\n          )}".length) }
+  const closeIdx = findConditionalBlockEnd(idx)
+  return { idx, block: jsx.slice(idx, closeIdx) }
 }
 
 test("the failure banner is rendered independently of updateAvailable, so it survives a cleared remote-version state", () => {
   const { idx } = failureBannerBlock()
   // Must not be nested inside the `updateAvailable &&` block above it.
-  const updateAvailableBlockEnd = jsx.indexOf("</div>\n          )}", jsx.indexOf("{updateAvailable && ("))
+  const updateAvailableIdx = jsx.indexOf("{updateAvailable && (")
+  assert.ok(updateAvailableIdx > -1, "expected the updateAvailable banner condition")
+  const updateAvailableBlockEnd = findConditionalBlockEnd(updateAvailableIdx)
   assert.ok(idx > updateAvailableBlockEnd, "the failure banner must be a sibling, not nested inside the updateAvailable banner")
 })
 
