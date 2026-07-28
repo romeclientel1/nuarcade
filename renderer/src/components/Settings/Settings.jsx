@@ -5,7 +5,6 @@ import { usePlaytime } from "../../hooks/usePlaytime"
 import ArtworkManager from "../ArtworkManager/ArtworkManager"
 import styles from "./Settings.module.css"
 import { useVersionCheck } from "../../hooks/useVersionCheck"
-import { THEMES } from "../../hooks/useTheme"
 import { useI18n } from "../../i18n/I18nContext.js"
 import { normalizeUiSoundsEnabled, normalizeUiSoundVolume } from "../../hooks/uiSoundConfig.js"
 
@@ -46,7 +45,7 @@ const EMULATOR_EXE_KEYWORDS = {
   pinballPath: 'vpinball',
 }
 
-export default function Settings({ games = [], onClose, onCRTChange, crtEnabled, themeId, onThemeChange, uiSoundsEnabled, onUiSoundsChange, uiSoundVolume, onUiSoundVolumeChange, scrollToSection }) {
+export default function Settings({ games = [], onClose, onCRTChange, crtEnabled, uiSoundsEnabled, onUiSoundsChange, uiSoundVolume, onUiSoundVolumeChange, scrollToSection }) {
   const { t, locale, setLocale, supportedLocales } = useI18n()
   const scrollRef = useRef(null)
   const saveRef    = useRef(null)
@@ -766,22 +765,15 @@ const handleSave = async () => {
             </div>
           </div>
 
-          <div className={styles.section}>
-            <div className={styles.sectionTitle}>{t("settings.sectionTheme")}</div>
-            <div className={styles.themeGrid}>
-              {Object.entries(THEMES).map(([id, t]) => (
-                <button
-                  key={id}
-                  className={styles.themeBtn + (themeId === id ? " " + styles.themeBtnActive : "")}
-                  style={{ borderColor: themeId === id ? t.accent : "rgba(255,255,255,0.1)", color: t.accent }}
-                  onClick={() => onThemeChange?.(id)}
-                >
-                  <span className={styles.themeDot} style={{ background: t.accent }} />
-                  {t.name}
-                </button>
-              ))}
-            </div>
-          </div>
+          {/* Theme Color setting retired (R1 audit): it only ever recolored
+              four leftover cyan-HUD spots in the Library screen (nav arrows,
+              search focus border, empty-state numbers/code -- see
+              Wheel.module.css), never any Vespara-redesigned surface. Those
+              four spots are now hardcoded to Vespara gold directly. No
+              config/IPC migration is needed -- the old picker's storage
+              (localStorage["nuarcade_theme"], via the now-removed
+              useTheme.js) never touched nuarcade-config.json or the main
+              process; any pre-existing value is simply left inert. */}
 
           <div className={styles.section}>
             <div className={styles.sectionTitle}>{t("settings.sectionAudio")}</div>

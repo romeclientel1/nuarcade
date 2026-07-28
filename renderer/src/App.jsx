@@ -9,7 +9,6 @@ import PlayerSelect from "./components/PlayerSelect/PlayerSelect"
 import { useProfiles } from "./context/ProfileContext"
 import { useDestination } from "./hooks/useDestination"
 import CoinCounter from "./components/CoinCounter/CoinCounter"
-import { useTheme } from "./hooks/useTheme"
 import { recoverLaunchSession } from "./launchSession/startupRecovery.js"
 import { buildRestorationForProfile, invalidateRestorationRequest } from "./launchSession/restorationRequest.js"
 import {
@@ -99,7 +98,6 @@ export default function App() {
     navigate: navigateSurface,
     goHome: goToSurfaceRoot,
   } = useDestination()
-  const { themeId, setTheme } = useTheme()
   // Settings already persists this to the backend config under crtEffect --
   // this just loads that saved value on launch and mirrors live changes so
   // the CRT overlay actually reflects what's configured instead of being
@@ -373,8 +371,6 @@ export default function App() {
               onReturnHome={handleReturnHomeFromWheel}
               crtEnabled={crtEnabled}
               onCRTChange={setCrtEnabled}
-              themeId={themeId}
-              onThemeChange={setTheme}
               uiSoundsEnabled={uiSoundsEnabled}
               onUiSoundsChange={setUiSoundsEnabled}
               uiSoundVolume={uiSoundVolume}
@@ -387,8 +383,6 @@ export default function App() {
               onReturnHome={handleReturnHomeFromControlRoom}
               crtEnabled={crtEnabled}
               onCRTChange={setCrtEnabled}
-              themeId={themeId}
-              onThemeChange={setTheme}
               uiSoundsEnabled={uiSoundsEnabled}
               onUiSoundsChange={setUiSoundsEnabled}
               uiSoundVolume={uiSoundVolume}

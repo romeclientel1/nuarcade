@@ -65,7 +65,7 @@ const RETURN_LABEL_BY_ORIGIN = {
 
 export default function ControlRoom({
   activeProfile, onReturnHome, entryOrigin = "sanctuary",
-  crtEnabled, onCRTChange, themeId, onThemeChange,
+  crtEnabled, onCRTChange,
   uiSoundsEnabled, onUiSoundsChange, uiSoundVolume, onUiSoundVolumeChange,
 }) {
   const { t } = useI18n()
@@ -479,8 +479,6 @@ export default function ControlRoom({
             onClose={closeStation}
             onCRTChange={onCRTChange}
             crtEnabled={crtEnabled}
-            themeId={themeId}
-            onThemeChange={onThemeChange}
             uiSoundsEnabled={uiSoundsEnabled}
             onUiSoundsChange={onUiSoundsChange}
             uiSoundVolume={uiSoundVolume}

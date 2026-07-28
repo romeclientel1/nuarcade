@@ -242,7 +242,7 @@ function KonamiCelebration({ onClose }) {
   )
 }
 
-export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange, activeProfile, onSwitchPlayer, onReturnHome, restorationRequest, uiSoundsEnabled, onUiSoundsChange, uiSoundVolume, onUiSoundVolumeChange }) {
+export default function Wheel({ onCRTChange, crtEnabled, activeProfile, onSwitchPlayer, onReturnHome, restorationRequest, uiSoundsEnabled, onUiSoundsChange, uiSoundVolume, onUiSoundVolumeChange }) {
   const { t } = useI18n()
   const {
     games, loading, libraryEmpty, config,

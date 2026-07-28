@@ -1164,8 +1164,12 @@
 
 .navBtn {
   background: transparent;
-  border: 1px solid rgba(0,200,255,0.25);
-  color: var(--accent);
+  /* Vespara gold, not the old --accent theme-picker variable (the Theme
+     Color setting was retired -- see useTheme.js's removal -- since it
+     only ever recolored a few leftover cyan-HUD spots like this one,
+     never any Vespara-redesigned surface). */
+  border: 1px solid rgba(214, 178, 116, 0.3);
+  color: #d6b274;
   width: 48px;
   height: 48px;
   border-radius: 50%;
@@ -1181,8 +1185,8 @@
 }
 
 .navBtn:hover {
-  background: rgba(0,200,255,0.12);
-  border-color: #00c8ff;
+  background: rgba(214, 178, 116, 0.12);
+  border-color: #d6b274;
 }
 
 .cardTrack {
@@ -1445,7 +1449,7 @@
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: var(--accent, #00ff88);
+  background: #d6b274;
   color: #000;
   font-weight: 900;
   font-size: 12px;
@@ -1474,7 +1478,7 @@
 }
 .emptyFolderRow code {
   font-family: 'Courier New', monospace;
-  color: var(--accent, #00ff88);
+  color: #d6b274;
   font-size: 10px;
   white-space: nowrap;
 }
@@ -1718,7 +1722,7 @@
 
 .searchInput {
   background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(0,200,255,0.4);
+  border: 1px solid rgba(214, 178, 116, 0.4);
   border-radius: 3px;
   padding: 6px 14px;
   color: #fff;
@@ -1729,7 +1733,7 @@
   transition: border-color 0.15s;
 }
 
-.searchInput:focus { border-color: var(--accent); }
+.searchInput:focus { border-color: #d6b274; }
 
 .searchClose {
   background: transparent;

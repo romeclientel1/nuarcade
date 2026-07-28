@@ -228,9 +228,12 @@ test("Settings opens from the Systems Wing stations and MediaManager from the Ar
 test("Settings.jsx and MediaManager.jsx carry no Control Room-specific edits -- integration is prop-passing and CSS wrapping only", () => {
   assert.doesNotMatch(settingsJsx, /ControlRoom/)
   assert.doesNotMatch(mediaJsx, /ControlRoom/)
-  // Every prop C1 already passed remains passed unchanged; R1 adds
-  // scrollToSection/initialTab as new, additive props only.
-  assert.match(crJsx, /<Settings\s*\n\s*games=\{games\}\s*\n\s*onClose=\{closeStation\}\s*\n\s*onCRTChange=\{onCRTChange\}\s*\n\s*crtEnabled=\{crtEnabled\}\s*\n\s*themeId=\{themeId\}\s*\n\s*onThemeChange=\{onThemeChange\}\s*\n\s*uiSoundsEnabled=\{uiSoundsEnabled\}\s*\n\s*onUiSoundsChange=\{onUiSoundsChange\}\s*\n\s*uiSoundVolume=\{uiSoundVolume\}\s*\n\s*onUiSoundVolumeChange=\{onUiSoundVolumeChange\}\s*\n\s*scrollToSection=\{/)
+  // Every prop C1 already passed remains passed unchanged, except themeId/
+  // onThemeChange -- removed repo-wide when the Theme Color setting was
+  // retired (see useTheme.js). R1 added scrollToSection/initialTab as new,
+  // additive props.
+  assert.match(crJsx, /<Settings\s*\n\s*games=\{games\}\s*\n\s*onClose=\{closeStation\}\s*\n\s*onCRTChange=\{onCRTChange\}\s*\n\s*crtEnabled=\{crtEnabled\}\s*\n\s*uiSoundsEnabled=\{uiSoundsEnabled\}\s*\n\s*onUiSoundsChange=\{onUiSoundsChange\}\s*\n\s*uiSoundVolume=\{uiSoundVolume\}\s*\n\s*onUiSoundVolumeChange=\{onUiSoundVolumeChange\}\s*\n\s*scrollToSection=\{/)
+  assert.doesNotMatch(crJsx, /themeId|onThemeChange/)
   assert.match(crJsx, /<MediaManager\s*\n\s*onClose=\{closeStation\}\s*\n\s*onVideosUpdated=\{\(\) => \{\}\}\s*\n\s*onArtworkUpdated=\{\(\) => \{\}\}\s*\n\s*initialTab=\{/)
 })
 

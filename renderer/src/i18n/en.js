@@ -46,7 +46,6 @@ export default {
   "settings.sectionEmulatorBehavior": "Emulator Auto-Configuration",
   "settings.sectionTpFolderRenamer": "TeknoParrot Folder Renamer",
   "settings.sectionDisplay": "Display",
-  "settings.sectionTheme": "Theme color",
   "settings.sectionAudio": "Audio",
   "settings.sectionCardArt": "Card art type",
   "settings.sectionMusic": "Background music",
