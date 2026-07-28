@@ -5,7 +5,6 @@ import { usePlaytime } from "../../hooks/usePlaytime"
 import ArtworkManager from "../ArtworkManager/ArtworkManager"
 import styles from "./Settings.module.css"
 import { useVersionCheck } from "../../hooks/useVersionCheck"
-import { THEMES } from "../../hooks/useTheme"
 import { useI18n } from "../../i18n/I18nContext.js"
 import { normalizeUiSoundsEnabled, normalizeUiSoundVolume } from "../../hooks/uiSoundConfig.js"
 
@@ -46,10 +45,18 @@ const EMULATOR_EXE_KEYWORDS = {
   pinballPath: 'vpinball',
 }
 
-export default function Settings({ games = [], onClose, onCRTChange, crtEnabled, themeId, onThemeChange, uiSoundsEnabled, onUiSoundsChange, uiSoundVolume, onUiSoundVolumeChange }) {
+export default function Settings({ games = [], onClose, onCRTChange, crtEnabled, uiSoundsEnabled, onUiSoundsChange, uiSoundVolume, onUiSoundVolumeChange, scrollToSection }) {
   const { t, locale, setLocale, supportedLocales } = useI18n()
   const scrollRef = useRef(null)
   const saveRef    = useRef(null)
+  // Control Room direct-station navigation (R1): each station in the new
+  // Systems Wing scrolls this still-single, still-unified settings document
+  // to the anchor matching the destination the user picked, rather than
+  // splitting this component apart. `scrolledRef` guards against re-firing
+  // on every keystroke -- `config` (read below) is a new object reference
+  // on every edit via update(), so without this guard the page would jump
+  // back to the anchor every time a field changed.
+  const scrolledRef = useRef(false)
   useOverlayGamepad({
     onClose,
     onUp:      () => scrollRef.current?.scrollBy({ top: -200, behavior: 'smooth' }),
@@ -117,8 +124,18 @@ const [showControllerTest, setShowControllerTest] = useState(false)
 const [rescanning, setRescanning] = useState(false)
 const [backingUp, setBackingUp] = useState(false)
 const [restoring, setRestoring] = useState(false)
-  const [artPref, setArtPref] = useState(() => localStorage.getItem('nuarcade_art_pref') || 'sgdb')
-  const updateArtPref = (val) => { setArtPref(val); localStorage.setItem('nuarcade_art_pref', val) }
+  // Card Art Type setting retired (R2 audit): it was architecturally
+  // orphaned exactly like the retired Theme Color setting (raw
+  // localStorage["nuarcade_art_pref"], never touched nuarcade-config.json/
+  // IPC, excluded from backup/restore) and its label ("What shows on wheel
+  // cards") overstated its real effect -- it only tinted GameCard.jsx's
+  // dimmed background-bleed layer behind the centered card, never the
+  // primary card art, search/collections (same GameCard), Sanctuary's
+  // Recently Played, or the Archive View preview. GameCard.jsx now uses
+  // the fixed 'sgdb'-equivalent priority order that was already the
+  // default, so this is not a visible change for anyone who left the
+  // setting untouched. Any pre-existing "nuarcade_art_pref" localStorage
+  // value is simply left inert, unread and unrepurposed.
 const [rescanResult, setRescanResult] = useState(null)
 const [pruneFetching, setPruneFetching] = useState(false)
 const [pruneResult, setPruneResult] = useState(null)
@@ -454,6 +471,12 @@ const handleSave = async () => {
     if (RESTART_KEYS.has(key)) changedPathKeysRef.current.add(key)
   }
 
+  useEffect(() => {
+    if (!scrollToSection || !config || scrolledRef.current) return
+    scrolledRef.current = true
+    document.getElementById(scrollToSection)?.scrollIntoView({ behavior: "smooth", block: "start" })
+  }, [scrollToSection, config])
+
   if (!config) return null
 
   return (
@@ -493,7 +516,7 @@ const handleSave = async () => {
 
           <div className={styles.section}>
             <div className={styles.section}>
-        <div className={styles.sectionTitle}>{t("settings.sectionEmulators")}</div>
+        <div className={styles.sectionTitle} id="section-emulators">{t("settings.sectionEmulators")}</div>
         <div className={styles.pathsNote}>
           {t("settings.emulatorsNote")}
         </div>
@@ -535,7 +558,7 @@ const handleSave = async () => {
         </div>
       </div>
 
-      <div className={styles.sectionTitle}>{t("settings.sectionPaths")}</div>
+      <div className={styles.sectionTitle} id="section-paths">{t("settings.sectionPaths")}</div>
             <div className={styles.pathsNote}>
               {t("settings.pathsNote")}
             </div>
@@ -598,6 +621,19 @@ const handleSave = async () => {
               </div>
             ))}
           </div>
+
+          <div className={styles.section}>
+            <div className={styles.sectionTitle} id="section-controllers">{t("settings.sectionControllers")}</div>
+            <div className={styles.pathsNote}>
+              {t("settings.controllersNote")}
+            </div>
+            <button className={styles.exportBtn} onClick={() => setShowControllerTest(true)}>
+              {t("settings.openControllerTest")}
+            </button>
+          </div>
+          {showControllerTest && (
+            <ControllerTest onClose={() => setShowControllerTest(false)} />
+          )}
 
           <div className={styles.section}>
             <div className={styles.sectionTitle}>{t("settings.sectionTpFolderRenamer")}</div>
@@ -677,7 +713,7 @@ const handleSave = async () => {
           )
         })}
 
-        <div className={styles.sectionTitle}>{t("settings.sectionDisplay")}</div>
+        <div className={styles.sectionTitle} id="section-display">{t("settings.sectionDisplay")}</div>
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>{t("settings.mode")}</label>
               <div className={styles.toggleGroup}>
@@ -725,7 +761,7 @@ const handleSave = async () => {
           </div>
 
           <div className={styles.section}>
-            <div className={styles.sectionTitle}>{t("settings.language")}</div>
+            <div className={styles.sectionTitle} id="section-language">{t("settings.language")}</div>
             <div className={styles.toggleGroup}>
               {supportedLocales.map(l => (
                 <button
@@ -739,22 +775,15 @@ const handleSave = async () => {
             </div>
           </div>
 
-          <div className={styles.section}>
-            <div className={styles.sectionTitle}>{t("settings.sectionTheme")}</div>
-            <div className={styles.themeGrid}>
-              {Object.entries(THEMES).map(([id, t]) => (
-                <button
-                  key={id}
-                  className={styles.themeBtn + (themeId === id ? " " + styles.themeBtnActive : "")}
-                  style={{ borderColor: themeId === id ? t.accent : "rgba(255,255,255,0.1)", color: t.accent }}
-                  onClick={() => onThemeChange?.(id)}
-                >
-                  <span className={styles.themeDot} style={{ background: t.accent }} />
-                  {t.name}
-                </button>
-              ))}
-            </div>
-          </div>
+          {/* Theme Color setting retired (R1 audit): it only ever recolored
+              four leftover cyan-HUD spots in the Library screen (nav arrows,
+              search focus border, empty-state numbers/code -- see
+              Wheel.module.css), never any Vespara-redesigned surface. Those
+              four spots are now hardcoded to Vespara gold directly. No
+              config/IPC migration is needed -- the old picker's storage
+              (localStorage["nuarcade_theme"], via the now-removed
+              useTheme.js) never touched nuarcade-config.json or the main
+              process; any pre-existing value is simply left inert. */}
 
           <div className={styles.section}>
             <div className={styles.sectionTitle}>{t("settings.sectionAudio")}</div>
@@ -805,23 +834,6 @@ const handleSave = async () => {
             </div>
           </div>
 
-          <div className={styles.section}>
-            <div className={styles.sectionTitle}>{t("settings.sectionCardArt")}</div>
-            <div className={styles.inputRow}>
-              <label className={styles.inputLabel}>{t("settings.cardArtLabel")}</label>
-              <div className={styles.toggleGroup}>
-                {['snap','boxart','sgdb','none'].map(opt => (
-                  <button
-                    key={opt}
-                    className={styles.toggleBtn + (artPref === opt ? ' ' + styles.toggleBtnActive : '')}
-                    onClick={() => updateArtPref(opt)}
-                  >
-                    {opt === 'snap' ? 'SNAP' : opt === 'boxart' ? 'BOX' : opt === 'sgdb' ? 'SGDB' : 'OFF'}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
 
           <div className={styles.section}>
             <div className={styles.sectionTitle}>{t("settings.sectionMusic")}</div>
@@ -859,7 +871,7 @@ const handleSave = async () => {
           </div>
 
           <div className={styles.section}>
-            <div className={styles.sectionTitle}>{t("settings.sectionAttract")}</div>
+            <div className={styles.sectionTitle} id="section-attract">{t("settings.sectionAttract")}</div>
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>{t("settings.idleTimeout")}</label>
               <div className={styles.sliderWrap}>
@@ -960,7 +972,7 @@ const handleSave = async () => {
           </div>
 
           <div className={styles.section}>
-            <div className={styles.sectionTitle}>{t("settings.sectionEmulators")}</div>
+            <div className={styles.sectionTitle}>{t("settings.sectionEmulatorBehavior")}</div>
             
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>{t("settings.autoConfigureTp")}</label>
@@ -1129,7 +1141,7 @@ const handleSave = async () => {
           )}
 
           <div className={styles.section}>
-            <div className={styles.sectionTitle}>{t("settings.sectionLibrary")}</div>
+            <div className={styles.sectionTitle} id="section-library">{t("settings.sectionLibrary")}</div>
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>{t("settings.rescanGames")}</label>
               <div style={{ display: 'flex', gap: 8 }}>
@@ -1227,7 +1239,7 @@ const handleSave = async () => {
               </div>
             )}
 
-            <div className={styles.inputRow}>
+            <div className={styles.inputRow} id="section-media-restoration">
               <label className={styles.inputLabel}>Orphaned media</label>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button className={styles.exportBtn} onClick={handleFindOrphans} disabled={orphanScanning}>

@@ -202,11 +202,22 @@ export default function VesparaHome({
       const idx = displayedRecentGames.findIndex(g => (g.id || g.profile) === initialFocus.gameId)
       if (idx >= 0) { setFocusZone("recents"); setRecentIndex(idx); return }
     }
-    // 'library' | 'setup-connection' | 'first-game' (not produced today,
-    // see selectInitialHomeFocus) | 'none' all currently resolve to
-    // focusing the Library action slot -- see the render section for how
-    // 'setup-connection' relabels that same button rather than adding a
-    // new one.
+    // 'setup-connection' (true first-run: no playable game and no play
+    // history at all -- see selectInstallationReadiness/selectInitialHomeFocus)
+    // now focuses the Control Room tile, not Library -- new users connect
+    // their systems there before the Library has anything to show. This
+    // only touches the derived focus target; detection (installationReadiness)
+    // and completion (it naturally stops being 'unconfigured' once a game
+    // becomes playable) are untouched. See the render section for how this
+    // same isSetupFocus condition relabels that tile's CTA text.
+    if (initialFocus.type === "setup-connection") {
+      setFocusZone("actions")
+      setActionIndex(ACTIONS.indexOf("controlRoom"))
+      return
+    }
+    // 'library' | 'first-game' (not produced today, see selectInitialHomeFocus)
+    // | 'none' all resolve to focusing the Library action slot, unchanged
+    // for established users.
     setFocusZone("actions")
     setActionIndex(0)
   }, [hasAcceptedInitialFocus, initialFocusHint, loading, initialFocus, displayedRecentGames])
@@ -552,7 +563,11 @@ export default function VesparaHome({
                     <span className={styles.destinationMarker} aria-hidden="true" />
                     <span className={styles.destinationCopy}>
                       <span className={styles.destinationName}>
-                        {action === "library" && isSetupFocus ? t("home.setUp") : ACTION_LABELS[action]}
+                        {/* First-run onboarding now points to the Control
+                            Room, not the Library -- see the isSetupFocus
+                            comment above and the initial-focus effect,
+                            which targets this same tile. */}
+                        {action === "controlRoom" && isSetupFocus ? t("home.enterControlRoom") : ACTION_LABELS[action]}
                       </span>
                       <span className={styles.destinationDetail} aria-hidden="true">{detail}</span>
                     </span>

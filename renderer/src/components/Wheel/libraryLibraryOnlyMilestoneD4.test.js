@@ -180,15 +180,15 @@ test("Archive View's A/B media lifecycle -- refs, readiness, crossfade, fallback
 
 test("Archive View is fully within the viewport at 1920x1080 -- measured live: frame 626-957, hintBar starts 1041, depart starts 978", () => {
   assert.match(css, /\.stage \.wheelArea\s*\{[^}]*top:\s*clamp\(158px,\s*17\.2vh,\s*186px\)[^}]*right:[^}]*height:\s*clamp\(290px,\s*30\.5vh,\s*330px\)/s)
-  assert.match(css, /\.stage \.infoPanel\s*\{[^}]*top:\s*clamp\(462px,\s*45.5vh,\s*494px\)/s)
+  assert.match(css, /\.stage \.infoPanel\s*\{[^}]*top:\s*clamp\(456px,\s*45.5vh,\s*488px\)/s)
   assert.match(css, /\.previewReservation\s*\{[^}]*top:\s*clamp\(546px,\s*54vh,\s*582px\)[^}]*width:\s*clamp\(440px,\s*28\.1vw,\s*540px\)/s)
 })
 
-test("Archive View is fully within the viewport at 1280x720 -- measured live: frame 448-620, hintBar starts 681, depart starts 638", () => {
+test("Archive View is fully within the viewport at 1280x720 -- measured live pre-D6/R2: frame 448-620, hintBar starts 681, depart starts 638 (D6 raised top to 432 and made width vh-derived; R2 raised infoPanel's own top from 372 to 366 -- see libraryPreviewViewportRegression.test.js and the .stage .infoPanel comment in Wheel.module.css for the worst-case math; live re-verification is a remaining Windows validation step)", () => {
   const compact = css.slice(css.indexOf("@media (max-width: 1280px), (max-height: 870px)"), css.indexOf("/* Restrained entrance", css.indexOf("@media (max-width: 1280px), (max-height: 870px)")))
   assert.match(compact, /\.stage \.wheelArea\s*\{[^}]*top:\s*150px[^}]*height:\s*210px/s)
-  assert.match(compact, /\.stage \.infoPanel\s*\{[^}]*top:\s*372px/s)
-  assert.match(compact, /\.previewReservation\s*\{[^}]*top:\s*456px[^}]*width:\s*260px/s)
+  assert.match(compact, /\.stage \.infoPanel\s*\{[^}]*top:\s*366px/s)
+  assert.match(compact, /\.previewReservation\s*\{[^}]*top:\s*432px[^}]*width:\s*clamp\(340px, calc\(\(100vh - 509px\) \* 16 \/ 9\), 720px\)/s)
 })
 
 // -- 19/20. Controller hints and Depart do not overlap Archive View ---------

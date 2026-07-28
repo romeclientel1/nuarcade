@@ -374,11 +374,16 @@
    extra vertical room it needs to sit fully inside the viewport. Bounded
    width/centering, title/meta/favorite/genre content, and Launch Game as
    a distinct focus target are all unchanged. */
+/* R2 -- raised a further 6px (both clamp floors, vh coefficient unchanged)
+   to close some of the visual gap above the Launch Game section. Small and
+   safe: wheelArea/previewReservation are untouched, and this mirrors the
+   compact-mode adjustment below, which had far less spare room to begin
+   with (see that rule's own comment for the exact math). */
 .stage .infoPanel {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  top: clamp(462px, 45.5vh, 494px);
+  top: clamp(456px, 45.5vh, 488px);
   width: clamp(700px, 60vw, 1150px);
   min-height: 40px;
   box-sizing: border-box;
@@ -521,7 +526,12 @@
   z-index: 1;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  /* object-fit: contain (not cover) -- the still is a stand-in for the
+     same 16:9 media the video below it will show; it must show the
+     complete frame, never crop it, matching .archiveVideo below. The
+     screen's own dark background (see .previewScreen) fills any
+     letterbox space when the source asset isn't exactly 16:9. */
+  object-fit: contain;
   opacity: 0.78;
   filter: saturate(0.78) sepia(0.08) brightness(0.82);
 }
@@ -556,7 +566,12 @@
   z-index: 2;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  /* object-fit: contain (not cover) -- the preview must show the
+     complete captured frame, never crop it, now that the surface itself
+     is materially larger and more prominent. The screen's own dark
+     background (see .previewScreen) fills any letterbox space when the
+     source video isn't exactly 16:9. */
+  object-fit: contain;
   opacity: 0;
   pointer-events: none;
   filter: saturate(0.92) brightness(0.92) contrast(1.02);
@@ -683,20 +698,54 @@
     transform: scale(0.52);
   }
 
+  /* R2 -- raised 6px (378->366... actually 372->366): carousel bottom is
+     fixed at 360px (wheelArea top 150 + height 210 above), so this closes
+     the gap above Launch Game from 12px to 6px. infoPanel's real content
+     height here is ~54px (fixed pixels, not vh-based -- see the
+     .previewReservation comment below), so its real bottom edge moves from
+     ~426px to ~420px, which *increases* the buffer to previewReservation's
+     432px top from 6px to 12px -- safer, not tighter, on that side. */
   .stage .infoPanel {
     left: 50%;
     right: auto;
     transform: translateX(-50%);
-    top: 372px;
+    top: 366px;
     width: 720px;
     min-height: 34px;
     padding: 4px 16px;
     gap: 12px;
   }
 
+  /* VES-R0-002 follow-up -- the fixed 260px compact width (paired with a
+     fixed top:456px) was safe against clipping but left the preview far
+     smaller than useful once real Windows testing showed the fully
+     visible panel was too small to read. 456px was more conservative than
+     it needed to be: it was chosen when this box's clipping risk was
+     still being diagnosed, well below the compact infoPanel's real bottom
+     edge (~426px in compact mode -- infoPanel's content height there is
+     fixed pixels, not vh-based, since Milestone D2 deliberately kept
+     primary type sizes unchanged in compact mode, so that edge doesn't
+     move with viewport height). Moving top up to 432px (a 6px buffer
+     below that real edge) reclaims two dozen px, and -- more importantly
+     -- means the remaining headroom down to the hint bar grows with
+     viewport height throughout the whole compact range (<=870px tall),
+     so width is now derived from that headroom via calc() instead of a
+     single fixed number:
+       available height = 100vh - top(432px) - hint-bar safe margin(40px)
+       screen budget      = available height - reservation chrome(37px:
+                             15px vertical padding + 8px heading
+                             bottom-padding + ~14px heading line-box)
+       width              = screen budget * 16 / 9
+     Floors at 340px (30% larger than the old fixed 260px even at the
+     smallest realistic compact viewport) and caps at 720px (the top of
+     the requested 520-720px target) so a narrow-but-very-tall window
+     (e.g. 1000x1400, which still matches this block via max-width:1280)
+     can't grow the preview unreasonably large. See
+     libraryPreviewViewportRegression.test.js for the worst-case math this
+     relies on. */
   .previewReservation {
-    top: 456px;
-    width: 260px;
+    top: 432px;
+    width: clamp(340px, calc((100vh - 509px) * 16 / 9), 720px);
     padding: 7px 9px 8px;
   }
 
@@ -1127,8 +1176,12 @@
 
 .navBtn {
   background: transparent;
-  border: 1px solid rgba(0,200,255,0.25);
-  color: var(--accent);
+  /* Vespara gold, not the old --accent theme-picker variable (the Theme
+     Color setting was retired -- see useTheme.js's removal -- since it
+     only ever recolored a few leftover cyan-HUD spots like this one,
+     never any Vespara-redesigned surface). */
+  border: 1px solid rgba(214, 178, 116, 0.3);
+  color: #d6b274;
   width: 48px;
   height: 48px;
   border-radius: 50%;
@@ -1144,8 +1197,8 @@
 }
 
 .navBtn:hover {
-  background: rgba(0,200,255,0.12);
-  border-color: #00c8ff;
+  background: rgba(214, 178, 116, 0.12);
+  border-color: #d6b274;
 }
 
 .cardTrack {
@@ -1408,7 +1461,7 @@
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: var(--accent, #00ff88);
+  background: #d6b274;
   color: #000;
   font-weight: 900;
   font-size: 12px;
@@ -1437,7 +1490,7 @@
 }
 .emptyFolderRow code {
   font-family: 'Courier New', monospace;
-  color: var(--accent, #00ff88);
+  color: #d6b274;
   font-size: 10px;
   white-space: nowrap;
 }
@@ -1681,7 +1734,7 @@
 
 .searchInput {
   background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(0,200,255,0.4);
+  border: 1px solid rgba(214, 178, 116, 0.4);
   border-radius: 3px;
   padding: 6px 14px;
   color: #fff;
@@ -1692,7 +1745,7 @@
   transition: border-color 0.15s;
 }
 
-.searchInput:focus { border-color: var(--accent); }
+.searchInput:focus { border-color: #d6b274; }
 
 .searchClose {
   background: transparent;

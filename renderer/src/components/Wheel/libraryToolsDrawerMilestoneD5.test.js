@@ -165,10 +165,10 @@ test("Settings/Media/Switch Player/Depart are absent from the Tools panel specif
   assert.doesNotMatch(panel, /setShowSettings|setShowMediaManager|onSwitchPlayer|openDepart/)
 })
 
-test("Settings and Media remain fully available in the Control Room (Milestone C3), untouched by this milestone", () => {
-  assert.match(crJsx, /id: "settings"/)
+test("Settings and Media remain fully available in the Control Room (now via R1's direct-destination stations), untouched by this milestone", () => {
+  assert.match(crJsx, /module:\s*"settings"/)
   assert.match(crJsx, /<Settings\b/)
-  assert.match(crJsx, /id: "media"/)
+  assert.match(crJsx, /module:\s*"media"/)
   assert.match(crJsx, /<MediaManager\b/)
 })
 

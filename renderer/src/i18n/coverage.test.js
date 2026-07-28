@@ -150,8 +150,8 @@ test("Settings headings switch language", () => {
   const IDENTICAL_BY_DESIGN = new Set(["settings.sectionAudio", "settings.sectionPixelcade"])
   const sectionKeys = [
     "settings.sectionEmulators", "settings.sectionPaths", "settings.sectionTpFolderRenamer",
-    "settings.sectionDisplay", "settings.sectionTheme", "settings.sectionAudio",
-    "settings.sectionCardArt", "settings.sectionMusic", "settings.sectionAttract",
+    "settings.sectionDisplay", "settings.sectionAudio",
+    "settings.sectionMusic", "settings.sectionAttract",
     "settings.sectionPixelcade", "settings.sectionLinks", "settings.sectionArtwork",
     "settings.sectionLibrary", "settings.sectionBios", "settings.sectionAbout",
   ]

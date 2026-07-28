@@ -18,14 +18,20 @@ const SAMPLE_GAMES = [
 
 const TABS = ['library', 'artwork', 'bezels', 'emumovies', 'about']
 
-export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdated }) {
+export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdated, initialTab }) {
   const { t } = useI18n()
   const scrollRef = useRef(null)
   const [games, setGames] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState("all")
   const [systemFilter, setSystemFilter] = useState("all")
-  const [tab, setTab] = useState("library")
+  // Control Room direct-station navigation (R1): the Presentation Wing's
+  // stations (Artwork/Videos/Scraping/Bezels) each open MediaManager
+  // pre-selected on the matching tab, via initialTab, instead of always
+  // landing on Library. Falls back to the pre-existing default ("library")
+  // for any caller that doesn't pass one (e.g. tests constructing this
+  // component directly) and guards against an unrecognized value.
+  const [tab, setTab] = useState(TABS.includes(initialTab) ? initialTab : "library")
   const [emFocused, setEmFocused] = useState(null) // null | 'create' | 'scan'
   const emScanBtnRef = useRef(null)
   const emCreateBtnRef = useRef(null)

@@ -79,7 +79,7 @@ test("the local title's subtitle contains only Collection Hall + count, no activ
 // -- 6. Selected-game pedestal is compact and retains all required data -----
 
 test("the pedestal's footprint is cut roughly a third while keeping title, platform/readiness/favorite, genre, and Launch (D4: bounded compact strip, min-height cut further to 44px)", () => {
-  assert.match(block(css, ".stage .infoPanel"), /top:\s*clamp\(462px,\s*45.5vh,\s*494px\)[\s\S]*width:\s*clamp\(700px,\s*60vw,\s*1150px\)[\s\S]*min-height:\s*40px/)
+  assert.match(block(css, ".stage .infoPanel"), /top:\s*clamp\(456px,\s*45.5vh,\s*488px\)[\s\S]*width:\s*clamp\(700px,\s*60vw,\s*1150px\)[\s\S]*min-height:\s*40px/)
   const panel = jsx.slice(jsx.indexOf("<div className={styles.infoPanel"), jsx.indexOf("{showSort &&"))
   assert.match(panel, /styles\.marqueeWrap[\s\S]*current\.title/)
   assert.match(panel, /styles\.infoMeta[\s\S]*current\.system[\s\S]*current\.status/)

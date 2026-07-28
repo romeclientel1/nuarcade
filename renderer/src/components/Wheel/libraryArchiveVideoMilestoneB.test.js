@@ -126,10 +126,10 @@ test("Archive View is decorative with no native controls or tab stop", () => {
   assert.match(archiveMarkup, /<img src=\{previewStill\} alt=""/)
 })
 
-test("Archive View keeps a framed, centered lower-band geometry and framed cover crop (D4: moved further up/grown modestly to fully clear the viewport)", () => {
+test("Archive View keeps a framed, centered lower-band geometry with the complete frame preserved, uncropped (D4: moved further up/grown modestly to fully clear the viewport; D6: switched from cover to contain so the full frame is never cropped)", () => {
   assert.match(css, /\.previewReservation\s*\{[^}]*left:\s*50%[^}]*transform:\s*translateX\(-50%\)[^}]*z-index:\s*7[^}]*width:\s*clamp\(440px,\s*28\.1vw,\s*540px\)/s)
   assert.match(css, /\.previewScreen\s*\{[^}]*aspect-ratio:\s*16 \/ 9[^}]*overflow:\s*hidden/s)
-  assert.match(css, /\.archiveVideo\s*\{[^}]*object-fit:\s*cover[^}]*pointer-events:\s*none/s)
+  assert.match(css, /\.archiveVideo\s*\{[^}]*object-fit:\s*contain[^}]*pointer-events:\s*none/s)
 })
 
 test("compact layout keeps Return, the Vespara lockup, and Console/Welcome Back in separate global-header columns, with the local Library title in its own row below, without shrinking Return's text", () => {

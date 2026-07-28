@@ -128,12 +128,12 @@ test("the dual video refs/states remain and selection assigns only the inactive 
   assert.match(wheelJsx, /if \(incomingSlot === 'a'\) setBgVideoA\(incoming\)\s*else setBgVideoB\(incoming\)/)
 })
 
-test("video presentation is framed, cover-fit, restrained, and keeps loop/playsInline/autoPlay", () => {
+test("video presentation is framed, contain-fit (D6: switched from cover so the complete frame is never cropped), restrained, and keeps loop/playsInline/autoPlay", () => {
   assert.match(wheelJsx, /<video\s*\n\s*ref=\{bgVideoARef\}[\s\S]*?src=\{bgVideoA\.source\}[\s\S]*?loop\s*\n\s*playsInline\s*\n\s*autoPlay/)
   const block = wheelCss.match(/\.archiveVideo\s*\{([^}]*)\}/)
   assert.ok(block)
   assert.match(block[1], /position:\s*absolute/)
-  assert.match(block[1], /object-fit:\s*cover/)
+  assert.match(block[1], /object-fit:\s*contain/)
   assert.match(block[1], /filter:\s*saturate\(0\.92\) brightness\(0\.92\) contrast\(1\.02\)/)
   assert.doesNotMatch(wheelCss, /\.bgVideo\s*\{|\.bgVideoHidden\s*\{/)
 })

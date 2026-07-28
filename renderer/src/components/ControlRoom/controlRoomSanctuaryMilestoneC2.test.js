@@ -216,9 +216,9 @@ test("VesparaHome consumes the focus hint exactly once and focuses the matching 
 // (already covered structurally by C1's own test; re-asserted here as part
 // of C2's explicit checklist)
 
-test("Settings opens from the Systems Wing station and MediaManager from the Archives Wing station", () => {
-  assert.match(crJsx, /const SYSTEMS_STATIONS = \[\s*\{ id: "settings"/)
-  assert.match(crJsx, /const ARCHIVES_STATIONS = \[\s*\{ id: "media"/)
+test("Settings opens from the Systems Wing stations and MediaManager from the Archives Wing stations (R1: direct destinations, same two underlying components)", () => {
+  assert.match(crJsx, /const SYSTEMS_STATIONS = \[/)
+  assert.match(crJsx, /const ARCHIVES_STATIONS = \[/)
   assert.match(crJsx, /activeModule === "settings" &&[\s\S]*<Settings/)
   assert.match(crJsx, /activeModule === "media" &&[\s\S]*<MediaManager/)
 })
@@ -228,16 +228,20 @@ test("Settings opens from the Systems Wing station and MediaManager from the Arc
 test("Settings.jsx and MediaManager.jsx carry no Control Room-specific edits -- integration is prop-passing and CSS wrapping only", () => {
   assert.doesNotMatch(settingsJsx, /ControlRoom/)
   assert.doesNotMatch(mediaJsx, /ControlRoom/)
-  // Every prop C1 already passed remains passed unchanged.
-  assert.match(crJsx, /<Settings\s*\n\s*games=\{games\}\s*\n\s*onClose=\{closeStation\}\s*\n\s*onCRTChange=\{onCRTChange\}\s*\n\s*crtEnabled=\{crtEnabled\}\s*\n\s*themeId=\{themeId\}\s*\n\s*onThemeChange=\{onThemeChange\}\s*\n\s*uiSoundsEnabled=\{uiSoundsEnabled\}\s*\n\s*onUiSoundsChange=\{onUiSoundsChange\}\s*\n\s*uiSoundVolume=\{uiSoundVolume\}\s*\n\s*onUiSoundVolumeChange=\{onUiSoundVolumeChange\}\s*\n\s*\/>/)
-  assert.match(crJsx, /<MediaManager onClose=\{closeStation\} onVideosUpdated=\{\(\) => \{\}\} onArtworkUpdated=\{\(\) => \{\}\}\s*\/>/)
+  // Every prop C1 already passed remains passed unchanged, except themeId/
+  // onThemeChange -- removed repo-wide when the Theme Color setting was
+  // retired (see useTheme.js). R1 added scrollToSection/initialTab as new,
+  // additive props.
+  assert.match(crJsx, /<Settings\s*\n\s*games=\{games\}\s*\n\s*onClose=\{closeStation\}\s*\n\s*onCRTChange=\{onCRTChange\}\s*\n\s*crtEnabled=\{crtEnabled\}\s*\n\s*uiSoundsEnabled=\{uiSoundsEnabled\}\s*\n\s*onUiSoundsChange=\{onUiSoundsChange\}\s*\n\s*uiSoundVolume=\{uiSoundVolume\}\s*\n\s*onUiSoundVolumeChange=\{onUiSoundVolumeChange\}\s*\n\s*scrollToSection=\{/)
+  assert.doesNotMatch(crJsx, /themeId|onThemeChange/)
+  assert.match(crJsx, /<MediaManager\s*\n\s*onClose=\{closeStation\}\s*\n\s*onVideosUpdated=\{\(\) => \{\}\}\s*\n\s*onArtworkUpdated=\{\(\) => \{\}\}\s*\n\s*initialTab=\{/)
 })
 
 // -- 15. Closing a station restores the exact originating station -----------
 
 test("closing a station still restores focus to the exact wing/column it was opened from (C1 mechanism untouched)", () => {
-  assert.match(crJsx, /const openStation = \(moduleId\) => \{\s*restoreFocusRef\.current = \{ zone: "root", column: columnRef\.current \}/)
-  assert.match(crJsx, /const closeStation = \(\) => \{\s*setActiveModule\(null\)\s*const restore = restoreFocusRef\.current\s*if \(restore\) \{ setFocusZone\(restore\.zone\); setColumn\(restore\.column\) \}/)
+  assert.match(crJsx, /const openStation = \(station\) => \{\s*restoreFocusRef\.current = \{ zone: "root", column: columnRef\.current \}/)
+  assert.match(crJsx, /const closeStation = \(\) => \{\s*setActiveModule\(null\)\s*setActiveStationId\(null\)\s*const restore = restoreFocusRef\.current\s*if \(restore\) \{ setFocusZone\(restore\.zone\); setColumn\(restore\.column\) \}/)
 })
 
 // -- 16. B/Escape returns exactly one level, extended to leave the room -----

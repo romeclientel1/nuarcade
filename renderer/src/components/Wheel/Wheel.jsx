@@ -242,7 +242,7 @@ function KonamiCelebration({ onClose }) {
   )
 }
 
-export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange, activeProfile, onSwitchPlayer, onReturnHome, restorationRequest, uiSoundsEnabled, onUiSoundsChange, uiSoundVolume, onUiSoundVolumeChange }) {
+export default function Wheel({ onCRTChange, crtEnabled, activeProfile, onSwitchPlayer, onReturnHome, restorationRequest, uiSoundsEnabled, onUiSoundsChange, uiSoundVolume, onUiSoundVolumeChange }) {
   const { t } = useI18n()
   const {
     games, loading, libraryEmpty, config,
@@ -264,7 +264,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
   }, [loading, games, addRecentlyPlayed])
 
   useMediaFolders()
-  const [artPref, setArtPref] = useState(() => localStorage.getItem('nuarcade_art_pref') || 'sgdb')
 
   const { getCollections } = useCollections()
   const [collections, setCollections] = useState(() => getCollections())
@@ -1654,7 +1653,6 @@ export default function Wheel({ onCRTChange, crtEnabled, themeId, onThemeChange,
                       isNavFocused={focusZone === 2}
                       isAttract={attractMode}
                       isFavorite={isFavorite(game.id || game.profile)}
-                      artPref={artPref}
                       artwork={artwork}
                       onClick={() => {
                         if (index === selectedIndex) { sounds.select(); resetLaunching(); setShowDetail(true) }
