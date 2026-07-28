@@ -37,6 +37,8 @@ export default {
   "settings.updateNow": "Actualizar ahora",
   "settings.installing": "Instalando... {progress}%",
   "settings.installingEllipsis": "Instalando...",
+  "settings.updateFailed": "Error al actualizar: {reason}",
+  "settings.updateRetry": "Intentar de nuevo",
   "settings.sectionEmulators": "Emuladores",
   "settings.sectionPaths": "Rutas",
   "settings.sectionControllers": "Controles",

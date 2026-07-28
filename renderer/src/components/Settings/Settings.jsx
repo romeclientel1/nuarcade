@@ -118,7 +118,7 @@ export default function Settings({ games = [], onClose, onCRTChange, crtEnabled,
 
   const [saved, setSaved] = useState(false)
   const [exporting, setExporting] = useState(false)
-  const { updateAvailable, remoteVersion, handleUpdateNow, installing, progress } = useVersionCheck()
+  const { updateAvailable, remoteVersion, handleUpdateNow, installing, progress, installError } = useVersionCheck()
 const { getAllPlaytime, formatTime } = usePlaytime()
 const [showControllerTest, setShowControllerTest] = useState(false)
 const [rescanning, setRescanning] = useState(false)
@@ -510,6 +510,22 @@ const handleSave = async () => {
               <span>{t("settings.updateAvailable", { version: remoteVersion })}</span>
               <button className={styles.updateLink} onClick={handleUpdateNow} disabled={installing}>
                 {installing ? (progress != null ? t("settings.installing", { progress }) : t("settings.installingEllipsis")) : t("settings.updateNow")}
+              </button>
+            </div>
+          )}
+
+          {/* Stable, user-readable failure state -- previously a failed
+              Update Now silently flipped `installing` back to false with no
+              visible message ("flashes and resets"), because this banner
+              did not exist and installError was discarded unread. It is
+              rendered independently of updateAvailable so it survives even
+              if the remote-version state is cleared, and it offers a direct
+              retry rather than requiring the Traveler to reopen Settings. */}
+          {!installing && installError && (
+            <div className={styles.updateBanner} style={{ background: '#2a0f0f', borderColor: '#ff5555' }}>
+              <span>{t("settings.updateFailed", { reason: installError })}</span>
+              <button className={styles.updateLink} style={{ background: '#ff5555' }} onClick={handleUpdateNow}>
+                {t("settings.updateRetry")}
               </button>
             </div>
           )}
