@@ -76,7 +76,7 @@ jobs:
         shell: pwsh
         run: |
           $version = '${{ steps.version.outputs.VERSION }}'
-          $installerName = "Vespara Setup $version.exe"
+          $installerName = "Vespara.Setup.$version.exe"
           $installerPath = Join-Path 'dist' $installerName
           if (-not (Test-Path -LiteralPath $installerPath -PathType Leaf)) {
             Write-Error "Expected installer not found at $installerPath"
@@ -90,7 +90,15 @@ jobs:
           }
 
           $checksumName = "$installerName.sha256"
-          if ($checksumName -notmatch '^Vespara Setup .+\.exe\.sha256$') {
+          # Canonical dotted convention -- GitHub Releases normalizes asset
+          # filenames on upload (spaces become dots), so the space-separated
+          # "Vespara Setup <version>.exe" form electron-builder used to
+          # produce was silently rewritten to "Vespara.Setup.<version>.exe"
+          # by GitHub itself, and the updater's exact-match asset lookup
+          # (which never does a wildcard or case-insensitive fallback)
+          # correctly rejected the mismatch. Producing the already-dotted
+          # name locally/in CI means GitHub's normalization is a no-op.
+          if ($checksumName -notmatch '^Vespara\.Setup\..+\.exe\.sha256$') {
             Write-Error "Computed checksum filename does not match the expected convention: $checksumName"
             exit 1
           }
@@ -177,7 +185,7 @@ jobs:
         shell: pwsh
         run: |
           $version = '${{ needs.build-windows.outputs.version }}'
-          $installerName = "Vespara Setup $version.exe"
+          $installerName = "Vespara.Setup.$version.exe"
           $checksumName = "$installerName.sha256"
 
           $installerCandidates = @(Get-ChildItem -Path dist -Filter $installerName -File)

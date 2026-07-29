@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 
-const CURRENT_VERSION = "6.0.0"
+const CURRENT_VERSION = "6.0.1"
 
 export function useVersionCheck() {
   const [updateAvailable, setUpdateAvailable] = useState(false)
@@ -41,7 +41,13 @@ export function useVersionCheck() {
   }
 
   const handleUpdateNow = async () => {
+    // Confirms the click itself actually reached this handler, and with
+    // what remote version -- previously nothing logged this at all, so a
+    // packaged build's stdout gave no evidence Update Now had even fired.
+    console.log('[useVersionCheck] Update Now clicked', { remoteVersion })
+
     if (!remoteVersion || !window.nuarcade || !window.nuarcade.downloadUpdate) {
+      console.log('[useVersionCheck] falling back to manual download (no remoteVersion or bridge unavailable)')
       handleDownload()
       return
     }
@@ -58,16 +64,22 @@ export function useVersionCheck() {
       // Nothing about a URL or filesystem path ever passes through here.
       const dl = await window.nuarcade.downloadUpdate({ version: remoteVersion })
       if (!dl || !dl.success || !dl.token) {
-        setInstallError((dl && dl.error) || 'Download failed')
+        const reason = (dl && dl.error) || 'Download failed'
+        console.error('[useVersionCheck] downloadUpdate failed:', reason)
+        setInstallError(reason)
         setInstalling(false)
         return
       }
+      console.log('[useVersionCheck] downloadUpdate succeeded, installing')
       const inst = await window.nuarcade.installUpdate({ token: dl.token })
       if (!inst || !inst.success) {
-        setInstallError((inst && inst.error) || 'Install failed')
+        const reason = (inst && inst.error) || 'Install failed'
+        console.error('[useVersionCheck] installUpdate failed:', reason)
+        setInstallError(reason)
         setInstalling(false)
       }
     } catch (e) {
+      console.error('[useVersionCheck] Update Now threw an unexpected error:', e && e.message)
       setInstallError(e.message)
       setInstalling(false)
     }

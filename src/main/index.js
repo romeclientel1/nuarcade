@@ -2248,15 +2248,20 @@ function isExactRequestShape(payload, expectedKeys) {
 
 ipcMain.handle('check-update', async (event, payload) => {
   if (!isExactRequestShape(payload, ['currentVersion'])) {
+    console.error('[updater-ipc] check-update: rejected malformed request shape')
     return { success: false, error: 'Invalid request.' }
   }
+  console.log('[updater-ipc] check-update invoked', { currentVersion: payload.currentVersion })
   return updater.checkForUpdate(payload.currentVersion)
 })
 
 ipcMain.handle('download-update', async (event, payload) => {
   if (!isExactRequestShape(payload, ['version'])) {
+    console.error('[updater-ipc] download-update: rejected malformed request shape')
     return { success: false, error: 'Invalid request.' }
   }
+  // Log only the version being requested -- never a token or file content.
+  console.log('[updater-ipc] download-update invoked', { version: payload.version })
   return updater.downloadUpdate(payload.version, {
     userDataPath: app.getPath('userData'),
     onProgress: (data) => event.sender.send('update-progress', data),
@@ -2265,8 +2270,12 @@ ipcMain.handle('download-update', async (event, payload) => {
 
 ipcMain.handle('install-update', async (event, payload) => {
   if (!isExactRequestShape(payload, ['token'])) {
+    console.error('[updater-ipc] install-update: rejected malformed request shape')
     return { success: false, error: 'Invalid request.' }
   }
+  // Deliberately never logs payload.token -- only that install-update was
+  // invoked, so the boundary itself is still visible in packaged-build logs.
+  console.log('[updater-ipc] install-update invoked')
   return updater.installUpdate(payload.token, {
     userDataPath: app.getPath('userData'),
   })

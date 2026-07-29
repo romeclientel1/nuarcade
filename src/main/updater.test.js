@@ -441,7 +441,7 @@ test('an oversized non-200 (4xx/5xx) release response does not accumulate unboun
 
 test('a checksum response just under its byte limit succeeds', () => withTempDir(async (userDataPath) => {
   const installerBytes = 'fake installer bytes for 5.8.4'
-  const validLine = validChecksumLine(installerBytes, 'Vespara Setup 5.8.4.exe')
+  const validLine = validChecksumLine(installerBytes, 'Vespara.Setup.5.8.4.exe')
   assert.ok(Buffer.byteLength(validLine, 'utf8') < CHECKSUM_MAX_BYTES)
   const release = makeRelease('5.8.4', [
     installerAssetFor('5.8.4', 'https://objects.githubusercontent.com/installer'),
@@ -459,7 +459,7 @@ test('a checksum response just under its byte limit succeeds', () => withTempDir
 
 test('an oversized checksum response is rejected, the download fails, and no verified token survives', () => withTempDir(async (userDataPath) => {
   const installerBytes = 'fake installer bytes for 5.8.4'
-  const oversizedChecksum = validChecksumLine(installerBytes, 'Vespara Setup 5.8.4.exe') + 'x'.repeat(CHECKSUM_MAX_BYTES * 2)
+  const oversizedChecksum = validChecksumLine(installerBytes, 'Vespara.Setup.5.8.4.exe') + 'x'.repeat(CHECKSUM_MAX_BYTES * 2)
   const release = makeRelease('5.8.4', [
     installerAssetFor('5.8.4', 'https://objects.githubusercontent.com/installer'),
     checksumAssetFor('5.8.4', 'https://objects.githubusercontent.com/checksum'),
@@ -489,8 +489,8 @@ test('selects the exact installer and checksum asset names', () => {
     checksumAssetFor('5.8.4', 'https://objects.githubusercontent.com/b'),
   ])
   const { installerAsset, checksumAsset } = selectReleaseAssets(release, '5.8.4')
-  assert.equal(installerAsset.name, 'Vespara Setup 5.8.4.exe')
-  assert.equal(checksumAsset.name, 'Vespara Setup 5.8.4.exe.sha256')
+  assert.equal(installerAsset.name, 'Vespara.Setup.5.8.4.exe')
+  assert.equal(checksumAsset.name, 'Vespara.Setup.5.8.4.exe.sha256')
 })
 
 test('zero installer matches is rejected', () => {
@@ -540,54 +540,54 @@ test('there is no fallback to the first asset when the exact name is absent', ()
 // == Checksum handling ========================================================
 
 test('a valid Commit 4 checksum line is accepted', () => {
-  const line = validChecksumLine('installer bytes', 'Vespara Setup 5.8.4.exe')
-  assert.equal(parseChecksumContent(line, 'Vespara Setup 5.8.4.exe'), sha256hex('installer bytes'))
+  const line = validChecksumLine('installer bytes', 'Vespara.Setup.5.8.4.exe')
+  assert.equal(parseChecksumContent(line, 'Vespara.Setup.5.8.4.exe'), sha256hex('installer bytes'))
 })
 
 test('a byte-order mark is rejected', () => {
-  const line = '﻿' + validChecksumLine('installer bytes', 'Vespara Setup 5.8.4.exe')
-  assert.throws(() => parseChecksumContent(line, 'Vespara Setup 5.8.4.exe'))
+  const line = '﻿' + validChecksumLine('installer bytes', 'Vespara.Setup.5.8.4.exe')
+  assert.throws(() => parseChecksumContent(line, 'Vespara.Setup.5.8.4.exe'))
 })
 
 test('an uppercase digest is rejected', () => {
-  const line = `${sha256hex('x').toUpperCase()}  Vespara Setup 5.8.4.exe\n`
-  assert.throws(() => parseChecksumContent(line, 'Vespara Setup 5.8.4.exe'))
+  const line = `${sha256hex('x').toUpperCase()}  Vespara.Setup.5.8.4.exe\n`
+  assert.throws(() => parseChecksumContent(line, 'Vespara.Setup.5.8.4.exe'))
 })
 
 test('wrong spacing (one space, or three spaces) is rejected', () => {
   const hash = sha256hex('x')
-  assert.throws(() => parseChecksumContent(`${hash} Vespara Setup 5.8.4.exe\n`, 'Vespara Setup 5.8.4.exe'))
-  assert.throws(() => parseChecksumContent(`${hash}   Vespara Setup 5.8.4.exe\n`, 'Vespara Setup 5.8.4.exe'))
+  assert.throws(() => parseChecksumContent(`${hash} Vespara.Setup.5.8.4.exe\n`, 'Vespara.Setup.5.8.4.exe'))
+  assert.throws(() => parseChecksumContent(`${hash}   Vespara.Setup.5.8.4.exe\n`, 'Vespara.Setup.5.8.4.exe'))
 })
 
 test('a checksum line naming the wrong filename is rejected', () => {
-  const line = validChecksumLine('x', 'Vespara Setup 5.8.3.exe')
-  assert.throws(() => parseChecksumContent(line, 'Vespara Setup 5.8.4.exe'))
+  const line = validChecksumLine('x', 'Vespara.Setup.5.8.3.exe')
+  assert.throws(() => parseChecksumContent(line, 'Vespara.Setup.5.8.4.exe'))
 })
 
 test('a checksum line whose filename contains a path component is rejected', () => {
   const hash = sha256hex('x')
-  assert.throws(() => parseChecksumContent(`${hash}  dist/Vespara Setup 5.8.4.exe\n`, 'Vespara Setup 5.8.4.exe'))
-  assert.throws(() => parseChecksumContent(`${hash}  C:\\dist\\Vespara Setup 5.8.4.exe\n`, 'Vespara Setup 5.8.4.exe'))
+  assert.throws(() => parseChecksumContent(`${hash}  dist/Vespara.Setup.5.8.4.exe\n`, 'Vespara.Setup.5.8.4.exe'))
+  assert.throws(() => parseChecksumContent(`${hash}  C:\\dist\\Vespara.Setup.5.8.4.exe\n`, 'Vespara.Setup.5.8.4.exe'))
 })
 
 test('an extra non-empty line is rejected', () => {
-  const line = validChecksumLine('x', 'Vespara Setup 5.8.4.exe') + validChecksumLine('y', 'Vespara Setup 5.8.4.exe')
-  assert.throws(() => parseChecksumContent(line, 'Vespara Setup 5.8.4.exe'))
+  const line = validChecksumLine('x', 'Vespara.Setup.5.8.4.exe') + validChecksumLine('y', 'Vespara.Setup.5.8.4.exe')
+  assert.throws(() => parseChecksumContent(line, 'Vespara.Setup.5.8.4.exe'))
 })
 
 test('CR-only line endings are rejected', () => {
   const hash = sha256hex('x')
-  assert.throws(() => parseChecksumContent(`${hash}  Vespara Setup 5.8.4.exe\r\n`, 'Vespara Setup 5.8.4.exe'))
+  assert.throws(() => parseChecksumContent(`${hash}  Vespara.Setup.5.8.4.exe\r\n`, 'Vespara.Setup.5.8.4.exe'))
 })
 
 test('empty content is rejected', () => {
-  assert.throws(() => parseChecksumContent('', 'Vespara Setup 5.8.4.exe'))
+  assert.throws(() => parseChecksumContent('', 'Vespara.Setup.5.8.4.exe'))
 })
 
 test('a digest mismatch (well-formed content, wrong hash) is rejected downstream by comparison, not by parsing', () => {
-  const line = validChecksumLine('actual content', 'Vespara Setup 5.8.4.exe')
-  const parsedDigest = parseChecksumContent(line, 'Vespara Setup 5.8.4.exe')
+  const line = validChecksumLine('actual content', 'Vespara.Setup.5.8.4.exe')
+  const parsedDigest = parseChecksumContent(line, 'Vespara.Setup.5.8.4.exe')
   const recomputed = sha256hex('tampered content')
   assert.notEqual(parsedDigest, recomputed)
 })
@@ -595,17 +595,17 @@ test('a digest mismatch (well-formed content, wrong hash) is rejected downstream
 // == updater-owned filename matching (cleanup) ===============================
 
 test('the strict matcher accepts only updater-owned filenames', () => {
-  assert.equal(isUpdaterOwnedFilename('Vespara Setup 5.8.4.exe'), true)
-  assert.equal(isUpdaterOwnedFilename('Vespara Setup 5.8.4.exe.part'), true)
-  assert.equal(isUpdaterOwnedFilename('Vespara Setup 5.8.4.exe.sha256'), true)
+  assert.equal(isUpdaterOwnedFilename('Vespara.Setup.5.8.4.exe'), true)
+  assert.equal(isUpdaterOwnedFilename('Vespara.Setup.5.8.4.exe.part'), true)
+  assert.equal(isUpdaterOwnedFilename('Vespara.Setup.5.8.4.exe.sha256'), true)
 })
 
 test('the strict matcher rejects unrelated or broad-looking filenames', () => {
   assert.equal(isUpdaterOwnedFilename('some-other-app.exe'), false)
   assert.equal(isUpdaterOwnedFilename('my-important-file.exe'), false)
   assert.equal(isUpdaterOwnedFilename('download.part'), false)
-  assert.equal(isUpdaterOwnedFilename('Vespara Setup 5.8.4.exe.bak'), false)
-  assert.equal(isUpdaterOwnedFilename('Vespara Setup notaversion.exe'), false)
+  assert.equal(isUpdaterOwnedFilename('Vespara.Setup.5.8.4.exe.bak'), false)
+  assert.equal(isUpdaterOwnedFilename('Vespara.Setup.notaversion.exe'), false)
 })
 
 // == downloadUpdate: end-to-end against a real temp directory + fake network
@@ -626,7 +626,7 @@ test('downloadUpdate succeeds end-to-end with a valid checksum, returning a toke
   const httpsRequestImpl = makeFakeHttpsImpl([
     { status: 200, body: JSON.stringify(release) },
     { status: 200, body: installerBytes },
-    { status: 200, body: validChecksumLine(installerBytes, 'Vespara Setup 5.8.4.exe') },
+    { status: 200, body: validChecksumLine(installerBytes, 'Vespara.Setup.5.8.4.exe') },
   ])
 
   const result = await updater.downloadUpdate('5.8.4', { userDataPath, httpsRequestImpl })
@@ -637,7 +637,7 @@ test('downloadUpdate succeeds end-to-end with a valid checksum, returning a toke
   const artifact = getVerifiedArtifactForTest()
   assert.ok(artifact)
   assert.equal(artifact.version, '5.8.4')
-  assert.equal(path.basename(artifact.path), 'Vespara Setup 5.8.4.exe')
+  assert.equal(path.basename(artifact.path), 'Vespara.Setup.5.8.4.exe')
   assert.equal(fs.existsSync(artifact.path), true)
   clearVerifiedArtifactForTest()
 }))
@@ -659,7 +659,7 @@ test('a digest mismatch during download fails and removes the partial/unverified
   const httpsRequestImpl = makeFakeHttpsImpl([
     { status: 200, body: JSON.stringify(release) },
     { status: 200, body: installerBytes },
-    { status: 200, body: validChecksumLine('different content entirely', 'Vespara Setup 5.8.4.exe') },
+    { status: 200, body: validChecksumLine('different content entirely', 'Vespara.Setup.5.8.4.exe') },
   ])
 
   const result = await updater.downloadUpdate('5.8.4', { userDataPath, httpsRequestImpl })
@@ -684,9 +684,9 @@ test('the renderer cannot provide a download URL or destination path -- download
 test('stale cleanup removes only strict updater-owned filenames and leaves unrelated files untouched', () => withTempDir(async (userDataPath) => {
   const dir = path.join(userDataPath, 'updater')
   fs.mkdirSync(dir, { recursive: true })
-  fs.writeFileSync(path.join(dir, 'Vespara Setup 5.8.3.exe'), 'stale')
-  fs.writeFileSync(path.join(dir, 'Vespara Setup 5.8.3.exe.part'), 'stale-part')
-  fs.writeFileSync(path.join(dir, 'Vespara Setup 5.8.3.exe.sha256'), 'stale-sum')
+  fs.writeFileSync(path.join(dir, 'Vespara.Setup.5.8.3.exe'), 'stale')
+  fs.writeFileSync(path.join(dir, 'Vespara.Setup.5.8.3.exe.part'), 'stale-part')
+  fs.writeFileSync(path.join(dir, 'Vespara.Setup.5.8.3.exe.sha256'), 'stale-sum')
   fs.writeFileSync(path.join(dir, 'unrelated-user-file.txt'), 'do not touch me')
 
   const installerBytes = 'fresh installer bytes'
@@ -697,21 +697,21 @@ test('stale cleanup removes only strict updater-owned filenames and leaves unrel
   const httpsRequestImpl = makeFakeHttpsImpl([
     { status: 200, body: JSON.stringify(release) },
     { status: 200, body: installerBytes },
-    { status: 200, body: validChecksumLine(installerBytes, 'Vespara Setup 5.8.4.exe') },
+    { status: 200, body: validChecksumLine(installerBytes, 'Vespara.Setup.5.8.4.exe') },
   ])
 
   const result = await updater.downloadUpdate('5.8.4', { userDataPath, httpsRequestImpl })
   assert.equal(result.success, true)
 
   const remaining = fs.readdirSync(dir).sort()
-  assert.deepEqual(remaining, ['Vespara Setup 5.8.4.exe', 'unrelated-user-file.txt'].sort())
+  assert.deepEqual(remaining, ['Vespara.Setup.5.8.4.exe', 'unrelated-user-file.txt'].sort())
   clearVerifiedArtifactForTest()
 }))
 
 test('a new download invalidates the previously verified artifact', () => withTempDir(async (userDataPath) => {
   const dir = path.join(userDataPath, 'updater')
   fs.mkdirSync(dir, { recursive: true })
-  const oldPath = path.join(dir, 'Vespara Setup 5.8.3.exe')
+  const oldPath = path.join(dir, 'Vespara.Setup.5.8.3.exe')
   fs.writeFileSync(oldPath, 'old verified installer')
   setVerifiedArtifactForTest({ path: oldPath, sha256: sha256hex('old verified installer'), version: '5.8.3', token: 'a'.repeat(64) })
 
@@ -723,7 +723,7 @@ test('a new download invalidates the previously verified artifact', () => withTe
   const httpsRequestImpl = makeFakeHttpsImpl([
     { status: 200, body: JSON.stringify(release) },
     { status: 200, body: installerBytes },
-    { status: 200, body: validChecksumLine(installerBytes, 'Vespara Setup 5.8.4.exe') },
+    { status: 200, body: validChecksumLine(installerBytes, 'Vespara.Setup.5.8.4.exe') },
   ])
 
   await updater.downloadUpdate('5.8.4', { userDataPath, httpsRequestImpl })
@@ -764,7 +764,7 @@ test('installUpdate rejects a replaced token (one that no longer matches current
 })
 
 test('installUpdate rejects a path outside the updater-owned directory', () => withTempDir(async (userDataPath) => {
-  const outsidePath = path.join(os.tmpdir(), 'Vespara Setup 5.8.4.exe')
+  const outsidePath = path.join(os.tmpdir(), 'Vespara.Setup.5.8.4.exe')
   fs.writeFileSync(outsidePath, 'not really in the updater dir')
   const token = 'c'.repeat(64)
   setVerifiedArtifactForTest({ path: outsidePath, sha256: sha256hex('not really in the updater dir'), version: '5.8.4', token })
@@ -789,7 +789,7 @@ test('installUpdate rejects a wrong basename', () => withTempDir(async (userData
 test('installUpdate rejects a missing file', () => withTempDir(async (userDataPath) => {
   const dir = path.join(userDataPath, 'updater')
   fs.mkdirSync(dir, { recursive: true })
-  const missingPath = path.join(dir, 'Vespara Setup 5.8.4.exe')
+  const missingPath = path.join(dir, 'Vespara.Setup.5.8.4.exe')
   const token = 'e'.repeat(64)
   setVerifiedArtifactForTest({ path: missingPath, sha256: 'x'.repeat(64), version: '5.8.4', token })
   const result = await updater.installUpdate(token, { userDataPath })
@@ -800,7 +800,7 @@ test('installUpdate rejects a missing file', () => withTempDir(async (userDataPa
 test('installUpdate rejects a changed installer digest and clears verified state', () => withTempDir(async (userDataPath) => {
   const dir = path.join(userDataPath, 'updater')
   fs.mkdirSync(dir, { recursive: true })
-  const installerPath = path.join(dir, 'Vespara Setup 5.8.4.exe')
+  const installerPath = path.join(dir, 'Vespara.Setup.5.8.4.exe')
   fs.writeFileSync(installerPath, 'original verified content')
   const token = 'f'.repeat(64)
   setVerifiedArtifactForTest({ path: installerPath, sha256: sha256hex('original verified content'), version: '5.8.4', token })
@@ -818,7 +818,7 @@ test('installUpdate rejects a changed installer digest and clears verified state
 test('an ordinary regular installer file is accepted (baseline for the symlink tests below)', () => withTempDir(async (userDataPath) => {
   const dir = path.join(userDataPath, 'updater')
   fs.mkdirSync(dir, { recursive: true })
-  const installerPath = path.join(dir, 'Vespara Setup 5.8.4.exe')
+  const installerPath = path.join(dir, 'Vespara.Setup.5.8.4.exe')
   fs.writeFileSync(installerPath, 'verified content')
   const token = 'b2'.repeat(32)
   setVerifiedArtifactForTest({ path: installerPath, sha256: sha256hex('verified content'), version: '5.8.4', token })
@@ -856,7 +856,7 @@ test('a symbolic-link installer path is rejected, the token is invalidated, and 
 
   const realFile = path.join(userDataPath, 'real-installer-elsewhere.exe')
   fs.writeFileSync(realFile, 'verified content')
-  const linkPath = path.join(dir, 'Vespara Setup 5.8.4.exe')
+  const linkPath = path.join(dir, 'Vespara.Setup.5.8.4.exe')
   fs.symlinkSync(realFile, linkPath)
 
   const token = 'c3'.repeat(32)
@@ -880,7 +880,7 @@ test('a symlink installer pointing outside the updater directory is rejected', (
   const outsideDir = fs.mkdtempSync(path.join(os.tmpdir(), 'vespara-updater-outside-'))
   const realFile = path.join(outsideDir, 'attacker-controlled.exe')
   fs.writeFileSync(realFile, 'verified content')
-  const linkPath = path.join(dir, 'Vespara Setup 5.8.4.exe')
+  const linkPath = path.join(dir, 'Vespara.Setup.5.8.4.exe')
   fs.symlinkSync(realFile, linkPath)
 
   const token = 'd4'.repeat(32)
@@ -898,7 +898,7 @@ test('a symlink installer pointing outside the updater directory is rejected', (
 test('a realpath that escapes the updater directory (via injected lstat/realpath) is rejected even when lstat itself reports a regular file', () => withTempDir(async (userDataPath) => {
   const dir = path.join(userDataPath, 'updater')
   fs.mkdirSync(dir, { recursive: true })
-  const installerPath = path.join(dir, 'Vespara Setup 5.8.4.exe')
+  const installerPath = path.join(dir, 'Vespara.Setup.5.8.4.exe')
   fs.writeFileSync(installerPath, 'verified content')
   const token = 'e5'.repeat(32)
   setVerifiedArtifactForTest({ path: installerPath, sha256: sha256hex('verified content'), version: '5.8.4', token })
@@ -936,7 +936,7 @@ function fakeTimerRecorder() {
 test('a successful rehash proceeds to an array-based spawn of the exact verified path with fixed arguments and no shell', () => withTempDir(async (userDataPath) => {
   const dir = path.join(userDataPath, 'updater')
   fs.mkdirSync(dir, { recursive: true })
-  const installerPath = path.join(dir, 'Vespara Setup 5.8.4.exe')
+  const installerPath = path.join(dir, 'Vespara.Setup.5.8.4.exe')
   fs.writeFileSync(installerPath, 'verified content')
   const token = '1'.repeat(64)
   setVerifiedArtifactForTest({ path: installerPath, sha256: sha256hex('verified content'), version: '5.8.4', token })
@@ -975,7 +975,7 @@ test('a successful rehash proceeds to an array-based spawn of the exact verified
 test('no quit timer is scheduled after a synchronous spawn throw', () => withTempDir(async (userDataPath) => {
   const dir = path.join(userDataPath, 'updater')
   fs.mkdirSync(dir, { recursive: true })
-  const installerPath = path.join(dir, 'Vespara Setup 5.8.4.exe')
+  const installerPath = path.join(dir, 'Vespara.Setup.5.8.4.exe')
   fs.writeFileSync(installerPath, 'verified content')
   const token = '8'.repeat(64)
   setVerifiedArtifactForTest({ path: installerPath, sha256: sha256hex('verified content'), version: '5.8.4', token })
@@ -990,7 +990,7 @@ test('no quit timer is scheduled after a synchronous spawn throw', () => withTem
 test('no quit timer is scheduled after a child error event without a prior spawn', () => withTempDir(async (userDataPath) => {
   const dir = path.join(userDataPath, 'updater')
   fs.mkdirSync(dir, { recursive: true })
-  const installerPath = path.join(dir, 'Vespara Setup 5.8.4.exe')
+  const installerPath = path.join(dir, 'Vespara.Setup.5.8.4.exe')
   fs.writeFileSync(installerPath, 'verified content')
   const token = '9'.repeat(64)
   setVerifiedArtifactForTest({ path: installerPath, sha256: sha256hex('verified content'), version: '5.8.4', token })
@@ -1009,7 +1009,7 @@ test('no quit timer is scheduled after a child error event without a prior spawn
 test('conflicting events (spawn then a later spurious error) never schedule a second timer', () => withTempDir(async (userDataPath) => {
   const dir = path.join(userDataPath, 'updater')
   fs.mkdirSync(dir, { recursive: true })
-  const installerPath = path.join(dir, 'Vespara Setup 5.8.4.exe')
+  const installerPath = path.join(dir, 'Vespara.Setup.5.8.4.exe')
   fs.writeFileSync(installerPath, 'verified content')
   const token = 'a1'.repeat(32)
   setVerifiedArtifactForTest({ path: installerPath, sha256: sha256hex('verified content'), version: '5.8.4', token })
@@ -1031,7 +1031,7 @@ test('conflicting events (spawn then a later spurious error) never schedule a se
 test('a synchronous spawn throw returns failure and does not quit', () => withTempDir(async (userDataPath) => {
   const dir = path.join(userDataPath, 'updater')
   fs.mkdirSync(dir, { recursive: true })
-  const installerPath = path.join(dir, 'Vespara Setup 5.8.4.exe')
+  const installerPath = path.join(dir, 'Vespara.Setup.5.8.4.exe')
   fs.writeFileSync(installerPath, 'verified content')
   const token = '2'.repeat(64)
   setVerifiedArtifactForTest({ path: installerPath, sha256: sha256hex('verified content'), version: '5.8.4', token })
@@ -1046,7 +1046,7 @@ test('a synchronous spawn throw returns failure and does not quit', () => withTe
 test('a child error event returns failure and does not quit', () => withTempDir(async (userDataPath) => {
   const dir = path.join(userDataPath, 'updater')
   fs.mkdirSync(dir, { recursive: true })
-  const installerPath = path.join(dir, 'Vespara Setup 5.8.4.exe')
+  const installerPath = path.join(dir, 'Vespara.Setup.5.8.4.exe')
   fs.writeFileSync(installerPath, 'verified content')
   const token = '3'.repeat(64)
   setVerifiedArtifactForTest({ path: installerPath, sha256: sha256hex('verified content'), version: '5.8.4', token })
@@ -1065,7 +1065,7 @@ test('a child error event returns failure and does not quit', () => withTempDir(
 test('duplicate terminal events (spawn then error) resolve exactly once, keeping the first outcome', () => withTempDir(async (userDataPath) => {
   const dir = path.join(userDataPath, 'updater')
   fs.mkdirSync(dir, { recursive: true })
-  const installerPath = path.join(dir, 'Vespara Setup 5.8.4.exe')
+  const installerPath = path.join(dir, 'Vespara.Setup.5.8.4.exe')
   fs.writeFileSync(installerPath, 'verified content')
   const token = '4'.repeat(64)
   setVerifiedArtifactForTest({ path: installerPath, sha256: sha256hex('verified content'), version: '5.8.4', token })
@@ -1085,7 +1085,7 @@ test('duplicate terminal events (spawn then error) resolve exactly once, keeping
 test('the token is single-use: a second install attempt with the same token fails because verified state was already consumed', () => withTempDir(async (userDataPath) => {
   const dir = path.join(userDataPath, 'updater')
   fs.mkdirSync(dir, { recursive: true })
-  const installerPath = path.join(dir, 'Vespara Setup 5.8.4.exe')
+  const installerPath = path.join(dir, 'Vespara.Setup.5.8.4.exe')
   fs.writeFileSync(installerPath, 'verified content')
   const token = '5'.repeat(64)
   setVerifiedArtifactForTest({ path: installerPath, sha256: sha256hex('verified content'), version: '5.8.4', token })
@@ -1105,7 +1105,7 @@ test('the token is single-use: a second install attempt with the same token fail
 test('rapid duplicate install calls allow at most one success', () => withTempDir(async (userDataPath) => {
   const dir = path.join(userDataPath, 'updater')
   fs.mkdirSync(dir, { recursive: true })
-  const installerPath = path.join(dir, 'Vespara Setup 5.8.4.exe')
+  const installerPath = path.join(dir, 'Vespara.Setup.5.8.4.exe')
   fs.writeFileSync(installerPath, 'verified content')
   const token = '6'.repeat(64)
   setVerifiedArtifactForTest({ path: installerPath, sha256: sha256hex('verified content'), version: '5.8.4', token })
@@ -1126,7 +1126,7 @@ test('rapid duplicate install calls allow at most one success', () => withTempDi
 test('the token is never present in a failure error message', () => withTempDir(async (userDataPath) => {
   const dir = path.join(userDataPath, 'updater')
   fs.mkdirSync(dir, { recursive: true })
-  const installerPath = path.join(dir, 'Vespara Setup 5.8.4.exe')
+  const installerPath = path.join(dir, 'Vespara.Setup.5.8.4.exe')
   fs.writeFileSync(installerPath, 'original')
   const token = '7'.repeat(64)
   setVerifiedArtifactForTest({ path: installerPath, sha256: sha256hex('original'), version: '5.8.4', token })
