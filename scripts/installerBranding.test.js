@@ -44,7 +44,7 @@ test('visible installer identity is Vespara while compatibility identifiers rema
   assert.equal(pkg.build.executableName, 'NuArcade')
   assert.equal(pkg.build.nsis.shortcutName, 'Vespara')
   assert.equal(pkg.build.nsis.uninstallDisplayName, 'Vespara')
-  assert.equal(pkg.build.nsis.artifactName, '${productName} Setup ${version}.${ext}')
+  assert.equal(pkg.build.nsis.artifactName, '${productName}.Setup.${version}.${ext}')
 })
 
 test('all active Windows icon surfaces use the approved local Vespara icon', () => {
@@ -136,9 +136,14 @@ test('upgrade and build discovery identities remain unchanged', () => {
   assert.match(workflow, /npm run build:win/)
   assert.match(workflow, /files: \|\s*\n\s*\$\{\{ steps\.assets\.outputs\.INSTALLER_PATH \}\}\s*\n\s*\$\{\{ steps\.assets\.outputs\.CHECKSUM_PATH \}\}/)
   // R0 Commit 5: the updater now derives the exact Commit 4 installer
-  // basename convention ("Vespara Setup ${version}.exe") rather than the
-  // old hyphenated "Vespara-Setup-" + version string-concatenation form.
-  assert.match(updater, /installerName\(version\)\s*\{\s*\n\s*return `Vespara Setup \$\{version\}\.exe`/)
+  // basename convention rather than the old hyphenated "Vespara-Setup-" +
+  // version string-concatenation form. R1 (asset-naming fix): the
+  // convention itself moved from a space-separated "Vespara Setup
+  // ${version}.exe" to a dotted "Vespara.Setup.${version}.exe" -- GitHub
+  // Releases normalizes spaces to dots on upload, so the space form was
+  // silently renamed by GitHub and never matched the updater's exact-name
+  // asset lookup. The dotted form survives GitHub's normalization unchanged.
+  assert.match(updater, /installerName\(version\)\s*\{\s*\n\s*return `Vespara\.Setup\.\$\{version\}\.exe`/)
   assert.equal(
     crypto.createHash('sha256').update(pkg.build.appId).digest('hex'),
     crypto.createHash('sha256').update('com.nuarcade.app').digest('hex')
@@ -170,7 +175,7 @@ test('build-windows generates a .sha256 checksum only after the installer exists
 
 test('the checksum filename is the exact installer basename plus .sha256', () => {
   assert.match(buildWindowsSection, /\$checksumName = "\$installerName\.sha256"/)
-  assert.match(buildWindowsSection, /\$installerName = "Vespara Setup \$version\.exe"/)
+  assert.match(buildWindowsSection, /\$installerName = "Vespara\.Setup\.\$version\.exe"/)
 })
 
 test('checksum generation explicitly uses SHA-256, lowercased', () => {
@@ -187,7 +192,7 @@ test('both the exact installer and exact checksum paths are passed to upload-art
 })
 
 test('publish-release requires exactly one exact-name installer and exactly one exact-name checksum, with no wildcard or first-match fallback', () => {
-  assert.match(publishReleaseSection, /\$installerName = "Vespara Setup \$version\.exe"/)
+  assert.match(publishReleaseSection, /\$installerName = "Vespara\.Setup\.\$version\.exe"/)
   assert.match(publishReleaseSection, /\$checksumName = "\$installerName\.sha256"/)
   assert.match(publishReleaseSection, /Get-ChildItem -Path dist -Filter \$installerName -File/)
   assert.match(publishReleaseSection, /Get-ChildItem -Path dist -Filter \$checksumName -File/)
@@ -195,7 +200,7 @@ test('publish-release requires exactly one exact-name installer and exactly one 
   assert.match(publishReleaseSection, /installerCandidates\.Count -gt 1/)
   assert.match(publishReleaseSection, /checksumCandidates\.Count -eq 0/)
   assert.match(publishReleaseSection, /checksumCandidates\.Count -gt 1/)
-  assert.doesNotMatch(publishReleaseSection, /Filter 'Vespara Setup \*\.exe'/)
+  assert.doesNotMatch(publishReleaseSection, /Filter 'Vespara\.Setup\.\*\.exe'/)
   assert.doesNotMatch(publishReleaseSection, /-Filter '\*\.sha256'/)
 })
 
@@ -226,15 +231,15 @@ function extractChecksumLinePattern(source) {
 
 test('malformed checksum content is rejected by the workflow-derived format regex', () => {
   const pattern = extractChecksumLinePattern(publishReleaseSection)
-  const validLine = `${'a'.repeat(64)}  Vespara Setup 5.8.4.exe`
+  const validLine = `${'a'.repeat(64)}  Vespara.Setup.5.8.4.exe`
   assert.match(validLine, pattern, 'sanity check: a well-formed line must match')
 
   const malformed = [
-    `${'A'.repeat(64)}  Vespara Setup 5.8.4.exe`,       // uppercase hex
-    `${'a'.repeat(63)}  Vespara Setup 5.8.4.exe`,        // 63 chars, too short
-    `${'a'.repeat(65)}  Vespara Setup 5.8.4.exe`,        // 65 chars, too long
-    `${'a'.repeat(64)} Vespara Setup 5.8.4.exe`,         // one space, not two
-    `${'a'.repeat(64)}   Vespara Setup 5.8.4.exe`,       // three spaces
+    `${'A'.repeat(64)}  Vespara.Setup.5.8.4.exe`,       // uppercase hex
+    `${'a'.repeat(63)}  Vespara.Setup.5.8.4.exe`,        // 63 chars, too short
+    `${'a'.repeat(65)}  Vespara.Setup.5.8.4.exe`,        // 65 chars, too long
+    `${'a'.repeat(64)} Vespara.Setup.5.8.4.exe`,         // one space, not two
+    `${'a'.repeat(64)}   Vespara.Setup.5.8.4.exe`,       // three spaces
     '',                                                    // empty
   ]
   for (const line of malformed) {
@@ -245,12 +250,12 @@ test('malformed checksum content is rejected by the workflow-derived format rege
 test('a checksum line naming a different file, containing a path separator, or carrying an extra label all fail the recorded-name checks (even though they pass the bare spacing/hex format regex)', () => {
   const pattern = extractChecksumLinePattern(publishReleaseSection)
 
-  const wrongName = `${'a'.repeat(64)}  Vespara Setup 5.8.3.exe`
+  const wrongName = `${'a'.repeat(64)}  Vespara.Setup.5.8.3.exe`
   const match = wrongName.match(pattern)
   assert.ok(match, 'the line is well-formed enough to reach the name-comparison step')
-  assert.notEqual(match[2], 'Vespara Setup 5.8.4.exe')
+  assert.notEqual(match[2], 'Vespara.Setup.5.8.4.exe')
 
-  const pathPrefixed = `${'a'.repeat(64)}  dist/Vespara Setup 5.8.4.exe`
+  const pathPrefixed = `${'a'.repeat(64)}  dist/Vespara.Setup.5.8.4.exe`
   const pathMatch = pathPrefixed.match(pattern)
   assert.ok(pathMatch, 'the line is well-formed enough to reach the path-separator check')
   assert.match(pathMatch[2], /[\\/]/, 'expected the recorded name to still contain a path separator for the guard to catch')
@@ -259,10 +264,10 @@ test('a checksum line naming a different file, containing a path separator, or c
   // regex -- the format check only constrains spacing and hash shape, not
   // filename content -- so this is caught by the separate exact-name
   // equality check in publish-release, not the format regex itself.
-  const labeled = `${'a'.repeat(64)}  SHA256: Vespara Setup 5.8.4.exe`
+  const labeled = `${'a'.repeat(64)}  SHA256: Vespara.Setup.5.8.4.exe`
   const labeledMatch = labeled.match(pattern)
   assert.ok(labeledMatch, 'a labeled line still satisfies the bare spacing/hex format')
-  assert.notEqual(labeledMatch[2], 'Vespara Setup 5.8.4.exe', 'the labeled recorded name must not equal the real installer name')
+  assert.notEqual(labeledMatch[2], 'Vespara.Setup.5.8.4.exe', 'the labeled recorded name must not equal the real installer name')
 })
 
 test('a mismatched digest is rejected by the workflow-derived comparison guard', () => {
@@ -284,6 +289,6 @@ test('protected packaging identities are unchanged by checksum work', () => {
   assert.equal(pkg.build.appId, 'com.nuarcade.app')
   assert.equal(pkg.build.executableName, 'NuArcade')
   assert.equal(pkg.name, 'nuarcade')
-  assert.equal(pkg.build.nsis.artifactName, '${productName} Setup ${version}.${ext}')
-  assert.match(workflow, /Vespara Setup \$version\.exe/)
+  assert.equal(pkg.build.nsis.artifactName, '${productName}.Setup.${version}.${ext}')
+  assert.match(workflow, /Vespara\.Setup\.\$version\.exe/)
 })

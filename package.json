@@ -1,6 +1,6 @@
 {
   "name": "nuarcade",
-  "version": "6.0.0",
+  "version": "6.0.1",
   "description": "Vespara by NuArcade \u2014 Modern arcade frontend for TeknoParrot and Visual Pinball X",
   "main": "src/main/index.js",
   "author": "Rome Clientel",
@@ -51,7 +51,7 @@
       "installerSidebar": "assets/installer/vespara-installer-sidebar.bmp",
       "uninstallerIcon": "assets/icons/icon.ico",
       "uninstallerSidebar": "assets/installer/vespara-installer-sidebar.bmp",
-      "artifactName": "${productName} Setup ${version}.${ext}",
+      "artifactName": "${productName}.Setup.${version}.${ext}",
       "shortcutName": "Vespara",
       "uninstallDisplayName": "Vespara",
       "createDesktopShortcut": true,

@@ -83,7 +83,7 @@ test("real NSIS build: renderer builds and electron-builder --win --x64 succeeds
   assert.match(output, /Install:\s*5 pages/, "adding the Directory-page Leave hook must not add or remove a page")
 
   // -- A real, named installer artifact exists --
-  const expectedArtifact = path.join(ROOT, "dist", `Vespara Setup ${pkg.version}.exe`)
+  const expectedArtifact = path.join(ROOT, "dist", `Vespara.Setup.${pkg.version}.exe`)
   assert.ok(fs.existsSync(expectedArtifact), `expected installer artifact at ${expectedArtifact}`)
   assert.ok(fs.statSync(expectedArtifact).size > 10_000_000, "installer artifact is implausibly small")
 })

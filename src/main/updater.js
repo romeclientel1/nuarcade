@@ -66,8 +66,39 @@ function isValidVersion(version) {
   return typeof version === 'string' && VERSION_PATTERN.test(version)
 }
 
+// Narrowly-scoped diagnostic logging for the Update Now path. Every catch
+// block along checkForUpdate/downloadUpdate/installUpdate used to discard
+// the real caught error and return only a generic, user-facing message --
+// which meant a packaged build's stdout showed nothing at all when an
+// update silently failed (see the "Update Now flashes and resets, no files,
+// no errors" investigation). These log calls exist purely so that reason is
+// now visible: release-lookup outcome, selected asset basenames, and the
+// real Error#message at whichever step actually failed. They deliberately
+// log only public, non-sensitive facts -- versions, asset filenames (which
+// are public GitHub release asset names), and error message text. They
+// NEVER log the install token, checksum digests, or any file's raw bytes.
+// `loggerImpl` is injectable (defaults to console) so tests can assert on
+// logging behavior without real console noise.
+function defaultLogger() {
+  return {
+    log: (...args) => console.log('[updater]', ...args),
+    error: (...args) => console.error('[updater]', ...args),
+  }
+}
+
+// Canonical dotted convention. GitHub Releases normalizes uploaded asset
+// filenames (spaces become dots) -- a space-separated "Vespara Setup
+// <version>.exe" name (electron-builder's old artifactName template)
+// gets silently rewritten by GitHub to "Vespara.Setup.<version>.exe" on
+// upload, and this module's exact-match asset selection (selectExactAsset,
+// below -- never a wildcard or case-insensitive fallback) correctly
+// rejected that mismatch rather than silently accepting a renamed file.
+// Producing the already-dotted name at build time (package.json's
+// artifactName + this function both use it) means GitHub's normalization
+// is a no-op, so the local/CI build, the published release asset, and
+// this exact-match lookup all agree on one filename.
 function installerName(version) {
-  return `Vespara Setup ${version}.exe`
+  return `Vespara.Setup.${version}.exe`
 }
 
 function checksumName(version) {
@@ -279,27 +310,34 @@ async function fetchLatestRelease({ httpsRequestImpl } = {}) {
 // malformed, prerelease, or path-like tag is treated the same as "nothing
 // newer" (safe default) rather than surfaced as an available version.
 async function checkForUpdate(currentVersion, options = {}) {
-  const { httpsRequestImpl } = options
+  const { httpsRequestImpl, loggerImpl } = options
+  const logger = loggerImpl || defaultLogger()
 
   if (!isValidVersion(currentVersion)) {
+    logger.error('checkForUpdate: invalid current version supplied', currentVersion)
     return { success: false, error: 'Invalid current version.' }
   }
+
+  logger.log('checkForUpdate: checking for updates', { currentVersion })
 
   let release
   try {
     release = await fetchLatestRelease({ httpsRequestImpl })
-  } catch {
+  } catch (e) {
+    logger.error('checkForUpdate: latest-release lookup failed:', e && e.message)
     return { success: false, error: 'Could not check for updates.' }
   }
 
   const tuple = parseStrictTag(release.tag_name)
   if (!tuple) {
     // Malformed/prerelease/path-like tag -- never report it as available.
+    logger.log('checkForUpdate: latest release tag is not a strict version tag, treating as none available:', release.tag_name)
     return { success: true, updateAvailable: false, version: null }
   }
 
   const currentTuple = currentVersion.split('.').map(Number)
   const isNewer = compareVersionTuples(tuple, currentTuple) > 0
+  logger.log('checkForUpdate: result', { currentVersion, remoteVersion: tuple.join('.'), updateAvailable: isNewer })
   if (!isNewer) {
     return { success: true, updateAvailable: false, version: null }
   }
@@ -391,8 +429,8 @@ function updaterDir(userDataPath) {
 // may ever be removed by cleanup. No broad "all .exe" / "all .part" /
 // whole-directory deletion is possible through this matcher.
 function isUpdaterOwnedFilename(name) {
-  return /^Vespara Setup \d+\.\d+\.\d+\.exe(\.part|\.sha256)?$/.test(name)
-     || /^Vespara Setup \d+\.\d+\.\d+\.updater-meta\.json$/.test(name)
+  return /^Vespara\.Setup\.\d+\.\d+\.\d+\.exe(\.part|\.sha256)?$/.test(name)
+     || /^Vespara\.Setup\.\d+\.\d+\.\d+\.updater-meta\.json$/.test(name)
 }
 
 function cleanupStaleUpdaterFiles(dir, { readdirImpl, unlinkImpl } = {}) {
@@ -491,14 +529,20 @@ async function downloadUpdate(version, options = {}) {
     computeSha256Impl,
     randomBytesImpl,
     onProgress,
+    loggerImpl,
   } = options
+  const logger = loggerImpl || defaultLogger()
 
   if (!isValidVersion(version)) {
+    logger.error('downloadUpdate: invalid version requested', version)
     return { success: false, error: 'Invalid version.' }
   }
   if (typeof userDataPath !== 'string' || userDataPath.length === 0) {
+    logger.error('downloadUpdate: no updater storage location (userDataPath) was supplied')
     return { success: false, error: 'Updater storage location was unavailable.' }
   }
+
+  logger.log('downloadUpdate: starting', { version })
 
   const exists = existsSyncImpl || fs.existsSync
   const mkdir = mkdirImpl || fs.mkdirSync
@@ -508,7 +552,8 @@ async function downloadUpdate(version, options = {}) {
   const dir = updaterDir(userDataPath)
   try {
     mkdir(dir, { recursive: true })
-  } catch {
+  } catch (e) {
+    logger.error('downloadUpdate: could not prepare the updater directory:', e && e.message)
     return { success: false, error: 'Could not prepare the updater directory.' }
   }
 
@@ -520,16 +565,22 @@ async function downloadUpdate(version, options = {}) {
   let release
   try {
     release = await fetchReleaseByTag(version, { httpsRequestImpl })
-  } catch {
+  } catch (e) {
+    logger.error('downloadUpdate: release lookup failed for tag v' + version + ':', e && e.message)
     return { success: false, error: 'Could not verify the requested release.' }
   }
+  logger.log('downloadUpdate: release lookup succeeded', { tag: release.tag_name })
 
   let assets
   try {
     assets = selectReleaseAssets(release, version)
-  } catch {
+  } catch (e) {
+    logger.error('downloadUpdate: asset selection failed:', e && e.message,
+      '-- expected installer:', installerName(version), 'checksum:', checksumName(version),
+      '-- release had assets named:', (Array.isArray(release.assets) ? release.assets.map((a) => a && a.name) : []))
     return { success: false, error: 'Expected release assets were not found.' }
   }
+  logger.log('downloadUpdate: selected assets', { installer: assets.installerAsset.name, checksum: assets.checksumAsset.name })
 
   const finalInstallerName = installerName(version)
   const finalInstallerPath = path.join(dir, finalInstallerName)
@@ -546,7 +597,8 @@ async function downloadUpdate(version, options = {}) {
     await downloadToFile(assets.installerAsset.browser_download_url, partialPath, {
       httpsRequestImpl, createWriteStreamImpl, onProgress,
     })
-  } catch {
+  } catch (e) {
+    logger.error('downloadUpdate: installer download failed:', e && e.message)
     cleanupAttempt()
     return { success: false, error: 'Installer download failed.' }
   }
@@ -554,7 +606,8 @@ async function downloadUpdate(version, options = {}) {
   let checksumContent
   try {
     checksumContent = await downloadToString(assets.checksumAsset.browser_download_url, { httpsRequestImpl })
-  } catch {
+  } catch (e) {
+    logger.error('downloadUpdate: checksum download failed:', e && e.message)
     cleanupAttempt()
     return { success: false, error: 'Checksum download failed.' }
   }
@@ -562,7 +615,8 @@ async function downloadUpdate(version, options = {}) {
   let expectedDigest
   try {
     expectedDigest = parseChecksumContent(checksumContent, finalInstallerName)
-  } catch {
+  } catch (e) {
+    logger.error('downloadUpdate: checksum content was invalid:', e && e.message)
     cleanupAttempt()
     return { success: false, error: 'Checksum content was invalid.' }
   }
@@ -570,25 +624,32 @@ async function downloadUpdate(version, options = {}) {
   let actualDigest
   try {
     actualDigest = await (computeSha256Impl || computeSha256)(partialPath, {})
-  } catch {
+  } catch (e) {
+    logger.error('downloadUpdate: could not hash the downloaded installer:', e && e.message)
     cleanupAttempt()
     return { success: false, error: 'Could not hash the downloaded installer.' }
   }
 
   if (actualDigest !== expectedDigest) {
+    // Never log either digest -- a mismatch is reported as a bare fact.
+    logger.error('downloadUpdate: installer checksum did not match the published checksum')
     cleanupAttempt()
     return { success: false, error: 'Installer checksum did not match.' }
   }
 
   try {
     rename(partialPath, finalInstallerPath)
-  } catch {
+  } catch (e) {
+    logger.error('downloadUpdate: could not finalize the downloaded installer:', e && e.message)
     cleanupAttempt()
     return { success: false, error: 'Could not finalize the downloaded installer.' }
   }
 
   const token = generateToken(randomBytesImpl)
   verifiedArtifact = { path: finalInstallerPath, sha256: actualDigest, version, token }
+  // Deliberately never logs `token` -- only that a verified artifact is
+  // now staged and ready for installUpdate to consume.
+  logger.log('downloadUpdate: succeeded, verified artifact staged', { version })
 
   return { success: true, token }
 }
@@ -606,12 +667,20 @@ async function installUpdate(token, options = {}) {
     quitImpl,
     setTimeoutImpl,
     quitDelayMs,
+    loggerImpl,
   } = options
+  const logger = loggerImpl || defaultLogger()
+
+  // Never logs the token value itself -- only that installUpdate was
+  // invoked, and later, plainly which validation/IO step (if any) failed.
+  logger.log('installUpdate: invoked')
 
   if (typeof token !== 'string' || !TOKEN_PATTERN.test(token)) {
+    logger.error('installUpdate: invalid install token shape')
     return { success: false, error: 'Invalid install token.' }
   }
   if (!verifiedArtifact || verifiedArtifact.token !== token) {
+    logger.error('installUpdate: no matching verified artifact for this token (unknown or expired)')
     return { success: false, error: 'Unknown or expired install token.' }
   }
 
@@ -693,10 +762,12 @@ async function installUpdate(token, options = {}) {
   let currentDigest
   try {
     currentDigest = await (computeSha256Impl || computeSha256)(resolvedPath, {})
-  } catch {
+  } catch (e) {
+    logger.error('installUpdate: installer file could not be verified:', e && e.message)
     return { success: false, error: 'Installer file could not be verified.' }
   }
   if (currentDigest !== artifact.sha256) {
+    logger.error('installUpdate: installer file changed since it was verified')
     try { unlink(resolvedPath) } catch { /* best-effort */ }
     return { success: false, error: 'Installer file changed since it was verified.' }
   }
@@ -712,14 +783,17 @@ async function installUpdate(token, options = {}) {
     let child
     try {
       child = doSpawn(resolvedPath, ['/S'], { detached: true, stdio: 'ignore' })
-    } catch {
+    } catch (e) {
+      logger.error('installUpdate: failed to spawn the installer:', e && e.message)
       settle({ success: false, error: 'Failed to start the installer.' })
       return
     }
-    child.on('error', function () {
+    child.on('error', function (e) {
+      logger.error('installUpdate: installer process error:', e && e.message)
       settle({ success: false, error: 'Installer process error.' })
     })
     child.on('spawn', function () {
+      logger.log('installUpdate: installer spawned successfully')
       if (child.unref) child.unref()
       settle({ success: true })
       // This delay is inherited from the pre-Commit-5 install-update
@@ -782,6 +856,7 @@ module.exports = {
     requestFollowingRedirects,
     bufferResponseWithLimit,
     discardResponse,
+    defaultLogger,
     getVerifiedArtifactForTest: () => verifiedArtifact,
     setVerifiedArtifactForTest: (artifact) => { verifiedArtifact = artifact },
     clearVerifiedArtifactForTest: () => { verifiedArtifact = null },
