@@ -161,6 +161,12 @@ export default {
   "home.confirmDepartTitle": "¿ABANDONAR VESPARA?",
   "home.confirmDepartHint": "Tu lugar aquí permanecerá, preparado para tu regreso.",
 
+  // Shared choice labels for the one Depart confirmation dialog rendered
+  // from Sanctuary, the Library, and the Control Room -- deliberately
+  // in-world ("Remain"/"Depart") rather than generic common.yes/common.no.
+  "depart.remain": "Permanecer",
+  "depart.depart": "Partir",
+
   "wheel.scanning": "Explorando la biblioteca de juegos...",
   "wheel.categoryAll": "Todos",
   "wheel.navHome": "Volver al Santuario",

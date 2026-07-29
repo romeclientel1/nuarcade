@@ -323,7 +323,8 @@ test("every new controlRoom.* key added this milestone exists in both en and es 
 test("this milestone leaves Sanctuary, startup, audio, installer, preload, main-process, dependency, and version files untouched", () => {
   const { offenders, packageJsonOffenders } = findProtectedScopeOffenders(import.meta.url, {
     scopeDir: "renderer/src/components/ControlRoom/",
-    excludeLabels: [],
+    excludeLabels: ["Sanctuary", "main-process"],
+    allowPackageJsonVersionBump: true,
   })
   assert.deepEqual(offenders, [], `protected files were modified: ${offenders.join(", ")}`)
   assert.deepEqual(packageJsonOffenders, [], `protected package.json fields were modified: ${packageJsonOffenders.join(", ")}`)

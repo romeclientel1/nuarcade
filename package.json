@@ -1,6 +1,6 @@
 {
   "name": "nuarcade",
-  "version": "6.0.1",
+  "version": "6.0.2",
   "description": "Vespara by NuArcade \u2014 Modern arcade frontend for TeknoParrot and Visual Pinball X",
   "main": "src/main/index.js",
   "author": "Rome Clientel",

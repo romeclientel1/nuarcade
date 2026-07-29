@@ -307,7 +307,11 @@ export default function VesparaHome({
 
   const confirmDepart = useCallback(() => {
     fadeOutSanctuaryAmbience()
-    window.nuarcade?.quit?.()
+    // A missing bridge (window.nuarcade or .quit undefined) is already safe
+    // via optional chaining -- this additionally swallows a REJECTED quit-app
+    // IPC round-trip (e.g. the main process throwing) so a failed quit can
+    // never surface as an unhandled promise rejection in the renderer.
+    window.nuarcade?.quit?.()?.catch?.(() => {})
   }, [fadeOutSanctuaryAmbience])
 
   const cancelDepart = useCallback(() => {
@@ -591,8 +595,8 @@ export default function VesparaHome({
           eyebrow={t("home.worldName")}
           title={t("home.confirmDepartTitle")}
           hint={t("home.confirmDepartHint")}
-          yesLabel={t("common.yes")}
-          noLabel={t("common.no")}
+          yesLabel={t("depart.depart")}
+          noLabel={t("depart.remain")}
           choice={departChoice}
           onChoiceChange={chooseDepart}
           onConfirm={acceptDepart}

@@ -606,9 +606,12 @@ export default function Wheel({ onCRTChange, crtEnabled, activeProfile, onSwitch
     setExitChoice(nextChoice)
   }, [sounds])
 
+  // Swallows a rejected quit-app IPC round-trip so a failed quit never
+  // surfaces as an unhandled promise rejection (a missing bridge is
+  // already safe via the optional chains alone).
   const acceptDepart = useCallback(() => {
     sounds.select()
-    window.nuarcade?.quit?.()
+    window.nuarcade?.quit?.()?.catch?.(() => {})
   }, [sounds])
 
   const declineDepart = useCallback(() => {
@@ -1849,8 +1852,8 @@ export default function Wheel({ onCRTChange, crtEnabled, activeProfile, onSwitch
           eyebrow={t("home.worldName")}
           title={t("wheel.confirmExitTitle")}
           hint={t("wheel.confirmExitHint")}
-          yesLabel={t("common.yes")}
-          noLabel={t("common.no")}
+          yesLabel={t("depart.depart")}
+          noLabel={t("depart.remain")}
           choice={exitChoice}
           onChoiceChange={chooseDepart}
           onConfirm={acceptDepart}

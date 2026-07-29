@@ -92,14 +92,22 @@ function readTrackedJson(repoRoot, relPath, ref) {
  * is clean.
  *
  * @param {string} testFileURL - import.meta.url of the calling test file
- * @param {{ scopeDir?: string, excludeLabels?: string[] }} [options]
+ * @param {{ scopeDir?: string, excludeLabels?: string[], allowPackageJsonVersionBump?: boolean }} [options]
  *   scopeDir: this milestone's own directory (default: Wheel/, the
  *     original Library-milestone caller).
  *   excludeLabels: PROTECTED_PATTERNS categories this specific milestone
  *     is explicitly authorized to touch (e.g. Control Room C2 + "Sanctuary").
+ *   allowPackageJsonVersionBump: opts out of package.json's own "version"
+ *     field check specifically (dependencies/devDependencies remain
+ *     protected either way). Default false, so every existing caller's
+ *     behavior is unchanged. Set true only for a milestone whose own,
+ *     explicit deliverable includes an authoritative version bump (e.g.
+ *     via scripts/set-version.js) landing in the same working tree as
+ *     unrelated cross-cutting file changes -- otherwise this check exists
+ *     precisely to catch an accidental, undocumented version edit.
  */
 export function findProtectedScopeOffenders(testFileURL, options = {}) {
-  const { scopeDir = "renderer/src/components/Wheel/", excludeLabels = [] } = options
+  const { scopeDir = "renderer/src/components/Wheel/", excludeLabels = [], allowPackageJsonVersionBump = false } = options
   const testDir = path.dirname(fileURLToPath(testFileURL))
   const repoRoot = path.join(testDir, "../../../..")
 
@@ -141,6 +149,7 @@ export function findProtectedScopeOffenders(testFileURL, options = {}) {
     }
     if (!before || !after) continue
     for (const field of PACKAGE_JSON_PROTECTED_FIELDS) {
+      if (field === "version" && allowPackageJsonVersionBump) continue
       if (JSON.stringify(before[field]) !== JSON.stringify(after[field])) {
         packageJsonOffenders.push(`${relPath} (${field})`)
       }

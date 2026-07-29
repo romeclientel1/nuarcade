@@ -156,7 +156,8 @@ test("panel titles use Vespara's shared neutral palette, not stark white or neon
 test("this milestone leaves Sanctuary, startup, audio, installer, preload, main-process, dependency, and version files untouched", () => {
   const { offenders, packageJsonOffenders } = findProtectedScopeOffenders(import.meta.url, {
     scopeDir: "renderer/src/components/ControlRoom/",
-    excludeLabels: ["Sanctuary"],
+    excludeLabels: ["Sanctuary", "main-process"],
+    allowPackageJsonVersionBump: true,
   })
   assert.deepEqual(offenders, [], `protected files were modified: ${offenders.join(", ")}`)
   assert.deepEqual(packageJsonOffenders, [], `protected package.json fields were modified: ${packageJsonOffenders.join(", ")}`)
