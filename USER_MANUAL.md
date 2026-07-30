@@ -1,114 +1,268 @@
-# NuArcade User Manual
+# Vespara Owner's Manual
 
-This manual covers everything from a guest walking up to your cabinet, to configuring emulator paths and media sources as the owner. If you only need the basics, read the Quick Start below and stop there.
+Verified against Vespara 6.0.2. Requires Windows 10 or 11, 64-bit. Vespara does not include games, ROMs, BIOS files, or emulator binaries — you provide and configure all of those yourself.
 
----
-
-## Quick Start (For Guests)
-
-You don't need to know anything about setup to play. Here's all of it:
-
-1. **Turn on the cabinet.** NuArcade opens straight to a player-select screen.
-2. **Pick a player, or just tap "Play as Guest."** No account needed for guests.
-3. **Browse games.** Move left/right on the D-pad or left stick to spin through the wheel. Move up/down to switch between systems (Arcade, PS1, Xbox 360, etc.) shown as tabs above the wheel.
-4. **Press A** on the game you want to see more info, or just **press A twice** (or hold) to launch it directly, depending on what's set up.
-5. **To exit a game and come back to the wheel**, use the emulator's own exit combo (varies by game/emulator -- ask the owner if unsure).
-6. **Press B** to back out of any menu or screen.
-
-That's genuinely all you need. Everything below is for the owner.
+This manual covers everything from a guest walking up to the cabinet, to configuring emulator paths and media sources as the owner. If you only need the basics, read the Quick Start below and stop there.
 
 ---
 
 ## Table of Contents
 
-1. [Getting Started](#1-getting-started)
-2. [Player Profiles](#2-player-profiles)
-3. [Navigating the Wheel](#3-navigating-the-wheel)
-4. [Controls Reference](#4-controls-reference)
-5. [Setting Up Emulators](#5-setting-up-emulators)
-6. [Media & Artwork](#6-media--artwork)
-7. [Features](#7-features)
-8. [Settings Reference](#8-settings-reference)
-9. [Troubleshooting](#9-troubleshooting)
-10. [Keeping NuArcade Updated](#10-keeping-nuarcade-updated)
+1. [Quick Start for Guests](#1-quick-start-for-guests)
+2. [The Sanctuary](#2-the-sanctuary)
+3. [The Library](#3-the-library)
+4. [Traveler Recognition and Profiles](#4-traveler-recognition-and-profiles)
+5. [The Control Room](#5-the-control-room)
+6. [Setting Up Emulators and Game Paths](#6-setting-up-emulators-and-game-paths)
+7. [Media, Artwork, Videos, Metadata, and Bezels](#7-media-artwork-videos-metadata-and-bezels)
+8. [Storage, Backups, Upgrades, and Uninstalling](#8-storage-backups-upgrades-and-uninstalling)
+9. [Updating Vespara](#9-updating-vespara)
+10. [Troubleshooting](#10-troubleshooting)
+11. [Keyboard and Controller Reference](#11-keyboard-and-controller-reference)
+12. [Supported Systems](#12-supported-systems)
+13. [Version and Documentation Status](#13-version-and-documentation-status)
 
 ---
 
-## 1. Getting Started
+## 1. Quick Start for Guests
 
-### Requirements
-- Windows 10 or 11 (64-bit)
-- Games stored on a drive you control (F:\ is the default NuArcade expects, but any path works once configured)
-- Emulators installed separately -- NuArcade launches them, it doesn't include ROMs or emulator software
+You don't need to know anything about setup to play. Here's all of it:
 
-### First Launch
-1. Download and run the installer from [Releases](https://github.com/romeclientel1/nuarcade/releases)
-2. Launch NuArcade -- it opens to the wheel with an empty or default library
-3. Open **Settings** (Start button on controller, or the Settings icon in the top bar) to point NuArcade at your emulators and game folders
-4. After changing any paths, use **Rescan** in Settings (or restart the app) to actually pick up the changes -- setting a path alone doesn't refresh the library automatically
+1. **Turn on the cabinet.** Vespara plays a short intro, then arrives at Traveler Recognition.
+2. **Pick a Traveler, or tap "Enter as Guest."** No account needed for guests.
+3. **You'll arrive in the Sanctuary** — Vespara's home screen. From here you can jump into your Recently Played games or enter the Library.
+4. **In the Library**, move left/right to browse, and select a game to see its details before launching.
+5. **To leave a game and come back**, use the emulator's own in-game exit combo (this varies by game/emulator — ask the owner if unsure).
+6. **When you're done**, choose Depart from the Sanctuary to close Vespara, or Switch Player to hand the cabinet to someone else.
 
-### Default Folder Layout
-NuArcade auto-creates this structure on first launch if it doesn't exist:
-
-```
-F:\
-  ArcadeGames\          TeknoParrot games
-  MAME\roms\            MAME ROMs
-  PS3Games\             RPCS3 games
-  Xbox360Games\         Xenia games
-  GCWiiGames\           Dolphin games
-  PS2Games\             PCSX2 games
-  SwitchGames\          Ryubing (Ryujinx fork) games
-  PS1Games\             DuckStation games
-  DreamcastGames\       Flycast games
-  XboxGames\            Xemu / Cxbx-Reloaded games (.iso for Xemu, extracted folders with a .xbe for Cxbx-Reloaded)
-  PSPGames\             PPSSPP games
-  WiiUGames\            Cemu games
-  Model2Games\          Model 2 games
-  Model3Games\          Model 3 games
-  RetroArchGames\       One folder per system, ROM files directly inside:
-    nes\
-    snes\
-    genesis\
-    psx\
-    ... (many more, auto-created)
-  Media\                Artwork, videos, music (auto-created)
-    Music\              Drop .mp3 files here for background music
-    SystemLogos\        Your own logo images for the category strip
-    EmuMovies\          EmuMovies Sync compatible folders
-```
-
-**Important for RetroArch specifically:** unlike every other emulator in NuArcade, RetroArch doesn't use one folder per game. It uses one folder per *system* (like `nes`, `snes`, `genesis`), with ROM files sitting directly inside that folder. If you put individual game folders at the top level instead, NuArcade will misread them as unrecognized "systems" and won't find anything.
+That's genuinely all you need. Everything below is for the owner.
 
 ---
 
-## 2. Player Profiles
+## 2. The Sanctuary
 
-- NuArcade shows a player-select screen on boot
-- Create a new profile, pick an existing one, or play as guest
-- Each profile tracks its own playtime, favorites, and game history separately
-- Switch players mid-session from the top bar (the button showing your current initials)
+The Sanctuary is Vespara's home screen — the first thing you see after Traveler Recognition, and where every session both starts and can return to.
+
+**Recently Played** shows up to 8 games, scoped to the current Traveler (a different Traveler sees their own recent games, not yours). Select one to jump straight back into it.
+
+**The four Sanctuary destinations:**
+
+| Destination | What it does |
+|---|---|
+| The Library | Browse, search, and launch your full game collection |
+| The Control Room | Configure emulators, paths, controllers, display, and media |
+| Switch Player | Return to Traveler Recognition to hand off or switch profiles |
+| Depart | Close Vespara |
+
+**Depart** opens a confirmation with two choices: **Remain** and **Depart**. Remain cancels and returns you to the Sanctuary — nothing happens. Depart closes the application. Choosing Depart does not delete, reset, or affect any saved data, profiles, favorites, or playtime history; it simply exits the program the same way closing any other application would.
 
 ---
 
-## 3. Navigating the Wheel
+## 3. The Library
 
-- Games fan out on a curved arc across the screen. The center card is your current selection.
-- **Category tabs** above the wheel filter by system (Arcade, MAME, PS1, Xbox 360, RetroArch, etc.) -- only categories that actually have games in them show up
-- **Sort options** (accessible from the top bar) let you reorder by most played, most launched, recently added, top rated, or system
-- Each card shows box art with a dark gradient at the bottom for the title -- press or select a card to see full details before launching
-- A background video plays behind the selected game if one's available, muted or at your configured ambient volume
+The Library is where you browse and launch games.
+
+- Games are organized by system, shown as category tabs — only systems that actually have games in them appear.
+- Selecting a game opens its detail view (called the **Archive View**), showing artwork, a gameplay preview video where available, and launch options.
+- **Search** lets you find a game by name.
+- **Sort** options reorder the list by most played, most launched, recently added, top rated, or system.
+- **Favorites** let you mark games for quick access.
+- **Collections** let you group games into your own custom lists.
+- **Stats** shows play statistics; **Achievements** shows unlocked achievements.
+- **Random** jumps to a random game in the current filter.
+- A background gameplay video plays behind the selected game where one is available.
+
+### AI Game Coach
+
+Press **C** on any game to open the AI Game Coach. It offers move lists, tips, strategies, and combos for that game, and supports natural-language search — you can type what you want to play instead of browsing manually. It works without any API key configured.
+
+### Operator Dashboard
+
+Press **O** to open the Operator Dashboard: a 35-day activity heat map, playtime totals, a breakdown by system, and per-game launch counts.
 
 ---
 
-## 4. Controls Reference
+## 4. Traveler Recognition and Profiles
 
-### Keyboard (verified against the actual code, not assumed)
+Traveler Recognition is the profile-selection screen shown at the start of every session and whenever you use Switch Player from the Sanctuary.
+
+- Create a new Traveler, pick an existing one, or continue as Guest.
+- Each Traveler tracks their own favorites, playtime, and recently played history separately — a Guest's activity is not saved to any Traveler's profile.
+- Recently Played on the Sanctuary is always scoped to whichever Traveler (or Guest) is currently active.
+
+---
+
+## 5. The Control Room
+
+The Control Room is reached from the Sanctuary and holds all of Vespara's configuration, organized into two wings.
+
+### Systems Wing — makes the worlds playable
+
+| Station | What it's for |
+|---|---|
+| Emulators | Detected emulators and their install paths |
+| Game Paths | The folders Vespara scans for each system |
+| Controllers | Test connected gamepads |
+| Launch Behavior | Attract mode, idle timing, auto-launch behavior |
+| Display & Performance | Fullscreen, CRT scanline effect, theme |
+| Preferences | Language, audio, and about/version info |
+| Systems Archive | Rescan, cache, and library maintenance tools |
+
+### Archives Wing — makes the collection come alive
+
+| Station | What it's for |
+|---|---|
+| Artwork | Box art and marquee management |
+| Videos | Per-game and bulk gameplay video fetching |
+| Scraping | Import media from EmuMovies |
+| Bezels | Fetch bezel artwork by system |
+| Media Restoration | Backup, restore, and orphaned-media cleanup |
+
+**Note:** opening any Archives Wing station takes you into a screen still titled **Media Manager**. This is expected — Media Manager is the actual screen behind every Archives station, not a separate or misnamed tool.
+
+---
+
+## 6. Setting Up Emulators and Game Paths
+
+Vespara does not include or bundle any emulator, ROM, BIOS file, or firmware. You install emulators yourself and tell Vespara where to find them and where your games live.
+
+For each system you want to play:
+
+1. Install the emulator to a folder you control.
+2. In the Control Room, open **Emulators** and point Vespara at that install folder.
+3. Open **Game Paths** and point Vespara at the folder where that system's games live — for example, `<your games folder>\PS2Games\`, or any location you prefer.
+4. After changing any path, **rescan** from the Systems Archive station (or restart Vespara) — changing a path alone does not refresh the library automatically.
+
+Vespara does not require a particular drive letter. Initial configurations may contain C:\-based example paths — owners can replace those with folders on any drive they control.
+
+**RetroArch is structured differently from every other emulator Vespara supports:** it uses one folder per *system* (for example `nes`, `snes`, `genesis`), with ROM files placed directly inside that folder — not one folder per game. Placing individual game folders at the top level instead will cause Vespara to misread them as unrecognized systems.
+
+**TeknoParrot Folder Renamer** (in the Control Room's Emulators area) can bulk-rename TeknoParrot game folders to a cleaner, more consistent naming convention, which helps title-matching against EmuMovies and SteamGridDB.
+
+**BIOS Status** (also in the Control Room) runs a live check for required BIOS files for the three emulators that need them and that Vespara can verify directly: PCSX2 (looks for `.bin` files in its `bios/` folder), DuckStation (looks for a PlayStation BIOS `.bin` in its `bios/` folder), and Xemu (looks for an MCPX boot ROM plus a BIOS `.bin` in its install folder). For every other emulator that requires BIOS, firmware, or keys — including Ryujinx/Switch — consult that emulator's own documentation for what it needs and where to place it.
+
+**One consolidated legal note:** you are responsible for providing your own legally obtained games, firmware, encryption keys, and BIOS files wherever an emulator requires them. Vespara does not provide, fetch, or redistribute any of these.
+
+---
+
+## 7. Media, Artwork, Videos, Metadata, and Bezels
+
+Vespara can pull artwork and video from two sources: **SteamGridDB** (automatic, built into Vespara) and **EmuMovies Sync** (higher quality, requires a separate account and desktop app). Gameplay videos can also be fetched directly from YouTube.
+
+### The fast path: Auto-fill Everything
+
+From Media Manager's Library tab, **Auto-fill Everything** runs a priority chain automatically:
+
+1. Imports every EmuMovies match first (best quality, if EmuMovies Sync is set up).
+2. Fills in artwork from SteamGridDB for anything EmuMovies didn't cover.
+3. Fills in gameplay video from YouTube for anything still missing.
+
+Click it again while it's running to cancel. On a large library this can take a while; it shows live progress so you can tell it's working.
+
+### SteamGridDB (automatic)
+
+Add your API key in the Control Room's Artwork station and Vespara fetches hero art and capsule images automatically.
+
+### EmuMovies Sync (higher quality video and box art)
+
+1. Create an account at EmuMovies — a paid membership unlocks video content.
+2. Download the EmuMovies Sync desktop app from EmuMovies.
+3. In Media Manager's Scraping tab, use "Create folder structure" — this builds one folder per emulator inside your configured Media folder.
+4. Point Sync's destination at the specific emulator folder you're downloading for.
+5. In Sync, select the matching system and run the download.
+6. **Back in Vespara, click "Scan EmuMovies folder"** — this step is required. Downloading with Sync only places files on disk; nothing appears in Vespara until you scan and import.
+7. Review the matches, then import all (or import individually).
+
+**A note on TeknoParrot:** it covers many different arcade hardware platforms, and most of that hardware isn't in EmuMovies' catalog. The best-confirmed match is Konami e-AMUSEMENT titles. For everything else under TeknoParrot, use Vespara's own YouTube fetch instead (Media Manager's Library tab, per-game).
+
+### System logos
+
+Category tabs in the Library can show a real logo instead of plain text:
+
+1. Place image files in `<your Media folder>\SystemLogos\`.
+2. Name each file to exactly match the category, lowercase, no spaces (for example `xbox360.png`, `ps1.png`, `arcade.png`). PNG, JPG, JPEG, WEBP, and SVG all work.
+3. Restart Vespara.
+
+Categories without a matching logo simply keep showing text, so this can be done gradually. Vespara does not ship logo images itself, since official console logos are trademarked — source your own.
+
+### Manual, per-system fetching
+
+If you'd rather not use Auto-fill Everything:
+
+- **Library tab:** rescan, bulk YouTube video fetch, filter by system.
+- **Artwork tab:** SteamGridDB fetch, filterable by system.
+- **Scraping tab (EmuMovies):** scan and review matches before importing.
+
+### Bezels
+
+The Bezels station fills bezel gaps in three passes: native MAME artwork from your own Bezel Source Folder (set in Game Paths — your own EmuMovies Sync or Hyperspin downloads; Vespara never fetches or redistributes bezel art itself), RetroArch-style overlays converted automatically from that same folder, then Vespara's own bundled placeholder art as a last resort. Existing artwork is never overwritten, and nothing installs until you preview and confirm.
+
+---
+
+## 8. Storage, Backups, Upgrades, and Uninstalling
+
+**Legacy technical names.** Vespara's user-facing name changed from NuArcade, but several internal, technical identifiers were deliberately kept unchanged for compatibility with existing installs, and should not be renamed manually:
+
+- The installed program is still `NuArcade.exe`.
+- Your configuration and library data live under `%APPDATA%\NuArcade\`.
+- The main configuration file is `nuarcade-config.json`.
+- An internal event log is stored as `nuarcade-events.json`.
+
+These names are intentional and stable across versions — do not rename these files or folders yourself, and don't be concerned that they say "NuArcade" rather than "Vespara."
+
+**What survives an update.** In the validated 6.0.1 → 6.0.2 update, the existing library, settings, configured paths, profiles, artwork, and play history were all preserved after the update completed.
+
+**What uninstalling does.** This has not been independently confirmed from source — whether uninstalling removes `%APPDATA%\NuArcade\` is not guaranteed either way by this manual. Treat it as unconfirmed rather than assuming your data will or won't be removed.
+
+**Before uninstalling or making any major system change, back up:**
+
+- `%APPDATA%\NuArcade\` (your configuration, profiles, and library data)
+- your configured Media folder (artwork, videos, and any music you've added)
+
+Copy both to an external drive or cloud folder before proceeding. This is the single most important habit in this manual — it costs a few minutes and protects everything else described here.
+
+---
+
+## 9. Updating Vespara
+
+Vespara checks for an available update once per session. When an update is found, it downloads and installs **silently** — you won't see the installer wizard.
+
+**After the update installs, Vespara may close and need to be reopened manually.** This was the observed behavior during the validated 6.0.1 → 6.0.2 update: the update installed successfully, the running app closed, and the user reopened it themselves from the desktop or Start Menu. Vespara does not promise or guarantee an automatic relaunch after an update — if it doesn't reopen on its own, just start it again the normal way.
+
+---
+
+## 10. Troubleshooting
+
+**Games are missing after adding or changing a path.** Rescan from the Control Room's Systems Archive station, or restart Vespara. Setting a path alone does not refresh the library.
+
+**The wrong emulator path is configured, or a game won't launch.** Re-check the emulator's install path in the Control Room's Emulators station, and the game folder in Game Paths.
+
+**An emulator needs BIOS or firmware files.** Use BIOS Status (Control Room) for PCSX2, DuckStation, and Xemu. For any other emulator, check that emulator's own documentation for what it needs.
+
+**A controller isn't detected.** Open the Control Room's Controllers station to test connected gamepads.
+
+**Artwork or video is missing.** Try Auto-fill Everything from Media Manager's Library tab, or fetch manually per-system from the Artwork/Videos tabs.
+
+**EmuMovies content was downloaded but isn't showing up in Vespara.** Downloading with EmuMovies Sync only places files on disk. You still need to click "Scan EmuMovies folder" in Media Manager's Scraping tab and import the results.
+
+**An update isn't appearing.** Updates are checked once per session — restart Vespara to trigger a fresh check, or check the Control Room's Preferences station for current version/update status.
+
+**Vespara didn't reopen on its own after an update.** Vespara may need to be reopened manually after an update — this occurred during the validated 6.0.1 → 6.0.2 update. Reopening it normally, from the desktop or Start Menu, is sufficient (see Chapter 9).
+
+**Restoring from a backup.** If you backed up `%APPDATA%\NuArcade\` and your Media folder as recommended in Chapter 8, replace the current versions of those folders with your backup copies while Vespara is closed, then relaunch.
+
+---
+
+## 11. Keyboard and Controller Reference
+
+Keyboard and controller behave differently on the Library screen — they are not two labels for the same input scheme, so both are listed in full below.
+
+### Keyboard (Library)
 
 | Key | Action |
 |---|---|
 | Left / Right Arrow | Move to previous / next game |
-| Enter | Open game detail view |
+| Enter | Open the selected game's Archive View |
 | Space | Launch the selected game |
 | F | Toggle favorite |
 | C | Open AI Game Coach |
@@ -117,43 +271,33 @@ F:\
 | T | Toggle Stats |
 | A | Toggle Achievements |
 | R | Jump to a random game |
-| S | Toggle screenshot mode (hides UI chrome for clean screenshots) |
+| S | Toggle screenshot mode (hides UI chrome) |
 | ? | Toggle help overlay |
-| Esc | Close whatever's open / go back |
+| Backspace | Return to the Sanctuary |
+| Esc | Close whatever's open, or go back |
 
-### Xbox Controller
+### Controller (Library)
 
-**INSERT COIN Screen**
-
-| Button | Action |
-|---|---|
-| D-pad Left / Right | Cycle between profiles, New Player, Play as Guest |
-| A | Select the focused item |
-| B | Quick shortcut to Play as Guest |
-
-**Main Wheel**
+The Library's controller navigation moves between five distinct zones: the top menu (Home / Tools), the category tabs, the game wheel itself, the Launch button, and the bottom hint bar (Favorite / Coach / Operator). D-pad up/down moves between zones; left/right moves within the current zone; A confirms; B closes or backs out.
 
 | Button | Action |
 |---|---|
-| D-pad Left/Right or Left Stick | Previous / next game |
-| D-pad Up/Down | Switch category tab |
-| A | Open game detail screen |
-| B | Close overlay / go back |
-| Start | Open Settings |
+| D-pad Left/Right or Left Stick | Move within the current zone (games, tabs, or hint bar items) |
+| D-pad Up/Down | Move between zones |
+| A | Confirm / select the focused item |
+| B | Close overlay, or back out |
 
-**Top bar (controller-navigable):** Sort, Random, Collections, Stats, Achievements, Switch Player, Media Manager, Settings, Help, Exit -- cycle through these with the shoulder buttons or D-pad depending on focus zone, select with A.
+### Sanctuary and Control Room
 
-**Bottom hint bar:** Favorite, AI Coach, Operator Dashboard -- same navigation pattern as the top bar.
+Both screens use the same pattern: D-pad/stick moves between focusable items, A confirms, B/Escape backs out or cancels. Sanctuary has two focus areas (Recently Played, and the four destinations); the Control Room has a header area (Return / Depart) and its station list.
+
+### A note on unverified claims
+
+Some older documentation claimed the AI Game Coach could be opened by holding the controller's A button. This manual does not repeat that claim — it could not be confirmed in the current source, so it has been left out rather than restated as fact.
 
 ---
 
-## 5. Setting Up Emulators
-
-Open **Settings > Emulators** to point NuArcade at each emulator's install folder, and **Settings > Paths** for each system's game folder.
-
-Every scanner needs both pieces: where the *emulator* lives, and where the *games* live. After changing paths, click **Rescan** (in Settings) or restart the app -- the library only refreshes on one of those two actions.
-
-### Supported Systems
+## 12. Supported Systems
 
 | System | Emulator |
 |---|---|
@@ -163,150 +307,27 @@ Every scanner needs both pieces: where the *emulator* lives, and where the *game
 | Xbox 360 | Xenia |
 | GameCube / Wii | Dolphin |
 | PlayStation 2 | PCSX2 |
-| Nintendo Switch | Ryubing (Ryujinx fork) |
+| Nintendo Switch | Ryujinx |
+| Nintendo 64 | Project64 |
 | PlayStation 1 | DuckStation |
 | Dreamcast / NAOMI | Flycast |
-| Original Xbox | Xemu / Cxbx-Reloaded |
+| Original Xbox | Xemu |
+| Original Xbox (fallback for specific titles) | Cxbx-Reloaded |
 | PlayStation Portable | PPSSPP |
 | Wii U | Cemu |
 | Sega Model 2 | Model 2 Emulator |
 | Sega Model 3 | Supermodel |
 | Pinball | Visual Pinball X |
-| Steam | Steam |
+| Steam | Launched via Steam |
 | PC Games | Direct launch |
-| NES, SNES, N64, GBA, GBC, GB, NDS, Genesis, Saturn, Sega CD, 32X, Master System, Game Gear, PS1, PSP, Dreamcast, Neo Geo, PC Engine, Atari, Amiga, C64, DOS, ScummVM + more | RetroArch |
+| NES, SNES, Genesis, GBA, and many other classic systems | RetroArch |
 
-### TeknoParrot Folder Renamer
-
-Settings includes a tool to bulk-rename TeknoParrot game folders to match a cleaner naming convention -- useful if your folder names don't match what NuArcade expects for title matching against EmuMovies or SteamGridDB.
-
-### BIOS Status
-
-Settings shows a live check of which emulators are missing required BIOS files, so you can spot compatibility issues before a game fails to launch.
+Original Xbox is intentionally listed twice: Xemu is the primary emulator, and Cxbx-Reloaded is kept as a fallback for specific titles that run better on it.
 
 ---
 
-## 6. Media & Artwork
+## 13. Version and Documentation Status
 
-NuArcade pulls artwork and video from two sources: **SteamGridDB** (automatic, built-in) and **EmuMovies Sync** (better quality, requires manual setup). You can also fetch gameplay videos directly from YouTube.
+Verified against Vespara 6.0.2 on 2026-07-30.
 
-### The Fast Path: Auto-fill Everything
-
-If you don't want to think about any of this, open **Media Manager > Library tab** and click **"Auto-fill Everything."** It runs a priority chain automatically:
-1. Scans and imports every EmuMovies match first (best quality, if you've set up EmuMovies Sync)
-2. SteamGridDB fills in artwork for anything EmuMovies didn't cover
-3. YouTube fills in gameplay video for anything still missing
-
-Click it again while it's running to cancel. On large libraries this can take a while -- it shows live progress ("Importing 1,847 / 3,100...") so you can tell it's actually working rather than stuck.
-
-### SteamGridDB (automatic, free)
-Add your API key in Settings and it fetches hero art and capsule images automatically. No other setup needed.
-
-### EmuMovies Sync (better quality video and box art)
-1. Create a free account at [emumovies.com](https://emumovies.com) -- a paid membership unlocks video content
-2. Download the EmuMovies Sync desktop app from their site
-3. In NuArcade, go to **Media > EmuMovies tab > "Create folder structure"** -- builds one folder per emulator
-4. Point Sync's destination folder at the specific emulator folder you're downloading for (e.g. point it at the `Xenia` folder for Xbox 360 content)
-5. In Sync, select the matching system and run the download
-6. **Back in NuArcade, click "Scan EmuMovies folder"** -- this step is required. Downloading with Sync only puts files on disk; nothing appears in NuArcade until you scan and import
-7. Review the matches, then **Import All** (or import individually)
-
-Each auto-created emulator folder includes a README.txt telling you exactly which system to select in Sync.
-
-**A note on TeknoParrot:** it covers many different arcade hardware platforms, and most of that hardware isn't in EmuMovies' catalog at all. The one confirmed match is **Konami e-AMUSEMENT** for Konami/Bemani-adjacent titles. For everything else in TeknoParrot, use NuArcade's own YouTube pipeline instead (**Media > Library tab**, per-game video fetch).
-
-### System Logos
-Category tabs can show a real logo instead of plain text:
-1. Drop image files into `<your Media folder>\SystemLogos\`
-2. Name each file to exactly match the category, lowercase, no spaces: `xbox360.png`, `ps1.png`, `arcade.png`, `retroarch.png`, etc. (`.png`, `.jpg`, `.jpeg`, `.webp`, `.svg` all work)
-3. Restart NuArcade
-
-Categories without a matching logo just keep showing text, so this can be done gradually. NuArcade doesn't ship logo images itself since official console logos are trademarked -- source your own.
-
-### Manual Fetching (Media Manager)
-If you'd rather control things per-system instead of running Auto-fill Everything:
-- **Library tab:** rescan, bulk YouTube video fetch (2 concurrent downloads by default), filter by system
-- **Artwork tab:** SteamGridDB fetch, filter by system so you can target just one platform at a time
-- **EmuMovies tab:** scan and review matches before importing, with a live diagnostic log visible from any tab
-
----
-
-## 7. Features
-
-### AI Game Coach
-Press **C** (or the Coach button on the hint bar) on any game to open the coach. Gives move lists, tips, strategies, and combos. Also supports natural-language search -- type what you want to play instead of browsing.
-
-### Operator Dashboard
-Press **O** to open. Shows a 35-day activity heat map, playtime totals, system breakdown, and per-game launch counts.
-
-### Collections
-Press **N** to manage. Group games into custom lists of your own.
-
-### Stats
-Press **T** to view play statistics.
-
-### Achievements
-Press **A** to view.
-
-### Attract Mode
-When the cabinet sits idle, it automatically cycles through games to draw attention. Configurable in Settings: idle timeout before it kicks in, cycle speed, and whether it prefers games with artwork.
-
-### CRT Effect & Themes
-Settings lets you toggle a CRT scanline overlay and pick an accent theme color for the whole UI. Both persist across restarts.
-
-### Background Music
-Drop .mp3 files into `F:\Media\Music\` and NuArcade shuffles them while you browse. Music fades automatically when a gameplay preview video is playing. Click the Now Playing badge to skip tracks.
-
-### Pixelcade Integration
-If you have a Pixelcade LED marquee device, enable it in Settings and enter its IP and port. It receives game art automatically as you navigate and launch games.
-
-### Controller Hints
-A brief overlay shows the correct controller layout when launching certain games, covering TeknoParrot, MAME, Model 2, and Model 3 titles.
-
----
-
-## 8. Settings Reference
-
-| Section | What it controls |
-|---|---|
-| Emulators | Install paths for each emulator |
-| Paths | Game folder locations for each system |
-| TeknoParrot Folder Renamer | Bulk-rename tool for TeknoParrot game folders |
-| Display | CRT effect toggle |
-| Theme color | Accent color for the whole UI |
-| Audio | Gameplay video volume |
-| Card art type | What shows on wheel cards -- snap, box art, SteamGridDB art, or none |
-| Background music | On/off, volume, and where to drop music files |
-| Attract mode | Idle timeout, cycle speed, artwork preference |
-| Pixelcade | Enable, IP address, port |
-| Links | Quick links to emulator downloads and related sites |
-| Artwork | SteamGridDB API key and related settings |
-| Library | Rescan, orphaned media cleanup, and library maintenance tools |
-| BIOS Status | Live check for missing required BIOS files per emulator |
-| About | Current version and update status |
-
----
-
-## 9. Troubleshooting
-
-**Newly downloaded EmuMovies media isn't showing up.** You still need to click "Scan EmuMovies folder" and import the results -- downloading with Sync alone doesn't do anything inside NuArcade.
-
-**I changed a path in Settings but nothing changed.** Click Rescan or restart the app. Changing a path alone doesn't refresh the library.
-
-**RetroArch games aren't being found.** Confirm your structure is one folder per *system* (`nes`, `snes`, `genesis`) with ROM files directly inside -- not individual game folders. Also confirm you've restarted after adding files.
-
-**Artwork looks stale or doesn't match what I just imported.** Restart the app. Some artwork changes require a fresh session to fully refresh.
-
-**A game says the file wasn't found.** The drive may be offline, or the file was moved/renamed since the last scan. Rescan after confirming the file exists at the expected path.
-
-**Sound from a game preview keeps playing after I launch a game.** This was a real bug, fixed in v5.0.1 and later -- if you're on an older version, update.
-
----
-
-## 10. Keeping NuArcade Updated
-
-An amber "UPDATE" badge appears in the top bar of the main wheel whenever a new version is available -- click it to go to the download page. The same status is also shown in **Settings > About**. NuArcade checks for updates once per session; there's no background polling or silent auto-install -- you'll always need to download and run the new installer yourself.
-
----
-
-*This manual reflects NuArcade v5.0.1. Some details may drift from the app as new versions ship -- if something here doesn't match what you're seeing, the in-app behavior is the source of truth.*
+If something in this manual doesn't match what you're seeing in the app, the in-app behavior is the source of truth — this manual should be re-verified against source and updated in the same change that bumps Vespara's version.
