@@ -545,6 +545,7 @@
 
 .destinationMarker {
   flex: 0 0 12px;
+  min-width: 0;
   height: 46px;
   border-left: 2px solid rgba(214, 178, 116, 0.4);
   border-top: 1px solid rgba(214, 178, 116, 0.24);
@@ -558,7 +559,13 @@
   gap: 7px;
 }
 
+/* R10: min-width: 0 added defensively (see .actionRow's compact-block R10
+   comment for the actual mechanism/fix). .destinationName is a plain inline
+   span today, so min-width has no rendering effect on it yet -- but it
+   guards against a future change (e.g. making this a flex/grid item to
+   control truncation) silently reintroducing the same class of blowout. */
 .destinationName {
+  min-width: 0;
   font-size: clamp(13px, 1.25vw, 18px);
   letter-spacing: 2px;
   text-transform: uppercase;
@@ -736,16 +743,41 @@
     padding: 14px;
   }
 
+  /* R10: packaged runtime diagnostics (layoutDiagnostics.js, see
+     sanctuaryFontBlowoutMilestoneR10.test.js for the full writeup) captured
+     the actual mechanism at an 811x768 packaged viewport: actionRow measured
+     775px wide (fits) on the very first render, using the fallback font --
+     then, immediately after document.fonts.ready (the real 'Orbitron'
+     webfont finishing its load), actionRow's OWN width jumped to 1178px and
+     Depart's right edge to 1196px, with .home's scrollWidth (1196) now
+     exceeding its clientWidth (811) -- all silently past the clipped,
+     overflow:hidden viewport edge. This is intrinsic grid-item/text sizing
+     expanding the GRID CONTAINER itself, not overscan or vertical clipping:
+     .actionRow never declared an explicit width/max-width of its own, so
+     its inline size was never made definite. Per the CSS Grid spec, `fr`
+     tracks (the `minmax(0, Nfr)` columns already in place below) only
+     distribute space against a DEFINITE container size; without one, a
+     grid container's own auto sizing can fall back to each track's
+     max-content contribution instead -- which is exactly the ~403px jump
+     (775px -> 1178px) that landed the moment the wider real webfont
+     metrics replaced the narrower fallback. Fixing this requires making
+     actionRow's own box definite and unable to grow past its container,
+     not just capping its tracks (which were already correctly
+     zero-floored) or its items (actionBtn already had min-width: 0). */
   .actionRow {
     grid-template-columns: minmax(0, 1.8fr) minmax(0, 1.1fr) minmax(0, 0.9fr) minmax(0, 0.6fr);
     gap: 8px;
+    width: 100%;
+    max-width: 100%;
     min-width: 0;
+    box-sizing: border-box;
   }
 
   .actionBtn {
     min-height: 70px;
     padding: 12px 14px;
     min-width: 0;
+    max-width: 100%;
   }
 
   .libraryDestination {
