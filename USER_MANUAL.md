@@ -189,7 +189,7 @@ Matching is **case-insensitive** either way — `Xbox360.PNG` and `xbox360.png` 
 
 Collections (the custom groups you build yourself in the Library) never show a logo, regardless of filename — they always display your chosen collection name as text.
 
-A few tab names never actually appear in a real library today, so a logo for them would never be seen: **Retro** and **Pinball** are listed among the app's built-in tab names but nothing currently populates either one with games. Original Xbox games (Xemu/Cxbx-Reloaded) have no dedicated tab at all — they only show up under **All** — so there is no logo filename for Xbox to add.
+Original Xbox games (Xemu for disc-image formats, Cxbx-Reloaded for already-extracted games) now share one dedicated **Original Xbox** tab and logo — named that way, not just "Xbox," so it can't be confused with **Xbox360**.
 
 The table below is the complete, verified list of every tab that can currently show a custom logo, its required filename (shown here as `.png`, though the other four extensions above work identically), and notes on how it's populated.
 
@@ -215,14 +215,14 @@ The table below is the complete, verified list of every tab that can currently s
 | Model2 | `model2.png` | Populated by the dedicated Model 2 Emulator scanner. |
 | Model3 | `model3.png` | Populated by the dedicated Supermodel (Model 3) scanner. |
 | PS3 | `ps3.png` | Populated by the dedicated RPCS3 scanner. |
-| Xbox360 | `xbox360.png` | Populated by the dedicated Xenia scanner. |
+| Xbox360 | `xbox360.png` | Populated by the dedicated Xenia scanner. Kept separate from Original Xbox below — different console, different emulator. |
+| Original Xbox | `original xbox.png` | Populated by both Xemu (disc-image formats such as `.iso`/`.xiso`) and Cxbx-Reloaded (already-extracted games with their own `.xbe`) — one shared tab and logo for both, since they're the same console. |
 | GCWii | `gcwii.png` | Populated by the dedicated Dolphin scanner (both GameCube and Wii titles). |
 | WiiU | `wiiu.png` | Populated by the dedicated Cemu scanner. |
 | PS2 | `ps2.png` | Populated by the dedicated PCSX2 scanner; also shared with a RetroArch `ps2` folder. |
 | Switch | `switch.png` | Populated by the dedicated Ryujinx scanner. |
+| Pinball | `pinball.png` | Populated by scanning your configured Pinball Tables folder for `.vpx` files. |
 | PC | `pc.png` | Populated by both the Steam-library scanner and the direct PC-games scanner. |
-| Retro | `retro.png` | Listed in the app's built-in tab names, but no scanner currently produces a game that populates it. It cannot appear in a real library right now. |
-| Pinball | `pinball.png` | The Pinball scan handler calls a function that isn't implemented, so the tab never receives games in the current build. It cannot appear in a real library right now. |
 
 **RetroArch per-system tabs** (one tab per non-empty folder under your RetroArch games path; filename is the system name shown, lowercase, spaces/hyphens kept)
 

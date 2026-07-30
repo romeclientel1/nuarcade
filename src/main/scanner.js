@@ -1666,7 +1666,7 @@ async function scanXboxGames(xboxGamesPath) {
       path: e.path,
       emulator: 'xemu',
       genre: 'Action',
-      system: 'Xbox',
+      system: 'Original Xbox',
       status: 'Playable',
       icon: 'XBX',
       artwork: null,
@@ -1680,7 +1680,7 @@ async function scanXboxGames(xboxGamesPath) {
       path: e.path,
       emulator: 'cxbx',
       genre: 'Action',
-      system: 'Xbox',
+      system: 'Original Xbox',
       status: 'Playable',
       icon: 'XBX',
       artwork: null,
@@ -1949,6 +1949,53 @@ async function scanModel3Games(model3GamesPath) {
 }
 
 module.exports = { ...module.exports, scanModel3Games }
+
+
+// -- Visual Pinball X / Pinball Table Scanner --------------------------------
+// Flat-file scan of the configured Pinball Tables folder (cfg.tablesPath,
+// passed in as tablesPath -- see the 'scan-pinball' IPC handler in
+// src/main/index.js). Only .vpx is a supported format: Settings.jsx labels
+// tablesPath as "Folder containing .vpx table files", Help.jsx documents
+// "Pinball tables (.vpx)", and both i18n locale files' wheel.tipPinball
+// string tells the owner to "Add .vpx files to {path}" -- no other pinball
+// table format (.vpt, .fp, etc.) is referenced anywhere in this codebase, so
+// none is invented here. genre/system are both 'Pinball' to match the
+// Library's fixed "Pinball" tab (Wheel.jsx's CATEGORIES), and emulator is
+// 'vpx' so useGameLauncher.js's existing `emu === "vpx"` branch launches it
+// via the existing launch-vpx-table IPC handler, unchanged.
+async function scanPinballTables(tablesPath) {
+  const games = []
+  if (!fs.existsSync(tablesPath)) {
+    return { games, count: 0, path: tablesPath, error: 'Folder not found' }
+  }
+
+  const EXTS = ['.vpx']
+  let entries
+  try { entries = fs.readdirSync(tablesPath, { withFileTypes: true }) }
+  catch (e) { return { games, count: 0, error: e.message } }
+
+  for (const entry of entries) {
+    if (!entry.isFile()) continue
+    const ext = path.extname(entry.name).toLowerCase()
+    if (!EXTS.includes(ext)) continue
+    const title = entry.name.replace(/\.[^.]+$/, '').replace(/_/g, ' ').trim()
+    games.push({
+      id: 'pinball_' + title.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, ''),
+      title,
+      path: path.join(tablesPath, entry.name),
+      emulator: 'vpx',
+      genre: 'Pinball',
+      system: 'Pinball',
+      status: 'Playable',
+      icon: 'PIN',
+      artwork: null,
+    })
+  }
+  games.sort((a, b) => a.title.localeCompare(b.title))
+  return { games, count: games.length, path: tablesPath }
+}
+
+module.exports = { ...module.exports, scanPinballTables }
 
 
 // -- Steam Game Scanner ------------------------------------------------------

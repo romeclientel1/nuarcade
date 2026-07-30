@@ -48,7 +48,16 @@ import { applyPendingRecentlyPlayedCredit } from "../../launchSession/startupRec
 import { consumeRestorationRequest } from "../../launchSession/restorationRequest.js"
 import { shouldConsumeRestoration, resolveLibraryRestoration } from "../../launchSession/restorationResolution.js"
 
-const CATEGORIES = ["All", "Favorites", "Recent", "Arcade", "MAME", "Retro", "Racing", "Fighting", "Shooter", "Rhythm", "Flying", "Sports", "N64", "PS1", "PSP", "Dreamcast", "Model2", "Model3", "PS3", "Xbox360", "GCWii", "WiiU", "PS2", "Switch", "Pinball", "PC"]
+// "Retro" was removed from this list (was never populated by any scanner --
+// no genre/system value anywhere in src/main/scanner.js is ever 'Retro' --
+// and every classic/RetroArch system it might have aggregated already gets
+// its own per-system tab dynamically, via _retroArchSystems below, so an
+// aggregate tab would only have duplicated those). "Original Xbox" was
+// added so Xemu and Cxbx-Reloaded titles -- previously tagged system:
+// 'Xbox' with no matching entry here at all, so they only ever appeared
+// under "All" -- get one dedicated tab. Named "Original Xbox", not "Xbox",
+// so it's not confused with "Xbox360" below.
+const CATEGORIES = ["All", "Favorites", "Recent", "Arcade", "MAME", "Racing", "Fighting", "Shooter", "Rhythm", "Flying", "Sports", "N64", "PS1", "PSP", "Dreamcast", "Model2", "Model3", "PS3", "Xbox360", "Original Xbox", "GCWii", "WiiU", "PS2", "Switch", "Pinball", "PC"]
 const ATTRACT_TIMEOUT = 120000
 const ARCHIVE_VIDEO_FADE_MS = 600
 const ARCHIVE_SELECTION_SETTLE_MS = 100
