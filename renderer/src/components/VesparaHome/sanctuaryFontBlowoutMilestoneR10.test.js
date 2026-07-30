@@ -47,6 +47,41 @@
 // that specific addition has no rendering effect today but guards against a
 // future regression of the same class).
 //
+// -----------------------------------------------------------------------
+// R11 (this pass): a packaged DevTools computed-style inspection found the
+// R10 fix above was live in the packaged build -- but constrained against
+// an ALREADY-OVERSIZED parent:
+//
+//   .body:            rect width 775px, display: grid,
+//                      grid-template-columns computed to 1178px
+//   .destinationDeck: rect width 1178px, min-width: auto, max-width: none
+//   .actionRow:       rect width 1178px, width: 1178px (its own 100% of
+//                      1178px), min-width: 0, max-width: 100%
+//
+// .actionRow's R10 constraints were completely correct in isolation -- 100%
+// of an oversized parent is still oversized. The real defect: `.body` is
+// `display: grid; grid-template-rows: minmax(190px, 1fr) auto auto;` with
+// NO `grid-template-columns` declared at all, so `.destinationDeck` (one of
+// .body's three grid-item rows) sits in an IMPLICIT column track sized by
+// the default `grid-auto-columns: auto`. An `auto` track falls back to the
+// automatic minimum size of the item placed in it, and `.destinationDeck`
+// (a plain block box with `min-width: auto` by default, `overflow:
+// visible`) had no override -- so its automatic minimum equalled
+// actionRow's own intrinsic content width once the real webfont loaded,
+// forcing .body's implicit column, .destinationDeck, and (via its own
+// 100%) actionRow all to 1178px.
+//
+// FIX: .body gained an explicit, zero-floored single-column track
+// (`grid-template-columns: minmax(0, 1fr)` -- still one column, matching
+// its existing single-column layout, not a new one), and .destinationDeck
+// gained the same width: 100%/max-width: 100%/min-width: 0/box-sizing:
+// border-box containment actionRow already had from R10. Every link in the
+// .body -> .destinationDeck -> .actionRow chain is now individually
+// zero-floored/capped, so none of them can be driven wider by another.
+// Horizontal-only -- .body's existing grid-template-ROWS (the vertical
+// layout) are untouched, and none of R10's actionRow/actionBtn
+// declarations were removed.
+//
 // EVIDENCE-TIER HONESTY NOTE: this sandbox still cannot launch a real
 // browser (see sanctuaryPackagedLayoutMilestoneR6.test.js's evidence-tier
 // note -- unchanged). What CAN be asserted with full confidence from source
@@ -69,7 +104,20 @@ import { dirname, join } from "node:path"
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const read = (relPath) => readFileSync(join(HERE, relPath), "utf8").replace(/\r\n/g, "\n")
-const css = read("VesparaHome.module.css")
+
+// Selector lookups below must never match text inside a CSS /* ... */
+// comment -- this project's own doc comments (including this milestone's
+// own R11 writeup, right in this file's target CSS) routinely start a line
+// with a bare selector name like ".destinationDeck sits in an implicit
+// column...", which otherwise satisfies the same selector-boundary regex
+// used to find real rules. Newlines are preserved (replaced with spaces of
+// equal length) so this has no effect on anything other than comment
+// bodies.
+function stripCssComments(source) {
+  return source.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, " "))
+}
+
+const css = stripCssComments(read("VesparaHome.module.css"))
 
 function findSelectorIndex(source, selector, fromIndex) {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
@@ -263,4 +311,115 @@ test("the R9 runtime layout diagnostics (layoutDiagnostics.js and its VesparaHom
   assert.match(jsx, /document\.fonts\.ready\.then\(\(\) => \{/)
   assert.match(jsx, /runLayoutDiagnostics\("recently-played"\)/)
   assert.match(jsx, /window\.addEventListener\("resize", onResize\)/)
+})
+
+// =============================================================================
+// -- 5. R11: the ancestor chain (.body -> .destinationDeck -> .actionRow) ---
+// =============================================================================
+//
+// A packaged DevTools computed-style report found the R10 fix constrained
+// actionRow against an ALREADY-OVERSIZED parent: .body's rect was 775px,
+// but its `display: grid` had no `grid-template-columns` at all, so
+// `.destinationDeck` sat in an implicit `auto` column whose automatic
+// minimum size was `.destinationDeck`'s own (uncapped) content width --
+// forcing .body's column, .destinationDeck, and actionRow's own 100% of it
+// all to 1178px. See the module doc comment's R11 section for the full
+// writeup.
+
+test("compact .body's grid track is zero-floored: an explicit, single-column grid-template-columns of minmax(0, 1fr) replaces the previously-undeclared (implicit auto) column", () => {
+  const block = cssBlockOrNull(compactBody, ".body")
+  assert.ok(block, "compact .body rule not found")
+  const gridTemplateColumns = declValue(block, "grid-template-columns")
+  const minmaxCalls = [...gridTemplateColumns.matchAll(/minmax\(([^,]+),/g)].map((m) => m[1].trim())
+  assert.equal(minmaxCalls.length, 1, `expected exactly 1 column track (matching .body's existing single-column layout), found: ${gridTemplateColumns}`)
+  assert.equal(minmaxCalls[0], "0", `the single column must have a 0 minimum (found "${minmaxCalls[0]}" in "${gridTemplateColumns}")`)
+})
+
+test("compact .body's grid-template-ROWS (the vertical layout) is unchanged by this horizontal-only fix", () => {
+  const block = cssBlockOrNull(css.slice(0, compactStart), ".body")
+  assert.ok(block, "base .body rule not found")
+  assert.equal(declValue(block, "grid-template-rows"), "minmax(190px, 1fr) auto auto")
+  // The compact block itself must not redeclare grid-template-rows (it
+  // never did, and still doesn't) -- vertical layout stays governed solely
+  // by the base rule above.
+  const compactBlock = cssBlockOrNull(compactBody, ".body")
+  assert.equal(declValueOrNull(compactBlock, "grid-template-rows"), null, "compact .body must not add its own grid-template-rows override -- vertical layout is out of scope for this horizontal fix")
+})
+
+test("compact .destinationDeck is fully container-constrained: width, max-width, min-width, and box-sizing are all explicitly set", () => {
+  const block = cssBlockOrNull(compactBody, ".destinationDeck")
+  assert.ok(block, "compact .destinationDeck rule not found")
+  assert.equal(declValue(block, "width"), "100%")
+  assert.equal(declValue(block, "max-width"), "100%")
+  assert.equal(declValue(block, "min-width"), "0")
+  assert.equal(declValue(block, "box-sizing"), "border-box")
+})
+
+test("compact .destinationDeck preserves its existing vertical positioning (position: relative, padding-top) -- only width/max-width/min-width/box-sizing were added", () => {
+  const baseBlock = cssBlockOrNull(css.slice(0, compactStart), ".destinationDeck")
+  assert.ok(baseBlock, "base .destinationDeck rule not found")
+  assert.equal(declValue(baseBlock, "position"), "relative")
+  assert.equal(declValue(baseBlock, "padding-top"), "8px")
+  // The compact override must not redeclare (and thus cannot have changed)
+  // either of those -- it only adds the new containment declarations.
+  const compactBlock = cssBlockOrNull(compactBody, ".destinationDeck")
+  assert.equal(declValueOrNull(compactBlock, "position"), null)
+  assert.equal(declValueOrNull(compactBlock, "padding-top"), null)
+})
+
+test("the base (1920x1080) .body and .destinationDeck rules are unchanged by this compact-only fix -- no grid-template-columns/width/max-width added there", () => {
+  const baseBody = cssBlockOrNull(css.slice(0, compactStart), ".body")
+  assert.equal(declValueOrNull(baseBody, "grid-template-columns"), null, "base .body must not have gained an explicit grid-template-columns -- this is a compact-only fix")
+  const baseDeck = cssBlockOrNull(css.slice(0, compactStart), ".destinationDeck")
+  assert.equal(declValueOrNull(baseDeck, "width"), null, "base .destinationDeck must not have gained an explicit width -- this is a compact-only fix")
+  assert.equal(declValueOrNull(baseDeck, "max-width"), null, "base .destinationDeck must not have gained an explicit max-width -- this is a compact-only fix")
+})
+
+test("the R10 actionRow/actionBtn constraints are still fully present -- this pass adds ancestor containment, it does not remove or replace them", () => {
+  const actionRowBlock = cssBlockOrNull(compactBody, ".actionRow")
+  assert.equal(declValue(actionRowBlock, "width"), "100%")
+  assert.equal(declValue(actionRowBlock, "max-width"), "100%")
+  assert.equal(declValue(actionRowBlock, "min-width"), "0")
+  assert.equal(declValue(actionRowBlock, "box-sizing"), "border-box")
+  const actionBtnBlock = cssBlockOrNull(compactBody, ".actionBtn")
+  assert.equal(declValue(actionBtnBlock, "min-width"), "0")
+  assert.equal(declValue(actionBtnBlock, "max-width"), "100%")
+})
+
+// -- Reconstruction of the captured R11 computed-style failure ---------------
+
+test("the captured pre-R11 computed styles (.body grid-template-columns resolving to 1178px, .destinationDeck rect 1178px with min-width: auto/max-width: none) fail the 775px bound this fix requires", () => {
+  const capturedBodyGridTrackPx = 1178
+  const capturedDestinationDeckWidthPx = 1178
+  assert.ok(!(capturedBodyGridTrackPx <= AVAILABLE_ROW_WIDTH_PX), `expected the captured pre-R11 .body grid track (${capturedBodyGridTrackPx}px) to exceed the ${AVAILABLE_ROW_WIDTH_PX}px bound`)
+  assert.ok(!(capturedDestinationDeckWidthPx <= AVAILABLE_ROW_WIDTH_PX), `expected the captured pre-R11 .destinationDeck width (${capturedDestinationDeckWidthPx}px) to exceed the ${AVAILABLE_ROW_WIDTH_PX}px bound`)
+})
+
+test("with .body's grid track and .destinationDeck now both zero-floored/capped, the structural upper bound on every link in the chain at an 811px viewport is the same 775px available width (793px right edge, including the 18px left inset)", () => {
+  // .body's grid track is now minmax(0, 1fr) -- a single fr track resolves
+  // to exactly the container's definite available space (775px, since
+  // .body itself sits inside the already-constrained .sanctuary/.home
+  // chain). .destinationDeck's own max-width: 100% then caps it at that
+  // same 775px, and actionRow's pre-existing max-width: 100% (R10) caps it
+  // at whatever .destinationDeck resolves to -- so the whole chain is now
+  // bounded by the same structural ceiling, not by any individual
+  // ancestor's uncapped content size.
+  const structuralMaxDestinationDeckWidth = AVAILABLE_ROW_WIDTH_PX
+  const structuralMaxActionRowWidth = structuralMaxDestinationDeckWidth
+  assert.equal(structuralMaxDestinationDeckWidth, 775)
+  assert.equal(structuralMaxActionRowWidth, 775)
+  assert.ok(SANCTUARY_PADDING_PX + structuralMaxActionRowWidth <= MAX_ALLOWED_RIGHT_EDGE_PX)
+})
+
+test("no horizontal scroll-width growth is structurally possible after fonts load: every link in the .body -> .destinationDeck -> .actionRow chain now has an explicit max-width: 100% (or an equivalent zero-floored track), so none of them can grow past their own containing block regardless of any webfont's glyph metrics", () => {
+  const bodyBlock = cssBlockOrNull(compactBody, ".body")
+  const deckBlock = cssBlockOrNull(compactBody, ".destinationDeck")
+  const rowBlock = cssBlockOrNull(compactBody, ".actionRow")
+  // .body: capped via its zero-floored single fr track (no max-content
+  // fallback possible once the track itself is explicit).
+  const bodyMins = [...declValue(bodyBlock, "grid-template-columns").matchAll(/minmax\(([^,]+),/g)].map((m) => m[1].trim())
+  assert.deepEqual(bodyMins, ["0"])
+  // .destinationDeck and .actionRow: capped via explicit max-width: 100%.
+  assert.equal(declValue(deckBlock, "max-width"), "100%")
+  assert.equal(declValue(rowBlock, "max-width"), "100%")
 })

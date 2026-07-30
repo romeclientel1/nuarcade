@@ -734,13 +734,46 @@
     font-size: 30px;
   }
 
+  /* R11: packaged DevTools computed-style inspection (see
+     sanctuaryFontBlowoutMilestoneR10.test.js's R11 section for the full
+     writeup) found that the R10 actionRow-only fix was already live in the
+     packaged build but constrained against an ALREADY-OVERSIZED parent:
+     .body's rect (775px) matched the true available width, but .body's own
+     `display: grid` never declared `grid-template-columns` at all -- so
+     .destinationDeck sits in an IMPLICIT column track sized by the default
+     `grid-auto-columns: auto`. An `auto` track has no explicit minimum, so
+     it falls back to the automatic minimum size of the item placed in it --
+     and .destinationDeck (a plain block box, `min-width: auto` by default,
+     `overflow: visible`) has no override of its own, so ITS automatic
+     minimum equals its content's min-content size, i.e. actionRow's own
+     intrinsic width once the real webfont loads. That forced .body's
+     implicit column -- and therefore .destinationDeck and (via its own
+     100%) .actionRow -- to 1178px, even though actionRow's own R10
+     constraints were completely correct in isolation: 100% of an
+     oversized 1178px parent is still 1178px. Fixed by giving .body an
+     EXPLICIT, zero-floored single-column track (`grid-template-columns:
+     minmax(0, 1fr)`, matching its own existing single-column layout, not a
+     new one) and by giving .destinationDeck the same width/max-width/
+     min-width containment actionRow already had, so no link in the
+     .body -> .destinationDeck -> .actionRow chain can drive any other link
+     wider than the real 775px available width. Horizontal-only --
+     .body's existing grid-template-ROWS (vertical layout/positioning) are
+     untouched. */
   .body {
+    grid-template-columns: minmax(0, 1fr);
     gap: 12px;
     padding-bottom: 28px;
   }
 
   .memoryShelf {
     padding: 14px;
+  }
+
+  .destinationDeck {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
   }
 
   /* R10: packaged runtime diagnostics (layoutDiagnostics.js, see
