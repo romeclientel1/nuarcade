@@ -180,10 +180,74 @@ Add your API key in the Control Room's Artwork station and Vespara fetches hero 
 Category tabs in the Library can show a real logo instead of plain text:
 
 1. Place image files in `<your Media folder>\SystemLogos\`.
-2. Name each file to exactly match the category, lowercase, no spaces (for example `xbox360.png`, `ps1.png`, `arcade.png`). PNG, JPG, JPEG, WEBP, and SVG all work.
-3. Restart Vespara.
+2. Name each file to exactly match the category tab, lowercase. **Spaces and hyphens in a tab's name are kept, not stripped** — for example `virtual boy.png`, `sega cd.png`, `pc-fx.png`, as well as the more familiar `xbox360.png`, `ps1.png`, `arcade.png`. PNG, JPG, JPEG, WEBP, and SVG all work.
+3. No restart or manual rescan is needed. Vespara reloads the SystemLogos folder every time you enter the Library, so leaving and coming back (or opening the Library for the first time after adding files) is enough.
 
 Categories without a matching logo simply keep showing text, so this can be done gradually. Vespara does not ship logo images itself, since official console logos are trademarked — source your own.
+
+Matching is **case-insensitive** either way — `Xbox360.PNG` and `xbox360.png` both work, since Vespara lowercases both the filename and the tab name before comparing them.
+
+Collections (the custom groups you build yourself in the Library) never show a logo, regardless of filename — they always display your chosen collection name as text.
+
+A few tab names never actually appear in a real library today, so a logo for them would never be seen: **Retro** and **Pinball** are listed among the app's built-in tab names but nothing currently populates either one with games. Original Xbox games (Xemu/Cxbx-Reloaded) have no dedicated tab at all — they only show up under **All** — so there is no logo filename for Xbox to add.
+
+The table below is the complete, verified list of every tab that can currently show a custom logo, its required filename (shown here as `.png`, though the other four extensions above work identically), and notes on how it's populated.
+
+**Built-in tabs**
+
+| Library tab | Filename | Notes |
+|---|---|---|
+| All | `all.png` | Always present. |
+| Favorites | `favorites.png` | Shown once you have at least one favorite. |
+| Recent | `recent.png` | Shown once you have at least one recently-played game. |
+| Arcade | `arcade.png` | Populated by TeknoParrot titles (default genre) and MAME titles; also shared with a RetroArch `arcade` folder if you use one. |
+| MAME | `mame.png` | Populated by the dedicated MAME scanner; also shared with a RetroArch `mame` folder. |
+| Racing | `racing.png` | Only from TeknoParrot titles whose own metadata tags them as a racing genre. |
+| Fighting | `fighting.png` | From TeknoParrot titles tagged as fighting, and from RetroArch Saturn, Neo Geo, NGP, FBA, or Atomiswave folders (those systems default to a "Fighting" genre). |
+| Shooter | `shooter.png` | Only from TeknoParrot titles tagged as a shooter genre. |
+| Rhythm | `rhythm.png` | Only from TeknoParrot titles tagged as a rhythm/music genre. |
+| Flying | `flying.png` | Only from TeknoParrot titles tagged as a flying genre. |
+| Sports | `sports.png` | Only from TeknoParrot titles tagged as a sports genre. |
+| N64 | `n64.png` | Populated by the dedicated Project64 scanner; also shared with a RetroArch `n64` folder. |
+| PS1 | `ps1.png` | Populated by the dedicated DuckStation scanner; also shared with a RetroArch `psx` or `ps1` folder. |
+| PSP | `psp.png` | Populated by the dedicated PPSSPP scanner; also shared with a RetroArch `psp` folder. |
+| Dreamcast | `dreamcast.png` | Populated by the dedicated Flycast scanner; also shared with a RetroArch `dreamcast` folder. |
+| Model2 | `model2.png` | Populated by the dedicated Model 2 Emulator scanner. |
+| Model3 | `model3.png` | Populated by the dedicated Supermodel (Model 3) scanner. |
+| PS3 | `ps3.png` | Populated by the dedicated RPCS3 scanner. |
+| Xbox360 | `xbox360.png` | Populated by the dedicated Xenia scanner. |
+| GCWii | `gcwii.png` | Populated by the dedicated Dolphin scanner (both GameCube and Wii titles). |
+| WiiU | `wiiu.png` | Populated by the dedicated Cemu scanner. |
+| PS2 | `ps2.png` | Populated by the dedicated PCSX2 scanner; also shared with a RetroArch `ps2` folder. |
+| Switch | `switch.png` | Populated by the dedicated Ryujinx scanner. |
+| PC | `pc.png` | Populated by both the Steam-library scanner and the direct PC-games scanner. |
+| Retro | `retro.png` | Listed in the app's built-in tab names, but no scanner currently produces a game that populates it. It cannot appear in a real library right now. |
+| Pinball | `pinball.png` | The Pinball scan handler calls a function that isn't implemented, so the tab never receives games in the current build. It cannot appear in a real library right now. |
+
+**RetroArch per-system tabs** (one tab per non-empty folder under your RetroArch games path; filename is the system name shown, lowercase, spaces/hyphens kept)
+
+| System | Filename | System | Filename |
+|---|---|---|---|
+| NES | `nes.png` | Neo Geo | `neo geo.png` |
+| SNES | `snes.png` | NGP | `ngp.png` |
+| GBA | `gba.png` | FBA | `fba.png` |
+| GBC | `gbc.png` | DOS | `dos.png` |
+| GB | `gb.png` | ScummVM | `scummvm.png` |
+| NDS | `nds.png` | CPC | `cpc.png` |
+| Virtual Boy | `virtual boy.png` | ZX Spectrum | `zx spectrum.png` |
+| GameCube | `gamecube.png` | C64 | `c64.png` |
+| Wii | `wii.png` | Amiga | `amiga.png` |
+| Genesis | `genesis.png` | Vectrex | `vectrex.png` |
+| Master System | `master system.png` | WonderSwan | `wonderswan.png` |
+| Game Gear | `game gear.png` | 3DO | `3do.png` |
+| SG-1000 | `sg-1000.png` | Atomiswave | `atomiswave.png` |
+| Saturn | `saturn.png` | Atari 2600 | `atari 2600.png` |
+| Sega CD | `sega cd.png` | Atari 7800 | `atari 7800.png` |
+| 32X | `32x.png` | Jaguar | `jaguar.png` |
+| PC Engine | `pc engine.png` | Lynx | `lynx.png` |
+| PC-FX | `pc-fx.png` | | |
+
+`Genesis` covers both a `genesis` and a `megadrive` folder name, `PS1` covers both `psx` and `ps1`, and `PC Engine` covers both `pcengine` and `pce` — each pair shares the one logo file for its shared label. Vespara also recognizes a number of fuller EmuMovies-style folder names (e.g. "Nintendo NES", "Sony PlayStation") as aliases for these same short names, so those resolve to the identical logo too — see `RA_SYSTEM_ALIASES` in `src/main/scanner.js` for the full alias list. N64, PS1, PS2, PSP, MAME, Arcade, and Dreamcast above are the same tabs (and same logo files) listed in the built-in table — a RetroArch folder with one of those names feeds the same tab as its dedicated emulator.
 
 ### Manual, per-system fetching
 
