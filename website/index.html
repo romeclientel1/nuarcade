@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vespara — A world for your arcade</title>
+  <meta name="description" content="Vespara is a cinematic Windows arcade frontend by NuArcade. Browse, launch, and live inside your collection — The Sanctuary, The Library, and The Control Room.">
+  <meta name="robots" content="index, follow">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="wordmark" href="#top" aria-label="Vespara home">
+        <span class="wordmark-mark" aria-hidden="true">◈</span>
+        <span class="wordmark-text">Vespara</span>
+      </a>
+
+      <button
+        type="button"
+        class="nav-toggle"
+        id="nav-toggle"
+        aria-expanded="false"
+        aria-controls="primary-nav"
+      >
+        <span class="nav-toggle-bar" aria-hidden="true"></span>
+        <span class="nav-toggle-bar" aria-hidden="true"></span>
+        <span class="nav-toggle-bar" aria-hidden="true"></span>
+        <span class="visually-hidden">Menu</span>
+      </button>
+
+      <nav class="primary-nav" id="primary-nav" aria-label="Primary">
+        <ul>
+          <li><a href="#experience">Experience</a></li>
+          <li><a href="#library">Library</a></li>
+          <li><a href="#control-room">Control Room</a></li>
+          <li><a href="#systems">Systems</a></li>
+          <li><a href="#download">Download</a></li>
+          <li>
+            <a
+              href="https://github.com/romeclientel1/nuarcade/blob/main/USER_MANUAL.md"
+              target="_blank"
+              rel="noopener"
+              aria-label="Owner's Manual (opens on GitHub in a new tab)"
+            >Manual</a>
+          </li>
+        </ul>
+      </nav>
+
+      <a class="btn btn-primary btn-header" href="#download">Download</a>
+    </div>
+  </header>
+
+  <main id="main">
+    <a id="top"></a>
+
+    <!-- ============================= HERO ============================= -->
+    <section class="hero" aria-labelledby="hero-heading">
+      <div class="hero-atmosphere" aria-hidden="true">
+        <div class="hero-starfield"></div>
+        <div class="hero-glow hero-glow-cyan"></div>
+        <div class="hero-glow hero-glow-violet"></div>
+      </div>
+
+      <div class="hero-inner">
+        <div class="hero-copy">
+          <p class="eyebrow">A world for your arcade</p>
+          <h1 id="hero-heading">Your collection deserves<br>a home.</h1>
+          <p class="hero-lede">
+            Vespara is a cinematic Windows arcade frontend for the emulators
+            and games you already own. It gives your collection a place to
+            arrive, a Library to live in, and a Control Room to shape it —
+            instead of just another launcher window.
+          </p>
+
+          <div class="hero-actions">
+            <a class="btn btn-primary btn-large" href="#download">Download Vespara</a>
+            <a
+              class="btn btn-secondary btn-large"
+              href="https://github.com/romeclientel1/nuarcade/blob/main/USER_MANUAL.md"
+              target="_blank"
+              rel="noopener"
+            >Read the Owner's Manual</a>
+          </div>
+
+          <dl class="hero-meta">
+            <div class="hero-meta-item">
+              <dt>Current version</dt>
+              <dd>Vespara 6.0.3</dd>
+            </div>
+            <div class="hero-meta-item">
+              <dt>Platform</dt>
+              <dd>Windows 10 / 11, 64-bit</dd>
+            </div>
+          </dl>
+        </div>
+
+        <figure class="screenshot-frame screenshot-frame-hero">
+          <div class="screenshot-placeholder" role="img" aria-label="Placeholder for a screenshot of the Sanctuary, Vespara's home screen">
+            <span class="screenshot-placeholder-glyph" aria-hidden="true">◈</span>
+            <span class="screenshot-placeholder-label">The Sanctuary</span>
+            <span class="screenshot-placeholder-path">website/assets/sanctuary-hero.png</span>
+          </div>
+          <figcaption>The Sanctuary — screenshot coming soon.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- =========================== EXPERIENCE ========================== -->
+    <section class="section" id="experience" aria-labelledby="experience-heading">
+      <div class="section-inner">
+        <p class="eyebrow">The journey in</p>
+        <h2 id="experience-heading">Arriving somewhere, not just opening something.</h2>
+        <p class="section-lede">
+          Vespara doesn't drop you straight into a list of games. Every
+          session follows the same short arrival, the same way walking up
+          to a real cabinet would.
+        </p>
+
+        <ol class="journey-list">
+          <li class="journey-step">
+            <span class="journey-index" aria-hidden="true">01</span>
+            <h3>Intro</h3>
+            <p>Vespara opens with a short cinematic intro before anything else appears.</p>
+          </li>
+          <li class="journey-step">
+            <span class="journey-index" aria-hidden="true">02</span>
+            <h3>Traveler Recognition</h3>
+            <p>
+              Pick an existing Traveler, create a new one, or continue as
+              Guest. Each Traveler keeps their own favorites, playtime, and
+              recently played history — a Guest's session isn't saved to
+              anyone's profile.
+            </p>
+          </li>
+          <li class="journey-step">
+            <span class="journey-index" aria-hidden="true">03</span>
+            <h3>The Sanctuary</h3>
+            <p>
+              You arrive in the Sanctuary — Vespara's home screen, and the
+              place every session starts from and can return to.
+            </p>
+          </li>
+        </ol>
+
+        <figure class="screenshot-frame screenshot-frame-wide">
+          <div class="screenshot-placeholder" role="img" aria-label="Placeholder for a screenshot of Traveler Recognition, the profile-selection screen">
+            <span class="screenshot-placeholder-glyph" aria-hidden="true">◈</span>
+            <span class="screenshot-placeholder-label">Traveler Recognition</span>
+            <span class="screenshot-placeholder-path">website/assets/traveler-recognition.png</span>
+          </div>
+          <figcaption>Traveler Recognition — screenshot coming soon.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- =========================== SANCTUARY =========================== -->
+    <section class="section section-alt" id="sanctuary" aria-labelledby="sanctuary-heading">
+      <div class="section-inner">
+        <p class="eyebrow">Home base</p>
+        <h2 id="sanctuary-heading">The Sanctuary</h2>
+        <p class="section-lede">
+          From the Sanctuary, four destinations are always within reach.
+        </p>
+
+        <div class="destination-grid">
+          <article class="destination-card">
+            <h3>The Library</h3>
+            <p>Browse, search, and launch your full game collection.</p>
+          </article>
+          <article class="destination-card">
+            <h3>The Control Room</h3>
+            <p>Configure emulators, paths, controllers, display, and media.</p>
+          </article>
+          <article class="destination-card">
+            <h3>Switch Player</h3>
+            <p>Return to Traveler Recognition to hand off or switch profiles.</p>
+          </article>
+          <article class="destination-card">
+            <h3>Depart</h3>
+            <p>
+              Close Vespara, with a confirmation step — Remain cancels and
+              returns you to the Sanctuary, Depart closes the application.
+            </p>
+          </article>
+        </div>
+
+        <p class="section-footnote">
+          <strong>Recently Played</strong> on the Sanctuary shows up to 8
+          games, scoped to whichever Traveler is currently active — a
+          different Traveler sees their own recent games, not yours.
+        </p>
+
+        <figure class="screenshot-frame">
+          <div class="screenshot-placeholder" role="img" aria-label="Placeholder for a screenshot of the Depart confirmation, showing Remain and Depart">
+            <span class="screenshot-placeholder-glyph" aria-hidden="true">◈</span>
+            <span class="screenshot-placeholder-label">Depart confirmation</span>
+            <span class="screenshot-placeholder-path">website/assets/depart-confirm.png</span>
+          </div>
+          <figcaption>Remain or Depart — screenshot coming soon.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- ============================= LIBRARY =========================== -->
+    <section class="section" id="library" aria-labelledby="library-heading">
+      <div class="section-inner section-inner-split">
+        <div class="section-copy">
+          <p class="eyebrow">Where your collection lives</p>
+          <h2 id="library-heading">The Library</h2>
+          <p class="section-lede">
+            Games are organized by system, shown as category tabs — only
+            systems that actually have games in them appear.
+          </p>
+
+          <ul class="feature-list">
+            <li><strong>System-based browsing.</strong> Move between systems without losing your place.</li>
+            <li><strong>Custom system logos.</strong> Replace any category's plain text with your own logo artwork.</li>
+            <li><strong>Favorites.</strong> Mark games for quick access.</li>
+            <li><strong>Collections.</strong> Group games into your own custom lists.</li>
+            <li><strong>Search and sorting.</strong> Find a game by name, or reorder by most played, most launched, recently added, top rated, or system.</li>
+            <li><strong>Archive View.</strong> Selecting a game opens its detail view — artwork, a gameplay preview video where available, and launch options.</li>
+            <li><strong>Artwork and video previews.</strong> A background gameplay video plays behind the selected game where one is available.</li>
+            <li><strong>AI Game Coach.</strong> Move lists, tips, strategies, and natural-language search for the selected game — no API key required.</li>
+          </ul>
+        </div>
+
+        <figure class="screenshot-frame">
+          <div class="screenshot-placeholder" role="img" aria-label="Placeholder for a screenshot of the Library's system browsing view">
+            <span class="screenshot-placeholder-glyph" aria-hidden="true">◈</span>
+            <span class="screenshot-placeholder-label">The Library</span>
+            <span class="screenshot-placeholder-path">website/assets/library-browse.png</span>
+          </div>
+          <figcaption>The Library — screenshot coming soon.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- ========================== CONTROL ROOM ========================= -->
+    <section class="section section-alt" id="control-room" aria-labelledby="control-room-heading">
+      <div class="section-inner">
+        <p class="eyebrow">Configuration, shaped like a place</p>
+        <h2 id="control-room-heading">The Control Room</h2>
+        <p class="section-lede">
+          Reached from the Sanctuary, the Control Room holds all of
+          Vespara's configuration, organized into two wings.
+        </p>
+
+        <div class="wing-grid">
+          <div class="wing">
+            <h3>Systems Wing</h3>
+            <p class="wing-sub">Makes the worlds playable.</p>
+            <ul>
+              <li>Emulators</li>
+              <li>Game Paths</li>
+              <li>Controllers</li>
+              <li>Launch Behavior</li>
+              <li>Display &amp; Performance</li>
+              <li>Preferences</li>
+              <li>Systems Archive</li>
+            </ul>
+          </div>
+          <div class="wing">
+            <h3>Archives Wing</h3>
+            <p class="wing-sub">Makes the collection come alive.</p>
+            <ul>
+              <li>Artwork</li>
+              <li>Videos</li>
+              <li>Scraping</li>
+              <li>Bezels</li>
+              <li>Media Restoration</li>
+            </ul>
+          </div>
+        </div>
+
+        <p class="section-footnote">
+          Opening any Archives Wing station takes you into a screen still
+          titled <strong>Media Manager</strong> — that's the actual screen
+          behind every Archives station, not a separate or misnamed tool.
+        </p>
+
+        <figure class="screenshot-frame screenshot-frame-wide">
+          <div class="screenshot-placeholder" role="img" aria-label="Placeholder for a screenshot showing the Control Room's Systems and Archives wings">
+            <span class="screenshot-placeholder-glyph" aria-hidden="true">◈</span>
+            <span class="screenshot-placeholder-label">The Control Room</span>
+            <span class="screenshot-placeholder-path">website/assets/control-room-wings.png</span>
+          </div>
+          <figcaption>The Control Room's two wings — screenshot coming soon.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- =========================== SYSTEMS ============================= -->
+    <section class="section" id="systems" aria-labelledby="systems-heading">
+      <div class="section-inner">
+        <p class="eyebrow">Supported systems</p>
+        <h2 id="systems-heading">Built for the emulators you already run.</h2>
+        <p class="section-lede">
+          Vespara doesn't include or bundle any emulator, ROM, BIOS file, or
+          firmware — you install and configure each of these yourself, and
+          point Vespara at them.
+        </p>
+
+        <div class="systems-table-wrap">
+          <table class="systems-table">
+            <caption class="visually-hidden">Vespara 6.0.3 supported systems and their emulators</caption>
+            <thead>
+              <tr>
+                <th scope="col">System</th>
+                <th scope="col">Emulator</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Arcade (TeknoParrot)</td><td>TeknoParrot</td></tr>
+              <tr><td>Arcade Classics</td><td>MAME</td></tr>
+              <tr><td>PlayStation 3</td><td>RPCS3</td></tr>
+              <tr><td>Xbox 360</td><td>Xenia</td></tr>
+              <tr><td>GameCube / Wii</td><td>Dolphin</td></tr>
+              <tr><td>PlayStation 2</td><td>PCSX2</td></tr>
+              <tr><td>Nintendo Switch</td><td>Ryujinx</td></tr>
+              <tr><td>Nintendo 64</td><td>Project64</td></tr>
+              <tr><td>PlayStation 1</td><td>DuckStation</td></tr>
+              <tr><td>Dreamcast / NAOMI</td><td>Flycast</td></tr>
+              <tr><td>Original Xbox</td><td>Xemu</td></tr>
+              <tr><td>Original Xbox (fallback for specific titles)</td><td>Cxbx-Reloaded</td></tr>
+              <tr><td>PlayStation Portable</td><td>PPSSPP</td></tr>
+              <tr><td>Wii U</td><td>Cemu</td></tr>
+              <tr><td>Sega Model 2</td><td>Model 2 Emulator</td></tr>
+              <tr><td>Sega Model 3</td><td>Supermodel</td></tr>
+              <tr><td>Pinball</td><td>Visual Pinball X</td></tr>
+              <tr><td>Steam</td><td>Launched via Steam</td></tr>
+              <tr><td>PC Games</td><td>Direct launch</td></tr>
+              <tr><td>NES, SNES, Genesis, GBA, and many other classic systems</td><td>RetroArch</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="section-footnote">
+          Original Xbox is intentionally listed twice: Xemu is the primary
+          emulator, and Cxbx-Reloaded is kept as a fallback for specific
+          titles that run better on it. See the
+          <a
+            href="https://github.com/romeclientel1/nuarcade/blob/main/USER_MANUAL.md#12-supported-systems"
+            target="_blank"
+            rel="noopener"
+          >Owner's Manual's Supported Systems chapter</a> for the current, authoritative list.
+        </p>
+      </div>
+    </section>
+
+    <!-- ============================= MEDIA ============================= -->
+    <section class="section section-alt" id="media" aria-labelledby="media-heading">
+      <div class="section-inner">
+        <p class="eyebrow">Bringing the collection to life</p>
+        <h2 id="media-heading">Media, artwork, and video</h2>
+        <p class="section-lede">
+          Vespara can fill in artwork, video, and system logos around the
+          games you already own. It does not distribute copyrighted
+          artwork, ROMs, BIOS files, or emulator software of its own — every
+          source below is either something you connect an account to, or
+          something you supply yourself.
+        </p>
+
+        <div class="media-grid">
+          <article class="media-card">
+            <h3>SteamGridDB artwork</h3>
+            <p>Add your own API key and Vespara fetches hero art and capsule images automatically.</p>
+          </article>
+          <article class="media-card">
+            <h3>EmuMovies imports</h3>
+            <p>Connect your own EmuMovies account and Sync app for higher-quality video and box art, then scan and import inside Vespara.</p>
+          </article>
+          <article class="media-card">
+            <h3>YouTube video fetching</h3>
+            <p>Fetch gameplay preview video directly from YouTube, per game or in bulk.</p>
+          </article>
+          <article class="media-card">
+            <h3>Custom system logos</h3>
+            <p>Drop your own logo images into a configured folder to replace any Library category's plain text.</p>
+          </article>
+          <article class="media-card">
+            <h3>Bezel support</h3>
+            <p>Fills bezel gaps from your own Bezel Source Folder, RetroArch-style overlays, and Vespara's own bundled placeholder art as a last resort.</p>
+          </article>
+          <article class="media-card">
+            <h3>Media restoration</h3>
+            <p>Backup, restore, and clean up orphaned media without losing what's already in place.</p>
+          </article>
+        </div>
+
+        <p class="section-footnote">
+          Every media feature above lives behind the Media Manager screen,
+          reached from any Archives Wing station in the Control Room.
+        </p>
+
+        <figure class="screenshot-frame screenshot-frame-wide">
+          <div class="screenshot-placeholder" role="img" aria-label="Placeholder for a screenshot of the Media Manager screen">
+            <span class="screenshot-placeholder-glyph" aria-hidden="true">◈</span>
+            <span class="screenshot-placeholder-label">Media Manager</span>
+            <span class="screenshot-placeholder-path">website/assets/media-manager.png</span>
+          </div>
+          <figcaption>Media Manager — screenshot coming soon.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- ============================ DOWNLOAD ============================ -->
+    <section class="section" id="download" aria-labelledby="download-heading">
+      <div class="section-inner section-inner-narrow">
+        <p class="eyebrow">Get Vespara</p>
+        <h2 id="download-heading">Download Vespara 6.0.3</h2>
+
+        <dl class="download-meta">
+          <div class="download-meta-item">
+            <dt>Current version</dt>
+            <dd>6.0.3</dd>
+          </div>
+          <div class="download-meta-item">
+            <dt>Platform</dt>
+            <dd>Windows 10 / 11, 64-bit</dd>
+          </div>
+          <div class="download-meta-item">
+            <dt>Installer</dt>
+            <dd><code>Vespara.Setup.6.0.3.exe</code></dd>
+          </div>
+        </dl>
+
+        <div class="hero-actions download-actions">
+          <a
+            class="btn btn-primary btn-large"
+            href="https://github.com/romeclientel1/nuarcade/releases/latest"
+            target="_blank"
+            rel="noopener"
+          >Download the latest release</a>
+          <a
+            class="btn btn-secondary btn-large"
+            href="https://github.com/romeclientel1/nuarcade/blob/main/USER_MANUAL.md"
+            target="_blank"
+            rel="noopener"
+          >Read the Owner's Manual</a>
+        </div>
+
+        <p class="section-footnote">
+          Vespara does not include games, ROMs, BIOS files, firmware, keys,
+          or emulator binaries — you provide and configure all of those
+          yourself.
+        </p>
+
+        <p class="section-footnote">
+          Vespara checks once per session and installs updates silently. It
+          may need to be reopened manually afterward.
+        </p>
+      </div>
+    </section>
+
+    <!-- =============================== FAQ =============================== -->
+    <section class="section section-alt" id="faq" aria-labelledby="faq-heading">
+      <div class="section-inner section-inner-narrow">
+        <p class="eyebrow">Questions</p>
+        <h2 id="faq-heading">Frequently asked questions</h2>
+
+        <dl class="faq-list">
+          <div class="faq-item">
+            <dt>Does Vespara include games?</dt>
+            <dd>No. Vespara does not include games or ROMs. You provide your own, legally obtained.</dd>
+          </div>
+          <div class="faq-item">
+            <dt>Does it include emulators?</dt>
+            <dd>No. Vespara does not bundle any emulator, BIOS file, or firmware. You install and configure each emulator yourself, then point Vespara at it.</dd>
+          </div>
+          <div class="faq-item">
+            <dt>Which versions of Windows are supported?</dt>
+            <dd>Windows 10 or 11, 64-bit.</dd>
+          </div>
+          <div class="faq-item">
+            <dt>Can I use my own folder structure?</dt>
+            <dd>Yes. Vespara does not require any particular drive letter or folder layout — you choose the Game Paths for each system in the Control Room.</dd>
+          </div>
+          <div class="faq-item">
+            <dt>Does it preserve my library during updates?</dt>
+            <dd>Yes. Your existing library, settings, configured paths, profiles, artwork, and play history are preserved through an update.</dd>
+          </div>
+          <div class="faq-item">
+            <dt>What are the legacy NuArcade names?</dt>
+            <dd>
+              Vespara's user-facing name changed from NuArcade, but a handful
+              of internal, technical identifiers were deliberately kept
+              unchanged for compatibility with existing installs — the
+              installed program is still <code>NuArcade.exe</code>, and
+              configuration and library data live under a folder still named
+              NuArcade. These names are intentional and stable across
+              versions.
+            </dd>
+          </div>
+          <div class="faq-item">
+            <dt>Where is the Owner's Manual?</dt>
+            <dd>
+              The full Owner's Manual is kept alongside the source on
+              GitHub: <a
+                href="https://github.com/romeclientel1/nuarcade/blob/main/USER_MANUAL.md"
+                target="_blank"
+                rel="noopener"
+              >read USER_MANUAL.md</a>.
+            </dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <span class="wordmark-mark" aria-hidden="true">◈</span>
+        <span>Vespara <span class="footer-by">by NuArcade</span></span>
+      </div>
+
+      <nav class="footer-nav" aria-label="Footer">
+        <a href="https://github.com/romeclientel1/nuarcade" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/romeclientel1/nuarcade/releases/latest" target="_blank" rel="noopener">Releases</a>
+        <a href="https://github.com/romeclientel1/nuarcade/blob/main/USER_MANUAL.md" target="_blank" rel="noopener">Owner's Manual</a>
+      </nav>
+
+      <p class="footer-version">Version 6.0.3</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
