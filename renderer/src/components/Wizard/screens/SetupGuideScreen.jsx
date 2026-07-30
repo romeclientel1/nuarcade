@@ -1,6 +1,17 @@
 import { useState } from 'react'
 import styles from './Screen.module.css'
 
+// Each entry intentionally holds only what this screen needs to give a
+// concise, non-volatile first-run orientation: identity (id/icon/name/
+// system/color), an existing working download link (url, preserved
+// mechanically from the prior version of this screen -- see the cleanup
+// report for any naming/URL pairs left unchanged but flagged as
+// questionable), whether the emulator commonly needs firmware/BIOS
+// (bios), and an optional short, source-grounded, non-promotional
+// compatibility note (compatNote). No install/games/BIOS folder paths and
+// no exact BIOS/firmware/key filenames are stored here anymore -- both are
+// owner-specific and belong in the Owner's Manual / the emulator's own
+// documentation, not hard-coded into the shipped app.
 const EMULATORS = [
   {
     id: 'teknoparrot',
@@ -9,16 +20,8 @@ const EMULATORS = [
     system: 'Arcade',
     color: '#00ff88',
     url: 'https://teknoparrot.com/',
-    folder: 'F:\\TeknoParrot\\',
-    gamesFolder: 'F:\\ArcadeGames\\',
     bios: false,
-    steps: [
-      'Download TeknoParrot from teknoparrot.com',
-      'Extract to F:\\TeknoParrot\\',
-      'Run TeknoParrotUi.exe once to initialize',
-      'Add game folders to F:\\ArcadeGames\\',
-    ],
-    note: null,
+    compatNote: null,
   },
   {
     id: 'rpcs3',
@@ -27,16 +30,8 @@ const EMULATORS = [
     system: 'PlayStation 3',
     color: '#0070d1',
     url: 'https://rpcs3.net',
-    folder: 'F:\\RPCS3\\',
-    gamesFolder: 'F:\\PS3Games\\',
     bios: false,
-    steps: [
-      'Download RPCS3 from rpcs3.net',
-      'Extract to F:\\RPCS3\\',
-      'Run rpcs3.exe once to initialize settings',
-      'Install PS3 game folders to F:\\PS3Games\\',
-    ],
-    note: 'Most arcade PS3 titles run without a firmware dump.',
+    compatNote: 'Most arcade-style PS3 titles run without a firmware dump.',
   },
   {
     id: 'xenia',
@@ -45,16 +40,8 @@ const EMULATORS = [
     system: 'Xbox 360',
     color: '#107c10',
     url: 'https://xenia.jp',
-    folder: 'F:\\Xenia\\',
-    gamesFolder: 'F:\\Xbox360Games\\',
     bios: false,
-    steps: [
-      'Download Xenia from xenia.jp',
-      'Extract to F:\\Xenia\\',
-      'No BIOS or firmware required',
-      'Add Xbox 360 ISO or XEX files to F:\\Xbox360Games\\',
-    ],
-    note: 'Easiest setup - no BIOS needed.',
+    compatNote: null,
   },
   {
     id: 'dolphin',
@@ -63,16 +50,8 @@ const EMULATORS = [
     system: 'GameCube / Wii',
     color: '#6b21a8',
     url: 'https://dolphin-emu.org',
-    folder: 'F:\\Dolphin\\',
-    gamesFolder: 'F:\\GCWiiGames\\',
     bios: false,
-    steps: [
-      'Download Dolphin from dolphin-emu.org',
-      'Install or extract to F:\\Dolphin\\',
-      'No BIOS required for most titles',
-      'Add GCN / Wii ISOs or RVZ files to F:\\GCWiiGames\\',
-    ],
-    note: 'RVZ format is recommended - smaller and faster than ISO.',
+    compatNote: 'RVZ format is generally smaller and faster to load than ISO.',
   },
   {
     id: 'pcsx2',
@@ -81,19 +60,8 @@ const EMULATORS = [
     system: 'PlayStation 2',
     color: '#003791',
     url: 'https://pcsx2.net',
-    folder: 'F:\\PCSX2\\',
-    gamesFolder: 'F:\\PS2Games\\',
     bios: true,
-    biosFolder: 'F:\\PCSX2\\bios\\',
-    biosFiles: ['Any PS2 BIOS .bin file (e.g. SCPH-70012.bin)'],
-    steps: [
-      'Download PCSX2 from pcsx2.net',
-      'Install to F:\\PCSX2\\',
-      'Obtain PS2 BIOS files from your own console',
-      'Place BIOS files in F:\\PCSX2\\bios\\',
-      'Add PS2 ISOs or CHD files to F:\\PS2Games\\',
-    ],
-    note: 'Requires PS2 BIOS files from your own console.',
+    compatNote: null,
   },
   {
     id: 'ryujinx',
@@ -102,20 +70,8 @@ const EMULATORS = [
     system: 'Nintendo Switch',
     color: '#e4000f',
     url: 'https://ryujinx.app/download',
-    folder: 'F:\\Ryujinx\\',
-    gamesFolder: 'F:\\SwitchGames\\',
     bios: true,
-    biosFolder: 'F:\\Ryujinx\\system\\',
-    biosFiles: ['prod.keys', 'title.keys (optional)', 'Firmware via Tools > Install Firmware'],
-    steps: [
-      'Download Ryujinx from ryujinx.org',
-      'Extract to F:\\Ryujinx\\',
-      'Obtain Switch firmware and prod.keys from your own console',
-      'Install firmware via Tools > Install Firmware in Ryujinx',
-      'Place prod.keys in F:\\Ryujinx\\system\\',
-      'Add Switch NSP or XCI files to F:\\SwitchGames\\',
-    ],
-    note: 'Requires Switch firmware and prod.keys from your own console.',
+    compatNote: null,
   },
   {
     id: 'mame',
@@ -124,16 +80,8 @@ const EMULATORS = [
     system: 'Arcade Classics',
     color: '#ff6600',
     url: 'https://www.mamedev.org',
-    folder: 'F:\\MAME\\',
-    gamesFolder: 'F:\\MAME\\roms\\',
     bios: false,
-    steps: [
-      'Download MAME from mamedev.org',
-      'Extract to F:\\MAME\\',
-      'Add ROM zip files to F:\\MAME\\roms\\',
-      'Run mame.exe once to generate mame.ini',
-    ],
-    note: 'Pac-Man, Galaga, Street Fighter, Mortal Kombat and 10,000+ titles.',
+    compatNote: null,
   },
   {
     id: 'retroarch',
@@ -142,16 +90,8 @@ const EMULATORS = [
     system: 'NES / SNES / Genesis / GBA / N64 / PS1',
     color: '#1a1a2e',
     url: 'https://www.retroarch.com',
-    folder: 'F:\\RetroArch\\',
-    gamesFolder: 'F:\\RetroArchGames\\',
     bios: false,
-    steps: [
-      'Download RetroArch from retroarch.com',
-      'Install to F:\\RetroArch\\',
-      'Launch RetroArch and download cores via Online Updater',
-      'Organize ROMs into F:\\RetroArchGames\\NES, SNES, Genesis, etc.',
-    ],
-    note: 'One frontend for 50+ systems. Use Online Updater to grab cores.',
+    compatNote: 'One frontend covering many classic systems -- install cores via its own Online Updater.',
   },
   {
     id: 'project64',
@@ -160,16 +100,8 @@ const EMULATORS = [
     system: 'Nintendo 64',
     color: '#e4000f',
     url: 'https://www.pj64-emu.com',
-    folder: 'F:\\Project64\\',
-    gamesFolder: 'F:\\N64Games\\',
     bios: false,
-    steps: [
-      'Download Project64 from pj64-emu.com',
-      'Install to F:\\Project64\\',
-      'No BIOS required',
-      'Add N64 ROM files (.z64, .n64, .v64) to F:\\N64Games\\',
-    ],
-    note: 'GoldenEye, Ocarina of Time, Smash Bros. No BIOS needed.',
+    compatNote: null,
   },
   {
     id: 'duckstation',
@@ -178,19 +110,8 @@ const EMULATORS = [
     system: 'PlayStation 1',
     color: '#003791',
     url: 'https://www.duckstation.org',
-    folder: 'F:\\DuckStation\\',
-    gamesFolder: 'F:\\PS1Games\\',
     bios: true,
-    biosFolder: 'F:\\DuckStation\\bios\\',
-    biosFiles: ['SCPH-1001.bin or any PlayStation BIOS .bin'],
-    steps: [
-      'Download DuckStation from duckstation.org',
-      'Extract to F:\\DuckStation\\',
-      'Obtain PS1 BIOS files from your own console',
-      'Point DuckStation to your BIOS folder in Settings',
-      'Add PS1 disc images (.bin/.cue, .iso, .chd) to F:\\PS1Games\\',
-    ],
-    note: 'Requires PS1 BIOS from your own console. CHD format recommended.',
+    compatNote: 'CHD format is generally recommended over raw bin/cue.',
   },
   {
     id: 'flycast',
@@ -199,19 +120,8 @@ const EMULATORS = [
     system: 'Dreamcast / NAOMI',
     color: '#ff6600',
     url: 'https://github.com/flyinghead/flycast/releases',
-    folder: 'F:\\Flycast\\',
-    gamesFolder: 'F:\\DreamcastGames\\',
     bios: true,
-    biosFolder: 'F:\\Flycast\\data\\',
-    biosFiles: ['dc_boot.bin', 'dc_flash.bin (recommended)'],
-    steps: [
-      'Download Flycast from GitHub releases',
-      'Extract to F:\\Flycast\\',
-      'Obtain Dreamcast BIOS (dc_boot.bin) from your own console',
-      'Place BIOS in F:\\Flycast\\data\\',
-      'Add Dreamcast GDI, CDI, or CHD files to F:\\DreamcastGames\\',
-    ],
-    note: 'Also emulates NAOMI arcade hardware. GDI in subfolders is supported.',
+    compatNote: 'Also covers NAOMI arcade hardware.',
   },
   {
     id: 'xemu',
@@ -220,19 +130,12 @@ const EMULATORS = [
     system: 'Original Xbox',
     color: '#107c10',
     url: 'https://xemu.app',
-    folder: 'F:\\Xemu\\',
-    gamesFolder: 'F:\\XboxGames\\',
     bios: true,
-    biosFolder: 'F:\\Xemu\\',
-    biosFiles: ['mcpx_1.0.bin (MCPX boot ROM)', 'BIOS flash file (name/location set in xemu.toml)'],
-    steps: [
-      'Download Xemu from xemu.app',
-      'Extract to F:\\Xemu\\',
-      'Obtain an MCPX boot ROM and BIOS flash file from your own console',
-      'Place both in F:\\Xemu\\ (or point Xemu at them via its own xemu.toml)',
-      'Add Xbox .iso or .xiso files to F:\\XboxGames\\',
-    ],
-    note: 'Recommended first choice for Original Xbox -- best overall compatibility. Cxbx-Reloaded below is the fallback for specific titles that run better there.',
+    // Original Xbox distinction (preserved, kept neutral -- see requirement
+    // to avoid claiming either emulator is universally better): Xemu
+    // handles disc-image formats; Cxbx-Reloaded (below) handles games
+    // already extracted with an executable.
+    compatNote: 'Works with disc-image formats (e.g. .iso/.xiso). See Cxbx-Reloaded below for already-extracted games.',
   },
   {
     id: 'cxbx',
@@ -241,15 +144,8 @@ const EMULATORS = [
     system: 'Original Xbox',
     color: '#5cb85c',
     url: 'https://github.com/Cxbx-Reloaded/Cxbx-Reloaded/releases',
-    folder: 'F:\\Cxbx-Reloaded\\',
-    gamesFolder: 'F:\\XboxGames\\',
     bios: false,
-    steps: [
-      'Download Cxbx-Reloaded from GitHub releases',
-      'Extract to F:\\Cxbx-Reloaded\\',
-      'Extract each Xbox game into its own folder (with default.xbe at the root) inside F:\\XboxGames\\',
-    ],
-    note: 'No BIOS dump needed -- has its own built-in Xbox kernel implementation. Needs games already extracted (not ISOs) -- shares the same F:\\XboxGames\\ folder as Xemu, and whichever format you have for a title decides which emulator it launches with.',
+    compatNote: 'Has its own built-in Xbox kernel implementation, so no BIOS dump is needed. Works with games already extracted to a folder with their executable, rather than disc images -- see Xemu above for disc images.',
   },
   {
     id: 'model2',
@@ -258,16 +154,8 @@ const EMULATORS = [
     system: 'Sega Model 2',
     color: '#003366',
     url: 'https://emulation.gametechwiki.com/index.php/Model_2_Emulator',
-    folder: 'F:\\Model2\\',
-    gamesFolder: 'F:\\Model2Games\\',
     bios: false,
-    steps: [
-      'Download Model 2 Emulator from GitHub releases',
-      'Extract to F:\\Model2\\',
-      'Place ROM zips in F:\\Model2Games\\',
-      'Run emulator_multicpu.exe once to configure',
-    ],
-    note: 'Daytona USA, Sega Rally, Virtua Fighter 2, Virtua Cop. No BIOS needed.',
+    compatNote: null,
   },
   {
     id: 'model3',
@@ -276,16 +164,8 @@ const EMULATORS = [
     system: 'Sega Model 3',
     color: '#003366',
     url: 'https://github.com/trzy/Supermodel/releases',
-    folder: 'F:\\Supermodel\\',
-    gamesFolder: 'F:\\Model3Games\\',
     bios: false,
-    steps: [
-      'Download Supermodel from supermodel3.com',
-      'Extract to F:\\Supermodel\\',
-      'Place ROM zips in F:\\Model3Games\\',
-      'Launch via Supermodel.exe <rom.zip> -fullscreen',
-    ],
-    note: 'Scud Race, Star Wars Trilogy, Virtua Fighter 3, Daytona USA 2. No BIOS needed.',
+    compatNote: null,
   },
   {
     id: 'ppsspp',
@@ -294,16 +174,8 @@ const EMULATORS = [
     system: 'PlayStation Portable',
     color: '#0057a8',
     url: 'https://www.ppsspp.org',
-    folder: 'F:\\PPSSPP\\',
-    gamesFolder: 'F:\\PSPGames\\',
     bios: false,
-    steps: [
-      'Download PPSSPP from ppsspp.org',
-      'Extract to F:\\PPSSPP\\',
-      'No BIOS required',
-      'Add PSP ISO or CSO files to F:\\PSPGames\\',
-    ],
-    note: 'God of War, Monster Hunter, Gran Turismo, GTA. No BIOS needed.',
+    compatNote: null,
   },
   {
     id: 'cemu',
@@ -312,17 +184,8 @@ const EMULATORS = [
     system: 'Wii U',
     color: '#009ac7',
     url: 'https://cemu.info',
-    folder: 'F:\\Cemu\\',
-    gamesFolder: 'F:\\WiiUGames\\',
     bios: false,
-    steps: [
-      'Download Cemu from cemu.info',
-      'Extract to F:\\Cemu\\',
-      'No BIOS required',
-      'Add Wii U game folders (with code/*.rpx) to F:\\WiiUGames\\',
-      'Or add .wud / .wux disc images to F:\\WiiUGames\\',
-    ],
-    note: 'Mario Kart 8, Smash Bros., Splatoon, Zelda BOTW. No BIOS needed.',
+    compatNote: null,
   },
   {
     id: 'vpx',
@@ -331,18 +194,26 @@ const EMULATORS = [
     system: 'Pinball',
     color: '#cc44ff',
     url: 'https://github.com/vpinball/vpinball/releases',
-    folder: 'F:\\vPinball\\',
-    gamesFolder: 'F:\\PinballTables\\',
     bios: false,
-    steps: [
-      'Download VPX installer from GitHub releases',
-      'Install to F:\\vPinball\\',
-      'Download VPX tables (.vpx files) from vpuniverse.com',
-      'Place table files in F:\\PinballTables\\',
-    ],
-    note: 'VPX tables often include their own assets - drop the whole folder.',
+    compatNote: 'Table files often include their own assets -- keep them together in the same folder.',
   },
 ]
+
+// Neutral, path-free setup summary shared by every emulator -- see the
+// module doc comment above for why no drive letters, install folders, or
+// exact BIOS/firmware filenames appear anywhere on this screen.
+function buildSteps(emu) {
+  const steps = [
+    `Install ${emu.name} in a folder you control.`,
+  ]
+  if (emu.bios) {
+    steps.push('Obtain any required firmware or BIOS files from your own hardware.')
+  }
+  steps.push("Point Vespara at the emulator's executable or install folder in the Control Room's Emulators station.")
+  steps.push(`Choose the folder containing your ${emu.system} games in Game Paths.`)
+  steps.push('Rescan after changing paths.')
+  return steps
+}
 
 export default function SetupGuideScreen({ config, updateConfig, next, prev }) {
   const [collapsed, setCollapsed] = useState({})
@@ -357,12 +228,25 @@ export default function SetupGuideScreen({ config, updateConfig, next, prev }) {
       <div className={styles.sub}>
         Vespara manages your library automatically -- but each emulator
         needs to be installed separately. You can skip this and come back
-        via Settings anytime.
+        via the Control Room anytime.
+      </div>
+      <div className={styles.sub}>
+        Vespara does not include games, ROMs, firmware, keys, BIOS files,
+        or emulator binaries. You must provide legally obtained copies of
+        anything an emulator requires.
+      </div>
+      <div className={styles.sub}>
+        See the Vespara Owner's Manual for detailed emulator, firmware, and
+        folder setup.
       </div>
 
       <div className={styles.emuList}>
         {EMULATORS.map(emu => {
           const isCollapsed = collapsed[emu.id]
+          const steps = buildSteps(emu)
+          const requirementNote = emu.bios
+            ? "Requires firmware or BIOS obtained from your own hardware. See the Owner's Manual and the emulator's official documentation."
+            : 'No BIOS normally required.'
           return (
             <div key={emu.id} className={styles.emuRow}>
               <div className={styles.emuHeader}>
@@ -381,13 +265,14 @@ export default function SetupGuideScreen({ config, updateConfig, next, prev }) {
               {!isCollapsed && (
                 <div className={styles.emuBody}>
                   <ol className={styles.emuSteps}>
-                    {emu.steps.map((s, i) => <li key={i}>{s}</li>)}
+                    {steps.map((s, i) => <li key={i}>{s}</li>)}
                   </ol>
-                  {emu.note && <div className={styles.emuNote}>{emu.note}</div>}
-                  <div className={styles.emuPaths}>
-                    <span>EMULATOR {emu.folder}</span>
-                    {emu.gamesFolder && <span>GAMES {emu.gamesFolder}</span>}
-                  </div>
+                  <div className={styles.emuNote}>{requirementNote}</div>
+                  {emu.compatNote && (
+                    <div className={styles.emuPaths}>
+                      <span>{emu.compatNote}</span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
