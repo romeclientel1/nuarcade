@@ -1,6 +1,6 @@
 # Vespara Owner's Manual
 
-Verified against Vespara 6.0.2. Requires Windows 10 or 11, 64-bit. Vespara does not include games, ROMs, BIOS files, or emulator binaries — you provide and configure all of those yourself.
+Verified against Vespara 6.0.3. Requires Windows 10 or 11, 64-bit. Vespara does not include games, ROMs, BIOS files, or emulator binaries — you provide and configure all of those yourself.
 
 This manual covers everything from a guest walking up to the cabinet, to configuring emulator paths and media sources as the owner. If you only need the basics, read the Quick Start below and stop there.
 
@@ -392,6 +392,6 @@ Original Xbox is intentionally listed twice: Xemu is the primary emulator, and C
 
 ## 13. Version and Documentation Status
 
-Verified against Vespara 6.0.2 on 2026-07-30.
+Verified against Vespara 6.0.3 on 2026-07-30.
 
 If something in this manual doesn't match what you're seeing in the app, the in-app behavior is the source of truth — this manual should be re-verified against source and updated in the same change that bumps Vespara's version.
