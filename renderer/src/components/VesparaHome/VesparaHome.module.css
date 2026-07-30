@@ -747,6 +747,68 @@
   .destinationDetail {
     display: none;
   }
+
+  /* R7: the R6 pass shrank each tile's own min-height/padding, but every
+     tile's box-sizing is border-box (global reset, renderer/src/index.css)
+     and .destinationMarker's per-destination heights (60px/48px/28px, plus
+     the 46px generic fallback switchPlayerDestination uses) were left
+     completely untouched by the compact query. Since actionBtn is
+     `align-items: center`, an unshrunk marker taller than a tile's own
+     (padding + min-height budget) silently forces that tile -- and the
+     whole actionRow, whose height is the tallest tile under align-items:
+     end -- past its intended compact size. Concretely, libraryDestination's
+     content-box budget for its child content was 84px min-height minus
+     14+14px padding = 56px, but its marker stayed 60px tall: the tile (and
+     therefore the whole row) rendered at 88px, not the intended 84px. Small
+     per-tile, but it was one of several uncounted contributors -- alongside
+     the still-full-size Recently Played card below -- that combined to
+     leave real, Windows-confirmed clipping even after the R6 threshold fix.
+     These overrides cap every marker so no tile's real content can force it
+     taller than its own compact min-height + padding budget. */
+  .destinationMarker {
+    height: 32px;
+  }
+
+  .libraryDestination .destinationMarker {
+    height: 40px;
+  }
+
+  .controlRoomDestination .destinationMarker {
+    height: 34px;
+  }
+
+  .departDestination .destinationMarker {
+    height: 22px;
+  }
+
+  /* R7: the Recently Played card was the single largest content block in
+     the whole Sanctuary stack (multiRecentRow .recentCard min-height:205px,
+     completely unaffected by the compact query above) -- it alone accounted
+     for roughly a third of the page's natural content height at 1366x768.
+     Shrinking it here is what actually buys the real, generous safety
+     margin the packaged-layout test now requires; the destinationMarker fix
+     above closes a real but comparatively small gap. */
+  .multiRecentRow .recentCard {
+    min-height: 150px;
+    padding: 10px;
+  }
+
+  .multiRecentRow .recentArt,
+  .multiRecentRow .recentArtFallback {
+    height: 76px;
+    margin-bottom: 8px;
+  }
+
+  .singleRecentRow .recentCard {
+    min-height: 190px;
+    padding: 10px;
+  }
+
+  .singleRecentRow .recentArt,
+  .singleRecentRow .recentArtFallback {
+    height: 110px;
+    margin-bottom: 8px;
+  }
 }
 
 @media (max-width: 680px) {
