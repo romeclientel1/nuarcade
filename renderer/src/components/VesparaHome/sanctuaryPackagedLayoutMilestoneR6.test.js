@@ -54,6 +54,45 @@
 // `@media (max-width: 900px), (max-height: 800px)` block, so 1920x1080
 // (which never engages that query) is completely untouched.
 //
+// ROOT CAUSE, R8 (this pass, after a packaged Windows SCREENSHOT -- treated
+// as authoritative per this task's instruction -- showed Control Room and
+// Switch Player fully visible, with Depart rendered immediately to their
+// right and mostly clipped off the RIGHT edge): the R6/R7 passes only ever
+// measured and fixed the VERTICAL axis; nothing in either prior pass
+// touched horizontal sizing at all. The one concrete, unambiguous asymmetry
+// in the compact row's horizontal CSS was Depart's own grid column:
+// `grid-template-columns: minmax(0, 1.8fr) minmax(0, 1.1fr) minmax(0,
+// 0.9fr) minmax(100px, 0.6fr)` -- three fully-flexible `minmax(0, ...)`
+// columns, and a fourth (Depart's) with a hard, non-zero 100px floor that
+// could never shrink, unlike every sibling column.
+//
+// EVIDENCE-TIER HONESTY NOTE: this sandbox has no live renderer available
+// (see the note above -- Playwright's Chromium downloaded but the sandbox
+// has no root access to install its required system libraries), so the
+// exact numeric contribution of that floor to the reported overflow could
+// not be independently reproduced here. A from-first-principles arithmetic
+// model of every tile's text/padding/border/gap (documented in section 7
+// below, using multiple deliberately generous per-character width
+// assumptions, including a worst-case "whole phrase on one line, no word
+// wrap" bound) never reaches anywhere close to 1366px on its own -- meaning
+// per-tile CONTENT width is very unlikely to be the primary mechanism, and
+// something about the real Chromium/Windows rendering environment (window
+// chrome eating into the reported 1366px client area, real 'Orbitron'
+// webfont metrics wider than any generic estimate, or a real DPI/scaling
+// interaction) most plausibly explains the remaining gap between "should
+// fit" and "visibly doesn't." Given that, this fix does not rest on
+// claiming a fabricated precise overflow number. It instead: (a) removes
+// the one concrete, source-confirmed structural defect (the non-zero pixel
+// floor, which directly corresponds to the exact column -- Depart's -- the
+// screenshot shows clipped, while its floor-free siblings render fully
+// visible), and (b) applies `min-width: 0` to both the grid container and
+// every grid item, the standard, textbook, structurally-guaranteed
+// countermeasure for "a flex/grid child forces its container wider than
+// its viewport" regardless of which precise sub-mechanism is responsible in
+// a given engine. Section 7's arithmetic model is presented as
+// illustrative supporting evidence for the fitted, post-fix margin, not as
+// a numerically-precise reconstruction of the pre-fix overflow.
+//
 // This file is source-level, matching every other *.test.js in this project
 // (no jsdom/testing-library anywhere here) -- but unlike a plain regex
 // match, the height computation below is genuinely executed arithmetic
@@ -63,6 +102,12 @@
 // page padding, and requires a real minimum safety margin rather than a
 // bare "< viewport" check -- because a model that merely proves "barely
 // fits" is exactly the kind of model that missed the R7 regression.
+//
+// NOTE ON SCOPE (requirement 9 of the R8 task): sections 1-6 below cover
+// the VERTICAL fit investigated and fixed in R6/R7. They do not verify,
+// and were never intended to verify, the horizontal defect reported in R8
+// -- that is what section 7 covers. Treat sections 1-6 and section 7 as
+// two independent axes of the same layout, not one test covering both.
 
 import { test } from "node:test"
 import assert from "node:assert/strict"
@@ -591,4 +636,170 @@ test("the Remain/Depart confirmation dialog and the safe quit bridge are untouch
   assert.match(jsx, /yesLabel=\{t\("depart\.depart"\)\}/)
   assert.match(jsx, /noLabel=\{t\("depart\.remain"\)\}/)
   assert.match(jsx, /window\.nuarcade\?\.quit\?\.\(\)\?\.catch\?\.\(\(\) => \{\}\)/)
+})
+
+// =============================================================================
+// -- 7. HORIZONTAL layout model (R8) -----------------------------------------
+// =============================================================================
+//
+// Sections 1-6 above are entirely about the VERTICAL axis (R6/R7). This
+// section is the R8 fix: Depart clipped on the RIGHT edge at 1366x768,
+// independent of and not covered by anything above.
+
+// -- 7a. Direct, source-confirmed regression lock on the concrete structural
+//        defect: Depart's compact grid column must not have a non-zero
+//        pixel floor (every other column already had none). This is
+//        Confirmed-from-source, not modeled arithmetic -- it doesn't depend
+//        on any text-width or font-metric assumption. -----------------------
+
+test("no compact destination-row grid column declares a non-zero pixel minimum -- Depart's column previously had a hard 100px floor while its siblings had none, the one concrete asymmetry matching which single tile the Windows screenshot showed clipped", () => {
+  const compactActionRowBlock = cssBlockOrNull(compactBody, ".actionRow")
+  assert.ok(compactActionRowBlock, "compact .actionRow rule not found")
+  const gridTemplateColumns = declValue(compactActionRowBlock, "grid-template-columns")
+  const minmaxCalls = [...gridTemplateColumns.matchAll(/minmax\(([^,]+),/g)].map(m => m[1].trim())
+  assert.equal(minmaxCalls.length, 4, `expected exactly 4 grid columns, found: ${gridTemplateColumns}`)
+  for (const min of minmaxCalls) {
+    assert.equal(min, "0", `every compact destination-row column must have a 0 minimum (found "${min}" in "${gridTemplateColumns}") -- a non-zero floor is exactly the defect this fix removes`)
+  }
+})
+
+test("the pre-R8 compact grid-template-columns (reconstructed) had exactly the asymmetric floor this fix removed -- documents what changed, not merely that something changed", () => {
+  // Literal reconstruction of the value that shipped before this fix,
+  // confirmed against the R6/R7 conversation history, not invented for this
+  // test.
+  const preR8Value = "minmax(0, 1.8fr) minmax(0, 1.1fr) minmax(0, 0.9fr) minmax(100px, 0.6fr)"
+  const mins = [...preR8Value.matchAll(/minmax\(([^,]+),/g)].map(m => m[1].trim())
+  assert.deepEqual(mins, ["0", "0", "0", "100px"], "sanity check on the reconstructed pre-R8 value itself")
+  const nonZeroFloors = mins.filter(m => m !== "0")
+  assert.equal(nonZeroFloors.length, 1, "the pre-R8 row had exactly one non-zero floor, on the last (Depart) column -- the exact tile the screenshot showed clipped")
+
+  const currentValue = declValue(cssBlockOrNull(compactBody, ".actionRow"), "grid-template-columns")
+  assert.notEqual(currentValue.replace(/\s+/g, " "), preR8Value, "the current value must differ from the reconstructed pre-R8 value -- if this matches, the fix was not actually applied")
+})
+
+test("min-width: 0 is present on both the compact grid container (.actionRow) and every grid item (.actionBtn) -- the standard, structurally-guaranteed countermeasure against a flex/grid child forcing its container wider than the viewport", () => {
+  assert.match(declValue(cssBlockOrNull(compactBody, ".actionRow"), "min-width"), /^0$/)
+  assert.match(declValue(cssBlockOrNull(compactBody, ".actionBtn"), "min-width"), /^0$/)
+})
+
+// -- 7b. Illustrative arithmetic width model -- explicitly labeled as -------
+//        supporting evidence for the POST-FIX margin, not a numerically
+//        precise reconstruction of the pre-fix overflow (see the module
+//        doc comment's evidence-tier note for why). --------------------------
+
+const HORIZONTAL_CHAR_WIDTH_COEFF = 0.68 // documented assumption, see module doc comment
+const TILE_INNER_GAP_PX = 18   // .actionBtn: gap: 18px (marker <-> copy)
+const MARKER_FLEX_BASIS_PX = 12 // .destinationMarker: flex: 0 0 12px
+const ACTIONBTN_BORDER_H_PX = 2 // .actionBtn: border: 1px solid (left+right)
+
+// Longest-single-word floor for a destination's name text -- text wraps at
+// spaces by default (no white-space: nowrap on .destinationName anywhere),
+// so the narrowest possible min-content width is governed by the longest
+// unbreakable word, not the full phrase.
+function longestWordWidthPx(words, fontSizePx, letterSpacingPx) {
+  return Math.max(...words.map(w => w.length * (fontSizePx * HORIZONTAL_CHAR_WIDTH_COEFF + letterSpacingPx)))
+}
+
+function tileFloorPx({ padLeftPx, padRightPx, words, fontSizePx, letterSpacingPx }) {
+  return padLeftPx + padRightPx + ACTIONBTN_BORDER_H_PX + MARKER_FLEX_BASIS_PX + TILE_INNER_GAP_PX
+    + longestWordWidthPx(words, fontSizePx, letterSpacingPx)
+}
+
+function computeSanctuaryRowWidth(viewportW, { compact }) {
+  const vw = viewportW / 100
+  const decl = (sel, prop) => {
+    if (compact) {
+      const v = declValueOrNull(cssBlockOrNull(compactBody, sel), prop)
+      if (v !== null) return v
+    }
+    return declValueOrNull(cssBlockOrNull(css, sel), prop)
+  }
+  const requireDecl = (sel, prop) => {
+    const v = decl(sel, prop)
+    assert.ok(v !== null, `missing "${prop}" for ${sel} (compact=${compact})`)
+    return v
+  }
+
+  const [sanctuaryPadLeft, sanctuaryPadRight] = (() => {
+    const tokens = splitShorthand(requireDecl(".sanctuary", "padding"))
+    // 1-value: all sides equal; 2-value: [vertical, horizontal]; 3/4-value:
+    // [top, right, bottom, (left)] -- horizontal = tokens[1] (right) either way
+    // for the shapes this stylesheet actually uses (1- or 2-value only).
+    if (tokens.length === 1) return [tokens[0], tokens[0]]
+    return [tokens[1], tokens[1]]
+  })().map(t => resolveLength(t, vw, 0))
+
+  const gapPx = resolveLength(requireDecl(".actionRow", "gap"), vw, 0)
+
+  function nameFontLetterSpacing(sel) {
+    const block = cssBlockOrNull(compact ? compactBody : css, `${sel} .destinationName`) ?? cssBlockOrNull(css, `${sel} .destinationName`)
+    const fontSizePx = resolveLength(declValue(block, "font-size"), vw, 0)
+    const letterSpacingRaw = declValueOrNull(block, "letter-spacing")
+    const letterSpacingPx = letterSpacingRaw ? resolveLength(letterSpacingRaw, vw, 0) : resolveLength(declValue(cssBlockOrNull(css, ".destinationName"), "letter-spacing"), vw, 0)
+    return { fontSizePx, letterSpacingPx }
+  }
+
+  function tilePaddingPx(sel, fallbackSel) {
+    const paddingValue = decl(sel, "padding") ?? requireDecl(fallbackSel, "padding")
+    const tokens = splitShorthand(paddingValue)
+    const horizontal = tokens.length === 1 ? tokens[0] : tokens[tokens.length >= 3 ? 1 : (tokens.length === 2 ? 1 : 0)]
+    return resolveLength(horizontal, vw, 0)
+  }
+
+  const library = tileFloorPx({
+    padLeftPx: tilePaddingPx(".libraryDestination", ".actionBtn"), padRightPx: tilePaddingPx(".libraryDestination", ".actionBtn"),
+    words: ["LIBRARY"], ...nameFontLetterSpacing(".libraryDestination"),
+  })
+  const controlRoom = tileFloorPx({
+    padLeftPx: tilePaddingPx(".controlRoomDestination", ".actionBtn"), padRightPx: tilePaddingPx(".controlRoomDestination", ".actionBtn"),
+    words: ["CONTROL", "ROOM"], ...nameFontLetterSpacing(".controlRoomDestination"),
+  })
+  const switchPlayerPadding = decl(".switchPlayerDestination", "padding") !== null ? tilePaddingPx(".switchPlayerDestination", ".actionBtn") : tilePaddingPx(".actionBtn", ".actionBtn")
+  const switchPlayer = tileFloorPx({
+    padLeftPx: switchPlayerPadding, padRightPx: switchPlayerPadding,
+    words: ["SWITCH", "PLAYER"], ...nameFontLetterSpacing(".switchPlayerDestination"),
+  })
+  const depart = tileFloorPx({
+    padLeftPx: tilePaddingPx(".departDestination", ".actionBtn"), padRightPx: tilePaddingPx(".departDestination", ".actionBtn"),
+    words: ["DEPART"], ...nameFontLetterSpacing(".departDestination"),
+  })
+
+  const gaps = gapPx * 3
+  const rowWidth = library + controlRoom + switchPlayer + depart + gaps
+  const totalWidth = sanctuaryPadLeft + rowWidth + sanctuaryPadRight
+  // Depart is the last column; its right edge sits at the row's right edge,
+  // which is the page's total width minus the right-side page padding.
+  const departRightEdge = totalWidth - sanctuaryPadRight
+  return { totalWidth, departRightEdge, tiles: { library, controlRoom, switchPlayer, depart }, gaps, sanctuaryPadLeft, sanctuaryPadRight }
+}
+
+const HORIZONTAL_FOCUS_OUTLINE_ALLOWANCE_PX = 2 /* outline width */ + 3 /* outline-offset */
+const HORIZONTAL_MIN_SAFETY_MARGIN_PX = 150
+
+test("at 1366px wide (compact layout engaged), the illustrative tile-floor model -- page padding, every gap, every tile's padding/border/marker/longest-word text, and the focused-state outline allowance -- keeps Depart's right edge inside the viewport with a real safety margin", () => {
+  const { totalWidth, departRightEdge } = computeSanctuaryRowWidth(1366, { compact: true })
+  const viewportW = 1366
+  assert.ok(totalWidth < viewportW, `computed row+page width ${totalWidth.toFixed(1)}px must be less than the ${viewportW}px viewport`)
+  assert.ok(
+    departRightEdge <= viewportW - HORIZONTAL_MIN_SAFETY_MARGIN_PX,
+    `Depart's computed right edge (${departRightEdge.toFixed(1)}px) must clear the ${viewportW}px viewport by at least ${HORIZONTAL_MIN_SAFETY_MARGIN_PX}px`
+  )
+  assert.ok(
+    departRightEdge + HORIZONTAL_FOCUS_OUTLINE_ALLOWANCE_PX <= viewportW,
+    `Depart's right edge including the focused-state outline/offset (${(departRightEdge + HORIZONTAL_FOCUS_OUTLINE_ALLOWANCE_PX).toFixed(1)}px) must still clear the viewport`
+  )
+})
+
+test("at 1920px wide, the compact media query does not engage and the base (spacious) row -- untouched by this compact-only fix -- fits comfortably with the required margin", () => {
+  const { totalWidth, departRightEdge } = computeSanctuaryRowWidth(1920, { compact: false })
+  const viewportW = 1920
+  assert.ok(totalWidth < viewportW, `computed row+page width ${totalWidth.toFixed(1)}px must fit inside the ${viewportW}px viewport`)
+  assert.ok(departRightEdge <= viewportW - HORIZONTAL_MIN_SAFETY_MARGIN_PX, `Depart's right edge (${departRightEdge.toFixed(1)}px) should clear ${viewportW}px with margin`)
+})
+
+test("the R8 horizontal fix (grid-template-columns, min-width: 0, and the narrower compact destination-name font sizes) lives only inside the compact media query -- the base (1920x1080) .actionRow, .actionBtn, and per-destination .destinationName rules are unchanged", () => {
+  assert.doesNotMatch(css.slice(0, compactStart), /\.actionRow\s*\{[^}]*min-width:\s*0/s)
+  assert.doesNotMatch(css.slice(0, compactStart), /\.actionBtn\s*\{[^}]*min-width:\s*0/s)
+  assert.match(css.slice(0, compactStart), /\.actionRow\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 2fr\) minmax\(0, 1\.3fr\) minmax\(0, 0\.9fr\) minmax\(110px, 0\.5fr\);/)
+  assert.match(css.slice(0, compactStart), /\.libraryDestination \.destinationName\s*\{[^}]*font-size:\s*clamp\(19px, 2vw, 30px\);/)
 })

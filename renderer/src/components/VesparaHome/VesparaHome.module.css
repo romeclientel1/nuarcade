@@ -694,8 +694,29 @@
    720p) while remaining well below any standard desktop height (900px,
    1080px), so 1920x1080 keeps today's exact spacious styling untouched. */
 @media (max-width: 900px), (max-height: 800px) {
+  /* R8: horizontal fix. Windows runtime confirmed Depart's tile was
+     rendered mostly off the RIGHT edge at 1366x768 -- Control Room and
+     Switch Player stayed visible, Depart didn't -- proving the compact
+     row's total rendered width exceeded the viewport, not its height (the
+     R6/R7 passes only ever measured/fixed the vertical axis). The one
+     concrete, unambiguous asymmetry in the row's horizontal sizing was
+     Depart's own grid column: `minmax(100px, 0.6fr)` -- a hard, non-zero
+     pixel floor that could never shrink below 100px regardless of
+     available space, unlike every other column's `minmax(0, Nfr)`. Fixed
+     by dropping that floor to 0 (so all four columns can flex evenly),
+     adding `min-width: 0` to both the grid container and every grid item
+     (the standard, structurally-guaranteed countermeasure for a
+     flex/grid child forcing its container wider than its viewport, and a
+     defensive measure alongside the floor removal since this sandbox has
+     no live renderer to confirm the exact contributing mechanism -- see
+     sanctuaryPackagedLayoutMilestoneR6.test.js for the full width model
+     and its documented evidence tier), narrowing the destination names'
+     compact font sizes (Library/Control Room previously used their full,
+     un-shrunk base clamp() sizes even in compact mode), and trimming the
+     row's own gap and the page's horizontal padding for extra margin.
+     Horizontal-only; the vertical R6/R7 values above are unchanged. */
   .sanctuary {
-    padding: 24px;
+    padding: 24px 18px;
   }
 
   .header {
@@ -716,13 +737,15 @@
   }
 
   .actionRow {
-    grid-template-columns: minmax(0, 1.8fr) minmax(0, 1.1fr) minmax(0, 0.9fr) minmax(100px, 0.6fr);
-    gap: 10px;
+    grid-template-columns: minmax(0, 1.8fr) minmax(0, 1.1fr) minmax(0, 0.9fr) minmax(0, 0.6fr);
+    gap: 8px;
+    min-width: 0;
   }
 
   .actionBtn {
     min-height: 70px;
     padding: 12px 14px;
+    min-width: 0;
   }
 
   .libraryDestination {
@@ -730,18 +753,36 @@
     padding: 14px 16px;
   }
 
+  .libraryDestination .destinationName {
+    font-size: 18px;
+    letter-spacing: 1.5px;
+  }
+
   .controlRoomDestination {
     min-height: 74px;
     padding: 12px 14px;
+  }
+
+  .controlRoomDestination .destinationName {
+    font-size: 15px;
+    letter-spacing: 1.5px;
   }
 
   .switchPlayerDestination {
     min-height: 62px;
   }
 
+  .switchPlayerDestination .destinationName {
+    font-size: 13px;
+  }
+
   .departDestination {
     min-height: 44px;
     padding: 8px 12px;
+  }
+
+  .departDestination .destinationName {
+    font-size: 13px;
   }
 
   .destinationDetail {

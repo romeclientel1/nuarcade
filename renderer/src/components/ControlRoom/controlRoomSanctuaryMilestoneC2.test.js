@@ -285,7 +285,11 @@ test("Depart in both Sanctuary and Control Room still uses the shared DepartConf
 test("the Sanctuary action row grid has four columns (library/controlRoom/switchPlayer/depart) at both the default and compact breakpoints", () => {
   assert.match(homeCss, /\.actionRow \{\s*display: grid;\s*grid-template-columns: minmax\(0, 2fr\) minmax\(0, 1\.3fr\) minmax\(0, 0\.9fr\) minmax\(110px, 0\.5fr\);/)
   const compact = homeCss.slice(homeCss.indexOf("@media (max-width: 900px)"), homeCss.indexOf("@media (max-width: 680px)"))
-  assert.match(compact, /\.actionRow \{\s*grid-template-columns: minmax\(0, 1\.8fr\) minmax\(0, 1\.1fr\) minmax\(0, 0\.9fr\) minmax\(100px, 0\.6fr\);/)
+  // R8: Depart's compact column dropped its 100px hard floor (minmax(0,
+  // 0.6fr), matching every sibling column) after a packaged Windows
+  // screenshot showed Depart clipped off the right edge at 1366x768 -- see
+  // sanctuaryPackagedLayoutMilestoneR6.test.js for the full investigation.
+  assert.match(compact, /\.actionRow \{\s*grid-template-columns: minmax\(0, 1\.8fr\) minmax\(0, 1\.1fr\) minmax\(0, 0\.9fr\) minmax\(0, 0\.6fr\);/)
 })
 
 test("the station frame narrows at the Control Room's own compact breakpoint without disappearing", () => {
