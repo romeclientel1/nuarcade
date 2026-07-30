@@ -545,6 +545,7 @@
 
 .destinationMarker {
   flex: 0 0 12px;
+  min-width: 0;
   height: 46px;
   border-left: 2px solid rgba(214, 178, 116, 0.4);
   border-top: 1px solid rgba(214, 178, 116, 0.24);
@@ -558,7 +559,13 @@
   gap: 7px;
 }
 
+/* R10: min-width: 0 added defensively (see .actionRow's compact-block R10
+   comment for the actual mechanism/fix). .destinationName is a plain inline
+   span today, so min-width has no rendering effect on it yet -- but it
+   guards against a future change (e.g. making this a flex/grid item to
+   control truncation) silently reintroducing the same class of blowout. */
 .destinationName {
+  min-width: 0;
   font-size: clamp(13px, 1.25vw, 18px);
   letter-spacing: 2px;
   text-transform: uppercase;
@@ -679,9 +686,44 @@
   opacity: 0.94;
 }
 
-@media (max-width: 900px), (max-height: 680px) {
+/* R6: widened from max-height:680px. At 1366x768 (a mainstream laptop/
+   TV resolution) the full-size Sanctuary stack -- header + a populated
+   Recently Played row (multiRecentRow .recentCard min-height:205px) + the
+   destination row -- computes to roughly 800px of natural content height
+   (see sanctuaryPackagedLayoutMilestoneR6.test.js for the full arithmetic),
+   which is taller than the 768px viewport .home clips to (.home is
+   position:fixed;inset:0;overflow:hidden, with no scroll affordance). The
+   old 680px threshold never engaged at 768px tall, so 1366x768 silently ran
+   the spacious, non-compact layout -- the one configuration least likely to
+   fit -- and departDestination (the smallest tile, bottom-aligned at the very
+   end of the action row) was the first thing pushed below the clipped,
+   unreachable-by-mouse-or-scroll region. 800px safely covers 768px (and
+   720p) while remaining well below any standard desktop height (900px,
+   1080px), so 1920x1080 keeps today's exact spacious styling untouched. */
+@media (max-width: 900px), (max-height: 800px) {
+  /* R8: horizontal fix. Windows runtime confirmed Depart's tile was
+     rendered mostly off the RIGHT edge at 1366x768 -- Control Room and
+     Switch Player stayed visible, Depart didn't -- proving the compact
+     row's total rendered width exceeded the viewport, not its height (the
+     R6/R7 passes only ever measured/fixed the vertical axis). The one
+     concrete, unambiguous asymmetry in the row's horizontal sizing was
+     Depart's own grid column: `minmax(100px, 0.6fr)` -- a hard, non-zero
+     pixel floor that could never shrink below 100px regardless of
+     available space, unlike every other column's `minmax(0, Nfr)`. Fixed
+     by dropping that floor to 0 (so all four columns can flex evenly),
+     adding `min-width: 0` to both the grid container and every grid item
+     (the standard, structurally-guaranteed countermeasure for a
+     flex/grid child forcing its container wider than its viewport, and a
+     defensive measure alongside the floor removal since this sandbox has
+     no live renderer to confirm the exact contributing mechanism -- see
+     sanctuaryPackagedLayoutMilestoneR6.test.js for the full width model
+     and its documented evidence tier), narrowing the destination names'
+     compact font sizes (Library/Control Room previously used their full,
+     un-shrunk base clamp() sizes even in compact mode), and trimming the
+     row's own gap and the page's horizontal padding for extra margin.
+     Horizontal-only; the vertical R6/R7 values above are unchanged. */
   .sanctuary {
-    padding: 24px;
+    padding: 24px 18px;
   }
 
   .header {
@@ -692,7 +734,33 @@
     font-size: 30px;
   }
 
+  /* R11: packaged DevTools computed-style inspection (see
+     sanctuaryFontBlowoutMilestoneR10.test.js's R11 section for the full
+     writeup) found that the R10 actionRow-only fix was already live in the
+     packaged build but constrained against an ALREADY-OVERSIZED parent:
+     .body's rect (775px) matched the true available width, but .body's own
+     `display: grid` never declared `grid-template-columns` at all -- so
+     .destinationDeck sits in an IMPLICIT column track sized by the default
+     `grid-auto-columns: auto`. An `auto` track has no explicit minimum, so
+     it falls back to the automatic minimum size of the item placed in it --
+     and .destinationDeck (a plain block box, `min-width: auto` by default,
+     `overflow: visible`) has no override of its own, so ITS automatic
+     minimum equals its content's min-content size, i.e. actionRow's own
+     intrinsic width once the real webfont loads. That forced .body's
+     implicit column -- and therefore .destinationDeck and (via its own
+     100%) .actionRow -- to 1178px, even though actionRow's own R10
+     constraints were completely correct in isolation: 100% of an
+     oversized 1178px parent is still 1178px. Fixed by giving .body an
+     EXPLICIT, zero-floored single-column track (`grid-template-columns:
+     minmax(0, 1fr)`, matching its own existing single-column layout, not a
+     new one) and by giving .destinationDeck the same width/max-width/
+     min-width containment actionRow already had, so no link in the
+     .body -> .destinationDeck -> .actionRow chain can drive any other link
+     wider than the real 775px available width. Horizontal-only --
+     .body's existing grid-template-ROWS (vertical layout/positioning) are
+     untouched. */
   .body {
+    grid-template-columns: minmax(0, 1fr);
     gap: 12px;
     padding-bottom: 28px;
   }
@@ -701,14 +769,48 @@
     padding: 14px;
   }
 
+  .destinationDeck {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  /* R10: packaged runtime diagnostics (layoutDiagnostics.js, see
+     sanctuaryFontBlowoutMilestoneR10.test.js for the full writeup) captured
+     the actual mechanism at an 811x768 packaged viewport: actionRow measured
+     775px wide (fits) on the very first render, using the fallback font --
+     then, immediately after document.fonts.ready (the real 'Orbitron'
+     webfont finishing its load), actionRow's OWN width jumped to 1178px and
+     Depart's right edge to 1196px, with .home's scrollWidth (1196) now
+     exceeding its clientWidth (811) -- all silently past the clipped,
+     overflow:hidden viewport edge. This is intrinsic grid-item/text sizing
+     expanding the GRID CONTAINER itself, not overscan or vertical clipping:
+     .actionRow never declared an explicit width/max-width of its own, so
+     its inline size was never made definite. Per the CSS Grid spec, `fr`
+     tracks (the `minmax(0, Nfr)` columns already in place below) only
+     distribute space against a DEFINITE container size; without one, a
+     grid container's own auto sizing can fall back to each track's
+     max-content contribution instead -- which is exactly the ~403px jump
+     (775px -> 1178px) that landed the moment the wider real webfont
+     metrics replaced the narrower fallback. Fixing this requires making
+     actionRow's own box definite and unable to grow past its container,
+     not just capping its tracks (which were already correctly
+     zero-floored) or its items (actionBtn already had min-width: 0). */
   .actionRow {
-    grid-template-columns: minmax(0, 1.8fr) minmax(0, 1.1fr) minmax(0, 0.9fr) minmax(100px, 0.6fr);
-    gap: 10px;
+    grid-template-columns: minmax(0, 1.8fr) minmax(0, 1.1fr) minmax(0, 0.9fr) minmax(0, 0.6fr);
+    gap: 8px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
   }
 
   .actionBtn {
     min-height: 70px;
     padding: 12px 14px;
+    min-width: 0;
+    max-width: 100%;
   }
 
   .libraryDestination {
@@ -716,13 +818,27 @@
     padding: 14px 16px;
   }
 
+  .libraryDestination .destinationName {
+    font-size: 18px;
+    letter-spacing: 1.5px;
+  }
+
   .controlRoomDestination {
     min-height: 74px;
     padding: 12px 14px;
   }
 
+  .controlRoomDestination .destinationName {
+    font-size: 15px;
+    letter-spacing: 1.5px;
+  }
+
   .switchPlayerDestination {
     min-height: 62px;
+  }
+
+  .switchPlayerDestination .destinationName {
+    font-size: 13px;
   }
 
   .departDestination {
@@ -730,8 +846,74 @@
     padding: 8px 12px;
   }
 
+  .departDestination .destinationName {
+    font-size: 13px;
+  }
+
   .destinationDetail {
     display: none;
+  }
+
+  /* R7: the R6 pass shrank each tile's own min-height/padding, but every
+     tile's box-sizing is border-box (global reset, renderer/src/index.css)
+     and .destinationMarker's per-destination heights (60px/48px/28px, plus
+     the 46px generic fallback switchPlayerDestination uses) were left
+     completely untouched by the compact query. Since actionBtn is
+     `align-items: center`, an unshrunk marker taller than a tile's own
+     (padding + min-height budget) silently forces that tile -- and the
+     whole actionRow, whose height is the tallest tile under align-items:
+     end -- past its intended compact size. Concretely, libraryDestination's
+     content-box budget for its child content was 84px min-height minus
+     14+14px padding = 56px, but its marker stayed 60px tall: the tile (and
+     therefore the whole row) rendered at 88px, not the intended 84px. Small
+     per-tile, but it was one of several uncounted contributors -- alongside
+     the still-full-size Recently Played card below -- that combined to
+     leave real, Windows-confirmed clipping even after the R6 threshold fix.
+     These overrides cap every marker so no tile's real content can force it
+     taller than its own compact min-height + padding budget. */
+  .destinationMarker {
+    height: 32px;
+  }
+
+  .libraryDestination .destinationMarker {
+    height: 40px;
+  }
+
+  .controlRoomDestination .destinationMarker {
+    height: 34px;
+  }
+
+  .departDestination .destinationMarker {
+    height: 22px;
+  }
+
+  /* R7: the Recently Played card was the single largest content block in
+     the whole Sanctuary stack (multiRecentRow .recentCard min-height:205px,
+     completely unaffected by the compact query above) -- it alone accounted
+     for roughly a third of the page's natural content height at 1366x768.
+     Shrinking it here is what actually buys the real, generous safety
+     margin the packaged-layout test now requires; the destinationMarker fix
+     above closes a real but comparatively small gap. */
+  .multiRecentRow .recentCard {
+    min-height: 150px;
+    padding: 10px;
+  }
+
+  .multiRecentRow .recentArt,
+  .multiRecentRow .recentArtFallback {
+    height: 76px;
+    margin-bottom: 8px;
+  }
+
+  .singleRecentRow .recentCard {
+    min-height: 190px;
+    padding: 10px;
+  }
+
+  .singleRecentRow .recentArt,
+  .singleRecentRow .recentArtFallback {
+    height: 110px;
+    margin-bottom: 8px;
   }
 }
 

@@ -207,7 +207,10 @@ export default function ControlRoom({
   }
   const cancelDepart = () => { setShowDepart(false); restoreDepartFocus(departTriggerRef.current) }
   const chooseDepart = (next) => setDepartChoice(next)
-  const acceptDepart = () => { window.nuarcade?.quit?.() }
+  // Swallows a rejected quit-app IPC round-trip so a failed quit never
+  // surfaces as an unhandled promise rejection (a missing bridge is
+  // already safe via the optional chains alone).
+  const acceptDepart = () => { window.nuarcade?.quit?.()?.catch?.(() => {}) }
   const declineDepart = () => cancelDepart()
 
   // Root-level gamepad navigation is suppressed entirely while a station is
@@ -506,8 +509,8 @@ export default function ControlRoom({
           eyebrow={t("home.worldName")}
           title={t("wheel.confirmExitTitle")}
           hint={t("wheel.confirmExitHint")}
-          yesLabel={t("common.yes")}
-          noLabel={t("common.no")}
+          yesLabel={t("depart.depart")}
+          noLabel={t("depart.remain")}
           choice={departChoice}
           onChoiceChange={chooseDepart}
           onConfirm={acceptDepart}

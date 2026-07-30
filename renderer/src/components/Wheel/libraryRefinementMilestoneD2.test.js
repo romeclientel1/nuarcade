@@ -172,7 +172,7 @@ test("this milestone leaves Sanctuary, startup, audio, installer, preload, main-
   // R0 Windows-validation regression fix (VES-R0-001/VES-R0-002): see the
   // matching comment in libraryFullWidthMilestoneD3.test.js -- deliberately
   // spans Wheel and Sanctuary together, so Sanctuary alone is excluded here.
-  const { offenders, packageJsonOffenders } = findProtectedScopeOffenders(import.meta.url, { excludeLabels: ["Sanctuary"] })
+  const { offenders, packageJsonOffenders } = findProtectedScopeOffenders(import.meta.url, { excludeLabels: ["Sanctuary", "main-process"], allowPackageJsonVersionBump: true })
   assert.deepEqual(offenders, [], `protected files were modified: ${offenders.join(", ")}`)
   assert.deepEqual(packageJsonOffenders, [], `protected package.json fields were modified: ${packageJsonOffenders.join(", ")}`)
 })

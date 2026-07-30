@@ -162,6 +162,14 @@ export default {
   "home.confirmDepartTitle": "LEAVE VESPARA?",
   "home.confirmDepartHint": "Your place here will remain, ready for your return.",
 
+  // Shared choice labels for the one Depart confirmation dialog rendered
+  // from Sanctuary, the Library, and the Control Room (renderer/src/
+  // components/Depart/DepartConfirmation.jsx) -- deliberately in-world
+  // ("Remain"/"Depart") rather than the generic common.yes/common.no used
+  // by ordinary confirm dialogs elsewhere in the app.
+  "depart.remain": "Remain",
+  "depart.depart": "Depart",
+
   "wheel.scanning": "Scanning game library...",
   "wheel.categoryAll": "All",
   "wheel.navHome": "Return to Sanctuary",

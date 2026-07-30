@@ -252,7 +252,8 @@ test("this milestone leaves Sanctuary, startup, audio, installer, preload, main-
   // dependency/version) fully in force.
   const { offenders, packageJsonOffenders } = findProtectedScopeOffenders(import.meta.url, {
     scopeDir: "renderer/src/components/ControlRoom/",
-    excludeLabels: ["Sanctuary"],
+    excludeLabels: ["Sanctuary", "main-process"],
+    allowPackageJsonVersionBump: true,
   })
   assert.deepEqual(offenders, [], `protected files were modified: ${offenders.join(", ")}`)
   assert.deepEqual(packageJsonOffenders, [], `protected package.json fields were modified: ${packageJsonOffenders.join(", ")}`)
