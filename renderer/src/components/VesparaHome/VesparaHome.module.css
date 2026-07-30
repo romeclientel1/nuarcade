@@ -679,7 +679,21 @@
   opacity: 0.94;
 }
 
-@media (max-width: 900px), (max-height: 680px) {
+/* R6: widened from max-height:680px. At 1366x768 (a mainstream laptop/
+   TV resolution) the full-size Sanctuary stack -- header + a populated
+   Recently Played row (multiRecentRow .recentCard min-height:205px) + the
+   destination row -- computes to roughly 800px of natural content height
+   (see sanctuaryPackagedLayoutMilestoneR6.test.js for the full arithmetic),
+   which is taller than the 768px viewport .home clips to (.home is
+   position:fixed;inset:0;overflow:hidden, with no scroll affordance). The
+   old 680px threshold never engaged at 768px tall, so 1366x768 silently ran
+   the spacious, non-compact layout -- the one configuration least likely to
+   fit -- and departDestination (the smallest tile, bottom-aligned at the very
+   end of the action row) was the first thing pushed below the clipped,
+   unreachable-by-mouse-or-scroll region. 800px safely covers 768px (and
+   720p) while remaining well below any standard desktop height (900px,
+   1080px), so 1920x1080 keeps today's exact spacious styling untouched. */
+@media (max-width: 900px), (max-height: 800px) {
   .sanctuary {
     padding: 24px;
   }
