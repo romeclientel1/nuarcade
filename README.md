@@ -2,7 +2,7 @@
 
 A modern arcade cabinet frontend built for serious collectors and venue operators.
 
-**Current version: v6.0.2**
+**Current version: v6.0.3**
 
 ---
 
@@ -10,7 +10,7 @@ A modern arcade cabinet frontend built for serious collectors and venue operator
 
 Vespara is an Electron-based game launcher that manages your arcade library from a single interface: browse and launch games across 20 supported systems, get instant AI coaching on any game, and configure everything — emulators, paths, controllers, and media — from one place.
 
-For full setup and day-to-day instructions, see the **[Owner's Manual](USER_MANUAL.md)**, verified against Vespara 6.0.2.
+For full setup and day-to-day instructions, see the **[Owner's Manual](USER_MANUAL.md)**, verified against Vespara 6.0.3.
 
 ---
 
@@ -121,7 +121,7 @@ Full keyboard and controller reference, including Sanctuary and Control Room nav
 
 ## Documentation
 
-- **[Owner's Manual](USER_MANUAL.md)** — the full guide, from a guest's quick start to owner setup, verified against Vespara 6.0.2.
+- **[Owner's Manual](USER_MANUAL.md)** — the full guide, from a guest's quick start to owner setup, verified against Vespara 6.0.3.
 - **[Releases](https://github.com/romeclientel1/nuarcade/releases)** — download installers and see release notes.
 
 ---
