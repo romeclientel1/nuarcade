@@ -1,70 +1,66 @@
 # Vespara <sub>by NuArcade</sub>
 
-A modern arcade cabinet frontend built for serious collectors and venue operators. Vespara replaces HyperSpin and LaunchBox with a clean, fast, AI-powered experience built on Electron + React, powered by the NuArcade platform underneath.
+A modern arcade cabinet frontend built for serious collectors and venue operators.
 
 **Current version: v6.0.2**
 
-**New to Vespara or just need a refresher?** See the [User Manual](USER_MANUAL.md) -- covers everything from a guest's quick start to full owner setup.
+---
+
+## What Vespara is
+
+Vespara is an Electron-based game launcher that manages your arcade library from a single interface: browse and launch games across 20 supported systems, get instant AI coaching on any game, and configure everything — emulators, paths, controllers, and media — from one place.
+
+For full setup and day-to-day instructions, see the **[Owner's Manual](USER_MANUAL.md)**, verified against Vespara 6.0.2.
 
 ---
 
-## What's New in 5.0
+## First launch
 
-The biggest stability pass NuArcade has had. Highlights:
-
-**Media & Artwork**
-- Fixed a core bug where fetched or imported artwork sat correctly in storage but never appeared on the wheel without a full restart
-- New "Auto-fill Everything" workflow -- one click runs EmuMovies first, then SteamGridDB and YouTube fill in whatever's still missing
-- 3D box art (transparent-background EmuMovies style) now displays correctly instead of showing an unrelated placeholder image through the transparent areas
-- Card artwork now fills significantly more of each card -- the dark title gradient was covering nearly 40% of the art for no real reason
-- EmuMovies bulk import ("Import All" and Auto-fill) is dramatically faster at large libraries -- fixed a bottleneck that made it look stuck or finished when it was still working
-- Orphaned media cleanup no longer misidentifies stray system files as orphaned game art
-
-**Bezels & Artwork Matching**
-- Real per-game bezel matching for 23 RetroArch systems (NES, SNES, Genesis, N64, Saturn, GBA/GBC/GB, PSX, and more) -- auto-detects whichever RetroArch core is actually installed and pulls matching artwork from Bezel Project, no manual setup per system
-- Bezel matching moved out of Settings into its own tab in Media Manager, alongside a new MAME artwork cleanup tool that compares installed bezels against your real ROM library and removes anything that does not match -- dry-run first, nothing deletes until you confirm
-- New: point NuArcade at your own EmuMovies Sync or Hyperspin bezel downloads (Settings > Paths > "Bezel Source Folder") and it will auto-install matching bezels for any MAME game that does not already have artwork -- existing artwork is never touched or overwritten
-- That local-folder install now goes further: RetroArch-style overlay bezels sitting in the same folder are automatically converted to native MAME format, and any game with no bezel available anywhere gets one of NuArcade's own bundled placeholder templates (correctly oriented vertical/horizontal via MAME's own driver data) so nothing is ever left blank
-- Fixed Sega Saturn bezel matching for setups running the YabaSanshiro core -- previously only Yabause and Beetle Saturn were recognized, so YabaSanshiro users got no bezels at all
-
-**Performance**
-- Wheel artwork now loads far faster -- previously every game in the library mounted its card and artwork simultaneously on load, even the hundreds not on screen
-- YouTube bulk fetch defaults to 2 concurrent downloads instead of 4, reducing timeout failures
-
-**Scanning & Compatibility**
-- PS3 and Xbox 360 scanners now properly validate game folders instead of counting junk/cache directories as games
-- RetroArch category added, and a systemic config-path bug fixed across 9 scanners (RetroArch, PS3, Switch, Xbox 360, GC/Wii, PS2, Dreamcast, Steam, TeknoParrot)
-- DuckStation and Ryujinx/Ryubing detection now uses fuzzy matching instead of exact filenames, so it survives version updates
-- .zip/.7z support added across several scanners
-- MAME games scanned via the RetroArch folder structure now resolve real titles instead of showing raw ROM shortnames like "whp"
-- MAME launch focus timing extended (third retry at 8s) and -nowindow forced explicitly, fixing occasional missed keyboard/controller focus on slower cold starts
-- Dreamcast games are now also recognized when organized under RetroArchGames\Dreamcast\ (GDI-in-subfolder included), not just the dedicated Flycast folder -- an existing toggle in Settings decides whether those games launch through standalone Flycast (default, best compatibility) or RetroArch's Flycast core (adds bezel support)
-- Original Xbox support added: Xemu (plays .iso/.xiso directly) and Cxbx-Reloaded (needs the game extracted into a folder with its .xbe exposed) live side by side in one Xbox Games folder -- whichever file format you have on disk for a title decides which emulator it launches with, no toggle needed -- setup wizard, Help screen, and user manual now cover both emulators too
-- MAME ROMs MAME itself flags as "preliminary" (Not Working) are now excluded from both the standalone MAME scanner and MAME games found under RetroArchGames -- checked against MAME's own driver database, new toggle in Settings under MAME
-
-**Wheel & UI**
-- System logos now show in the category strip
-- Wheel navigation has a real spring/overshoot animation instead of a jarring instant snap
-- Fixed the overshoot animation briefly flashing a different game's hero art over the current selection during navigation -- hero background and logo now wait for the selection to actually settle before appearing
-- Player initials now display correctly at the top of the screen
-- CRT effect and theme color settings are now properly wired and persist across restarts
-- Category pill and bottom hint bar text bumped from barely-visible to actually readable
-- Removed the boot splash screen cycling top games on startup
-
-**Quality of Life**
-- Update-check system fixed and now shows directly on the home screen, not just buried in Settings
-- Diagnostic log in Media Manager now visible from every tab instead of only the Library tab
-- System filter dropdowns added to both the Library and Artwork tabs
+Vespara opens with a short intro, then arrives at **Traveler Recognition** — pick an existing Traveler, create a new one, or continue as Guest. From there you arrive in **the Sanctuary**, Vespara's home screen.
 
 ---
 
-## What it does
+## The Sanctuary
 
-NuArcade is an Electron-based game launcher that manages your entire arcade library from a single interface. Navigate a curved 3D arc wheel, watch gameplay videos play behind the cards, launch games across 17+ emulators, and get instant AI coaching on any game -- all from a controller.
+The Sanctuary is home base. It shows **Recently Played** — up to 8 games, scoped to the current Traveler — and four destinations:
+
+| Destination | What it does |
+|---|---|
+| The Library | Browse and launch your game collection |
+| The Control Room | Configure emulators, paths, controllers, and media |
+| Switch Player | Return to Traveler Recognition |
+| Depart | Close Vespara (confirm with **Depart**, or **Remain** to cancel) |
+
+<!-- Screenshot: assets/docs/sanctuary-hero.png -->
 
 ---
 
-## Supported Systems
+## The Library
+
+Browse by system, search by name, sort by most played/most launched/recently added/top rated/system, mark favorites, group games into your own Collections, jump to a random game, and check Stats and Achievements. Selecting a game opens its **Archive View** — artwork, a gameplay preview, and launch options.
+
+The **AI Game Coach** (press `C`) gives move lists, tips, and strategy for the selected game, and supports natural-language search.
+
+<!-- Screenshot: assets/docs/library-browse.png -->
+
+See the [Owner's Manual](USER_MANUAL.md#3-the-library) for full detail.
+
+---
+
+## The Control Room
+
+Reached from the Sanctuary, the Control Room holds all configuration in two wings:
+
+- **Systems Wing** — Emulators, Game Paths, Controllers, Launch Behavior, Display & Performance, Preferences, Systems Archive.
+- **Archives Wing** — Artwork, Videos, Scraping, Bezels, Media Restoration.
+
+Opening any Archives Wing station takes you into a screen still titled **Media Manager** — that's expected, not a bug.
+
+See the [Owner's Manual](USER_MANUAL.md#5-the-control-room) for a station-by-station breakdown.
+
+---
+
+## Supported systems
 
 | System | Emulator |
 |---|---|
@@ -74,267 +70,62 @@ NuArcade is an Electron-based game launcher that manages your entire arcade libr
 | Xbox 360 | Xenia |
 | GameCube / Wii | Dolphin |
 | PlayStation 2 | PCSX2 |
-| Nintendo Switch | Ryubing (Ryujinx fork) |
+| Nintendo Switch | Ryujinx |
+| Nintendo 64 | Project64 |
 | PlayStation 1 | DuckStation |
 | Dreamcast / NAOMI | Flycast |
+| Original Xbox | Xemu |
+| Original Xbox (fallback for specific titles) | Cxbx-Reloaded |
 | PlayStation Portable | PPSSPP |
 | Wii U | Cemu |
 | Sega Model 2 | Model 2 Emulator |
 | Sega Model 3 | Supermodel |
 | Pinball | Visual Pinball X |
-| Steam | Steam |
+| Steam | Launched via Steam |
 | PC Games | Direct launch |
-| NES, SNES, N64, GBA, GBC, GB, NDS | RetroArch |
-| Genesis, Saturn, Sega CD, 32X, Master System, Game Gear | RetroArch |
-| PlayStation 1, PSP, Dreamcast | RetroArch |
-| Neo Geo, PC Engine, Atari, Amiga, C64, DOS, ScummVM + more | RetroArch |
-
-RetroArch games are organized by system subfolder -- only systems with ROMs present appear in your library.
+| NES, SNES, Genesis, GBA, and many other classic systems | RetroArch |
 
 ---
 
 ## Installation
 
-### Requirements
-- Windows 10 or 11 (64-bit)
-- Games stored on F:\ drive (recommended) or a path you configure
-- Emulators installed separately (NuArcade links to them, it does not include ROMs or emulator binaries)
+- Requires Windows 10 or 11, 64-bit.
+- Vespara does not include games, ROMs, BIOS files, firmware, keys, or emulator binaries — you provide and configure all of those yourself.
+- Download the latest installer (`Vespara.Setup.<version>.exe`) from [Releases](https://github.com/romeclientel1/nuarcade/releases) and run it.
+- Vespara does not require or assume any particular drive letter for your games or media.
 
-### Steps
-
-1. Download the latest installer from [Releases](https://github.com/romeclientel1/nuarcade/releases)
-2. Run `NuArcade-Setup-X.X.X.exe` -- the NSIS installer handles everything
-3. Launch NuArcade -- it opens straight to the main wheel
-4. Open **Settings** to point NuArcade at your emulators and game folders, configure controllers, and set up media sources
-5. Use **Rescan** in Settings (or restart) after configuring paths to populate your library
-
-### Default folder layout
-
-NuArcade expects this structure on first launch (auto-created):
-
-```
-F:\
-  ArcadeGames\          TeknoParrot games
-  MAME\roms\            MAME ROMs
-  PS3Games\             RPCS3 games
-  Xbox360Games\         Xenia games
-  GCWiiGames\           Dolphin games
-  PS2Games\             PCSX2 games
-  SwitchGames\          Ryubing games
-  PS1Games\             DuckStation games
-  DreamcastGames\       Flycast games
-  PSPGames\             PPSSPP games
-  WiiUGames\            Cemu games
-  Model2Games\          Model 2 games
-  Model3Games\          Model 3 games
-  RetroArch\roms\       RetroArch ROMs (one subfolder per system)
-    nes\
-    snes\
-    n64\
-    gba\
-    genesis\
-    saturn\
-    psx\
-    ... (36 system folders auto-created)
-  Media\                Artwork and videos (auto-created)
-    Music\
-    MAME\, TeknoParrot\, RPCS3\, ... (per-system art folders)
-    EmuMovies\          EmuMovies Sync compatible folders
-```
+See the [Owner's Manual](USER_MANUAL.md#6-setting-up-emulators-and-game-paths) for emulator and path setup.
 
 ---
 
-## Xbox Controller Mapping
+## Updates
 
-NuArcade is fully playable with an Xbox controller. Plug it in before launching.
-
-### INSERT COIN Screen
-
-| Button | Action |
-|---|---|
-| D-pad Up | Move focus to EXIT button |
-| D-pad Down | Move focus down (wraps from EXIT back to profiles) |
-| D-pad Left / Right | Cycle between profiles, New Player, Play as Guest |
-| A | Select focused item (profile, New Player, Guest, or EXIT) |
-| B | Quick shortcut to Play as Guest |
-| A on EXIT (x2) | First press shows CONFIRM, second press exits app |
-
-### Main Wheel
-
-| Button | Action |
-|---|---|
-| D-pad Left / Left Stick Left | Previous game |
-| D-pad Right / Left Stick Right | Next game |
-| D-pad Up | Previous system tab |
-| D-pad Down | Next system tab |
-| A | Open game detail screen |
-| B | Close overlay / go back |
-| Start | Open Settings |
-| Select | Open Search |
-
-### Game Detail Screen
-
-| Button | Action |
-|---|---|
-| A | Launch the game |
-| B | Close detail, return to wheel |
+Vespara checks for an update once per session and installs it silently. After installing, Vespara may close and need to be reopened manually — just reopen it normally. See the [Owner's Manual](USER_MANUAL.md#9-updating-vespara) for detail.
 
 ---
 
-## Media Setup
-
-NuArcade supports two media sources:
-
-### SteamGridDB (built-in, free)
-Hero art and capsule images are fetched automatically from SteamGridDB. Configure your API key in Settings -- no other setup needed.
-
-### EmuMovies Sync (recommended for video snaps and box art)
-1. Create an account at [emumovies.com](https://emumovies.com) -- a free account works, a supporting/lifetime membership unlocks video content
-2. Download the official EmuMovies Sync desktop app from their site
-3. In NuArcade, open **Media > EmuMovies tab > "Create folder structure"** -- this builds one folder per emulator NuArcade supports (matching the Emulators grid in Settings, minus RetroArch, since RetroArch spans many systems rather than being one itself)
-4. Point EmuMovies Sync's destination folder at the specific emulator folder for whatever you're downloading (e.g. point it at `Xenia` when downloading Xbox 360 content)
-5. In Sync, select the matching system from its own dropdown and run the download -- Sync creates its own system-named subfolder inside whatever folder you pointed it at
-6. Back in NuArcade, click **"Scan EmuMovies folder"** -- it finds media regardless of whether Sync nested it directly or one level inside a per-emulator wrapper folder, and shows you a review list before anything imports
-
-> **Step 6 is required, not automatic.** Downloading media with EmuMovies Sync only puts files on disk -- it doesn't do anything inside NuArcade by itself. Nothing shows up on the wheel until you go back into **Media > EmuMovies tab** and click "Scan EmuMovies folder" (then import from the results). It's easy to assume the videos and box art will "just work" once Sync finishes downloading -- they won't, until this step runs.
-
-Each emulator folder gets a `README.txt` explaining what system(s) it plays and which EmuMovies system name to select -- see the table below for the full reference.
-
-The real EmuMovies subfolder names (as of Sync v2.71): `Snap`, `Title`, `Background`, `Box`, `Box_25D`, `Box_3D`, `Box_Full`, `Box_Spine`, `BoxBack`, `Cart`, `Logos`, `Manual`, `System_Logo`, `Video_MP4`, `Video_MP4_HD`, `Video_MP4_HI_QUAL`, `Video_AVI`, `Video_AVI_HD`, `Video_AVI_HI_QUAL`. NuArcade's scanner prefers the highest available video quality tier automatically.
-
-### Emulator to EmuMovies system mapping
-
-Verified directly against EmuMovies Sync's own system dropdown (v2.71) -- these are the exact names to select in Sync for each NuArcade emulator.
-
-| NuArcade emulator | Select this system in EmuMovies Sync |
-|---|---|
-| RPCS3 | Sony PlayStation 3 |
-| Xenia | Microsoft Xbox 360 |
-| Dolphin | Nintendo GameCube, Nintendo Wii |
-| PCSX2 | Sony Playstation 2 |
-| Ryubing | Nintendo Switch |
-| MAME | MAME |
-| Project64 | Nintendo N64 |
-| DuckStation | Sony Playstation (PS1) |
-| Flycast | Sega Dreamcast, Sega Naomi, Sammy Atomiswave |
-| Model 2 Emulator | Sega Model 2 |
-| Supermodel (M3) | Sega Model 3 |
-| PPSSPP | Sony PSP |
-| Cemu | Nintendo Wii U |
-| Visual Pinball X | Visual Pinball (EmuMovies drops the "X") |
-
-### A note on TeknoParrot
-
-TeknoParrot isn't one system -- it runs many different arcade hardware platforms (SEGA Lindbergh, RingEdge, RingWide, ALL.Net/NU/ALLS, Namco System 357/369/ES-series, Taito Type X, and more). Checked against EmuMovies' own system list: **most of that hardware is not in EmuMovies' catalog at all.** That covers the bulk of TeknoParrot's library -- Initial D, Wangan Midnight, Mario Kart Arcade GP, House of the Dead, most racing and lightgun titles run on hardware EmuMovies simply doesn't have media for, regardless of which category you pick.
-
-The one confirmed real match: select **Konami e-AMUSEMENT** in Sync for any Konami/Bemani-adjacent titles in your TeknoParrot library.
-
-For everything else in TeknoParrot, use NuArcade's own YouTube video pipeline instead (**Media > Library tab**, "Find video" per game) -- it has real coverage for popular arcade titles that EmuMovies does not.
-
-### System Logos (optional)
-
-The category pills above your wheel can show a real system logo instead of plain text, once you add your own images.
-
-1. Drop image files into `<your Media folder>\SystemLogos\` -- created automatically the first time this runs
-2. Name each file to match the category exactly (lowercase, no spaces): `xbox360.png`, `ps1.png`, `ps2.png`, `dreamcast.png`, `n64.png`, `switch.png`, `wiiu.png`, `gcwii.png`, `pinball.png`, etc. -- `.png`, `.jpg`, `.jpeg`, `.webp`, and `.svg` all work
-3. Restart NuArcade (same as any config/media change)
-
-Any category without a matching logo just keeps showing its text label, so this can be done incrementally. NuArcade doesn't ship or generate any logo images itself -- since official console logos are trademarked, you'll need to source your own (fan art, icon packs, or your own designs all work).
-
----
-
-## Features
-
-### Arc Wheel
-- Cards fan out on a curved arc across the full screen width
-- Velocity-based momentum -- hold a direction to accelerate, release to coast
-- Elastic overshoot -- wheel snaps with a satisfying spring feel
-- System color-coded cards -- each emulator has its own color identity
-- Background video crossfade per game
-- Card shine sweep animation on selection
-
-### AI Game Coach
-- Press C (or hold A on controller) to open the coach for any game
-- Powered by Claude via Railway proxy
-- Gives move lists, tips, strategies, and combos
-- Natural language search -- type what you want to play
-
-### Operator Dashboard
-- Press O to open the operator view
-- 35-day activity heat map, playtime totals, system breakdown
-- Launch counts and per-game stats
-
-### Player Profiles
-- INSERT COIN screen on boot
-- Per-player playtime, game history, favorites, and ratings
-- Switch players mid-session
-
-### Controller Hints
-- 2-second overlay on game launch showing the correct controller layout
-- Covers TeknoParrot, MAME, Model 2, and Model 3
-
-### Collections
-- Press N to manage collections
-- Group games into custom lists
-
-### Auto-Updater
-- An amber "UPDATE" badge appears on the main wheel's top bar and in Settings when a new version is available
-- Checks for updates once per session (not on a background timer)
-- Clicking the badge downloads and silently installs the new version in the background (with a live progress indicator), then restarts NuArcade automatically -- no browser trip, no installer wizard
-
----
-
-## Keyboard Shortcuts (Main Wheel)
+## Quick controls
 
 | Key | Action |
 |---|---|
 | Left / Right Arrow | Previous / next game |
-| Enter | Open game detail view |
-| Space | Launch game |
+| Enter | Open game detail (Archive View) |
+| Space | Launch the selected game |
 | F | Toggle favorite |
 | C | AI Game Coach |
-| O | Operator dashboard |
-| N | Collections |
-| T | Stats |
-| A | Achievements |
-| R | Random game |
-| S | Screenshot mode |
-| ? | Toggle help |
 | Esc | Back / close overlay |
 
----
-
-## Folder Schema Versioning
-
-NuArcade tracks which version of the media/ROM folder structure has been created on your cabinet. When a new version introduces new system support, folders are automatically created on next launch without any manual steps.
-
-### Game Library Cache
-Scanned games (titles, artwork, metadata) are cached locally for 24 hours to keep launches fast. **This cache survives app updates and reinstalls** -- it's stored separately from the app itself.
-
-If a fix changes how games are scanned or titled and you don't see it reflected: go to Settings -> "Rescan all emulators", then fully close and reopen NuArcade. Rescanning alone clears the cache but doesn't refresh what's currently on screen -- only a fresh launch does that.
+Full keyboard and controller reference, including Sanctuary and Control Room navigation, is in the [Owner's Manual](USER_MANUAL.md#11-keyboard-and-controller-reference).
 
 ---
 
-## Development
+## Documentation
 
-Built with Electron 31 + React + Vite. Railway proxy handles AI features.
-
-```
-git clone https://github.com/romeclientel1/nuarcade
-cd nuarcade
-npm install
-npm run dev
-```
-
-Build (Windows NSIS installer via GitHub Actions):
-
-```
-# Push to main -- GitHub Actions builds NuArcade-Setup-X.X.X.exe automatically
-# Or trigger manually: Actions > Build NuArcade > Run workflow
-```
+- **[Owner's Manual](USER_MANUAL.md)** — the full guide, from a guest's quick start to owner setup, verified against Vespara 6.0.2.
+- **[Releases](https://github.com/romeclientel1/nuarcade/releases)** — download installers and see release notes.
 
 ---
 
 ## License
 
-MIT
+This repository's `package.json` declares an MIT license, but no standalone `LICENSE` file currently exists in the repository.
