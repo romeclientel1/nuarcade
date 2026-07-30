@@ -1,9 +1,14 @@
 // sanctuaryFontBlowoutMilestoneR10.test.js -----------------------------------
 //
 // R10: packaged runtime diagnostics (layoutDiagnostics.js, wired into
-// VesparaHome.jsx by the prior R9 diagnostic milestone and preserved here
-// per this task's direction) captured the ACTUAL mechanism behind the
-// Sanctuary Depart clipping report, at an 811x768 packaged viewport:
+// VesparaHome.jsx by the prior R9 diagnostic milestone) captured the ACTUAL
+// mechanism behind the Sanctuary Depart clipping report, at an 811x768
+// packaged viewport. That diagnostics module and its VesparaHome.jsx wiring
+// have since been removed (cleanup/6.0.2-remove-layout-diagnostics) now
+// that the fix below has passed both runtime and visual packaged
+// validation -- this doc comment keeps the captured numbers and reasoning
+// for historical/audit context, but nothing in this file still asserts the
+// diagnostics module itself is present:
 //
 //   Initial render (fallback font, before document.fonts.ready):
 //     actionRow: left 18, width 775, right 793   -- fits.
@@ -89,12 +94,13 @@
 // 100%` -- and per the CSS box model, a NORMAL block-level box with
 // `max-width: 100%` of a definite containing block CANNOT render wider than
 // that containing block, independent of any content/font sizing inside it.
-// That is a structural guarantee, not an estimate. What this sandbox cannot
-// independently confirm is the EXACT post-fix pixel numbers on the real
-// packaged build (Requirement 8 -- diagnostics are preserved specifically so
-// a follow-up packaged run can confirm them). Section 3 below states the
-// expected post-fix bounds as a structural inference from the CSS box
-// model, explicitly labeled as such.
+// That is a structural guarantee, not an estimate. The exact post-fix pixel
+// numbers WERE independently confirmed on the real packaged build (both
+// runtime measurement and visual inspection), which is what authorized
+// removing the temporary diagnostics module afterward. Section 3 below
+// states the expected post-fix bounds as a structural inference from the
+// CSS box model, explicitly labeled as such, alongside the confirmed
+// captured numbers.
 
 import { test } from "node:test"
 import assert from "node:assert/strict"
@@ -279,9 +285,8 @@ test("the captured pre-fix home.scrollWidth (1196) exceeded home.clientWidth (81
 // the viewport), the chain .home -> .sanctuary -> .actionRow now has a
 // definite, capped width at every link once .actionRow gained width/
 // max-width: 100%. This section locks in that guarantee wherever a plain
-// arithmetic model can express it, but Requirement 8 (preserving the
-// diagnostics) is what will let a real packaged run confirm the literal
-// pixel numbers.
+// arithmetic model can express it; the literal pixel numbers were
+// separately confirmed on a real packaged run (see the module doc comment).
 
 test("with .actionRow's own inline size now definite (width/max-width: 100%), the structural upper bound on its right edge at an 811px viewport is exactly the documented 793px -- Depart, as its last child, cannot exceed the same bound", () => {
   // This is a direct structural consequence of max-width: 100% inside a
@@ -301,20 +306,7 @@ test("with actionRow's own box capped, actionRow.scrollWidth can no longer legit
 })
 
 // =============================================================================
-// -- 4. Diagnostics preserved for a follow-up packaged verification ---------
-// =============================================================================
-
-test("the R9 runtime layout diagnostics (layoutDiagnostics.js and its VesparaHome.jsx wiring) are still present and still disabled by default -- preserved for one more packaged verification pass, per this task's direction", () => {
-  const jsx = read("VesparaHome.jsx")
-  assert.match(jsx, /import \{ logSanctuaryLayout, drawLayoutOutlines, clearLayoutOutlines, isLayoutDebugEnabled \} from "\.\/layoutDiagnostics\.js"/)
-  assert.match(jsx, /requestAnimationFrame\(\(\) => runLayoutDiagnostics\("initial-render"\)\)/)
-  assert.match(jsx, /document\.fonts\.ready\.then\(\(\) => \{/)
-  assert.match(jsx, /runLayoutDiagnostics\("recently-played"\)/)
-  assert.match(jsx, /window\.addEventListener\("resize", onResize\)/)
-})
-
-// =============================================================================
-// -- 5. R11: the ancestor chain (.body -> .destinationDeck -> .actionRow) ---
+// -- 4. R11: the ancestor chain (.body -> .destinationDeck -> .actionRow) ---
 // =============================================================================
 //
 // A packaged DevTools computed-style report found the R10 fix constrained
