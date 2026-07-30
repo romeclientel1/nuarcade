@@ -9,7 +9,9 @@
 // renamed field, an added category), this test's extraction regexes may
 // need updating alongside it.
 //
-// What this locks in, matching the audit's findings exactly:
+// What this locks in, matching the audit's findings (as amended by the
+// fix/library-system-tabs repair -- see systemCategoryRepair.test.js for
+// coverage specific to that repair):
 //   1. The logo folder is `<mediaPath>/SystemLogos`, extension whitelist is
 //      exactly .png/.jpg/.jpeg/.webp/.svg, and both the file-scan side and
 //      the render side lowercase their key before matching (case-insensitive
@@ -18,11 +20,11 @@
 //      possible non-collection tab ids, and the required filename stem for
 //      each is the literal id string lowercased -- with spaces/hyphens kept
 //      verbatim, not stripped.
-//   3. Specific known-bad states stay bad (so a silent fix doesn't make an
-//      audit finding stale without anyone noticing): "Retro" has no scanner
-//      that ever produces a matching game, "Xbox" has no CATEGORIES entry
-//      at all, and `scanPinballTables` (called from the Pinball IPC
-//      handler) is not defined anywhere in scanner.js.
+//   3. The three issues the original audit flagged are fixed, not just
+//      documented as broken: "Retro" is gone from CATEGORIES entirely (was
+//      never populated by any scanner), "Original Xbox" now exists as a
+//      dedicated CATEGORIES entry distinct from "Xbox360", and
+//      `scanPinballTables` is defined and exported from scanner.js.
 
 import { test } from "node:test"
 import assert from "node:assert/strict"
@@ -47,11 +49,11 @@ function extractCategories(src) {
 
 const CATEGORIES = extractCategories(wheelSrc)
 
-test("CATEGORIES matches the audited 26-entry fixed list, in order", () => {
+test("CATEGORIES matches the repaired 26-entry fixed list, in order", () => {
   assert.deepEqual(CATEGORIES, [
-    "All", "Favorites", "Recent", "Arcade", "MAME", "Retro", "Racing", "Fighting",
+    "All", "Favorites", "Recent", "Arcade", "MAME", "Racing", "Fighting",
     "Shooter", "Rhythm", "Flying", "Sports", "N64", "PS1", "PSP", "Dreamcast",
-    "Model2", "Model3", "PS3", "Xbox360", "GCWii", "WiiU", "PS2", "Switch",
+    "Model2", "Model3", "PS3", "Xbox360", "Original Xbox", "GCWii", "WiiU", "PS2", "Switch",
     "Pinball", "PC",
   ])
 })
@@ -59,10 +61,10 @@ test("CATEGORIES matches the audited 26-entry fixed list, in order", () => {
 test("every fixed CATEGORIES id's required logo filename stem is the id lowercased verbatim (no space/punctuation stripping)", () => {
   const expectedStems = {
     All: "all", Favorites: "favorites", Recent: "recent", Arcade: "arcade", MAME: "mame",
-    Retro: "retro", Racing: "racing", Fighting: "fighting", Shooter: "shooter", Rhythm: "rhythm",
+    Racing: "racing", Fighting: "fighting", Shooter: "shooter", Rhythm: "rhythm",
     Flying: "flying", Sports: "sports", N64: "n64", PS1: "ps1", PSP: "psp", Dreamcast: "dreamcast",
-    Model2: "model2", Model3: "model3", PS3: "ps3", Xbox360: "xbox360", GCWii: "gcwii",
-    WiiU: "wiiu", PS2: "ps2", Switch: "switch", Pinball: "pinball", PC: "pc",
+    Model2: "model2", Model3: "model3", PS3: "ps3", Xbox360: "xbox360", "Original Xbox": "original xbox",
+    GCWii: "gcwii", WiiU: "wiiu", PS2: "ps2", Switch: "switch", Pinball: "pinball", PC: "pc",
   }
   for (const cat of CATEGORIES) {
     assert.equal(cat.toLowerCase(), expectedStems[cat], `unexpected stem for "${cat}"`)
@@ -127,19 +129,22 @@ test("logos reload on every Wheel mount with no explicit rescan call (useEffect 
   assert.match(wheelSrc, /useEffect\(\(\) => \{\s*window\.nuarcade\?\.getSystemLogos\?\.\(\)/)
 })
 
-// -- 4. Known-bad states this audit flagged: must stay bad, or the doc goes stale --
+// -- 4. The three originally-flagged issues are fixed, not just documented --
 
-test("'Retro' has no scanner anywhere setting genre/system to 'Retro' -- the tab can never populate", () => {
+test("'Retro' is gone from CATEGORIES and no scanner anywhere sets genre/system to 'Retro'", () => {
+  assert.ok(!CATEGORIES.includes("Retro"))
   assert.doesNotMatch(scannerSrc, /(?:genre|system):\s*'Retro'/)
   assert.doesNotMatch(scannerSrc, /(?:genre|system):\s*"Retro"/)
 })
 
-test("'Xbox' has no CATEGORIES entry -- Original Xbox games have no tab and no possible logo filename", () => {
+test("'Xbox' (bare) has no CATEGORIES entry, but 'Original Xbox' does, distinct from 'Xbox360'", () => {
   assert.ok(!CATEGORIES.includes("Xbox"))
-  assert.ok(CATEGORIES.includes("Xbox360"), "sanity check: Xbox360 (the actually-fixed id) should still exist")
+  assert.ok(CATEGORIES.includes("Original Xbox"))
+  assert.ok(CATEGORIES.includes("Xbox360"))
 })
 
-test("scanPinballTables is referenced by the Pinball IPC handler but not defined in scanner.js -- Pinball tab cannot populate", () => {
+test("scanPinballTables is defined and exported from scanner.js, and still referenced by the Pinball IPC handler", () => {
   assert.match(mainIndexSrc, /scanPinballTables/)
-  assert.doesNotMatch(scannerSrc, /function scanPinballTables/)
+  assert.match(scannerSrc, /async function scanPinballTables/)
+  assert.match(scannerSrc, /module\.exports = \{ \.\.\.module\.exports, scanPinballTables \}/)
 })
