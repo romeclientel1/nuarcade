@@ -21,6 +21,7 @@ import { shouldConsumeRestoration, resolveHomeFocus } from "../../launchSession/
 import { useI18n } from "../../i18n/I18nContext.js"
 import { useSanctuaryAmbience } from "./useSanctuaryAmbience.js"
 import DepartConfirmation from "../Depart/DepartConfirmation.jsx"
+import { logSanctuaryLayout, drawLayoutOutlines, clearLayoutOutlines, isLayoutDebugEnabled } from "./layoutDiagnostics.js"
 import styles from "./VesparaHome.module.css"
 import sanctuaryArrivalHall from "./assets/sanctuary-arrival-hall.png"
 import vesparaSealAsset from "../../assets/brand/vespara-symbol-simplified.svg"
@@ -290,6 +291,100 @@ export default function VesparaHome({
   const [departChoice, setDepartChoice] = useState(1) // 0 = Yes, 1 = No (default safe)
   const departTriggerRef = useRef(null)
 
+  // R9 diagnostic pass ONLY (see layoutDiagnostics.js): read-only refs used
+  // solely to measure/outline real runtime layout geometry when explicitly
+  // enabled via localStorage. Nothing here changes what renders or how
+  // anything is styled/positioned -- these are additional refs on elements
+  // that already exist, not new elements or new layout rules.
+  const homeRef = useRef(null)
+  const sanctuaryRef = useRef(null)
+  const actionRowRef = useRef(null)
+  const hasLoggedRecentlyPlayedRef = useRef(false)
+
+  const collectLayoutElements = useCallback(() => {
+    const actionRowEl = actionRowRef.current
+    // ACTIONS.map (below) renders exactly one button per action, in ACTIONS
+    // order, as the actionRow's only children -- so indexing its children
+    // by position reliably identifies each destination tile without adding
+    // a new ref to every individual button.
+    const tileButtons = actionRowEl ? Array.from(actionRowEl.children) : []
+    const tileFor = (action) => tileButtons[ACTIONS.indexOf(action)] || null
+    return {
+      home: homeRef.current,
+      sanctuary: sanctuaryRef.current,
+      actionRow: actionRowEl,
+      tiles: {
+        library: tileFor("library"),
+        controlRoom: tileFor("controlRoom"),
+        switchPlayer: tileFor("switchPlayer"),
+        // departTriggerRef already targets the exact same button element
+        // (used elsewhere for focus restoration) -- reused here rather
+        // than re-deriving it, so it can never drift out of sync.
+        depart: departTriggerRef.current,
+      },
+    }
+  }, [])
+
+  const runLayoutDiagnostics = useCallback((stage) => {
+    if (!isLayoutDebugEnabled()) return
+    const elements = collectLayoutElements()
+    logSanctuaryLayout(stage, elements)
+    drawLayoutOutlines(elements)
+  }, [collectLayoutElements])
+
+  // 1. Once after initial render (post-commit, so refs and layout are real).
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => runLayoutDiagnostics("initial-render"))
+    return () => cancelAnimationFrame(raf)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // 2. Once after document.fonts.ready -- 'Orbitron' metrics are exactly
+  // the kind of runtime-only variable the source-level width model
+  // (sanctuaryPackagedLayoutMilestoneR6.test.js) flagged as unverifiable
+  // from source.
+  useEffect(() => {
+    if (typeof document === "undefined" || !document.fonts || typeof document.fonts.ready?.then !== "function") return
+    let cancelled = false
+    document.fonts.ready.then(() => {
+      if (!cancelled) runLayoutDiagnostics("fonts-ready")
+    })
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // 3. Once after Recently Played finishes its own rendering (loading
+  // transitions from true to false for the first time this mount).
+  useEffect(() => {
+    if (loading || hasLoggedRecentlyPlayedRef.current) return
+    hasLoggedRecentlyPlayedRef.current = true
+    const raf = requestAnimationFrame(() => runLayoutDiagnostics("recently-played"))
+    return () => cancelAnimationFrame(raf)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading])
+
+  // 4. On every window resize (debounced) -- the packaged-photo defect was
+  // reported at a specific resolution/scaling combination, so capturing
+  // geometry across resizes is what would let a future pass correlate a
+  // real crop against a real window size.
+  useEffect(() => {
+    if (typeof window === "undefined" || !isLayoutDebugEnabled()) return undefined
+    let timeoutId = null
+    const onResize = () => {
+      if (timeoutId) clearTimeout(timeoutId)
+      timeoutId = setTimeout(() => runLayoutDiagnostics("resize"), 150)
+    }
+    window.addEventListener("resize", onResize)
+    return () => {
+      window.removeEventListener("resize", onResize)
+      if (timeoutId) clearTimeout(timeoutId)
+    }
+  }, [runLayoutDiagnostics])
+
+  // Debug outlines are a visual overlay only -- remove them on unmount so
+  // they can never persist past this screen.
+  useEffect(() => () => clearLayoutOutlines(), [])
+
   const runAction = useCallback((action) => {
     if (action === "library") onEnterLibrary?.()
     else if (action === "controlRoom") onEnterControlRoom?.()
@@ -456,7 +551,7 @@ export default function VesparaHome({
     : t("home.welcomeGuest")
 
   return (
-    <div className={styles.home}>
+    <div className={styles.home} ref={homeRef}>
       <div className={styles.worldLayer} aria-hidden="true">
         <img
           src={sanctuaryArrivalHall}
@@ -467,7 +562,7 @@ export default function VesparaHome({
         <div className={styles.environmentVeil} />
       </div>
 
-      <main className={styles.sanctuary}>
+      <main className={styles.sanctuary} ref={sanctuaryRef}>
         <header className={styles.header}>
           <div className={styles.worldIdentity}>
             <img src={vesparaSealAsset} alt="" aria-hidden="true" className={styles.worldSeal} />
@@ -547,7 +642,7 @@ export default function VesparaHome({
               <span />
               <span />
             </div>
-            <div className={styles.actionRow}>
+            <div className={styles.actionRow} ref={actionRowRef}>
               {ACTIONS.map((action, i) => {
                 const focused = focusZone === "actions" && i === actionIndex
                 const detail = action === "library"
