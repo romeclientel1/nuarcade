@@ -6,7 +6,7 @@ import { useI18n } from '../../i18n/I18nContext.js'
 import styles from './PlayerSelect.module.css'
 import gatewayBackground from './assets/celestial_observatory_with_cosmic_vista.png'
 import gatewayTheme from './assets/vespara-gateway-theme.mp3'
-import vesparaSeal from '../../assets/brand/vespara-symbol-micro.svg'
+import vesparaSeal from '../../assets/brand/vespara-symbol-simplified.svg'
 
 const MAX_NAME_LEN = 12
 
@@ -178,6 +178,7 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDel
       <div className={styles.gatewayHaze} aria-hidden="true" />
       <div className={styles.grid} />
       <div className={styles.scanlines} />
+      <div className={styles.thresholdLight} aria-hidden="true" />
 
       {/* Spinning coin animation */}
       <div className={styles.coin} aria-hidden="true">
@@ -203,10 +204,12 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDel
         onMouseEnter={() => hoverFocus(EXIT_IDX)}
         onFocus={syncFromNativeFocus(EXIT_IDX)}
       >
-        {exitConfirm ? t("playerSelect.confirmExit") : t("playerSelect.exit")}
+        <span className={styles.departGlyph} aria-hidden="true">&#8592;</span>
+        <span>{exitConfirm ? t("playerSelect.confirmExit") : t("playerSelect.exit")}</span>
       </button>
 
-      <div className={styles.content}>
+      <main className={[styles.content, styles.ceremony].join(' ')}>
+        <div className={styles.architecturalFrame} aria-hidden="true" />
 
         {/* Vespara identity + traveler recognition -- the graphic seal is a
             restrained ornament, not a second brand announcement; the live
@@ -216,26 +219,35 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDel
           <div className={styles.brand}>{t("home.worldName")}</div>
           <div className={styles.sanctuary}>{t("home.sanctuary")}</div>
         </div>
-        <div className={styles.headline}>{t("playerSelect.headline")}</div>
-        <div className={styles.sub}>{t("playerSelect.sub")}</div>
+        <h1 className={styles.headline}>{t("playerSelect.headline")}</h1>
+        <p className={styles.sub}>{t("playerSelect.sub")}</p>
 
         {/* Existing profiles */}
         {profiles.length > 0 && (
-          <div className={styles.profileRow}>
-            {profiles.map((p, i) => (
-              <button
-                key={p.id}
-                ref={registerSlot(1 + i)}
-                className={[styles.profileBtn, isFocused(1 + i) ? styles.profileBtnActive : ''].join(' ')}
-                onClick={() => { snd.select(); selectProfile(p) }}
-                onMouseEnter={() => hoverFocus(1 + i)}
-                onFocus={syncFromNativeFocus(1 + i)}
-              >
-                <span className={styles.profileIcon}>{p.name[0].toUpperCase()}</span>
-                <span className={styles.profileName}>{p.name}</span>
-              </button>
-            ))}
-          </div>
+          <section className={styles.travelerField} aria-labelledby="recognized-travelers-label">
+            <div id="recognized-travelers-label" className={styles.fieldLabel}>
+              <span aria-hidden="true" />
+              Recognized Travelers
+              <span aria-hidden="true" />
+            </div>
+            <div className={styles.profileRow}>
+              {profiles.map((p, i) => (
+                <button
+                  key={p.id}
+                  ref={registerSlot(1 + i)}
+                  className={[styles.profileBtn, isFocused(1 + i) ? styles.profileBtnActive : ''].join(' ')}
+                  onClick={() => { snd.select(); selectProfile(p) }}
+                  onMouseEnter={() => hoverFocus(1 + i)}
+                  onFocus={syncFromNativeFocus(1 + i)}
+                >
+                  <span className={styles.profileOrnament} aria-hidden="true" />
+                  <span className={styles.profileIcon}>{p.name[0].toUpperCase()}</span>
+                  <span className={styles.profileName}>{p.name}</span>
+                  <span className={styles.profileDescriptor}>Recognized Traveler</span>
+                </button>
+              ))}
+            </div>
+          </section>
         )}
 
         {/* Add new player */}
@@ -268,8 +280,11 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDel
               onMouseEnter={() => hoverFocus(newPIdx)}
               onFocus={syncFromNativeFocus(newPIdx)}
             >
-              <span className={styles.btnIcon}>+</span>
-              {t("playerSelect.addPlayer")}
+              <span className={styles.btnIcon} aria-hidden="true">+</span>
+              <span className={styles.actionCopy}>
+                <span className={styles.actionTitle}>{t("playerSelect.addPlayer")}</span>
+                <span className={styles.actionNote}>Create a lasting Sanctuary identity</span>
+              </span>
             </button>
             <button
               ref={registerSlot(guestIdx)}
@@ -278,11 +293,15 @@ export default function PlayerSelect({ profiles, onSelect, onGuest, onAdd, onDel
               onMouseEnter={() => hoverFocus(guestIdx)}
               onFocus={syncFromNativeFocus(guestIdx)}
             >
-              {t("playerSelect.guest")}
+              <span className={styles.guestGlyph} aria-hidden="true">&#9671;</span>
+              <span className={styles.actionCopy}>
+                <span className={styles.actionTitle}>{t("playerSelect.guest")}</span>
+                <span className={styles.actionNote}>Play without saving to another Traveler</span>
+              </span>
             </button>
           </div>
         )}
-      </div>
+      </main>
     </div>
   )
 }

@@ -241,8 +241,8 @@ test("Intro.jsx's timing constants and skip behavior are completely untouched (n
 // -- 12. Vespara brand assets are reused, not recreated ---------------------
 
 test("PlayerSelect imports the existing production micro-mark SVG from renderer/src/assets/brand/, not a new/duplicated asset", () => {
-  assert.match(jsx, /import vesparaSeal from '\.\.\/\.\.\/assets\/brand\/vespara-symbol-micro\.svg'/)
-  const brandAssetPath = join(HERE, "../../assets/brand/vespara-symbol-micro.svg")
+  assert.match(jsx, /import vesparaSeal from '\.\.\/\.\.\/assets\/brand\/vespara-symbol-simplified\.svg'/)
+  const brandAssetPath = join(HERE, "../../assets/brand/vespara-symbol-simplified.svg")
   assert.ok(existsSync(brandAssetPath), "the referenced brand asset must be the real, existing production file")
 })
 

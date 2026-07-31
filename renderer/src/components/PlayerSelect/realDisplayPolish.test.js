@@ -211,6 +211,6 @@ test("no third-party dependency was added to renderer/package.json by this miles
 // -- 9. No JSX file changed unless specifically justified --------------------
 
 test("PlayerSelect.jsx's git-diffable surface is CSS-only in spirit -- the same import/render call sites from Milestone 1 are present verbatim", () => {
-  assert.match(jsx, /import vesparaSeal from '\.\.\/\.\.\/assets\/brand\/vespara-symbol-micro\.svg'/)
+  assert.match(jsx, /import vesparaSeal from '\.\.\/\.\.\/assets\/brand\/vespara-symbol-simplified\.svg'/)
   assert.match(jsx, /<img src=\{vesparaSeal\} alt="" aria-hidden="true" className=\{styles\.gatewaySeal\} \/>/)
 })
