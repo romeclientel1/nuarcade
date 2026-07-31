@@ -23,10 +23,19 @@ import { useSanctuaryAmbience } from "./useSanctuaryAmbience.js"
 import DepartConfirmation from "../Depart/DepartConfirmation.jsx"
 import styles from "./VesparaHome.module.css"
 import sanctuaryArrivalHall from "./assets/sanctuary-arrival-hall.png"
+import destinationLibrary from "./assets/destination-library.png"
+import destinationControlRoom from "./assets/destination-control-room.png"
+import destinationSwitchPlayer from "./assets/destination-switch-player.png"
 import vesparaSealAsset from "../../assets/brand/vespara-symbol-simplified.svg"
 
 const RECENT_LIMIT = 8
 const ACTIONS = ["library", "controlRoom", "switchPlayer", "depart"]
+const DESTINATION_VISUALS = {
+  library: `url("${destinationLibrary}")`,
+  controlRoom: `url("${destinationControlRoom}")`,
+  switchPlayer: `url("${destinationSwitchPlayer}")`,
+  depart: `url("${sanctuaryArrivalHall}")`,
+}
 
 // VesparaHome -------------------------------------------------------------
 // Vespara's central arrival space after Traveler Recognition: identify the
@@ -454,6 +463,16 @@ export default function VesparaHome({
   const welcomeText = activeProfile
     ? t("home.welcomeBack", { name: playerName })
     : t("home.welcomeGuest")
+  const recentStatusText = loading
+    ? t("common.loading")
+    : hasRecents
+      ? t("home.memorySubtitle")
+      : "None yet"
+  const libraryStatusText = loading
+    ? t("common.loading")
+    : games.length > 0
+      ? "Ready"
+      : "Empty"
 
   return (
     <div className={styles.home}>
@@ -484,57 +503,98 @@ export default function VesparaHome({
         </header>
 
         <div className={styles.body}>
-          <section className={styles.memoryShelf} aria-labelledby="vespara-recent-title">
-            <div className={styles.sectionHeading}>
-              <div>
-                <div id="vespara-recent-title" className={styles.sectionTitle}>{t("home.recentlyPlayed")}</div>
-                <div className={styles.sectionSubtitle}>{t("home.memorySubtitle")}</div>
-              </div>
-              <div className={styles.memoryLine} aria-hidden="true" />
+          <section className={styles.arrivalConsole} aria-label={t("home.sanctuary")}>
+            <div className={styles.consoleOrnament} aria-hidden="true">
+              <span />
+              <span />
+              <span />
             </div>
 
-            <div className={styles.memoryContent}>
-              {loading ? (
-                <div className={styles.empty}>{t("common.loading")}</div>
-              ) : !hasRecents ? (
-                <div className={styles.empty}>{emptyStateText}</div>
-              ) : (
-                <div
-                  className={
-                    styles.recentRow
-                    + (displayedRecentGames.length === 1 ? " " + styles.singleRecentRow : "")
-                    + (displayedRecentGames.length > 1 ? " " + styles.multiRecentRow : "")
-                  }
-                  ref={recentRowRef}
-                >
-                  {displayedRecentGames.map((g, i) => {
-                    const id = g.id || g.profile
-                    const art = artwork?.[id]
-                    const focused = focusZone === "recents" && i === recentIndex
-                    return (
-                      <button
-                        key={id}
-                        ref={focused ? focusedRecentCardRef : null}
-                        className={styles.recentCard + (focused ? " " + styles.focused : "")}
-                        onClick={() => { acceptManualFocus(); setFocusZone("recents"); setRecentIndex(i); launch(g) }}
-                        disabled={launching}
-                      >
-                        <span className={styles.memoryIndex} aria-hidden="true">{String(i + 1).padStart(2, "0")}</span>
-                        {art?.capsule || art?.hero ? (
-                          <img className={styles.recentArt} src={art.capsule || art.hero} alt="" />
-                        ) : (
-                          <div className={styles.recentArtFallback} aria-hidden="true">
-                            <span className={styles.recentArtFallbackGlyph}>{g.system ? g.system[0] : "?"}</span>
-                          </div>
-                        )}
-                        <div className={styles.recentTitle}>{g.title}</div>
-                        <div className={styles.recentSystem}>{g.system}</div>
-                      </button>
-                    )
-                  })}
+            <aside className={styles.statusPanel} aria-label={`${t("home.sanctuary")} status`}>
+              <div className={styles.statusHeading}>
+                <strong>{t("home.sanctuary")}</strong>
+                <span>Status</span>
+              </div>
+              <dl className={styles.statusList}>
+                <div className={styles.statusRow}>
+                  <dt>{t("playerSelect.headline")}</dt>
+                  <dd>{playerName}</dd>
                 </div>
-              )}
+                <div className={styles.statusRow}>
+                  <dt>{t("home.recentlyPlayed")}</dt>
+                  <dd>{recentStatusText}</dd>
+                </div>
+                <div className={styles.statusRow}>
+                  <dt>{t("home.library")}</dt>
+                  <dd>{libraryStatusText}</dd>
+                </div>
+              </dl>
+              <div className={styles.statusFoot}>
+                <span className={styles.statusLamp} aria-hidden="true" />
+                <span>{isSetupFocus ? t("home.enterControlRoom") : t("home.librarySubtitle")}</span>
+              </div>
+            </aside>
+
+            <div className={styles.arrivalVista} aria-hidden="true">
+              <div className={styles.vistaHalo} />
+              <img src={vesparaSealAsset} alt="" className={styles.vistaSeal} />
+              <div className={styles.vistaWordmark}>{t("home.worldName")}</div>
+              <div className={styles.vistaWelcome}>{welcomeText}</div>
+              <div className={styles.vistaRule}><span /></div>
             </div>
+
+            <section className={styles.memoryShelf} aria-labelledby="vespara-recent-title">
+              <div className={styles.sectionHeading}>
+                <div>
+                  <div id="vespara-recent-title" className={styles.sectionTitle}>{t("home.recentlyPlayed")}</div>
+                  <div className={styles.sectionSubtitle}>{t("home.memorySubtitle")}</div>
+                </div>
+                <div className={styles.memoryLine} aria-hidden="true" />
+              </div>
+
+              <div className={styles.memoryContent}>
+                {loading ? (
+                  <div className={styles.empty}>{t("common.loading")}</div>
+                ) : !hasRecents ? (
+                  <div className={styles.empty}>{emptyStateText}</div>
+                ) : (
+                  <div
+                    className={
+                      styles.recentRow
+                      + (displayedRecentGames.length === 1 ? " " + styles.singleRecentRow : "")
+                      + (displayedRecentGames.length > 1 ? " " + styles.multiRecentRow : "")
+                    }
+                    ref={recentRowRef}
+                  >
+                    {displayedRecentGames.map((g, i) => {
+                      const id = g.id || g.profile
+                      const art = artwork?.[id]
+                      const focused = focusZone === "recents" && i === recentIndex
+                      return (
+                        <button
+                          key={id}
+                          ref={focused ? focusedRecentCardRef : null}
+                          className={styles.recentCard + (focused ? " " + styles.focused : "")}
+                          onClick={() => { acceptManualFocus(); setFocusZone("recents"); setRecentIndex(i); launch(g) }}
+                          disabled={launching}
+                        >
+                          <span className={styles.memoryIndex} aria-hidden="true">{String(i + 1).padStart(2, "0")}</span>
+                          {art?.capsule || art?.hero ? (
+                            <img className={styles.recentArt} src={art.capsule || art.hero} alt="" />
+                          ) : (
+                            <div className={styles.recentArtFallback} aria-hidden="true">
+                              <span className={styles.recentArtFallbackGlyph}>{g.system ? g.system[0] : "?"}</span>
+                            </div>
+                          )}
+                          <div className={styles.recentTitle}>{g.title}</div>
+                          <div className={styles.recentSystem}>{g.system}</div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            </section>
           </section>
 
           {launchError && (
@@ -562,6 +622,7 @@ export default function VesparaHome({
                     key={action}
                     ref={action === "depart" ? departTriggerRef : undefined}
                     className={styles.actionBtn + " " + styles[action + "Destination"] + (focused ? " " + styles.focused : "")}
+                    style={{ "--destination-image": DESTINATION_VISUALS[action] }}
                     onClick={() => { acceptManualFocus(); setFocusZone("actions"); setActionIndex(i); sounds.select(); activateAction(action) }}
                   >
                     <span className={styles.destinationMarker} aria-hidden="true" />

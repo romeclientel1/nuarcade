@@ -3,7 +3,7 @@
   inset: 0;
   z-index: 999;
   pointer-events: none;
-  mix-blend-mode: multiply;
+  mix-blend-mode: normal;
 }
 .scanlines {
   position: absolute;
@@ -11,21 +11,21 @@
   background: repeating-linear-gradient(
     0deg,
     transparent,
-    transparent 2px,
-    rgba(0,0,0,0.18) 2px,
-    rgba(0,0,0,0.18) 4px
+    transparent 3px,
+    rgba(0,0,0,0.025) 3px,
+    rgba(0,0,0,0.025) 4px
   );
 }
 .vignette {
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse 100% 100% at 50% 50%, transparent 60%, rgba(0,0,0,0.5) 100%);
+  background: radial-gradient(ellipse 100% 100% at 50% 50%, transparent 68%, rgba(0,0,0,0.28) 100%);
 }
 .flicker {
   position: absolute;
   inset: 0;
   animation: flicker 8s ease-in-out infinite;
-  background: rgba(255,255,255,0.01);
+  background: rgba(255,255,255,0.003);
 }
 @keyframes flicker {
   0%, 95%, 100% { opacity: 1; }
