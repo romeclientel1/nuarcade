@@ -34,6 +34,7 @@
       <nav class="primary-nav" id="primary-nav" aria-label="Primary">
         <ul>
           <li><a href="#experience">Experience</a></li>
+          <li><a href="#sanctuary">Sanctuary</a></li>
           <li><a href="#library">Library</a></li>
           <li><a href="#control-room">Control Room</a></li>
           <li><a href="#systems">Systems</a></li>
@@ -115,37 +116,38 @@
         <h2 id="experience-heading">Arriving somewhere, not just opening something.</h2>
         <p class="section-lede">
           Vespara doesn't drop you straight into a list of games. Every
-          session follows the same short arrival, the same way walking up
-          to a real cabinet would.
+          session opens with the same short arrival, the same way walking
+          up to a real cabinet would.
         </p>
 
-        <ol class="journey-list">
-          <li class="journey-step">
-            <span class="journey-index" aria-hidden="true">01</span>
-            <h3>Intro</h3>
-            <p>Vespara opens with a short cinematic intro before anything else appears.</p>
+        <ol class="arrival-sequence">
+          <li class="arrival-step">
+            <span class="arrival-marker" aria-hidden="true"></span>
+            <div class="arrival-step-body">
+              <h3>Intro</h3>
+              <p>Vespara opens with a short cinematic intro before anything else appears.</p>
+            </div>
           </li>
-          <li class="journey-step">
-            <span class="journey-index" aria-hidden="true">02</span>
-            <h3>Traveler Recognition</h3>
-            <p>
-              Pick an existing Traveler, create a new one, or continue as
-              Guest. Each Traveler keeps their own favorites, playtime, and
-              recently played history — a Guest's session isn't saved to
-              anyone's profile.
-            </p>
-          </li>
-          <li class="journey-step">
-            <span class="journey-index" aria-hidden="true">03</span>
-            <h3>The Sanctuary</h3>
-            <p>
-              You arrive in the Sanctuary — Vespara's home screen, and the
-              place every session starts from and can return to.
-            </p>
+          <li class="arrival-step">
+            <span class="arrival-marker" aria-hidden="true"></span>
+            <div class="arrival-step-body">
+              <h3>Arrival at the Sanctuary</h3>
+              <p>
+                You arrive in the Sanctuary — Vespara's home screen, and the
+                place every session starts from and can return to. Who you
+                arrive as is decided just before this, in Traveler
+                Recognition.
+              </p>
+            </div>
           </li>
         </ol>
+      </div>
+    </section>
 
-        <figure class="screenshot-frame screenshot-frame-wide">
+    <!-- ==================== TRAVELER RECOGNITION ======================= -->
+    <section class="section section-alt" id="traveler-recognition" aria-labelledby="traveler-heading">
+      <div class="section-inner section-inner-split section-inner-split-reverse">
+        <figure class="screenshot-frame">
           <div class="screenshot-placeholder" role="img" aria-label="Placeholder for a screenshot of Traveler Recognition, the profile-selection screen">
             <span class="screenshot-placeholder-glyph" aria-hidden="true">◈</span>
             <span class="screenshot-placeholder-label">Traveler Recognition</span>
@@ -153,45 +155,95 @@
           </div>
           <figcaption>Traveler Recognition — screenshot coming soon.</figcaption>
         </figure>
+
+        <div class="section-copy">
+          <p class="eyebrow">Before you arrive</p>
+          <h2 id="traveler-heading">Traveler Recognition</h2>
+          <p class="section-lede">
+            Every session opens the same way: Vespara asks who's stepping
+            up to the cabinet before anything else happens.
+          </p>
+
+          <ul class="feature-list">
+            <li><strong>Existing Travelers.</strong> Pick a Traveler you've used before and pick up exactly where you left off.</li>
+            <li><strong>Create a new Traveler.</strong> Start a fresh profile of your own, separate from anyone else's.</li>
+            <li><strong>Continue as Guest.</strong> Play without creating a profile at all.</li>
+            <li><strong>Everything stays personal.</strong> Each Traveler keeps their own favorites, playtime, and recently played history.</li>
+            <li><strong>Guest sessions aren't saved.</strong> A Guest's activity isn't written to any Traveler's profile.</li>
+          </ul>
+        </div>
       </div>
     </section>
 
     <!-- =========================== SANCTUARY =========================== -->
-    <section class="section section-alt" id="sanctuary" aria-labelledby="sanctuary-heading">
+    <section class="section" id="sanctuary" aria-labelledby="sanctuary-heading">
       <div class="section-inner">
         <p class="eyebrow">Home base</p>
         <h2 id="sanctuary-heading">The Sanctuary</h2>
         <p class="section-lede">
-          From the Sanctuary, four destinations are always within reach.
+          Every session starts here, and can always return here. One place,
+          six paths leading out of it.
         </p>
 
-        <div class="destination-grid">
-          <article class="destination-card">
-            <h3>The Library</h3>
-            <p>Browse, search, and launch your full game collection.</p>
-          </article>
-          <article class="destination-card">
-            <h3>The Control Room</h3>
-            <p>Configure emulators, paths, controllers, display, and media.</p>
-          </article>
-          <article class="destination-card">
-            <h3>Switch Player</h3>
-            <p>Return to Traveler Recognition to hand off or switch profiles.</p>
-          </article>
-          <article class="destination-card">
-            <h3>Depart</h3>
-            <p>
-              Close Vespara, with a confirmation step — Remain cancels and
-              returns you to the Sanctuary, Depart closes the application.
-            </p>
-          </article>
+        <div class="sanctuary-map">
+          <div class="sanctuary-core" aria-hidden="true">
+            <span class="sanctuary-core-glyph">◈</span>
+            <span class="sanctuary-core-label">The Sanctuary</span>
+          </div>
+
+          <ol class="destination-rows">
+            <li class="destination-row">
+              <span class="destination-index" aria-hidden="true">01</span>
+              <div class="destination-body">
+                <h3>The Library</h3>
+                <p>Browse, search, and launch your full game collection.</p>
+              </div>
+            </li>
+            <li class="destination-row">
+              <span class="destination-index" aria-hidden="true">02</span>
+              <div class="destination-body">
+                <h3>The Control Room</h3>
+                <p>Configure emulators, paths, controllers, and display.</p>
+              </div>
+            </li>
+            <li class="destination-row">
+              <span class="destination-index" aria-hidden="true">03</span>
+              <div class="destination-body">
+                <h3>Media Wing</h3>
+                <p>Shape the artwork, video, and system logos around your collection.</p>
+              </div>
+            </li>
+            <li class="destination-row destination-row-featured">
+              <span class="destination-index" aria-hidden="true">04</span>
+              <div class="destination-body">
+                <h3>Recently Played</h3>
+                <p>
+                  Up to 8 games, scoped to whichever Traveler is currently
+                  active — select one to launch it directly, without
+                  leaving the Sanctuary.
+                </p>
+              </div>
+            </li>
+            <li class="destination-row">
+              <span class="destination-index" aria-hidden="true">05</span>
+              <div class="destination-body">
+                <h3>Switch Player</h3>
+                <p>Return to Traveler Recognition to hand off or switch profiles.</p>
+              </div>
+            </li>
+            <li class="destination-row">
+              <span class="destination-index" aria-hidden="true">06</span>
+              <div class="destination-body">
+                <h3>Depart</h3>
+                <p>
+                  Close Vespara, with a confirmation step — Remain cancels
+                  and returns you to the Sanctuary, Depart closes the
+                  application.
+                </p>
+              </div>
+            </li>
+          </ol>
         </div>
-
-        <p class="section-footnote">
-          <strong>Recently Played</strong> on the Sanctuary shows up to 8
-          games, scoped to whichever Traveler is currently active — a
-          different Traveler sees their own recent games, not yours.
-        </p>
 
         <figure class="screenshot-frame">
           <div class="screenshot-placeholder" role="img" aria-label="Placeholder for a screenshot of the Depart confirmation, showing Remain and Depart">
@@ -205,7 +257,7 @@
     </section>
 
     <!-- ============================= LIBRARY =========================== -->
-    <section class="section" id="library" aria-labelledby="library-heading">
+    <section class="section section-alt" id="library" aria-labelledby="library-heading">
       <div class="section-inner section-inner-split">
         <div class="section-copy">
           <p class="eyebrow">Where your collection lives</p>
@@ -215,16 +267,31 @@
             systems that actually have games in them appear.
           </p>
 
-          <ul class="feature-list">
-            <li><strong>System-based browsing.</strong> Move between systems without losing your place.</li>
-            <li><strong>Custom system logos.</strong> Replace any category's plain text with your own logo artwork.</li>
-            <li><strong>Favorites.</strong> Mark games for quick access.</li>
-            <li><strong>Collections.</strong> Group games into your own custom lists.</li>
-            <li><strong>Search and sorting.</strong> Find a game by name, or reorder by most played, most launched, recently added, top rated, or system.</li>
-            <li><strong>Archive View.</strong> Selecting a game opens its detail view — artwork, a gameplay preview video where available, and launch options.</li>
-            <li><strong>Artwork and video previews.</strong> A background gameplay video plays behind the selected game where one is available.</li>
-            <li><strong>AI Game Coach.</strong> Move lists, tips, strategies, and natural-language search for the selected game — no API key required.</li>
-          </ul>
+          <div class="library-groups">
+            <div class="library-group">
+              <h3>Finding a game</h3>
+              <ul class="feature-list">
+                <li><strong>System-based browsing.</strong> Move between systems without losing your place.</li>
+                <li><strong>Search and sorting.</strong> Find a game by name, or reorder by most played, most launched, recently added, top rated, or system.</li>
+              </ul>
+            </div>
+            <div class="library-group">
+              <h3>Making it yours</h3>
+              <ul class="feature-list">
+                <li><strong>Favorites.</strong> Mark games for quick access.</li>
+                <li><strong>Collections.</strong> Group games into your own custom lists.</li>
+                <li><strong>Custom system logos.</strong> Replace any category's plain text with your own logo artwork.</li>
+              </ul>
+            </div>
+            <div class="library-group">
+              <h3>Inside a game's Archive View</h3>
+              <ul class="feature-list">
+                <li><strong>Archive View.</strong> Selecting a game opens its detail view — artwork, a gameplay preview video where available, and launch options.</li>
+                <li><strong>Artwork and video previews.</strong> A background gameplay video plays behind the selected game where one is available.</li>
+                <li><strong>AI Game Coach.</strong> Move lists, tips, strategies, and natural-language search for the selected game — no API key required.</li>
+              </ul>
+            </div>
+          </div>
         </div>
 
         <figure class="screenshot-frame">
@@ -238,62 +305,80 @@
       </div>
     </section>
 
-    <!-- ========================== CONTROL ROOM ========================= -->
-    <section class="section section-alt" id="control-room" aria-labelledby="control-room-heading">
+    <!-- ================= CONTROL ROOM & MEDIA WING ===================== -->
+    <section class="section" id="control-room" aria-labelledby="control-room-heading">
       <div class="section-inner">
         <p class="eyebrow">Configuration, shaped like a place</p>
-        <h2 id="control-room-heading">The Control Room</h2>
+        <h2 id="control-room-heading">The Control Room &amp; Media Wing</h2>
         <p class="section-lede">
           Reached from the Sanctuary, the Control Room holds all of
-          Vespara's configuration, organized into two wings.
+          Vespara's configuration in two wings — one for the systems that
+          make your games playable, one for the artwork and video that
+          make your collection feel alive.
         </p>
 
-        <div class="wing-grid">
-          <div class="wing">
+        <div class="wing-split">
+          <div class="wing-column">
             <h3>Systems Wing</h3>
             <p class="wing-sub">Makes the worlds playable.</p>
-            <ul>
-              <li>Emulators</li>
-              <li>Game Paths</li>
-              <li>Controllers</li>
-              <li>Launch Behavior</li>
-              <li>Display &amp; Performance</li>
-              <li>Preferences</li>
-              <li>Systems Archive</li>
+            <ul class="feature-list">
+              <li><strong>Emulators.</strong> Detected emulators and their install paths.</li>
+              <li><strong>Game Paths.</strong> The folders Vespara scans for each system.</li>
+              <li><strong>Controllers.</strong> Test connected gamepads.</li>
+              <li><strong>Launch Behavior.</strong> Attract mode, idle timing, auto-launch behavior.</li>
+              <li><strong>Display &amp; Performance.</strong> Fullscreen, CRT scanline effect, theme.</li>
+              <li><strong>Preferences.</strong> Language, audio, and about/version info.</li>
+              <li><strong>Systems Archive.</strong> Rescan, cache, and library maintenance tools.</li>
             </ul>
           </div>
-          <div class="wing">
-            <h3>Archives Wing</h3>
+
+          <div class="wing-column">
+            <h3>Media Wing</h3>
             <p class="wing-sub">Makes the collection come alive.</p>
-            <ul>
-              <li>Artwork</li>
-              <li>Videos</li>
-              <li>Scraping</li>
-              <li>Bezels</li>
-              <li>Media Restoration</li>
+            <ul class="feature-list">
+              <li><strong>Artwork.</strong> Box art and marquee management, including automatic SteamGridDB fetching with your own API key.</li>
+              <li><strong>Videos.</strong> Per-game and bulk gameplay video fetching, including direct YouTube fetching.</li>
+              <li><strong>Scraping.</strong> Import media from your own EmuMovies account and Sync app.</li>
+              <li><strong>Custom system logos.</strong> Replace any Library category's plain text with your own logo artwork.</li>
+              <li><strong>Bezels.</strong> Fetch bezel artwork by system.</li>
+              <li><strong>Media Restoration.</strong> Backup, restore, and orphaned-media cleanup.</li>
             </ul>
           </div>
         </div>
 
         <p class="section-footnote">
-          Opening any Archives Wing station takes you into a screen still
+          Opening any Media Wing station takes you into a screen still
           titled <strong>Media Manager</strong> — that's the actual screen
-          behind every Archives station, not a separate or misnamed tool.
+          behind every Media Wing station, not a separate or disconnected
+          module. Vespara does not distribute copyrighted artwork, ROMs,
+          BIOS files, or emulator software of its own — every source above
+          is either something you connect an account to, or something you
+          supply yourself.
         </p>
 
-        <figure class="screenshot-frame screenshot-frame-wide">
-          <div class="screenshot-placeholder" role="img" aria-label="Placeholder for a screenshot showing the Control Room's Systems and Archives wings">
-            <span class="screenshot-placeholder-glyph" aria-hidden="true">◈</span>
-            <span class="screenshot-placeholder-label">The Control Room</span>
-            <span class="screenshot-placeholder-path">website/assets/control-room-wings.png</span>
-          </div>
-          <figcaption>The Control Room's two wings — screenshot coming soon.</figcaption>
-        </figure>
+        <div class="control-room-screens">
+          <figure class="screenshot-frame">
+            <div class="screenshot-placeholder" role="img" aria-label="Placeholder for a screenshot showing the Control Room's Systems and Media wings">
+              <span class="screenshot-placeholder-glyph" aria-hidden="true">◈</span>
+              <span class="screenshot-placeholder-label">The Control Room</span>
+              <span class="screenshot-placeholder-path">website/assets/control-room-wings.png</span>
+            </div>
+            <figcaption>The Control Room's two wings — screenshot coming soon.</figcaption>
+          </figure>
+          <figure class="screenshot-frame">
+            <div class="screenshot-placeholder" role="img" aria-label="Placeholder for a screenshot of the Media Manager screen">
+              <span class="screenshot-placeholder-glyph" aria-hidden="true">◈</span>
+              <span class="screenshot-placeholder-label">Media Manager</span>
+              <span class="screenshot-placeholder-path">website/assets/media-manager.png</span>
+            </div>
+            <figcaption>Media Manager — screenshot coming soon.</figcaption>
+          </figure>
+        </div>
       </div>
     </section>
 
     <!-- =========================== SYSTEMS ============================= -->
-    <section class="section" id="systems" aria-labelledby="systems-heading">
+    <section class="section section-alt" id="systems" aria-labelledby="systems-heading">
       <div class="section-inner">
         <p class="eyebrow">Supported systems</p>
         <h2 id="systems-heading">Built for the emulators you already run.</h2>
@@ -347,62 +432,6 @@
             rel="noopener"
           >Owner's Manual's Supported Systems chapter</a> for the current, authoritative list.
         </p>
-      </div>
-    </section>
-
-    <!-- ============================= MEDIA ============================= -->
-    <section class="section section-alt" id="media" aria-labelledby="media-heading">
-      <div class="section-inner">
-        <p class="eyebrow">Bringing the collection to life</p>
-        <h2 id="media-heading">Media, artwork, and video</h2>
-        <p class="section-lede">
-          Vespara can fill in artwork, video, and system logos around the
-          games you already own. It does not distribute copyrighted
-          artwork, ROMs, BIOS files, or emulator software of its own — every
-          source below is either something you connect an account to, or
-          something you supply yourself.
-        </p>
-
-        <div class="media-grid">
-          <article class="media-card">
-            <h3>SteamGridDB artwork</h3>
-            <p>Add your own API key and Vespara fetches hero art and capsule images automatically.</p>
-          </article>
-          <article class="media-card">
-            <h3>EmuMovies imports</h3>
-            <p>Connect your own EmuMovies account and Sync app for higher-quality video and box art, then scan and import inside Vespara.</p>
-          </article>
-          <article class="media-card">
-            <h3>YouTube video fetching</h3>
-            <p>Fetch gameplay preview video directly from YouTube, per game or in bulk.</p>
-          </article>
-          <article class="media-card">
-            <h3>Custom system logos</h3>
-            <p>Drop your own logo images into a configured folder to replace any Library category's plain text.</p>
-          </article>
-          <article class="media-card">
-            <h3>Bezel support</h3>
-            <p>Fills bezel gaps from your own Bezel Source Folder, RetroArch-style overlays, and Vespara's own bundled placeholder art as a last resort.</p>
-          </article>
-          <article class="media-card">
-            <h3>Media restoration</h3>
-            <p>Backup, restore, and clean up orphaned media without losing what's already in place.</p>
-          </article>
-        </div>
-
-        <p class="section-footnote">
-          Every media feature above lives behind the Media Manager screen,
-          reached from any Archives Wing station in the Control Room.
-        </p>
-
-        <figure class="screenshot-frame screenshot-frame-wide">
-          <div class="screenshot-placeholder" role="img" aria-label="Placeholder for a screenshot of the Media Manager screen">
-            <span class="screenshot-placeholder-glyph" aria-hidden="true">◈</span>
-            <span class="screenshot-placeholder-label">Media Manager</span>
-            <span class="screenshot-placeholder-path">website/assets/media-manager.png</span>
-          </div>
-          <figcaption>Media Manager — screenshot coming soon.</figcaption>
-        </figure>
       </div>
     </section>
 

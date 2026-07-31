@@ -304,13 +304,18 @@ code {
 
 .primary-nav ul {
   display: flex;
-  gap: var(--space-4);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  /* Row/column gap, tightened from the original single value now that the
+     desktop nav carries seven items (Sanctuary added) -- wraps to a second
+     line rather than overflowing if a narrow desktop width ever gets tight. */
+  gap: var(--space-2) var(--space-3);
 }
 
 .primary-nav a {
   color: var(--color-text-muted);
   text-decoration: none;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 500;
 }
 
@@ -512,60 +517,77 @@ code {
   padding: var(--space-1) 0 0;
 }
 
-.screenshot-frame-wide {
-  margin-top: var(--space-5);
+/* -- Section split modifier (editorial two-column) ------------------------- */
+
+/* Swaps which column comes first visually, so sections using the same
+   copy+figure split (Library, Traveler Recognition) don't all read
+   identically left-to-right. Grid `order` also applies on the
+   single-column mobile layout, so the figure still appears first there. */
+.section-inner-split-reverse .section-copy {
+  order: 2;
 }
 
-/* -- Journey / experience -------------------------------------------------- */
+.section-inner-split-reverse .screenshot-frame {
+  order: 1;
+}
 
-.journey-list {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+/* -- Arrival sequence (Experience) ------------------------------------------ */
+/* A short horizontal timeline -- two connected steps, not equal-width
+   cards -- for the Intro -> Arrival sequence. Traveler Recognition has its
+   own dedicated section now, so this list only ever has two steps. */
+
+.arrival-sequence {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: var(--space-6);
+  max-width: 680px;
+}
+
+.arrival-step {
+  position: relative;
+  display: flex;
   gap: var(--space-4);
-  margin-top: var(--space-5);
+  padding-bottom: var(--space-6);
 }
 
-.journey-step {
-  border: 1px solid var(--color-surface-border);
-  border-radius: 8px;
-  padding: var(--space-4);
-  /* Smoked glass: restrained warm-tinted transparency, not a glow. */
-  background: rgba(15, 25, 23, 0.4);
-  box-shadow: inset 0 1px 0 rgba(242, 233, 218, 0.03), 0 10px 24px rgba(0, 0, 0, 0.25);
+.arrival-step:last-child {
+  padding-bottom: 0;
 }
 
-.journey-index {
-  display: block;
-  font-family: var(--font-display);
-  font-size: 0.85rem;
-  color: var(--color-amber);
-  letter-spacing: 0.1em;
-  margin-bottom: var(--space-2);
+.arrival-marker {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  margin-top: 0.4em;
+  border-radius: 50%;
+  background: var(--color-amber);
+  box-shadow: 0 0 0 4px rgba(224, 168, 96, 0.15);
+  position: relative;
 }
 
-/* -- Destination grid (Sanctuary) ------------------------------------------ */
-
-.destination-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-3);
-  margin-top: var(--space-5);
+/* Connecting line between steps -- absent after the last marker. */
+.arrival-step:not(:last-child) .arrival-marker::after {
+  content: "";
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  width: 1px;
+  height: calc(100% + var(--space-6) - 10px);
+  transform: translateX(-50%);
+  background: var(--color-surface-border);
 }
 
-.destination-card {
-  border: 1px solid var(--color-surface-border);
-  border-radius: 8px;
-  padding: var(--space-4);
-  background: linear-gradient(180deg, rgba(224, 168, 96, 0.04), rgba(15, 25, 23, 0.4));
-  box-shadow: inset 0 1px 0 rgba(242, 233, 218, 0.03), 0 10px 24px rgba(0, 0, 0, 0.25);
+.arrival-step-body h3 {
+  margin-bottom: 0.4em;
 }
 
-.destination-card p {
+.arrival-step-body p {
   margin-bottom: 0;
-  font-size: 0.95rem;
 }
 
-/* -- Feature list (Library) ------------------------------------------------- */
+/* -- Feature list (reused across Traveler Recognition, Library, Systems and
+   Media Wing lists) -- an editorial row list, deliberately not a card. */
 
 .feature-list li {
   padding: var(--space-2) 0;
@@ -582,21 +604,141 @@ code {
   color: var(--color-text);
 }
 
-/* -- Control Room wings ------------------------------------------------------ */
+/* -- Sanctuary map (architectural destination layout) ----------------------- */
+/* One coherent place with paths leading out of it: a small central mark
+   labeled "The Sanctuary", and six destinations as staggered rows rather
+   than uniform cards. Recently Played is visually distinguished (a
+   slightly wider row with a warm-tinted border) since it behaves
+   differently from the other five -- it launches a game directly. */
 
-.wing-grid {
+.sanctuary-map {
+  margin-top: var(--space-6);
+}
+
+.sanctuary-core {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  padding: 0.6em 1.4em;
+  margin-bottom: var(--space-5);
+  border: 1px solid rgba(224, 168, 96, 0.22);
+  border-radius: 999px;
+  background: linear-gradient(160deg, rgba(224, 168, 96, 0.08), rgba(10, 18, 16, 0.5));
+}
+
+.sanctuary-core-glyph {
+  color: var(--color-amber);
+  font-size: 1.1rem;
+}
+
+.sanctuary-core-label {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--color-text-muted);
+}
+
+.destination-rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.destination-row {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-4);
+  grid-template-columns: 3rem minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: baseline;
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-surface-border);
+}
+
+.destination-row:last-child {
+  border-bottom: none;
+}
+
+/* Staggered indentation -- alternating rows step inward, so the list reads
+   as a laid-out place rather than a repeated stack. */
+.destination-row:nth-child(even) {
+  margin-left: var(--space-5);
+}
+
+.destination-index {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  color: var(--color-amber);
+  letter-spacing: 0.1em;
+}
+
+.destination-body h3 {
+  margin-bottom: 0.3em;
+}
+
+.destination-body p {
+  margin-bottom: 0;
+  font-size: 0.95rem;
+}
+
+.destination-row-featured {
+  padding: var(--space-3) var(--space-3);
+  margin-left: 0;
+  border: 1px solid rgba(224, 168, 96, 0.2);
+  border-bottom: 1px solid rgba(224, 168, 96, 0.2);
+  border-radius: 8px;
+  background: linear-gradient(160deg, rgba(224, 168, 96, 0.06), rgba(15, 25, 23, 0.35));
+}
+
+/* -- Library groups (shelf-like rows) --------------------------------------- */
+/* Each group reads as a labeled shelf -- a heading acting like a shelf tag
+   beside its row of features -- rather than one long flat bullet list. */
+
+.library-groups {
   margin-top: var(--space-5);
 }
 
-.wing {
-  border: 1px solid var(--color-surface-border);
-  border-radius: 8px;
-  padding: var(--space-4);
-  background: rgba(15, 25, 23, 0.4);
-  box-shadow: inset 0 1px 0 rgba(242, 233, 218, 0.03), 0 10px 24px rgba(0, 0, 0, 0.25);
+.library-group {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.6fr);
+  gap: var(--space-4);
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--color-surface-border);
+}
+
+.library-group:last-child {
+  border-bottom: none;
+}
+
+.library-group h3 {
+  margin-bottom: 0;
+  font-size: 1.05rem;
+  color: var(--color-text-muted);
+}
+
+.library-group .feature-list {
+  align-self: start;
+}
+
+/* -- Control Room & Media Wing split ---------------------------------------- */
+/* One continuous surface divided by a single line, rather than two
+   separate bordered cards -- an editorial split, not a repeated grid. */
+
+.wing-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: var(--space-6);
+  margin-top: var(--space-6);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-surface-border);
+}
+
+.wing-column {
+  padding-left: var(--space-5);
+  border-left: 1px solid var(--color-surface-border);
+}
+
+.wing-column:first-child {
+  padding-left: 0;
+  border-left: none;
 }
 
 .wing-sub {
@@ -605,13 +747,14 @@ code {
   margin-bottom: var(--space-3);
 }
 
-.wing li {
-  padding: 0.4em 0;
-  color: var(--color-text-muted);
-  border-bottom: 1px dotted var(--color-surface-border);
-}
+/* -- Control Room screenshots (two placeholders, side by side) -------------- */
 
-.wing li:last-child { border-bottom: none; }
+.control-room-screens {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+}
 
 /* -- Systems table ----------------------------------------------------------- */
 
@@ -650,28 +793,6 @@ code {
 
 .systems-table tbody tr:hover {
   background: rgba(255, 255, 255, 0.02);
-}
-
-/* -- Media grid ---------------------------------------------------------------- */
-
-.media-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-3);
-  margin-top: var(--space-5);
-}
-
-.media-card {
-  border: 1px solid var(--color-surface-border);
-  border-radius: 8px;
-  padding: var(--space-4);
-  background: linear-gradient(180deg, rgba(224, 168, 96, 0.05), rgba(15, 25, 23, 0.4));
-  box-shadow: inset 0 1px 0 rgba(242, 233, 218, 0.03), 0 10px 24px rgba(0, 0, 0, 0.25);
-}
-
-.media-card p {
-  font-size: 0.95rem;
-  margin-bottom: 0;
 }
 
 /* -- Download -------------------------------------------------------------------- */
@@ -805,16 +926,36 @@ code {
     grid-template-columns: 1fr;
   }
 
-  .journey-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  /* The reverse-order swap only makes sense in the two-column layout. */
+  .section-inner-split-reverse .section-copy,
+  .section-inner-split-reverse .screenshot-frame {
+    order: initial;
   }
 
-  .destination-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .wing-split {
+    grid-template-columns: 1fr;
+    gap: var(--space-5);
   }
 
-  .media-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .wing-column {
+    padding-left: 0;
+    border-left: none;
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-surface-border);
+  }
+
+  .wing-column:first-child {
+    padding-top: 0;
+    border-top: none;
+  }
+
+  .library-group {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
+
+  .control-room-screens {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -852,6 +993,7 @@ code {
   .primary-nav a {
     display: block;
     padding: var(--space-2) 0;
+    font-size: 0.95rem;
   }
 
   .nav-toggle {
@@ -862,14 +1004,6 @@ code {
     display: none;
   }
 
-  .journey-list {
-    grid-template-columns: 1fr;
-  }
-
-  .wing-grid {
-    grid-template-columns: 1fr;
-  }
-
   .section-inner {
     padding: var(--space-6) var(--space-3);
   }
@@ -877,17 +1011,15 @@ code {
   .hero-inner {
     padding: var(--space-5) var(--space-3) var(--space-6);
   }
+
+  /* Staggered indentation only reads as "architectural" with room to
+     spare -- flush left on narrow viewports instead. */
+  .destination-row:nth-child(even) {
+    margin-left: 0;
+  }
 }
 
 @media (max-width: 480px) {
-  .destination-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .media-grid {
-    grid-template-columns: 1fr;
-  }
-
   .hero-actions,
   .download-actions {
     flex-direction: column;
