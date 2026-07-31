@@ -3,9 +3,32 @@
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background: #06070a;
-  color: #e8e2d4;
+  background: #020706;
+  color: #eee7d7;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  isolation: isolate;
+}
+
+.stage::before,
+.stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.stage::before {
+  background:
+    radial-gradient(circle at 50% 48%, rgba(204, 159, 78, 0.11) 0, rgba(4, 25, 23, 0.22) 28%, rgba(1, 8, 8, 0.7) 76%, rgba(0, 4, 4, 0.92) 100%),
+    linear-gradient(90deg, rgba(0, 12, 12, 0.76), transparent 29%, transparent 71%, rgba(0, 10, 10, 0.78));
+}
+
+.stage::after {
+  inset: 14px;
+  border-top: 1px solid rgba(197, 157, 85, 0.23);
+  border-bottom: 1px solid rgba(197, 157, 85, 0.13);
+  clip-path: polygon(0 0, 22% 0, 22% 1px, 78% 1px, 78% 0, 100% 0, 100% 100%, 76% 100%, 76% calc(100% - 1px), 24% calc(100% - 1px), 24% 100%, 0 100%);
 }
 
 .environment {
@@ -17,104 +40,125 @@
   object-position: center;
   pointer-events: none;
   z-index: 0;
+  filter: brightness(0.48) saturate(0.58) contrast(1.16) sepia(0.08);
+  transform: scale(1.018);
 }
 
-/* -- Global header: Return | Vespara lockup | Welcome Back + Depart -- */
-
+/* Compact world header: equal-weight doors, centered identity. */
 .globalHeader {
   position: absolute;
-  top: 22px;
-  left: 32px;
-  right: 32px;
+  top: 24px;
+  left: 42px;
+  right: 42px;
   z-index: 5;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  gap: 16px;
+  gap: 20px;
+  min-height: 54px;
+  border-bottom: 1px solid rgba(181, 143, 76, 0.28);
 }
 
-.worldNav { justify-self: start; }
-.headerRight { justify-self: end; display: flex; align-items: center; gap: 16px; min-width: 0; }
-.brand { justify-self: center; }
+.worldNav { justify-self: start; align-self: start; }
+.headerRight {
+  justify-self: end;
+  align-self: start;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-width: 0;
+}
+.brand { justify-self: center; align-self: start; padding-top: 4px; }
 
 .brandName {
   font-family: "Times New Roman", Georgia, "Liberation Serif", serif;
-  font-size: 22px;
-  letter-spacing: 0.28em;
-  color: #cbd8e2;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9), 0 0 22px rgba(0, 0, 0, 0.7);
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  color: #f1e4c3;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.9), 0 0 22px rgba(191, 147, 74, 0.2);
 }
 
 .returnHomeBtn,
 .departBtn {
-  background: rgba(10, 12, 16, 0.55);
-  border: 1px solid #3a4854;
-  color: #cbd8e2;
-  padding: 8px 16px;
-  border-radius: 4px;
-  font-size: 13px;
-  letter-spacing: 0.06em;
+  position: relative;
+  min-width: 166px;
+  min-height: 46px;
+  background: linear-gradient(180deg, rgba(9, 31, 29, 0.78), rgba(2, 14, 14, 0.9));
+  border: 0;
+  border-top: 1px solid rgba(188, 148, 75, 0.55);
+  border-bottom: 1px solid rgba(113, 88, 44, 0.6);
+  color: #eee4cc;
+  padding: 10px 19px;
+  font-family: "Times New Roman", Georgia, "Liberation Serif", serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.095em;
   cursor: pointer;
-  transition: border-color 0.15s ease, background 0.15s ease;
+  transition: color 0.16s ease, background 0.16s ease, transform 0.16s ease;
 }
+
+.returnHomeBtn::before,
+.departBtn::after {
+  content: "";
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  width: 14px;
+  border-color: rgba(188, 148, 75, 0.55);
+}
+.returnHomeBtn::before { left: 0; border-left: 1px solid; }
+.departBtn::after { right: 0; border-right: 1px solid; }
 
 .returnHomeBtn:hover,
 .departBtn:hover {
-  border-color: #6c8ea6;
-  background: rgba(20, 26, 32, 0.7);
+  color: #fff4d7;
+  background: linear-gradient(180deg, rgba(22, 52, 46, 0.86), rgba(7, 23, 22, 0.94));
 }
 
-/* -- Gold trim: restrained edging reserved for major world/place labels --
-   Same treatment VesparaHome's .worldName uses (thin gold stroke + a small,
-   warm text-shadow, never a full glow). Never applied to descriptions,
-   readiness values, technical status, or hint text -- see Part 6. */
 .goldTrim {
-  -webkit-text-stroke: 0.6px rgba(214, 178, 116, 0.65);
+  -webkit-text-stroke: 0.6px rgba(214, 178, 116, 0.48);
   paint-order: stroke fill;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.75), 0 0 18px rgba(230, 195, 130, 0.18);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.82), 0 0 18px rgba(230, 195, 130, 0.16);
 }
 
-/* -- One true focus owner (Part 2) --------------------------------------
-   `:focus-visible` is a browser-enforced singleton -- exactly one element
-   in the document can match it at a time -- so building the "current
-   controller/keyboard focus" treatment on it, rather than on a derived
-   React state class, makes "never two controls with equal focus
-   prominence" true by construction instead of by careful bookkeeping.
-   Brighter than the quiet .wingSelected marker below, with a small local
-   lift/illumination -- unmistakable, but not a glow or a color-only cue. */
 .returnHomeBtn:focus-visible,
 .departBtn:focus-visible,
 .station:focus-visible {
   outline: none;
   border-color: #a8823f;
-  background: rgba(28, 32, 38, 0.8);
-  box-shadow: 0 0 0 2px rgba(168, 130, 63, 0.45), 0 4px 14px rgba(0, 0, 0, 0.4);
-  transform: translateY(-2px);
+  background: linear-gradient(90deg, rgba(99, 74, 31, 0.32), rgba(8, 33, 30, 0.92));
+  box-shadow: 0 0 0 1px rgba(239, 199, 117, 0.72), 0 8px 24px rgba(0, 0, 0, 0.58), inset 0 1px rgba(255, 224, 153, 0.18);
+  transform: translateX(4px);
 }
 
-/* Same true-focus treatment, kept as its own rule (rather than folded into
-   the shared selector list above) so the pre-existing focus-visible
-   contract's exact selector shape stays intact for regression checks. */
 .readinessAction:focus-visible {
   outline: none;
   border-color: #a8823f;
-  background: rgba(28, 32, 38, 0.8);
+  background: rgba(86, 64, 28, 0.58);
   box-shadow: 0 0 0 2px rgba(168, 130, 63, 0.45), 0 4px 14px rgba(0, 0, 0, 0.4);
   transform: translateY(-2px);
 }
 
 .travelerGreeting {
-  font-size: 13px;
-  color: #9aa6ae;
+  font-size: 14px;
+  color: #b8b5a9;
   white-space: nowrap;
+  text-shadow: 0 2px 8px #000;
 }
-.travelerName { color: #e8e2d4; }
-
-/* -- Local destination title -- */
+.travelerName {
+  display: block;
+  color: #f0dfb8;
+  font-family: "Times New Roman", Georgia, "Liberation Serif", serif;
+  font-size: 18px;
+  font-weight: 700;
+  text-align: right;
+  letter-spacing: 0.04em;
+}
 
 .titleRow {
   position: absolute;
-  top: 78px;
+  top: 88px;
   left: 32px;
   right: 32px;
   z-index: 5;
@@ -123,69 +167,81 @@
 
 .placeName {
   font-family: "Times New Roman", Georgia, "Liberation Serif", serif;
-  font-size: 30px;
+  font-size: 34px;
+  font-weight: 600;
   letter-spacing: 0.2em;
-  color: #cbd8e2;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9), 0 0 22px rgba(0, 0, 0, 0.7);
+  color: #f1e6ce;
+  text-shadow: 0 3px 16px rgba(0, 0, 0, 0.95), 0 0 24px rgba(197, 151, 73, 0.15);
 }
 
 .placeSubtitle {
   margin-top: 4px;
-  font-size: 13px;
-  letter-spacing: 0.12em;
-  color: #7c8890;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9), 0 0 16px rgba(0, 0, 0, 0.7);
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  color: #c1bbae;
+  text-shadow: 0 2px 10px #000;
 }
-
-/* -- Three architectural zones: Systems Wing / Workstation / Archives Wing -- */
 
 .chamber {
   position: absolute;
-  top: 160px;
-  left: 32px;
-  right: 32px;
-  bottom: 32px;
+  top: 158px;
+  left: 38px;
+  right: 38px;
+  bottom: 30px;
   z-index: 5;
   display: grid;
-  grid-template-columns: 280px minmax(0, 1fr) 280px;
+  grid-template-columns: 330px minmax(0, 1fr) 330px;
   gap: 24px;
+  align-items: stretch;
 }
 
 .wing {
-  background: rgba(8, 10, 13, 0.55);
-  border: 1px solid #232a32;
-  border-radius: 6px;
-  padding: 18px;
+  position: relative;
+  background:
+    linear-gradient(90deg, rgba(197, 154, 76, 0.08), transparent 16%),
+    linear-gradient(180deg, rgba(4, 28, 26, 0.94), rgba(1, 14, 14, 0.88));
+  border: 0;
+  border-top: 1px solid rgba(189, 148, 73, 0.48);
+  border-bottom: 1px solid rgba(90, 74, 42, 0.52);
+  padding: 24px 18px 20px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   min-height: 0;
   overflow-y: auto;
+  box-shadow: inset 16px 0 38px rgba(0, 0, 0, 0.35), inset 0 1px rgba(246, 209, 135, 0.05);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(153, 117, 56, 0.6) transparent;
 }
 
-/* Selected/open wing (Part 2): a quiet, persistent marker -- a thin brass
-   left accent and a barely-lifted background, nothing that competes with
-   the true-focus treatment above. Stays visible when real focus moves to
-   the header (the class is driven by `column`, never by `focusZone`), and
-   never grows a box-shadow or lift, so it can never be mistaken for "this
-   is what A activates right now." */
+.wing::before,
+.wing::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+.wing::before {
+  inset: 10px 8px;
+  border-left: 1px solid rgba(183, 143, 68, 0.35);
+  border-right: 1px solid rgba(46, 92, 84, 0.38);
+}
+.wing::after {
+  top: 0;
+  left: 0;
+  width: 72px;
+  height: 3px;
+  background: linear-gradient(90deg, #d3a75d, transparent);
+  box-shadow: 0 0 20px rgba(211, 167, 93, 0.18);
+}
+
 .wingSelected {
   border-left: 3px solid #6b5227;
-  background: rgba(12, 14, 18, 0.68);
+  background:
+    linear-gradient(90deg, rgba(191, 146, 68, 0.13), transparent 22%),
+    linear-gradient(180deg, rgba(6, 35, 32, 0.96), rgba(2, 17, 16, 0.92));
 }
+.wingDimmed { opacity: 0.42; }
 
-/* The peer wing while a station is open -- visible (place identity stays
-   legible) but clearly inactive, so the open station's own wing reads as
-   the one thing currently engaged. */
-.wingDimmed {
-  opacity: 0.4;
-}
-
-/* Applied to the header/title/chamber while a station is open. Dims them
-   (the room stays visible around the station, per spec) and removes them
-   from mouse/pointer interaction -- without this, the constrained station
-   frame below leaves enough of the room exposed that Return/Depart/the
-   peer wing would otherwise still be clickable underneath an open station. */
 .roomInactive {
   pointer-events: none;
 }
@@ -194,178 +250,336 @@
   opacity: 0.5;
   transition: opacity 0.2s ease;
 }
+.chamber.roomInactive { opacity: 0.24; transition: opacity 0.2s ease; }
 
 .wingTitle {
-  font-size: 12px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #8a7350;
+  position: relative;
+  z-index: 1;
+  font-family: "Times New Roman", Georgia, "Liberation Serif", serif;
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: 0.075em;
+  color: #ead9b3;
 }
 
-/* Wing purpose line (Part 5) -- plain description text, deliberately not
-   gold-trimmed (see Part 6: descriptions never carry the world-label
-   treatment). */
 .wingPurpose {
-  font-size: 12px;
-  color: #9aa6ae;
-  margin-bottom: 6px;
+  position: relative;
+  z-index: 1;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #b9b6aa;
+  margin-bottom: 8px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(160, 126, 67, 0.26);
 }
 
 .station {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  align-items: center;
+  gap: 11px;
+  min-height: 70px;
   text-align: left;
-  background: rgba(20, 24, 30, 0.5);
-  border: 1px solid #2a323b;
-  border-radius: 4px;
-  padding: 12px 14px;
-  color: #cbd8e2;
+  background: linear-gradient(90deg, rgba(11, 42, 38, 0.76), rgba(3, 20, 20, 0.64));
+  border: 0;
+  border-left: 1px solid rgba(68, 109, 98, 0.5);
+  border-bottom: 1px solid rgba(76, 95, 84, 0.42);
+  padding: 9px 12px 9px 7px;
+  color: #e8e1d1;
   cursor: pointer;
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
   transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
 }
 
-.station:hover { border-color: #4d3a20; }
+.station:nth-of-type(even) {
+  margin-left: 6px;
+  background: linear-gradient(90deg, rgba(8, 35, 33, 0.7), rgba(2, 18, 18, 0.58));
+}
+
+.station:hover { border-color: #68512b; background: linear-gradient(90deg, rgba(69, 53, 26, 0.25), rgba(6, 29, 27, 0.88)); }
 
 .stationFocused {
   border-color: #a8823f;
-  background: rgba(24, 28, 34, 0.75);
-  transform: translateY(-2px);
+  background: linear-gradient(90deg, rgba(116, 85, 34, 0.34), rgba(8, 38, 34, 0.94));
+  transform: translateX(4px);
 }
 
-.stationLabel { font-size: 14px; }
-.stationHint { margin-top: 4px; font-size: 11px; color: #7c8890; }
+.stationMarker {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(187, 146, 70, 0.52);
+  border-radius: 50%;
+  color: #e0b866;
+  font-family: Georgia, serif;
+  font-size: 18px;
+  background: radial-gradient(circle, rgba(171, 126, 47, 0.15), rgba(0, 19, 18, 0.74) 68%);
+  box-shadow: inset 0 0 13px rgba(0, 0, 0, 0.7);
+}
+.stationCopy { display: block; min-width: 0; }
+.stationLabel { display: block; font-size: 15px; font-weight: 650; line-height: 1.15; color: #eee6d6; }
+.stationHint { display: block; margin-top: 5px; font-size: 12px; line-height: 1.28; color: #aaa99f; }
 
-/* -- Readiness workstation (Part 3/4): fills the previously-empty center
-   area with a truthful setup/status readout instead of static instruction
-   copy. Every value here comes from readinessRows in ControlRoom.jsx,
-   itself derived from real config/library state -- never a literal here. */
 .workstation {
-  border: 1px solid #232a32;
-  border-radius: 6px;
-  background: rgba(8, 10, 13, 0.35);
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 14px;
-  text-align: center;
-  padding: 24px;
+  gap: 17px;
   min-height: 0;
   overflow-y: auto;
+  padding: 88px 8% 56px;
+  text-align: center;
+  background:
+    linear-gradient(90deg, rgba(172, 134, 65, 0.2), rgba(172, 134, 65, 0.03) 9%, transparent 20%, transparent 80%, rgba(172, 134, 65, 0.03) 91%, rgba(172, 134, 65, 0.2)) top / 100% 1px no-repeat,
+    linear-gradient(90deg, rgba(81, 120, 107, 0.14), transparent 18%, transparent 82%, rgba(81, 120, 107, 0.14)) bottom / 100% 1px no-repeat;
+}
+
+.workstation::before {
+  content: "";
+  position: absolute;
+  inset: 8% 7% 9%;
+  border-left: 1px solid rgba(155, 122, 61, 0.19);
+  border-right: 1px solid rgba(155, 122, 61, 0.19);
+  clip-path: polygon(0 12%, 1px 12%, 1px 88%, 0 88%, 0 0, 100% 0, 100% 12%, calc(100% - 1px) 12%, calc(100% - 1px) 88%, 100% 88%, 100% 100%, 0 100%);
+  pointer-events: none;
+}
+
+.workstationHalo {
+  position: absolute;
+  top: 4%;
+  left: 50%;
+  width: min(58vw, 720px);
+  height: 68%;
+  transform: translateX(-50%);
+  border-radius: 50% 50% 18% 18%;
+  background: radial-gradient(ellipse at 50% 34%, rgba(213, 169, 87, 0.16), rgba(9, 45, 39, 0.13) 38%, transparent 70%);
+  pointer-events: none;
+}
+
+.consoleCrown {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.consoleSeal {
+  width: 58px;
+  height: 58px;
+  object-fit: contain;
+  filter: sepia(1) saturate(0.7) brightness(1.35) drop-shadow(0 0 14px rgba(211, 166, 82, 0.25));
 }
 
 .readinessTitle {
-  font-size: 15px;
-  letter-spacing: 0.14em;
-  color: #cbd8e2;
-  text-transform: uppercase;
+  font-family: "Times New Roman", Georgia, "Liberation Serif", serif;
+  font-size: 25px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #eee0bf;
 }
+
+.consoleSurface {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 500px);
+  padding: 20px 26px;
+  background: linear-gradient(180deg, rgba(3, 29, 27, 0.9), rgba(1, 14, 14, 0.95));
+  border-top: 1px solid rgba(211, 166, 82, 0.58);
+  border-bottom: 1px solid rgba(91, 83, 57, 0.52);
+  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.46), inset 0 1px rgba(255, 226, 160, 0.04);
+}
+
+.consoleSurface::before,
+.consoleSurface::after {
+  content: "";
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  width: 17px;
+  border-color: rgba(172, 135, 69, 0.42);
+}
+.consoleSurface::before { left: 0; border-left: 1px solid; }
+.consoleSurface::after { right: 0; border-right: 1px solid; }
 
 .readinessRows {
   display: flex;
   flex-direction: column;
   gap: 8px;
   width: 100%;
-  max-width: 320px;
 }
 
 .readinessRow {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
-  font-size: 12px;
-  padding: 6px 10px;
-  border: 1px solid #232a32;
-  border-radius: 4px;
-  background: rgba(20, 24, 30, 0.4);
+  gap: 18px;
+  font-size: 14px;
+  padding: 9px 5px;
+  border-bottom: 1px solid rgba(82, 112, 101, 0.28);
 }
-
-/* Plain technical status text -- never gold-trimmed (Part 6). */
-.readinessLabel { color: #9aa6ae; }
-.readinessValue { color: #cbd8e2; }
+.readinessLabel { color: #b8b6ab; }
+.readinessValue { color: #eee5d3; font-weight: 600; }
 
 .readinessAction {
-  background: rgba(107, 82, 39, 0.28);
-  border: 1px solid #6b5227;
+  margin-top: 16px;
+  background: rgba(91, 68, 29, 0.42);
+  border: 1px solid #81632f;
   color: #f3ead1;
-  padding: 10px 22px;
-  border-radius: 4px;
-  font-size: 13px;
-  letter-spacing: 0.08em;
+  padding: 11px 24px;
+  font-size: 14px;
+  letter-spacing: 0.055em;
   cursor: pointer;
   transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
 }
-.readinessAction:hover { border-color: #8a7350; }
+.readinessAction:hover { border-color: #b58c43; }
+.readinessComplete { margin-top: 12px; font-size: 14px; letter-spacing: 0.06em; color: #b8c8aa; }
+.readinessNeutral { margin-top: 13px; font-size: 14px; line-height: 1.45; color: #b9b6ab; }
 
-.readinessComplete {
-  font-size: 13px;
-  letter-spacing: 0.08em;
-  color: #7c9a7c;
+.stationContext {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 50px minmax(0, 1fr);
+  align-items: center;
+  gap: 15px;
+  width: min(100%, 430px);
+  padding: 15px 20px;
+  background: linear-gradient(90deg, rgba(13, 48, 42, 0.85), rgba(2, 22, 21, 0.8));
+  border-left: 2px solid rgba(205, 161, 78, 0.7);
+  border-bottom: 1px solid rgba(69, 102, 91, 0.43);
+  text-align: left;
 }
-
-/* Neutral (unavailable/unknown) readiness state -- honest, but deliberately
-   not styled as either success (readinessComplete's green) or an urgent
-   call-to-action (readinessAction's brass button). */
-.readinessNeutral {
-  font-size: 12px;
-  color: #7c8890;
+.contextSymbol {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border: 1px solid rgba(196, 154, 76, 0.55);
+  border-radius: 50%;
+  color: #e4bd70;
+  font-size: 21px;
 }
+.contextCopy { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.contextWing { color: #bc9757; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+.contextCopy strong { color: #f0e7d6; font-family: "Times New Roman", Georgia, serif; font-size: 20px; }
+.contextCopy > span:last-child { color: #b7b4a9; font-size: 13px; line-height: 1.35; }
 
-/* -- Station frame: the existing Settings/MediaManager overlay, constrained --
-   Settings.jsx/MediaManager.jsx are untouched -- both still render their own
-   real `position: fixed; inset: 0` overlay. `transform` on this wrapper
-   (any value, including an identity transform) makes it the CSS containing
-   block for THAT fixed-position child, per the CSS Transforms spec -- so
-   the untouched overlay resolves its own inset:0 against this frame's box
-   instead of the full viewport, without a single line of Settings/
-   MediaManager code changing. This is what turns their native full-screen
-   presentation into a constrained workstation viewport with the room
-   visible around the edges. */
+/* Outer architectural framing only; child module internals remain untouched. */
 .stationFrame {
   position: fixed;
-  inset: clamp(20px, 5vh, 64px) clamp(48px, 8vw, 160px);
+  inset: clamp(20px, 4vh, 48px) clamp(48px, 7vw, 140px);
   z-index: 20;
-  border-radius: 10px;
-  border: 2px solid #6b5227;
-  box-shadow:
-    0 0 0 1px rgba(0, 0, 0, 0.6),
-    0 30px 80px rgba(0, 0, 0, 0.75),
-    0 0 70px rgba(0, 0, 0, 0.55);
+  display: grid;
+  grid-template-rows: 66px minmax(0, 1fr);
+  border: 1px solid rgba(190, 147, 70, 0.88);
+  background: #03110f;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.8), 0 32px 90px rgba(0, 0, 0, 0.82), 0 0 70px rgba(119, 84, 31, 0.12);
+  overflow: hidden;
+  clip-path: polygon(24px 0, calc(100% - 24px) 0, 100% 24px, 100% calc(100% - 24px), calc(100% - 24px) 100%, 24px 100%, 0 calc(100% - 24px), 0 24px);
+}
+
+.stationFrameHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 0 34px;
+  background:
+    radial-gradient(circle at 50% 0, rgba(187, 143, 65, 0.17), transparent 55%),
+    linear-gradient(180deg, #09241f, #031613);
+  border-bottom: 1px solid rgba(178, 139, 69, 0.46);
+  color: #b7965b;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.stationFrameHeader strong {
+  color: #f0e3c4;
+  font-family: "Times New Roman", Georgia, serif;
+  font-size: 21px;
+  letter-spacing: 0.075em;
+}
+
+.stationViewport {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
   overflow: hidden;
   transform: translateZ(0);
 }
 
-/* -- Reduced motion -- */
-
 @media (prefers-reduced-motion: reduce) {
-  .station, .readinessAction { transition: none; }
+  .station, .readinessAction, .globalHeader.roomInactive, .titleRow.roomInactive, .chamber.roomInactive { transition: none; }
   .stationFocused,
   .returnHomeBtn:focus-visible,
   .departBtn:focus-visible,
   .station:focus-visible,
   .readinessAction:focus-visible { transform: none; }
+  .environment { transform: none; }
 }
 
-/* -- Compact layout (1280x720 and below) -- */
+/* 1366 x 768 and similarly compact living-room displays. */
+@media (max-width: 1440px), (max-height: 820px) {
+  .globalHeader { top: 15px; left: 24px; right: 24px; min-height: 44px; }
+  .returnHomeBtn, .departBtn { min-width: 142px; min-height: 38px; padding: 7px 13px; font-size: 13px; }
+  .brandName { font-size: 21px; }
+  .travelerGreeting { font-size: 12px; }
+  .travelerName { font-size: 15px; }
+  .titleRow { top: 66px; }
+  .placeName { font-size: 27px; }
+  .placeSubtitle { font-size: 12px; }
+  .chamber { top: 126px; left: 24px; right: 24px; bottom: 18px; grid-template-columns: 254px minmax(0, 1fr) 254px; gap: 16px; }
+  .wing { padding: 16px 12px 12px; gap: 5px; }
+  .wingTitle { font-size: 17px; }
+  .wingPurpose { margin-bottom: 3px; padding-bottom: 7px; font-size: 11px; }
+  .station { grid-template-columns: 34px minmax(0, 1fr); gap: 8px; min-height: 56px; padding: 6px 8px 6px 5px; }
+  .stationMarker { width: 31px; height: 31px; font-size: 14px; }
+  .stationLabel { font-size: 13px; }
+  .stationHint { margin-top: 2px; font-size: 10px; line-height: 1.15; }
+  .workstation { padding: 45px 6% 24px; gap: 10px; }
+  .consoleSeal { width: 42px; height: 42px; }
+  .readinessTitle { font-size: 19px; }
+  .consoleSurface { padding: 13px 18px; }
+  .readinessRow { font-size: 12px; padding: 6px 3px; }
+  .readinessNeutral { margin-top: 8px; font-size: 12px; }
+  .stationContext { grid-template-columns: 38px minmax(0, 1fr); gap: 10px; padding: 10px 14px; }
+  .contextSymbol { width: 36px; height: 36px; font-size: 16px; }
+  .contextCopy strong { font-size: 16px; }
+  .contextCopy > span:last-child { font-size: 11px; }
+  .stationFrame { inset: 12px 30px; grid-template-rows: 54px minmax(0, 1fr); }
+  .stationFrameHeader { padding: 0 28px; }
+  .stationFrameHeader strong { font-size: 18px; }
+}
 
+/* Compact layout (1280x720 and below) */
 @media (max-width: 1280px), (max-height: 760px) {
-  .globalHeader { top: 14px; left: 20px; right: 20px; }
+  .globalHeader { top: 12px; left: 20px; right: 20px; }
   .titleRow { top: 58px; left: 20px; right: 20px; }
   .placeName { font-size: 24px; }
   .chamber {
     top: 118px;
     left: 20px;
     right: 20px;
-    bottom: 20px;
+    bottom: 16px;
     grid-template-columns: 220px minmax(0, 1fr) 220px;
     gap: 14px;
   }
-  .wing { padding: 12px; }
-  .wingPurpose { font-size: 11px; }
+  .wing { padding: 12px 9px 9px; }
+  .wingPurpose { font-size: 10px; }
   .brandName { font-size: 17px; }
-  .workstation { padding: 14px; gap: 10px; }
-  .readinessTitle { font-size: 13px; }
-  .readinessRow { font-size: 11px; padding: 5px 8px; }
+  .station { min-height: 50px; }
+  .stationHint { font-size: 9px; }
+  .workstation { padding: 28px 4% 16px; gap: 8px; }
+  .readinessTitle { font-size: 17px; }
+  .readinessRow { font-size: 11px; padding: 5px 3px; }
   .stationFrame {
     inset: 10px 24px;
-    border-radius: 8px;
   }
 }

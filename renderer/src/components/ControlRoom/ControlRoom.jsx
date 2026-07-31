@@ -8,6 +8,7 @@ import { resolveDepartInvoker, restoreDepartFocus } from "../Depart/departIntera
 import { useOverlayGamepad } from "../../hooks/useOverlayGamepad.js"
 import { useGameLibrary } from "../../hooks/useGameLibrary"
 import { useI18n } from "../../i18n/I18nContext.js"
+import vesparaSeal from "../../assets/brand/vespara-symbol-simplified.svg"
 
 // Root-level navigation graph:
 //   zone "header" -- items: return, depart (Left/Right between them, Down
@@ -34,20 +35,20 @@ import { useI18n } from "../../i18n/I18nContext.js"
 // Media Restoration opens Settings -- not MediaManager -- because that is
 // where the real backup/restore/orphan-cleanup logic already lives).
 const SYSTEMS_STATIONS = [
-  { id: "emulators", module: "settings", section: "section-emulators", labelKey: "controlRoom.station.emulatorsLabel", hintKey: "controlRoom.station.emulatorsHint" },
-  { id: "gamePaths", module: "settings", section: "section-paths", labelKey: "controlRoom.station.gamePathsLabel", hintKey: "controlRoom.station.gamePathsHint" },
-  { id: "controllers", module: "settings", section: "section-controllers", labelKey: "controlRoom.station.controllersLabel", hintKey: "controlRoom.station.controllersHint" },
-  { id: "launchBehavior", module: "settings", section: "section-attract", labelKey: "controlRoom.station.launchBehaviorLabel", hintKey: "controlRoom.station.launchBehaviorHint" },
-  { id: "displayPerformance", module: "settings", section: "section-display", labelKey: "controlRoom.station.displayPerformanceLabel", hintKey: "controlRoom.station.displayPerformanceHint" },
-  { id: "preferences", module: "settings", section: "section-language", labelKey: "controlRoom.station.preferencesLabel", hintKey: "controlRoom.station.preferencesHint" },
-  { id: "systemsArchive", module: "settings", section: "section-library", labelKey: "controlRoom.station.systemsArchiveLabel", hintKey: "controlRoom.station.systemsArchiveHint", advanced: true },
+  { id: "emulators", module: "settings", section: "section-emulators", symbol: "◉", labelKey: "controlRoom.station.emulatorsLabel", hintKey: "controlRoom.station.emulatorsHint" },
+  { id: "gamePaths", module: "settings", section: "section-paths", symbol: "⌁", labelKey: "controlRoom.station.gamePathsLabel", hintKey: "controlRoom.station.gamePathsHint" },
+  { id: "controllers", module: "settings", section: "section-controllers", symbol: "✦", labelKey: "controlRoom.station.controllersLabel", hintKey: "controlRoom.station.controllersHint" },
+  { id: "launchBehavior", module: "settings", section: "section-attract", symbol: "▷", labelKey: "controlRoom.station.launchBehaviorLabel", hintKey: "controlRoom.station.launchBehaviorHint" },
+  { id: "displayPerformance", module: "settings", section: "section-display", symbol: "▣", labelKey: "controlRoom.station.displayPerformanceLabel", hintKey: "controlRoom.station.displayPerformanceHint" },
+  { id: "preferences", module: "settings", section: "section-language", symbol: "◇", labelKey: "controlRoom.station.preferencesLabel", hintKey: "controlRoom.station.preferencesHint" },
+  { id: "systemsArchive", module: "settings", section: "section-library", symbol: "◫", labelKey: "controlRoom.station.systemsArchiveLabel", hintKey: "controlRoom.station.systemsArchiveHint", advanced: true },
 ]
 const ARCHIVES_STATIONS = [
-  { id: "artwork", module: "media", tab: "artwork", labelKey: "controlRoom.station.artworkLabel", hintKey: "controlRoom.station.artworkHint" },
-  { id: "videos", module: "media", tab: "library", labelKey: "controlRoom.station.videosLabel", hintKey: "controlRoom.station.videosHint" },
-  { id: "scraping", module: "media", tab: "emumovies", labelKey: "controlRoom.station.scrapingLabel", hintKey: "controlRoom.station.scrapingHint" },
-  { id: "bezels", module: "media", tab: "bezels", labelKey: "controlRoom.station.bezelsLabel", hintKey: "controlRoom.station.bezelsHint" },
-  { id: "mediaRestoration", module: "settings", section: "section-media-restoration", labelKey: "controlRoom.station.mediaRestorationLabel", hintKey: "controlRoom.station.mediaRestorationHint", advanced: true },
+  { id: "artwork", module: "media", tab: "artwork", symbol: "✧", labelKey: "controlRoom.station.artworkLabel", hintKey: "controlRoom.station.artworkHint" },
+  { id: "videos", module: "media", tab: "library", symbol: "▹", labelKey: "controlRoom.station.videosLabel", hintKey: "controlRoom.station.videosHint" },
+  { id: "scraping", module: "media", tab: "emumovies", symbol: "↥", labelKey: "controlRoom.station.scrapingLabel", hintKey: "controlRoom.station.scrapingHint" },
+  { id: "bezels", module: "media", tab: "bezels", symbol: "▱", labelKey: "controlRoom.station.bezelsLabel", hintKey: "controlRoom.station.bezelsHint" },
+  { id: "mediaRestoration", module: "settings", section: "section-media-restoration", symbol: "↺", labelKey: "controlRoom.station.mediaRestorationLabel", hintKey: "controlRoom.station.mediaRestorationHint", advanced: true },
 ]
 
 // Contextual-return contract (Milestone C3, Part 7): ControlRoom can be
@@ -108,8 +109,8 @@ export default function ControlRoom({
 
   const returnBtnRef = useRef(null)
   const departBtnRef = useRef(null)
-  const systemsBtnRef = useRef(null)
-  const archivesBtnRef = useRef(null)
+  const systemsBtnRef = useRef([])
+  const archivesBtnRef = useRef([])
   const continueSetupBtnRef = useRef(null) // mouse/Tab entry point only -- see continueSetup() comment
   const restoreFocusRef = useRef(null) // { zone, column } to restore when a module closes
 
@@ -126,9 +127,11 @@ export default function ControlRoom({
     if (focusZone === "header") {
       (headerIdx === 0 ? returnBtnRef : departBtnRef).current?.focus()
     } else if (focusZone === "root") {
-      (column === "systems" ? systemsBtnRef : column === "archives" ? archivesBtnRef : null)?.current?.focus()
+      const stationRefs = column === "systems" ? systemsBtnRef : archivesBtnRef
+      const stationIndex = column === "systems" ? systemsIdx : archivesIdx
+      stationRefs.current[stationIndex]?.focus()
     }
-  }, [focusZone, headerIdx, column, activeModule])
+  }, [focusZone, headerIdx, column, systemsIdx, archivesIdx, activeModule])
 
   const openStation = (station) => {
     restoreFocusRef.current = { zone: "root", column: columnRef.current }
@@ -348,6 +351,9 @@ export default function ControlRoom({
   // which would risk exactly the double-focus-owner problem Part 2 exists
   // to eliminate.
   const continueSetup = () => { setFocusZone("root"); setColumn("systems"); setSystemsIdx(0); openStation(SYSTEMS_STATIONS[0]) }
+  const selectedStation = column === "systems" ? SYSTEMS_STATIONS[systemsIdx] : ARCHIVES_STATIONS[archivesIdx]
+  const selectedWingLabel = column === "systems" ? t("controlRoom.systemsWing") : t("controlRoom.archivesWing")
+  const activeStation = [...SYSTEMS_STATIONS, ...ARCHIVES_STATIONS].find(station => station.id === activeStationId)
 
   return (
     <div className={styles.stage}>
@@ -403,48 +409,65 @@ export default function ControlRoom({
           {SYSTEMS_STATIONS.map((s, i) => (
             <button
               key={s.id}
-              ref={i === 0 ? systemsBtnRef : null}
+              ref={node => { systemsBtnRef.current[i] = node }}
               className={styles.station + (focusZone === "root" && column === "systems" && systemsIdx === i && !continueSetupFocused ? " " + styles.stationFocused : "")}
               aria-current={focusZone === "root" && column === "systems" && systemsIdx === i && !continueSetupFocused}
               onClick={() => { setFocusZone("root"); setColumn("systems"); setSystemsIdx(i); openStation(s) }}
               onFocus={() => { setFocusZone("root"); setColumn("systems"); setSystemsIdx(i); setContinueSetupFocused(false) }}
             >
-              <div className={styles.stationLabel}>{t(s.labelKey)}</div>
-              <div className={styles.stationHint}>{t(s.hintKey)}</div>
+              <span className={styles.stationMarker} aria-hidden="true">{s.symbol}</span>
+              <span className={styles.stationCopy}>
+                <span className={styles.stationLabel}>{t(s.labelKey)}</span>
+                <span className={styles.stationHint}>{t(s.hintKey)}</span>
+              </span>
             </button>
           ))}
         </div>
 
         <div className={styles.workstation}>
-          <div className={styles.readinessTitle + " " + styles.goldTrim}>{t("controlRoom.readinessTitle")}</div>
-          <div className={styles.readinessRows}>
-            {readinessRows.map(row => (
-              <div key={row.key} className={styles.readinessRow}>
-                <span className={styles.readinessLabel}>{t(row.labelKey)}</span>
-                <span className={styles.readinessValue}>{row.statusText || t(row.statusKey)}</span>
-              </div>
-            ))}
+          <div className={styles.workstationHalo} aria-hidden="true" />
+          <div className={styles.consoleCrown}>
+            <img src={vesparaSeal} alt="" aria-hidden="true" className={styles.consoleSeal} />
+            <div className={styles.readinessTitle + " " + styles.goldTrim}>{t("controlRoom.readinessTitle")}</div>
           </div>
-          {readinessState === "needsSetup" && (
-            <button
-              ref={continueSetupBtnRef}
-              className={styles.readinessAction}
-              onClick={continueSetup}
-              onFocus={() => setContinueSetupFocused(true)}
-              onBlur={() => setContinueSetupFocused(false)}
-            >
-              {t("controlRoom.continueSetup")}
-            </button>
-          )}
-          {readinessState === "ready" && (
-            <div className={styles.readinessComplete}>{t("controlRoom.vesparaReady")}</div>
-          )}
-          {readinessState === "unavailable" && (
-            <div className={styles.readinessNeutral}>{t("controlRoom.readinessUnavailable")}</div>
-          )}
-          {readinessState === "unknown" && (
-            <div className={styles.readinessNeutral}>{t("controlRoom.readinessChecking")}</div>
-          )}
+          <div className={styles.consoleSurface}>
+            <div className={styles.readinessRows}>
+              {readinessRows.map(row => (
+                <div key={row.key} className={styles.readinessRow}>
+                  <span className={styles.readinessLabel}>{t(row.labelKey)}</span>
+                  <span className={styles.readinessValue}>{row.statusText || t(row.statusKey)}</span>
+                </div>
+              ))}
+            </div>
+            {readinessState === "needsSetup" && (
+              <button
+                ref={continueSetupBtnRef}
+                className={styles.readinessAction}
+                onClick={continueSetup}
+                onFocus={() => setContinueSetupFocused(true)}
+                onBlur={() => setContinueSetupFocused(false)}
+              >
+                {t("controlRoom.continueSetup")}
+              </button>
+            )}
+            {readinessState === "ready" && (
+              <div className={styles.readinessComplete}>{t("controlRoom.vesparaReady")}</div>
+            )}
+            {readinessState === "unavailable" && (
+              <div className={styles.readinessNeutral}>{t("controlRoom.readinessUnavailable")}</div>
+            )}
+            {readinessState === "unknown" && (
+              <div className={styles.readinessNeutral}>{t("controlRoom.readinessChecking")}</div>
+            )}
+          </div>
+          <div className={styles.stationContext} aria-live="polite">
+            <span className={styles.contextSymbol} aria-hidden="true">{selectedStation.symbol}</span>
+            <span className={styles.contextCopy}>
+              <span className={styles.contextWing}>{selectedWingLabel}</span>
+              <strong>{t(selectedStation.labelKey)}</strong>
+              <span>{t(selectedStation.hintKey)}</span>
+            </span>
+          </div>
         </div>
 
         <div
@@ -462,14 +485,17 @@ export default function ControlRoom({
           {ARCHIVES_STATIONS.map((s, i) => (
             <button
               key={s.id}
-              ref={i === 0 ? archivesBtnRef : null}
+              ref={node => { archivesBtnRef.current[i] = node }}
               className={styles.station + (focusZone === "root" && column === "archives" && archivesIdx === i ? " " + styles.stationFocused : "")}
               aria-current={focusZone === "root" && column === "archives" && archivesIdx === i}
               onClick={() => { setFocusZone("root"); setColumn("archives"); setArchivesIdx(i); openStation(s) }}
               onFocus={() => { setFocusZone("root"); setColumn("archives"); setArchivesIdx(i) }}
             >
-              <div className={styles.stationLabel}>{t(s.labelKey)}</div>
-              <div className={styles.stationHint}>{t(s.hintKey)}</div>
+              <span className={styles.stationMarker} aria-hidden="true">{s.symbol}</span>
+              <span className={styles.stationCopy}>
+                <span className={styles.stationLabel}>{t(s.labelKey)}</span>
+                <span className={styles.stationHint}>{t(s.hintKey)}</span>
+              </span>
             </button>
           ))}
         </div>
@@ -477,30 +503,42 @@ export default function ControlRoom({
 
       {activeModule === "settings" && (
         <div className={styles.stationFrame} data-active-wing={activeWing}>
-          <Settings
-            games={games}
-            onClose={closeStation}
-            onCRTChange={onCRTChange}
-            crtEnabled={crtEnabled}
-            uiSoundsEnabled={uiSoundsEnabled}
-            onUiSoundsChange={onUiSoundsChange}
-            uiSoundVolume={uiSoundVolume}
-            onUiSoundVolumeChange={onUiSoundVolumeChange}
-            scrollToSection={
-              (SYSTEMS_STATIONS.find(s => s.id === activeStationId)
-                || ARCHIVES_STATIONS.find(s => s.id === activeStationId))?.section
-            }
-          />
+          <div className={styles.stationFrameHeader}>
+            <span>{activeWing === "systems" ? t("controlRoom.systemsWing") : t("controlRoom.archivesWing")}</span>
+            <strong>{activeStation ? t(activeStation.labelKey) : t("controlRoom.title")}</strong>
+          </div>
+          <div className={styles.stationViewport}>
+            <Settings
+              games={games}
+              onClose={closeStation}
+              onCRTChange={onCRTChange}
+              crtEnabled={crtEnabled}
+              uiSoundsEnabled={uiSoundsEnabled}
+              onUiSoundsChange={onUiSoundsChange}
+              uiSoundVolume={uiSoundVolume}
+              onUiSoundVolumeChange={onUiSoundVolumeChange}
+              scrollToSection={
+                (SYSTEMS_STATIONS.find(s => s.id === activeStationId)
+                  || ARCHIVES_STATIONS.find(s => s.id === activeStationId))?.section
+              }
+            />
+          </div>
         </div>
       )}
       {activeModule === "media" && (
         <div className={styles.stationFrame} data-active-wing={activeWing}>
-          <MediaManager
-            onClose={closeStation}
-            onVideosUpdated={() => {}}
-            onArtworkUpdated={() => {}}
-            initialTab={ARCHIVES_STATIONS.find(s => s.id === activeStationId)?.tab}
-          />
+          <div className={styles.stationFrameHeader}>
+            <span>{t("controlRoom.archivesWing")}</span>
+            <strong>{activeStation ? t(activeStation.labelKey) : t("controlRoom.title")}</strong>
+          </div>
+          <div className={styles.stationViewport}>
+            <MediaManager
+              onClose={closeStation}
+              onVideosUpdated={() => {}}
+              onArtworkUpdated={() => {}}
+              initialTab={ARCHIVES_STATIONS.find(s => s.id === activeStationId)?.tab}
+            />
+          </div>
         </div>
       )}
 
