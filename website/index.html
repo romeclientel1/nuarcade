@@ -6,7 +6,7 @@
   <title>Vespara — A world for your arcade</title>
   <meta name="description" content="Vespara is a cinematic Windows arcade frontend by NuArcade. Browse, launch, and live inside your collection — The Sanctuary, The Library, and The Control Room.">
   <meta name="robots" content="index, follow">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=vespara-sanctuary-final-3">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to main content</a>
@@ -14,7 +14,7 @@
   <header class="site-header">
     <div class="header-inner">
       <a class="wordmark" href="#top" aria-label="Vespara home">
-        <span class="wordmark-mark" aria-hidden="true">◈</span>
+        <span class="brand-sigil" aria-hidden="true">V</span>
         <span class="wordmark-text">Vespara</span>
       </a>
 
@@ -33,24 +33,24 @@
 
       <nav class="primary-nav" id="primary-nav" aria-label="Primary">
         <ul>
-          <li><a href="#experience">Experience</a></li>
+          <li><a href="#feature-strip">Experience</a></li>
           <li><a href="#sanctuary">Sanctuary</a></li>
           <li><a href="#library">Library</a></li>
           <li><a href="#control-room">Control Room</a></li>
           <li><a href="#systems">Systems</a></li>
-          <li><a href="#download">Download</a></li>
-          <li>
-            <a
-              href="https://github.com/romeclientel1/nuarcade/blob/main/USER_MANUAL.md"
-              target="_blank"
-              rel="noopener"
-              aria-label="Owner's Manual (opens on GitHub in a new tab)"
-            >Manual</a>
-          </li>
         </ul>
       </nav>
 
-      <a class="btn btn-primary btn-header" href="#download">Download</a>
+      <a class="btn btn-primary btn-header" href="#download">
+        <span aria-hidden="true">↓</span> Download
+      </a>
+      <a
+        class="header-manual"
+        href="https://github.com/romeclientel1/nuarcade/blob/main/USER_MANUAL.md"
+        target="_blank"
+        rel="noopener"
+        aria-label="Owner's Manual (opens on GitHub in a new tab)"
+      ><span aria-hidden="true">▥</span> Manual</a>
     </div>
   </header>
 
@@ -60,87 +60,137 @@
     <!-- ============================= HERO ============================= -->
     <section class="hero" aria-labelledby="hero-heading">
       <div class="hero-atmosphere" aria-hidden="true">
-        <div class="hero-starfield"></div>
-        <div class="hero-glow hero-glow-cyan"></div>
-        <div class="hero-glow hero-glow-violet"></div>
+        <div class="hero-vault hero-vault-left"></div>
+        <div class="hero-vault hero-vault-right"></div>
+        <div class="hero-floor"></div>
       </div>
 
       <div class="hero-inner">
         <div class="hero-copy">
           <p class="eyebrow">A world for your arcade</p>
-          <h1 id="hero-heading">Your collection deserves<br>a home.</h1>
+          <h1 id="hero-heading">Your Collection.<br>Finally in <em>Order.</em></h1>
           <p class="hero-lede">
             Vespara is a cinematic Windows arcade frontend for the emulators
-            and games you already own. It gives your collection a place to
-            arrive, a Library to live in, and a Control Room to shape it —
-            instead of just another launcher window.
+            and games you already own — a Sanctuary to arrive in, a Library
+            to explore, and a Control Room to shape the experience.
           </p>
 
           <div class="hero-actions">
-            <a class="btn btn-primary btn-large" href="#download">Download Vespara</a>
+            <a
+              class="btn btn-primary btn-large"
+              href="https://github.com/romeclientel1/nuarcade/releases/latest"
+              target="_blank"
+              rel="noopener"
+            ><span aria-hidden="true">↓</span> Download Vespara</a>
             <a
               class="btn btn-secondary btn-large"
               href="https://github.com/romeclientel1/nuarcade/blob/main/USER_MANUAL.md"
               target="_blank"
               rel="noopener"
-            >Read the Owner's Manual</a>
+            ><span aria-hidden="true">▥</span> Read Owner's Manual</a>
           </div>
 
-          <dl class="hero-meta">
-            <div class="hero-meta-item">
-              <dt>Current version</dt>
-              <dd>Vespara 6.0.3</dd>
-            </div>
-            <div class="hero-meta-item">
-              <dt>Platform</dt>
-              <dd>Windows 10 / 11, 64-bit</dd>
-            </div>
-          </dl>
+          <ul class="hero-meta" aria-label="Product information">
+            <li><span aria-hidden="true">⊞</span> Windows 10 / 11, 64-bit</li>
+            <li>Vespara 6.0.3</li>
+            <li>Bring your own games</li>
+          </ul>
         </div>
 
-        <figure class="screenshot-frame screenshot-frame-hero">
-          <div class="screenshot-placeholder" role="img" aria-label="Placeholder for a screenshot of the Sanctuary, Vespara's home screen">
-            <span class="screenshot-placeholder-glyph" aria-hidden="true">◈</span>
-            <span class="screenshot-placeholder-label">The Sanctuary</span>
-            <span class="screenshot-placeholder-path">website/assets/sanctuary-hero.png</span>
+        <figure class="hero-sanctuary-frame">
+          <div class="hero-frame-crown" aria-hidden="true">
+            <span class="mini-sigil">V</span>
+            <span>Vespara</span>
           </div>
-          <figcaption>The Sanctuary — screenshot coming soon.</figcaption>
+          <div
+            class="hero-screen-placeholder"
+            role="img"
+            aria-label="Temporary Sanctuary composition derived from the approved Vespara visual reference"
+          >
+            <span class="hero-screen-vignette" aria-hidden="true"></span>
+          </div>
+          <figcaption>One sanctuary for every game, every system, every memory.</figcaption>
         </figure>
       </div>
     </section>
 
-    <!-- =========================== EXPERIENCE ========================== -->
-    <section class="section" id="experience" aria-labelledby="experience-heading">
-      <div class="section-inner">
-        <p class="eyebrow">The journey in</p>
-        <h2 id="experience-heading">Arriving somewhere, not just opening something.</h2>
-        <p class="section-lede">
-          Vespara doesn't drop you straight into a list of games. Every
-          session opens with the same short arrival, the same way walking
-          up to a real cabinet would.
-        </p>
+    <!-- ========================= FEATURE STRIP ========================= -->
+    <section class="pain-point-strip" id="feature-strip" aria-labelledby="features-heading">
+      <div class="architectural-rail">
+        <h2 class="visually-hidden" id="features-heading">Collection tools</h2>
+        <ul class="pain-point-list">
+          <li>
+            <span class="feature-icon" aria-hidden="true">◇</span>
+            <div><h3>TeknoParrot Renamer</h3><p>Find mismatched folders and approve suggested names so games appear correctly.</p></div>
+          </li>
+          <li>
+            <span class="feature-icon" aria-hidden="true">▻</span>
+            <div><h3>YouTube Video Scraper</h3><p>Fill missing gameplay previews with per-game or bulk video fetching.</p></div>
+          </li>
+          <li>
+            <span class="feature-icon" aria-hidden="true">◎</span>
+            <div><h3>EmuMovies Imports</h3><p>Match and import media from your EmuMovies Sync folders after confirmation.</p></div>
+          </li>
+          <li>
+            <span class="feature-icon" aria-hidden="true">⬡</span>
+            <div><h3>Custom System Logos</h3><p>Replace category text with your own logo artwork.</p></div>
+          </li>
+          <li>
+            <span class="feature-icon" aria-hidden="true">▣</span>
+            <div><h3>Streamlined Setup</h3><p>Configure paths, controllers, and display in one place.</p></div>
+          </li>
+          <li>
+            <span class="feature-icon" aria-hidden="true">▧</span>
+            <div><h3>Curated Media</h3><p>Manage artwork, videos, bezels, and restoration.</p></div>
+          </li>
+        </ul>
+      </div>
+    </section>
 
-        <ol class="arrival-sequence">
-          <li class="arrival-step">
-            <span class="arrival-marker" aria-hidden="true"></span>
-            <div class="arrival-step-body">
-              <h3>Intro</h3>
-              <p>Vespara opens with a short cinematic intro before anything else appears.</p>
-            </div>
-          </li>
-          <li class="arrival-step">
-            <span class="arrival-marker" aria-hidden="true"></span>
-            <div class="arrival-step-body">
-              <h3>Arrival at the Sanctuary</h3>
-              <p>
-                You arrive in the Sanctuary — Vespara's home screen, and the
-                place every session starts from and can return to. Who you
-                arrive as is decided just before this, in Traveler
-                Recognition.
-              </p>
-            </div>
-          </li>
-        </ol>
+    <!-- ======================== DESTINATIONS ========================== -->
+    <section class="destination-showcase" id="destinations" aria-labelledby="destinations-heading">
+      <div class="destination-showcase-inner">
+        <div class="destination-heading-row">
+          <span aria-hidden="true"></span>
+          <p class="eyebrow">Four destinations. One collection.</p>
+          <h2 class="visually-hidden" id="destinations-heading">Explore Vespara</h2>
+          <span aria-hidden="true"></span>
+        </div>
+
+        <div class="destination-bays">
+          <article class="destination-bay destination-bay-sanctuary" id="sanctuary">
+            <header><p>The Sanctuary</p><span>A home for your collection</span></header>
+            <div class="destination-visual" role="img" aria-label="Temporary visual of the Sanctuary environment"></div>
+            <p>Every session starts here, with paths to every part of your collection.</p>
+            <a href="https://github.com/romeclientel1/nuarcade/blob/main/USER_MANUAL.md" target="_blank" rel="noopener">Explore Sanctuary <span aria-hidden="true">→</span></a>
+          </article>
+
+          <article class="destination-bay destination-bay-library" id="library">
+            <header><p>The Library</p><span>Your games, beautifully organized</span></header>
+            <div class="destination-visual" role="img" aria-label="Temporary visual of the Library collection environment"></div>
+            <p>Browse by system, search, sort, save favorites, and build collections.</p>
+            <a href="https://github.com/romeclientel1/nuarcade/blob/main/USER_MANUAL.md" target="_blank" rel="noopener">Browse the Library <span aria-hidden="true">→</span></a>
+          </article>
+
+          <article class="destination-bay destination-bay-control" id="control-room">
+            <header><p>Control Room</p><span>Configure. Connect. Command.</span></header>
+            <div class="destination-visual" role="img" aria-label="Temporary visual of the Control Room interface"></div>
+            <p>Set up emulators, game paths, controllers, display, and launch behavior.</p>
+            <a href="https://github.com/romeclientel1/nuarcade/blob/main/USER_MANUAL.md" target="_blank" rel="noopener">Enter Control Room <span aria-hidden="true">→</span></a>
+          </article>
+
+          <article class="destination-bay destination-bay-media" id="media-wing">
+            <header><p>Media Wing</p><span>Your media, elevated</span></header>
+            <div class="destination-visual" role="img" aria-label="Temporary visual of the Media Wing environment"></div>
+            <p>Shape the artwork, video, system logos, and bezels around your games.</p>
+            <a href="https://github.com/romeclientel1/nuarcade/blob/main/USER_MANUAL.md" target="_blank" rel="noopener">Discover Media Wing <span aria-hidden="true">→</span></a>
+          </article>
+        </div>
+
+        <p class="destination-legal">
+          Vespara does not distribute copyrighted artwork, ROMs, BIOS files,
+          or emulator software. Connect supported services or supply your own files.
+        </p>
       </div>
     </section>
 
@@ -148,12 +198,19 @@
     <section class="section section-alt" id="traveler-recognition" aria-labelledby="traveler-heading">
       <div class="section-inner section-inner-split section-inner-split-reverse">
         <figure class="screenshot-frame">
-          <div class="screenshot-placeholder" role="img" aria-label="Placeholder for a screenshot of Traveler Recognition, the profile-selection screen">
-            <span class="screenshot-placeholder-glyph" aria-hidden="true">◈</span>
-            <span class="screenshot-placeholder-label">Traveler Recognition</span>
-            <span class="screenshot-placeholder-path">website/assets/traveler-recognition.png</span>
+          <div class="screenshot-placeholder traveler-portal-stage" role="img" aria-label="Atmospheric concept for Traveler Recognition with a central profile portal and surrounding traveler medallions">
+            <span class="traveler-arch traveler-arch-outer" aria-hidden="true"></span>
+            <span class="traveler-arch traveler-arch-inner" aria-hidden="true"></span>
+            <span class="traveler-medallion traveler-medallion-one" aria-hidden="true"></span>
+            <span class="traveler-medallion traveler-medallion-two" aria-hidden="true"></span>
+            <span class="traveler-medallion traveler-medallion-three" aria-hidden="true"></span>
+            <span class="traveler-medallion traveler-medallion-four" aria-hidden="true"></span>
+            <span class="traveler-portal-core">
+              <span class="screenshot-placeholder-glyph" aria-hidden="true">◈</span>
+              <span class="screenshot-placeholder-label">Traveler Recognition</span>
+            </span>
           </div>
-          <figcaption>Traveler Recognition — screenshot coming soon.</figcaption>
+          <figcaption>Traveler Recognition — temporary atmospheric concept.</figcaption>
         </figure>
 
         <div class="section-copy">
@@ -176,7 +233,7 @@
     </section>
 
     <!-- =========================== SANCTUARY =========================== -->
-    <section class="section" id="sanctuary" aria-labelledby="sanctuary-heading">
+    <section class="section" id="sanctuary-legacy" aria-labelledby="sanctuary-heading" hidden>
       <div class="section-inner">
         <p class="eyebrow">Home base</p>
         <h2 id="sanctuary-heading">The Sanctuary</h2>
@@ -249,7 +306,7 @@
           <div class="screenshot-placeholder" role="img" aria-label="Placeholder for a screenshot of the Depart confirmation, showing Remain and Depart">
             <span class="screenshot-placeholder-glyph" aria-hidden="true">◈</span>
             <span class="screenshot-placeholder-label">Depart confirmation</span>
-            <span class="screenshot-placeholder-path">website/assets/depart-confirm.png</span>
+            <span class="screenshot-placeholder-path">Application capture forthcoming</span>
           </div>
           <figcaption>Remain or Depart — screenshot coming soon.</figcaption>
         </figure>
@@ -257,7 +314,7 @@
     </section>
 
     <!-- ============================= LIBRARY =========================== -->
-    <section class="section section-alt" id="library" aria-labelledby="library-heading">
+    <section class="section section-alt" id="library-legacy" aria-labelledby="library-heading" hidden>
       <div class="section-inner section-inner-split">
         <div class="section-copy">
           <p class="eyebrow">Where your collection lives</p>
@@ -298,7 +355,7 @@
           <div class="screenshot-placeholder" role="img" aria-label="Placeholder for a screenshot of the Library's system browsing view">
             <span class="screenshot-placeholder-glyph" aria-hidden="true">◈</span>
             <span class="screenshot-placeholder-label">The Library</span>
-            <span class="screenshot-placeholder-path">website/assets/library-browse.png</span>
+            <span class="screenshot-placeholder-path">Application capture forthcoming</span>
           </div>
           <figcaption>The Library — screenshot coming soon.</figcaption>
         </figure>
@@ -306,7 +363,7 @@
     </section>
 
     <!-- ================= CONTROL ROOM & MEDIA WING ===================== -->
-    <section class="section" id="control-room" aria-labelledby="control-room-heading">
+    <section class="section" id="control-room-legacy" aria-labelledby="control-room-heading" hidden>
       <div class="section-inner">
         <p class="eyebrow">Configuration, shaped like a place</p>
         <h2 id="control-room-heading">The Control Room &amp; Media Wing</h2>
@@ -361,7 +418,7 @@
             <div class="screenshot-placeholder" role="img" aria-label="Placeholder for a screenshot showing the Control Room's Systems and Media wings">
               <span class="screenshot-placeholder-glyph" aria-hidden="true">◈</span>
               <span class="screenshot-placeholder-label">The Control Room</span>
-              <span class="screenshot-placeholder-path">website/assets/control-room-wings.png</span>
+              <span class="screenshot-placeholder-path">Application capture forthcoming</span>
             </div>
             <figcaption>The Control Room's two wings — screenshot coming soon.</figcaption>
           </figure>
@@ -369,7 +426,7 @@
             <div class="screenshot-placeholder" role="img" aria-label="Placeholder for a screenshot of the Media Manager screen">
               <span class="screenshot-placeholder-glyph" aria-hidden="true">◈</span>
               <span class="screenshot-placeholder-label">Media Manager</span>
-              <span class="screenshot-placeholder-path">website/assets/media-manager.png</span>
+              <span class="screenshot-placeholder-path">Application capture forthcoming</span>
             </div>
             <figcaption>Media Manager — screenshot coming soon.</figcaption>
           </figure>
