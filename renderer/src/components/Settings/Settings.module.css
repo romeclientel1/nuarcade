@@ -492,3 +492,692 @@
   opacity: 0.75;
   filter: grayscale(0.3);
 }
+
+/* ============================================================
+   STATION WORKSPACES
+   The original controls remain mounted and wired exactly as before. Only
+   the groups belonging to the requested anchor participate in layout.
+   ============================================================ */
+
+.overlay {
+  background:
+    radial-gradient(circle at 50% 8%, rgba(185, 139, 63, 0.09), transparent 34%),
+    rgba(0, 8, 8, 0.82);
+  backdrop-filter: blur(7px);
+  padding: 18px;
+}
+
+.panel {
+  width: min(1320px, calc(100vw - 96px));
+  max-width: none;
+  height: min(820px, calc(100vh - 80px));
+  max-height: none;
+  background:
+    linear-gradient(180deg, rgba(4, 24, 22, 0.98), rgba(2, 13, 13, 0.99)),
+    #03110f;
+  border-radius: 0;
+  box-shadow: 0 26px 80px rgba(0, 0, 0, 0.52);
+}
+
+.header {
+  align-items: center;
+  padding: 17px 30px;
+  min-height: 70px;
+  border-bottom: 1px solid rgba(187, 145, 72, 0.35);
+  background:
+    linear-gradient(90deg, rgba(154, 113, 48, 0.08), transparent 25%, transparent 75%, rgba(154, 113, 48, 0.06)),
+    rgba(3, 18, 17, 0.96);
+}
+
+.title {
+  font-family: "Times New Roman", Georgia, "Liberation Serif", serif;
+  font-size: 24px;
+  color: #eee1c4;
+  letter-spacing: 0.065em;
+  margin-bottom: 2px;
+}
+
+.sub {
+  font-size: 13px;
+  color: #aaa99f;
+}
+
+.closeBtn {
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(181, 139, 65, 0.52);
+  border-radius: 0;
+  background: rgba(6, 28, 25, 0.85);
+  color: #e8dcc2;
+  font-size: 16px;
+}
+
+.closeBtn:hover {
+  border-color: #d6b274;
+  background: rgba(91, 67, 28, 0.35);
+}
+
+.body {
+  position: relative;
+  padding: 28px 36px 38px;
+  gap: 18px;
+  background:
+    linear-gradient(90deg, rgba(31, 77, 68, 0.08), transparent 18%, transparent 82%, rgba(31, 77, 68, 0.08)),
+    rgba(1, 11, 11, 0.74);
+  scrollbar-color: rgba(182, 139, 65, 0.72) rgba(0, 0, 0, 0.18);
+  scrollbar-width: thin;
+}
+
+.stationIntroduction {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(280px, 0.8fr) minmax(300px, 1fr);
+  align-items: center;
+  gap: 4px 26px;
+  padding: 4px 0 22px 22px;
+  border-left: 2px solid rgba(210, 165, 80, 0.78);
+  border-bottom: 1px solid rgba(177, 139, 71, 0.3);
+}
+
+.stationIntroduction::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 180px;
+  height: 1px;
+  background: linear-gradient(90deg, #d5a85c, transparent);
+  box-shadow: 0 0 18px rgba(213, 168, 92, 0.2);
+}
+
+.stationEyebrow {
+  grid-column: 1 / -1;
+  color: #b99152;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.stationHeading {
+  font-family: "Times New Roman", Georgia, "Liberation Serif", serif;
+  font-size: clamp(28px, 2vw, 38px);
+  line-height: 1;
+  font-weight: 700;
+  color: #f1e5cb;
+  letter-spacing: 0.035em;
+}
+
+.stationPurpose {
+  width: min(100%, 560px);
+  max-width: 560px;
+  justify-self: end;
+  padding: 6px 0 6px 22px;
+  border-left: 1px solid rgba(177, 139, 71, 0.3);
+  color: #bebbb0;
+  font-size: 15px;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.stationSection {
+  display: none;
+}
+
+.stationSectionActive {
+  display: block;
+  position: relative;
+  padding: 24px 26px 28px;
+  border: 0;
+  border-top: 1px solid rgba(174, 135, 69, 0.32);
+  border-bottom: 1px solid rgba(68, 100, 89, 0.3);
+  background:
+    linear-gradient(110deg, rgba(8, 40, 36, 0.74), rgba(2, 18, 18, 0.58) 58%, rgba(79, 58, 25, 0.08)),
+    rgba(2, 17, 16, 0.76);
+  box-shadow: inset 18px 0 34px rgba(0, 0, 0, 0.15);
+}
+
+.stationSectionActive::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 0;
+  width: 72px;
+  height: 2px;
+  background: linear-gradient(90deg, #c99a4f, transparent);
+}
+
+.stationSubsection {
+  display: none;
+}
+
+.stationSubsectionActive {
+  display: block;
+}
+
+.stationSubsectionHidden {
+  display: none !important;
+}
+
+.section {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.sectionTitle {
+  margin-bottom: 17px;
+  font-family: "Times New Roman", Georgia, "Liberation Serif", serif;
+  font-size: 18px;
+  line-height: 1.2;
+  font-weight: 700;
+  color: #ddbd80;
+  letter-spacing: 0.075em;
+  text-transform: none;
+}
+
+.pathsNote,
+.emuNote {
+  color: #aaa99f;
+  font-size: 13px;
+  line-height: 1.55;
+  margin-bottom: 18px;
+}
+
+.inputRow {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.72fr) minmax(250px, 1.55fr) auto;
+  align-items: center;
+  gap: 13px;
+  min-height: 56px;
+  margin: 0;
+  padding: 9px 11px;
+  border-bottom: 1px solid rgba(77, 106, 96, 0.24);
+  background: rgba(0, 10, 10, 0.16);
+}
+
+.inputRow:nth-of-type(even) {
+  background: rgba(11, 45, 40, 0.14);
+}
+
+.inputLabelStack {
+  min-width: 0;
+}
+
+.inputLabel {
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 14px;
+  line-height: 1.3;
+  font-weight: 650;
+  color: #e5ded0;
+}
+
+.inputSub {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: #99998f;
+}
+
+.input,
+.textInput {
+  min-width: 0;
+  min-height: 42px;
+  padding: 10px 13px;
+  border: 1px solid rgba(121, 139, 123, 0.36);
+  border-radius: 0;
+  background: rgba(0, 9, 9, 0.72);
+  color: #eee7da;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+}
+
+.input:focus,
+.textInput:focus {
+  border-color: #d6b274;
+  box-shadow: 0 0 0 2px rgba(214, 178, 116, 0.17);
+}
+
+.browseBtn,
+.exportBtn,
+.communityLink,
+.toggleBtn,
+.emuToggle,
+.emulatorBtn {
+  min-height: 40px;
+  border-radius: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0.025em;
+}
+
+.browseBtn {
+  padding: 9px 16px;
+  border-color: rgba(196, 153, 74, 0.48);
+  background: rgba(75, 55, 24, 0.18);
+  color: #dcc28d;
+}
+
+.browseBtn:hover,
+.exportBtn:hover:not(:disabled),
+.communityLink:hover,
+.emulatorBtn:hover {
+  border-color: #d6b274;
+  background: rgba(109, 79, 31, 0.23);
+  color: #f1e5ca;
+}
+
+.communityLink {
+  width: 100%;
+  appearance: none;
+  padding: 11px 15px;
+  border: 1px solid rgba(177, 139, 71, 0.38);
+  border-radius: 0;
+  background:
+    linear-gradient(90deg, rgba(24, 64, 57, 0.24), transparent 72%),
+    rgba(0, 14, 13, 0.82);
+  box-shadow: inset 0 1px rgba(235, 207, 150, 0.04), inset 12px 0 24px rgba(0, 0, 0, 0.12);
+  color: #e6dcc8;
+  text-align: left;
+  cursor: pointer;
+}
+
+.communityLink:hover {
+  border-color: rgba(214, 178, 116, 0.72);
+  background:
+    linear-gradient(90deg, rgba(76, 70, 40, 0.24), transparent 72%),
+    rgba(2, 24, 21, 0.9);
+  color: #f1e5ca;
+}
+
+.toggleGroup,
+.toggleRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.toggleBtn {
+  min-width: 76px;
+  padding: 9px 18px;
+  color: #aaa99e;
+  border-color: rgba(128, 142, 128, 0.35);
+}
+
+.toggleActive {
+  border-color: #d6b274 !important;
+  color: #f0d9a8 !important;
+  background: rgba(152, 108, 39, 0.22);
+  box-shadow: inset 0 1px rgba(255, 228, 169, 0.08);
+}
+
+.sliderWrap {
+  gap: 18px;
+}
+
+.slider {
+  height: 7px;
+}
+
+.sliderVal {
+  min-width: 54px;
+  font-size: 14px;
+  color: #e0bd78;
+}
+
+.emulatorOverview {
+  margin: 0 0 22px;
+  padding: 0 0 24px;
+  border-bottom: 1px solid rgba(174, 135, 69, 0.28);
+}
+
+.emulatorGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.emulatorBtn {
+  padding: 10px 13px;
+  color: #cdb57f;
+  background: rgba(11, 40, 35, 0.48);
+}
+
+.emulatorBtnDim {
+  opacity: 0.67;
+  filter: saturate(0.72);
+}
+
+.emuToggles {
+  gap: 8px;
+}
+
+.emuToggle {
+  padding: 8px 12px;
+  color: #aaa99f;
+  border-color: rgba(105, 125, 112, 0.34);
+  background: rgba(3, 24, 22, 0.62);
+}
+
+.emuToggleOn {
+  border-color: rgba(205, 160, 78, 0.52);
+  background: rgba(92, 66, 27, 0.19);
+  color: #e7ddc7;
+}
+
+.emuToggleOn .emuDot {
+  background: #d6b274 !important;
+}
+
+.aboutRow {
+  min-height: 48px;
+  padding: 10px 14px;
+  border-radius: 0;
+  border-color: rgba(84, 111, 99, 0.28);
+  background: rgba(2, 18, 17, 0.6);
+}
+
+.aboutLabel {
+  min-width: 120px;
+  font-size: 12px;
+  color: #aaa99f;
+}
+
+.aboutVal {
+  font-size: 13px;
+  color: #d7bd89;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.body[data-active-section="section-emulators"] > .stationSectionActive,
+.body[data-active-section="section-paths"] > .stationSectionActive {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 18px;
+}
+
+.body[data-active-section="section-emulators"] .emulatorOverview,
+.body[data-active-section="section-emulators"] > .stationSectionActive > .sectionTitle,
+.body[data-active-section="section-emulators"] > .stationSectionActive > .pathsNote,
+.body[data-active-section="section-paths"] > .stationSectionActive > .sectionTitle,
+.body[data-active-section="section-paths"] > .stationSectionActive > .pathsNote {
+  grid-column: 1 / -1;
+}
+
+.body[data-active-section="section-controllers"] > .stationSectionActive {
+  width: 100%;
+  min-height: 360px;
+  display: grid;
+  place-items: center;
+}
+
+.controllerDiagnosticFrame {
+  position: relative;
+  width: min(800px, 100%);
+  min-height: 250px;
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr);
+  align-items: center;
+  gap: 34px;
+  padding: 32px 38px;
+  border-top: 1px solid rgba(190, 147, 72, 0.45);
+  border-bottom: 1px solid rgba(68, 106, 94, 0.42);
+  background:
+    radial-gradient(circle at 16% 50%, rgba(190, 147, 72, 0.1), transparent 25%),
+    linear-gradient(100deg, rgba(4, 40, 35, 0.62), rgba(0, 15, 14, 0.52));
+  box-shadow: inset 16px 0 32px rgba(0, 0, 0, 0.2);
+}
+
+.controllerDiagnosticFrame::before,
+.controllerDiagnosticFrame::after {
+  content: "";
+  position: absolute;
+  width: 56px;
+  height: 24px;
+  pointer-events: none;
+}
+
+.controllerDiagnosticFrame::before {
+  top: -1px;
+  left: 0;
+  border-top: 2px solid #c99a4f;
+  border-left: 1px solid rgba(201, 154, 79, 0.52);
+}
+
+.controllerDiagnosticFrame::after {
+  right: 0;
+  bottom: -1px;
+  border-right: 1px solid rgba(201, 154, 79, 0.42);
+  border-bottom: 2px solid rgba(201, 154, 79, 0.68);
+}
+
+.controllerDiagnosticGlyph {
+  width: 132px;
+  height: 132px;
+  display: grid;
+  place-items: center;
+  justify-self: center;
+  border: 1px solid rgba(197, 154, 78, 0.48);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(189, 145, 69, 0.11), rgba(3, 30, 27, 0.7) 56%, rgba(0, 12, 12, 0.88));
+  box-shadow: inset 0 0 28px rgba(0, 0, 0, 0.34), 0 0 26px rgba(194, 149, 73, 0.06);
+}
+
+.controllerDiagnosticGlyph::before,
+.controllerDiagnosticGlyph::after,
+.controllerDiagnosticGlyph span {
+  content: "";
+  display: block;
+  border: 1px solid rgba(217, 182, 113, 0.62);
+}
+
+.controllerDiagnosticGlyph::before {
+  width: 52px;
+  height: 22px;
+  border-radius: 20px 20px 12px 12px;
+  transform: translateY(13px);
+}
+
+.controllerDiagnosticGlyph::after {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #c99a4f;
+  transform: translate(17px, -13px);
+}
+
+.controllerDiagnosticGlyph span {
+  width: 14px;
+  height: 2px;
+  border-width: 1px 0;
+  transform: translate(-17px, -26px);
+}
+
+.controllerDiagnosticContent .sectionTitle {
+  margin-bottom: 14px;
+  font-size: 21px;
+}
+
+.controllerDiagnosticContent .pathsNote {
+  max-width: 520px;
+  margin-bottom: 22px;
+  font-size: 14px;
+}
+
+.controllerDiagnosticContent .exportBtn {
+  min-width: 220px;
+}
+
+.body[data-active-section="section-attract"] > .stationSectionActive {
+  width: 100%;
+  min-height: 360px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: center;
+  gap: 16px;
+}
+
+.body[data-active-section="section-attract"] > .stationSectionActive > .sectionTitle {
+  grid-column: 1 / -1;
+  margin-bottom: 2px;
+}
+
+.body[data-active-section="section-attract"] > .stationSectionActive > .inputRow {
+  min-height: 96px;
+  grid-template-columns: minmax(150px, 0.72fr) minmax(230px, 1.28fr);
+  padding: 18px 20px;
+  border: 1px solid rgba(75, 111, 98, 0.3);
+  background:
+    linear-gradient(115deg, rgba(14, 53, 47, 0.34), transparent 72%),
+    rgba(0, 13, 12, 0.48);
+}
+
+.body[data-active-section="section-attract"] > .stationSectionActive > .inputRow:last-child {
+  grid-column: 1 / -1;
+}
+
+.body[data-active-section="section-attract"] .sliderWrap {
+  max-width: 470px;
+}
+
+.body[data-active-section="section-display"] > .stationSectionActive,
+.body[data-active-section="section-language"] > .stationSectionActive {
+  margin-bottom: 0;
+}
+
+.body[data-active-section="section-library"] > .stationSectionActive {
+  margin-bottom: 16px;
+}
+
+.body[data-active-section="section-library"] .exportBtn {
+  border-color: rgba(190, 145, 70, 0.48);
+  color: #d9bd84;
+}
+
+.footer {
+  min-height: 76px;
+  padding: 14px 30px;
+  border-top: 1px solid rgba(190, 147, 72, 0.4);
+  background: rgba(2, 16, 15, 0.98);
+}
+
+.footerActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.resetBtn,
+.footerCloseBtn,
+.saveBtn {
+  min-height: 44px;
+  border-radius: 0;
+  padding: 10px 24px;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.055em;
+}
+
+.resetBtn {
+  border-color: rgba(160, 91, 78, 0.38);
+  color: #b89c94;
+}
+
+.footerCloseBtn {
+  border: 1px solid rgba(116, 139, 126, 0.48);
+  background: rgba(3, 26, 23, 0.7);
+  color: #d8d4c9;
+  cursor: pointer;
+}
+
+.saveBtn {
+  min-width: 170px;
+  border-color: #d6b274;
+  color: #f1ddb0;
+  background: linear-gradient(180deg, rgba(137, 97, 35, 0.34), rgba(83, 59, 25, 0.26));
+}
+
+.resetBtn:focus-visible,
+.footerCloseBtn:focus-visible,
+.saveBtn:focus-visible,
+.closeBtn:focus-visible,
+.browseBtn:focus-visible,
+.exportBtn:focus-visible,
+.communityLink:focus-visible,
+.emulatorBtn:focus-visible,
+.emuToggle:focus-visible,
+.toggleBtn:focus-visible,
+.slider:focus-visible {
+  outline: 2px solid #e3bd72;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 4px rgba(214, 178, 116, 0.12);
+}
+
+@media (max-width: 1440px), (max-height: 820px) {
+  .overlay { padding: 10px; }
+  .panel {
+    width: min(1120px, calc(100vw - 72px));
+    height: min(650px, calc(100vh - 56px));
+  }
+  .header { min-height: 60px; padding: 12px 22px; }
+  .title { font-size: 21px; }
+  .sub { font-size: 12px; }
+  .closeBtn { width: 38px; height: 38px; }
+  .body { padding: 20px 24px 28px; gap: 14px; }
+  .stationIntroduction { padding: 2px 0 16px 17px; }
+  .stationHeading { font-size: 27px; }
+  .stationPurpose { max-width: 440px; padding-left: 16px; font-size: 13px; }
+  .stationSectionActive { padding: 18px 20px 21px; }
+  .sectionTitle { margin-bottom: 13px; font-size: 16px; }
+  .pathsNote, .emuNote { margin-bottom: 13px; font-size: 12px; }
+  .inputRow {
+    grid-template-columns: minmax(145px, 0.7fr) minmax(190px, 1.45fr) auto;
+    min-height: 50px;
+    padding: 7px 8px;
+    gap: 10px;
+  }
+  .inputLabel { font-size: 13px; }
+  .inputSub { font-size: 11px; }
+  .input, .textInput { min-height: 38px; padding: 8px 10px; font-size: 12px; }
+  .browseBtn, .exportBtn, .communityLink, .toggleBtn, .emuToggle, .emulatorBtn { min-height: 36px; font-size: 12px; }
+  .emulatorGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+  .body[data-active-section="section-controllers"] > .stationSectionActive,
+  .body[data-active-section="section-attract"] > .stationSectionActive { min-height: 300px; }
+  .controllerDiagnosticFrame { min-height: 220px; grid-template-columns: 150px minmax(0, 1fr); gap: 24px; padding: 24px 28px; }
+  .controllerDiagnosticGlyph { width: 108px; height: 108px; }
+  .body[data-active-section="section-attract"] > .stationSectionActive > .inputRow { min-height: 78px; padding: 12px 14px; }
+  .footer { min-height: 64px; padding: 10px 22px; }
+  .resetBtn, .footerCloseBtn, .saveBtn { min-height: 40px; padding: 8px 20px; font-size: 12px; }
+}
+
+@media (max-width: 980px) {
+  .panel { width: calc(100vw - 30px); }
+  .stationIntroduction { grid-template-columns: 1fr; }
+  .stationPurpose { justify-self: start; padding: 6px 0 0; border-left: 0; text-align: left; }
+  .body[data-active-section="section-emulators"] > .stationSectionActive,
+  .body[data-active-section="section-paths"] > .stationSectionActive { grid-template-columns: 1fr; }
+  .body[data-active-section="section-emulators"] .emulatorOverview,
+  .body[data-active-section="section-emulators"] > .stationSectionActive > .sectionTitle,
+  .body[data-active-section="section-emulators"] > .stationSectionActive > .pathsNote,
+  .body[data-active-section="section-paths"] > .stationSectionActive > .sectionTitle,
+  .body[data-active-section="section-paths"] > .stationSectionActive > .pathsNote { grid-column: 1; }
+  .inputRow { grid-template-columns: 1fr; }
+  .emulatorGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .controllerDiagnosticFrame { grid-template-columns: 1fr; text-align: center; }
+  .controllerDiagnosticContent .pathsNote { margin-inline: auto; }
+  .body[data-active-section="section-attract"] > .stationSectionActive { grid-template-columns: 1fr; }
+  .body[data-active-section="section-attract"] > .stationSectionActive > .inputRow:last-child { grid-column: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .closeBtn,
+  .browseBtn,
+  .exportBtn,
+  .communityLink,
+  .toggleBtn,
+  .emuToggle,
+  .emulatorBtn,
+  .saveBtn,
+  .resetBtn,
+  .footerCloseBtn { transition: none; }
+}

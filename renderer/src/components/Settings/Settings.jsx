@@ -45,6 +45,25 @@ const EMULATOR_EXE_KEYWORDS = {
   pinballPath: 'vpinball',
 }
 
+// Presentation-only station metadata. The anchor IDs remain the source of
+// truth passed by the parent shell; these existing i18n keys simply give the
+// active workspace a readable title and purpose without creating new copy or
+// changing any navigation/data contract.
+const SETTINGS_STATIONS = {
+  'section-emulators': { labelKey: 'controlRoom.station.emulatorsLabel', hintKey: 'controlRoom.station.emulatorsHint' },
+  'section-paths': { labelKey: 'controlRoom.station.gamePathsLabel', hintKey: 'controlRoom.station.gamePathsHint' },
+  'section-controllers': { labelKey: 'controlRoom.station.controllersLabel', hintKey: 'controlRoom.station.controllersHint' },
+  'section-attract': { labelKey: 'controlRoom.station.launchBehaviorLabel', hintKey: 'controlRoom.station.launchBehaviorHint', purposeCopy: { en: 'Attract mode, idle timing, and cycle behavior', es: 'Modo atracción, tiempo de inactividad y ritmo del ciclo' } },
+  'section-display': { labelKey: 'controlRoom.station.displayPerformanceLabel', hintKey: 'controlRoom.station.displayPerformanceHint', purposeCopy: { en: 'Fullscreen, CRT effect, audio, and playback', es: 'Pantalla completa, efecto CRT, audio y reproducción' } },
+  'section-language': { labelKey: 'controlRoom.station.preferencesLabel', hintKey: 'controlRoom.station.preferencesHint', purposeCopy: { en: 'Language, Pixelcade, links, and application details', es: 'Idioma, Pixelcade, enlaces y detalles de la aplicación' } },
+  'section-library': { labelKey: 'controlRoom.station.systemsArchiveLabel', hintKey: 'controlRoom.station.systemsArchiveHint' },
+}
+
+const EMULATORS_NOTE = {
+  en: 'Download and install emulators, then configure their executable paths in the Game Paths station.',
+  es: 'Descarga e instala los emuladores y configura después sus rutas ejecutables en la estación Rutas de juegos.',
+}
+
 export default function Settings({ games = [], onClose, onCRTChange, crtEnabled, uiSoundsEnabled, onUiSoundsChange, uiSoundVolume, onUiSoundVolumeChange, scrollToSection }) {
   const { t, locale, setLocale, supportedLocales } = useI18n()
   const scrollRef = useRef(null)
@@ -474,10 +493,25 @@ const handleSave = async () => {
   useEffect(() => {
     if (!scrollToSection || !config || scrolledRef.current) return
     scrolledRef.current = true
-    document.getElementById(scrollToSection)?.scrollIntoView({ behavior: "smooth", block: "start" })
+    // Recognized stations isolate their content in-place, so scrolling the
+    // anchor would also move Control Room's clipped outer stage. Keep the
+    // legacy deep-link behavior for any non-station anchor only.
+    if (!SETTINGS_STATIONS[scrollToSection]) {
+      document.getElementById(scrollToSection)?.scrollIntoView({ behavior: "auto", block: "start" })
+    }
+    scrollRef.current?.scrollTo({ top: 0, behavior: "auto" })
   }, [scrollToSection, config])
 
   if (!config) return null
+
+  const activeSection = SETTINGS_STATIONS[scrollToSection] ? scrollToSection : 'section-emulators'
+  const activeStation = SETTINGS_STATIONS[activeSection]
+  const copyLocale = locale === 'es' ? 'es' : 'en'
+  const stationPurpose = activeStation.purposeCopy?.[copyLocale] ?? t(activeStation.hintKey)
+  const stationSectionClass = (...sectionIds) =>
+    styles.section + ' ' + styles.stationSection + (sectionIds.includes(activeSection) ? ' ' + styles.stationSectionActive : '')
+  const stationSubsectionClass = (sectionId) =>
+    styles.stationSubsection + (activeSection === sectionId ? ' ' + styles.stationSubsectionActive : '')
 
   return (
     <div className={styles.overlay}>
@@ -490,7 +524,13 @@ const handleSave = async () => {
           <button className={styles.closeBtn} onClick={onClose} title={t("common.close") + " (B)"}>X</button>
         </div>
 
-        <div className={styles.body} ref={scrollRef}>
+        <div className={styles.body} ref={scrollRef} data-active-section={activeSection}>
+
+          <div className={styles.stationIntroduction}>
+            <div className={styles.stationEyebrow}>{t("controlRoom.title")}</div>
+            <div className={styles.stationHeading}>{t(activeStation.labelKey)}</div>
+            <div className={styles.stationPurpose}>{stationPurpose}</div>
+          </div>
 
           {restartNeeded && (
             <div className={styles.updateBanner} style={{
@@ -530,11 +570,11 @@ const handleSave = async () => {
             </div>
           )}
 
-          <div className={styles.section}>
-            <div className={styles.section}>
+          <div className={stationSectionClass('section-emulators', 'section-paths')}>
+            <div className={styles.section + ' ' + styles.emulatorOverview + (activeSection === 'section-paths' ? ' ' + styles.stationSubsectionHidden : '')}>
         <div className={styles.sectionTitle} id="section-emulators">{t("settings.sectionEmulators")}</div>
         <div className={styles.pathsNote}>
-          {t("settings.emulatorsNote")}
+          {EMULATORS_NOTE[copyLocale]}
         </div>
         <div className={styles.emulatorGrid}>
           {[
@@ -574,8 +614,8 @@ const handleSave = async () => {
         </div>
       </div>
 
-      <div className={styles.sectionTitle} id="section-paths">{t("settings.sectionPaths")}</div>
-            <div className={styles.pathsNote}>
+      <div className={styles.sectionTitle + (activeSection === 'section-emulators' ? ' ' + styles.stationSubsectionHidden : '')} id="section-paths">{t("settings.sectionPaths")}</div>
+            <div className={styles.pathsNote + (activeSection === 'section-emulators' ? ' ' + styles.stationSubsectionHidden : '')}>
               {t("settings.pathsNote")}
             </div>
             {[
@@ -619,7 +659,10 @@ const handleSave = async () => {
               { key: "pcGamesPath",        label: "PC Games",             sub: "Folder containing PC game subfolders" },
               { key: "mediaPath",          label: "Media folder",         sub: "Folder for downloaded artwork/videos" },
             ].map(p => (
-              <div key={p.key} className={styles.inputRow}>
+              <div
+                key={p.key}
+                className={styles.inputRow + (activeSection === 'section-emulators' && !EMULATOR_EXE_KEYWORDS[p.key] ? ' ' + styles.stationSubsectionHidden : '')}
+              >
                 <div className={styles.inputLabelStack}>
                   <label className={styles.inputLabel}>{p.label}</label>
                   {p.sub && <span className={styles.inputSub}>{p.sub}</span>}
@@ -638,20 +681,26 @@ const handleSave = async () => {
             ))}
           </div>
 
-          <div className={styles.section}>
-            <div className={styles.sectionTitle} id="section-controllers">{t("settings.sectionControllers")}</div>
-            <div className={styles.pathsNote}>
-              {t("settings.controllersNote")}
+          <div className={stationSectionClass('section-controllers')}>
+            <div className={styles.controllerDiagnosticFrame}>
+              <div className={styles.controllerDiagnosticGlyph} aria-hidden="true"><span /></div>
+              <div className={styles.controllerDiagnosticContent}>
+                <div className={styles.sectionTitle} id="section-controllers">{t("settings.sectionControllers")}</div>
+                <div className={styles.pathsNote}>
+                  {t("settings.controllersNote")}
+                </div>
+                <button className={styles.exportBtn} onClick={() => setShowControllerTest(true)}>
+                  {t("settings.openControllerTest")}
+                </button>
+              </div>
             </div>
-            <button className={styles.exportBtn} onClick={() => setShowControllerTest(true)}>
-              {t("settings.openControllerTest")}
-            </button>
           </div>
           {showControllerTest && (
             <ControllerTest onClose={() => setShowControllerTest(false)} />
           )}
 
-          <div className={styles.section}>
+          <div className={stationSectionClass('section-display', 'section-library')}>
+            <div className={stationSubsectionClass('section-library')}>
             <div className={styles.sectionTitle}>{t("settings.sectionTpFolderRenamer")}</div>
         <div className={styles.pathsNote}>
           {t("settings.tpRenamerNote")}
@@ -729,6 +778,8 @@ const handleSave = async () => {
           )
         })}
 
+            </div>
+            <div className={stationSubsectionClass('section-display')}>
         <div className={styles.sectionTitle} id="section-display">{t("settings.sectionDisplay")}</div>
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>{t("settings.mode")}</label>
@@ -774,9 +825,10 @@ const handleSave = async () => {
                 ))}
               </div>
             </div>
+            </div>
           </div>
 
-          <div className={styles.section}>
+          <div className={stationSectionClass('section-language')}>
             <div className={styles.sectionTitle} id="section-language">{t("settings.language")}</div>
             <div className={styles.toggleGroup}>
               {supportedLocales.map(l => (
@@ -801,7 +853,7 @@ const handleSave = async () => {
               useTheme.js) never touched nuarcade-config.json or the main
               process; any pre-existing value is simply left inert. */}
 
-          <div className={styles.section}>
+          <div className={stationSectionClass('section-display')}>
             <div className={styles.sectionTitle}>{t("settings.sectionAudio")}</div>
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>{t("settings.videoVolume")}</label>
@@ -851,7 +903,7 @@ const handleSave = async () => {
           </div>
 
 
-          <div className={styles.section}>
+          <div className={stationSectionClass('section-display')}>
             <div className={styles.sectionTitle}>{t("settings.sectionMusic")}</div>
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>{t("settings.music")}</label>
@@ -886,7 +938,7 @@ const handleSave = async () => {
             </div>
           </div>
 
-          <div className={styles.section}>
+          <div className={stationSectionClass('section-attract')}>
             <div className={styles.sectionTitle} id="section-attract">{t("settings.sectionAttract")}</div>
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>{t("settings.idleTimeout")}</label>
@@ -926,7 +978,7 @@ const handleSave = async () => {
             </div>
           </div>
 
-          <div className={styles.section}>
+          <div className={stationSectionClass('section-language')}>
             <div className={styles.sectionTitle}>{t("settings.sectionPixelcade")}</div>
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>{t("settings.enable")}</label>
@@ -965,7 +1017,7 @@ const handleSave = async () => {
             </div>
           </div>
 
-          <div className={styles.section}>
+          <div className={stationSectionClass('section-language')}>
             <div className={styles.sectionTitle}>{t("settings.sectionLinks")}</div>
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>GitHub</label>
@@ -987,7 +1039,7 @@ const handleSave = async () => {
             </div>
           </div>
 
-          <div className={styles.section}>
+          <div className={stationSectionClass('section-emulators', 'section-library')}>
             <div className={styles.sectionTitle}>{t("settings.sectionEmulatorBehavior")}</div>
             
             <div className={styles.inputRow}>
@@ -1066,7 +1118,7 @@ const handleSave = async () => {
             </div>
           </div>
 
-          <div className={styles.section}>
+          <div className={stationSectionClass('section-library')}>
             <div className={styles.sectionTitle}>{t("settings.sectionArtwork")}</div>
             <div className={styles.pathsNote} style={{ marginBottom: 8 }}>
               This section configures box art/video sources. To find or download a video for a specific game,
@@ -1156,7 +1208,7 @@ const handleSave = async () => {
             />
           )}
 
-          <div className={styles.section}>
+          <div className={stationSectionClass('section-library')}>
             <div className={styles.sectionTitle} id="section-library">{t("settings.sectionLibrary")}</div>
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>{t("settings.rescanGames")}</label>
@@ -1335,7 +1387,7 @@ const handleSave = async () => {
             </div>
           </div>
 
-          <div className={styles.section}>
+          <div className={stationSectionClass('section-library')}>
             <div className={styles.sectionTitle}>{t("settings.sectionBios")}</div>
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>{t("settings.checkBiosFiles")}</label>
@@ -1384,7 +1436,7 @@ const handleSave = async () => {
             )}
           </div>
 
-          <div className={styles.section}>
+          <div className={stationSectionClass('section-language')}>
             <div className={styles.sectionTitle}>{t("settings.sectionAbout")}</div>
 
             <div className={styles.aboutGrid}>
@@ -1415,9 +1467,12 @@ const handleSave = async () => {
           }}>
             {t("settings.resetToDefaults")}
           </button>
-          <button className={styles.saveBtn} ref={saveRef} onClick={handleSave}>
-            {saved ? t("settings.saved") : t("settings.save")}
-          </button>
+          <div className={styles.footerActions}>
+            <button className={styles.footerCloseBtn} onClick={onClose}>{t("common.close")}</button>
+            <button className={styles.saveBtn} ref={saveRef} onClick={handleSave}>
+              {saved ? t("settings.saved") : t("settings.save")}
+            </button>
+          </div>
         </div>
 
       </div>
