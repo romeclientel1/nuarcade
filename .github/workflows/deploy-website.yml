@@ -1,0 +1,50 @@
+name: Deploy Vespara Website
+
+# Publishes only the contents of website/ (the static Vespara public site)
+# to GitHub Pages. Entirely separate from the "Build NuArcade" workflow,
+# which builds/packages the Electron application and is not touched here.
+
+on:
+  push:
+    branches:
+      - website/vespara-launch
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only the newest Pages deployment should run. This cancels a QUEUED run
+# that's still waiting to start, but never cancels a run that's already
+# IN PROGRESS -- so an active production deployment to the github-pages
+# environment can't be interrupted mid-deploy.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload website/ as the Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: website/
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
