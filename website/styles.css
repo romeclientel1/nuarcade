@@ -1,27 +1,36 @@
 /* =============================================================================
    Vespara — public website styles
    Plain CSS, no build step, no framework. Cinematic dark environment inspired
-   by the Sanctuary: deep black/navy background, soft atmospheric gradients,
-   restrained cyan/violet/amber accents, architectural framing.
+   by the Sanctuary: deep teal-black architectural shadow, warm gold
+   illumination, smoked glass and dark metal surfaces, warm ivory text.
    ========================================================================== */
 
 :root {
-  --color-bg: #05070d;
-  --color-bg-alt: #080b14;
-  --color-surface: #0d1220;
-  --color-surface-border: #1c2436;
-  --color-text: #e8ecf4;
-  --color-text-muted: #a7b0c4;
-  --color-text-faint: #6b7590;
+  --color-bg: #070f0e;
+  --color-bg-alt: #0a1614;
+  --color-surface: #0f1917;
+  --color-surface-border: #2b2621;
+  --color-text: #f2e9da;
+  --color-text-muted: #b3a999;
+  --color-text-faint: #8a8172;
 
-  --color-cyan: #5fd0e0;
-  --color-violet: #9a7fe6;
+  /* Primary accent: warm gold/amber illumination -- used for links, the
+     eyebrow, focus states, and the primary button. Cyan and violet have
+     been retired entirely, not just swapped in place; nothing in this file
+     references them anymore. */
   --color-amber: #e0a860;
+  --color-amber-bright: #efc98a;
+  --color-amber-deep: #a67c3d;
 
-  --focus-ring: #7fd8e8;
+  /* Atmosphere-only: deep teal glow used for the hero's soft architectural
+     shadow. Never applied to text, links, or controls. */
+  --color-teal-glow: #163632;
+
+  --focus-ring: #e2c084;
 
   --font-display: "Segoe UI", "Avenir Next", Avenir, system-ui, sans-serif;
   --font-body: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", serif;
 
   --max-width: 1200px;
 
@@ -63,11 +72,24 @@ html, body {
 }
 
 h1, h2, h3, h4 {
-  font-family: var(--font-display);
   font-weight: 600;
   line-height: 1.15;
   margin: 0 0 var(--space-3);
   letter-spacing: -0.01em;
+}
+
+/* Major headings (H1, section H2s) use a quiet system serif -- Vespara's
+   own display face until/unless one is added, kept to the "no external
+   fonts" rule. H3/H4 (card and sub-headings) stay in the sans stack, same
+   as navigation, buttons, and body copy. */
+h1, h2 {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+h3, h4 {
+  font-family: var(--font-display);
 }
 
 h1 { font-size: clamp(2.5rem, 5vw, 4.25rem); }
@@ -77,7 +99,7 @@ h3 { font-size: 1.25rem; margin-bottom: var(--space-2); }
 p { margin: 0 0 var(--space-3); color: var(--color-text-muted); }
 
 a {
-  color: var(--color-cyan);
+  color: var(--color-amber);
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
 }
@@ -114,8 +136,8 @@ code {
   position: absolute;
   left: var(--space-2);
   top: -100px;
-  background: var(--color-cyan);
-  color: #04121a;
+  background: var(--color-amber);
+  color: #1c1408;
   padding: 0.75em 1.25em;
   border-radius: var(--radius);
   font-weight: 600;
@@ -163,7 +185,7 @@ code {
   letter-spacing: 0.18em;
   font-size: 0.8rem;
   font-weight: 600;
-  color: var(--color-cyan);
+  color: var(--color-amber);
   margin: 0 0 var(--space-2);
 }
 
@@ -194,30 +216,33 @@ code {
   text-decoration: none;
   border: 1px solid transparent;
   cursor: pointer;
-  transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+  /* Restrained hover: color/border/brightness only, no movement. */
+  transition: background-color 0.15s ease, border-color 0.15s ease, filter 0.2s ease;
   min-height: 48px;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--color-cyan), #3fa8c2);
-  color: #03141c;
+  background: linear-gradient(135deg, var(--color-amber-bright), var(--color-amber-deep));
+  color: #1c1408;
 }
 
 .btn-primary:hover {
-  color: #03141c;
-  transform: translateY(-1px);
+  color: #1c1408;
+  filter: brightness(1.08);
 }
 
 .btn-secondary {
-  background: transparent;
+  /* Quiet smoked-glass control rather than a plain grey outline. */
+  background: rgba(15, 25, 23, 0.5);
   border-color: var(--color-surface-border);
   color: var(--color-text);
+  backdrop-filter: blur(6px);
 }
 
 .btn-secondary:hover {
-  border-color: var(--color-cyan);
+  border-color: var(--color-amber);
   color: var(--color-text);
-  transform: translateY(-1px);
+  background: rgba(15, 25, 23, 0.7);
 }
 
 .btn-large {
@@ -242,7 +267,7 @@ code {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(5, 7, 13, 0.85);
+  background: rgba(7, 15, 14, 0.85);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--color-surface-border);
 }
@@ -269,7 +294,7 @@ code {
 }
 
 .wordmark-mark {
-  color: var(--color-cyan);
+  color: var(--color-amber);
   font-size: 1.1em;
 }
 
@@ -342,18 +367,15 @@ code {
   pointer-events: none;
 }
 
+/* Was a radial-dot starfield; replaced with a quiet architectural wash --
+   a soft teal shadow easing down from the top, no dots, no HUD feel. The
+   element and class name are kept as-is (HTML is not being edited in this
+   pass) but no longer render anything resembling a star grid. */
 .hero-starfield {
   position: absolute;
   inset: 0;
-  background-image:
-    radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.5), transparent),
-    radial-gradient(1px 1px at 30% 70%, rgba(255,255,255,0.35), transparent),
-    radial-gradient(1px 1px at 60% 15%, rgba(255,255,255,0.4), transparent),
-    radial-gradient(1px 1px at 80% 55%, rgba(255,255,255,0.3), transparent),
-    radial-gradient(1px 1px at 45% 40%, rgba(255,255,255,0.45), transparent),
-    radial-gradient(1px 1px at 90% 80%, rgba(255,255,255,0.3), transparent);
-  background-size: 100% 100%;
-  opacity: 0.6;
+  background: radial-gradient(120% 80% at 50% 0%, rgba(22, 54, 50, 0.45), transparent 65%);
+  opacity: 0.9;
 }
 
 .hero-glow {
@@ -363,18 +385,21 @@ code {
   max-width: 700px;
   max-height: 700px;
   border-radius: 50%;
-  filter: blur(90px);
-  opacity: 0.18;
+  filter: blur(120px);
+  opacity: 0.14;
 }
 
+/* Class names kept for HTML stability; the colors they render are now a
+   soft teal architectural shadow and a subtle warm-gold illumination,
+   not cyan/violet. */
 .hero-glow-cyan {
-  background: var(--color-cyan);
+  background: var(--color-teal-glow);
   top: -20%;
   right: -10%;
 }
 
 .hero-glow-violet {
-  background: var(--color-violet);
+  background: var(--color-amber);
   bottom: -25%;
   left: -15%;
 }
@@ -426,7 +451,9 @@ code {
   border: 1px solid var(--color-surface-border);
   border-radius: 8px;
   padding: var(--space-1);
-  background: linear-gradient(160deg, rgba(95, 208, 224, 0.06), rgba(154, 127, 230, 0.06));
+  /* Smoked glass: a faint warm-gold wash over dark metal, not a cyan/violet tint. */
+  background: linear-gradient(160deg, rgba(224, 168, 96, 0.07), rgba(10, 18, 16, 0.65));
+  box-shadow: inset 0 1px 0 rgba(242, 233, 218, 0.05), 0 14px 32px rgba(0, 0, 0, 0.35);
   position: relative;
 }
 
@@ -434,7 +461,8 @@ code {
   content: "";
   position: absolute;
   inset: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  /* Subtle gold-lit edge in place of the previous neutral-white inner border. */
+  border: 1px solid rgba(224, 168, 96, 0.16);
   border-radius: 6px;
   pointer-events: none;
 }
@@ -442,10 +470,8 @@ code {
 .screenshot-placeholder {
   aspect-ratio: 16 / 10;
   border-radius: 5px;
-  background:
-    repeating-linear-gradient(135deg, rgba(255,255,255,0.02) 0 2px, transparent 2px 12px),
-    linear-gradient(160deg, var(--color-surface), #060811);
-  border: 1px dashed var(--color-surface-border);
+  background: linear-gradient(160deg, var(--color-surface), #071310);
+  border: 1px solid rgba(224, 168, 96, 0.14);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -457,8 +483,8 @@ code {
 
 .screenshot-placeholder-glyph {
   font-size: 1.8rem;
-  color: var(--color-violet);
-  opacity: 0.8;
+  color: var(--color-amber);
+  opacity: 0.75;
 }
 
 .screenshot-placeholder-label {
@@ -468,9 +494,14 @@ code {
   font-size: 1.05rem;
 }
 
+/* De-emphasized: quieter than a developer-console path string -- smaller,
+   sans-serif, muted, and italicized like a caption rather than a file path
+   in a terminal. */
 .screenshot-placeholder-path {
-  font-family: "Cascadia Code", "Consolas", monospace;
-  font-size: 0.8rem;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-style: italic;
+  letter-spacing: 0.01em;
   color: var(--color-text-faint);
 }
 
@@ -498,7 +529,9 @@ code {
   border: 1px solid var(--color-surface-border);
   border-radius: 8px;
   padding: var(--space-4);
-  background: rgba(255, 255, 255, 0.015);
+  /* Smoked glass: restrained warm-tinted transparency, not a glow. */
+  background: rgba(15, 25, 23, 0.4);
+  box-shadow: inset 0 1px 0 rgba(242, 233, 218, 0.03), 0 10px 24px rgba(0, 0, 0, 0.25);
 }
 
 .journey-index {
@@ -523,7 +556,8 @@ code {
   border: 1px solid var(--color-surface-border);
   border-radius: 8px;
   padding: var(--space-4);
-  background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+  background: linear-gradient(180deg, rgba(224, 168, 96, 0.04), rgba(15, 25, 23, 0.4));
+  box-shadow: inset 0 1px 0 rgba(242, 233, 218, 0.03), 0 10px 24px rgba(0, 0, 0, 0.25);
 }
 
 .destination-card p {
@@ -561,7 +595,8 @@ code {
   border: 1px solid var(--color-surface-border);
   border-radius: 8px;
   padding: var(--space-4);
-  background: rgba(255, 255, 255, 0.015);
+  background: rgba(15, 25, 23, 0.4);
+  box-shadow: inset 0 1px 0 rgba(242, 233, 218, 0.03), 0 10px 24px rgba(0, 0, 0, 0.25);
 }
 
 .wing-sub {
@@ -606,7 +641,7 @@ code {
 }
 
 .systems-table thead th {
-  color: var(--color-cyan);
+  color: var(--color-amber);
   font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -630,7 +665,8 @@ code {
   border: 1px solid var(--color-surface-border);
   border-radius: 8px;
   padding: var(--space-4);
-  background: linear-gradient(180deg, rgba(224, 168, 96, 0.03), transparent);
+  background: linear-gradient(180deg, rgba(224, 168, 96, 0.05), rgba(15, 25, 23, 0.4));
+  box-shadow: inset 0 1px 0 rgba(242, 233, 218, 0.03), 0 10px 24px rgba(0, 0, 0, 0.25);
 }
 
 .media-card p {
