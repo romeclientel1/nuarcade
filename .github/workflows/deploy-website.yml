@@ -7,7 +7,7 @@ name: Deploy Vespara Website
 on:
   push:
     branches:
-      - website/vespara-launch
+      - main
   workflow_dispatch: {}
 
 permissions:
