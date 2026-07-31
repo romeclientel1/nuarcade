@@ -1309,7 +1309,7 @@ export default function Wheel({ onCRTChange, crtEnabled, activeProfile, onSwitch
   if (!libraryEmpty && games.length === 0) return <div style={{ width:"100vw", height:"100vh", background:"#000", display:"flex", alignItems:"center", justifyContent:"center", color:"#888", fontFamily:"monospace", fontSize:14 }}>{t("common.loading")}</div>
 
   return (
-    <div className={styles.stage + (cabinetMode ? " " + styles.cabinetMode : "") + (screenshotMode ? " " + styles.screenshotMode : "")}>
+    <div className={styles.stage + (libraryEmpty ? " " + styles.libraryEmptyStage : "") + (cabinetMode ? " " + styles.cabinetMode : "") + (screenshotMode ? " " + styles.screenshotMode : "")}>
       <img
         src={libraryEnvironment}
         alt=""
@@ -1328,7 +1328,14 @@ export default function Wheel({ onCRTChange, crtEnabled, activeProfile, onSwitch
           ) : (
             <div className={styles.previewFallback}>
               <img src={vesparaMicroMark} alt="" />
-              <span>{current?.title || "VESPARA"}</span>
+              {libraryEmpty ? (
+                <>
+                  <span className={styles.emptyArchiveTitle}>No collection selected</span>
+                  <small className={styles.emptyArchiveStatus}>Awaiting your collection</small>
+                </>
+              ) : (
+                <span>{current?.title || "VESPARA"}</span>
+              )}
             </div>
           )}
           {bgVideoA && (
@@ -1572,43 +1579,59 @@ export default function Wheel({ onCRTChange, crtEnabled, activeProfile, onSwitch
       </div>
 
       {libraryEmpty ? (
-        <div className={styles.libraryEmpty}>
-          <div className={styles.emptyBigIcon}>[ ]</div>
-          <div className={styles.emptyBigTitle}>{t("wheel.libraryEmptyTitle")}</div>
-          <div className={styles.emptyBigSub}>
-            {t("wheel.libraryEmptySub")}
-          </div>
-          <div className={styles.emptySteps}>
-            <div className={styles.emptyStep}>
-              <span className={styles.emptyStepNum}>1</span>
-              <span>Install emulators via <strong>Emulators</strong> section in Settings</span>
+        <main className={styles.libraryEmpty} aria-labelledby="library-empty-title">
+          <section className={styles.emptyWelcome}>
+            <div className={styles.emptyEyebrow}>The collection hall is ready</div>
+            <div className={styles.emptyBigIcon} aria-hidden="true">
+              <img src={vesparaMicroMark} alt="" />
             </div>
-            <div className={styles.emptyStep}>
-              <span className={styles.emptyStepNum}>2</span>
-              <span>Copy game files to your F: drive folders</span>
+            <h1 id="library-empty-title" className={styles.emptyBigTitle}>{t("wheel.libraryEmptyTitle")}</h1>
+            <p className={styles.emptyBigSub}>{t("wheel.libraryEmptySub")}</p>
+            <div className={styles.emptySteps} aria-label="Prepare the Library">
+              <div className={styles.emptyStep}>
+                <span className={styles.emptyStepNum}>1</span>
+                <span><strong>Configure emulators</strong> in the Emulators section of Settings.</span>
+              </div>
+              <div className={styles.emptyStep}>
+                <span className={styles.emptyStepNum}>2</span>
+                <span><strong>Place your games</strong> in the configured collection folders.</span>
+              </div>
+              <div className={styles.emptyStep}>
+                <span className={styles.emptyStepNum}>3</span>
+                <span>Choose <strong>Rescan</strong> in Settings to catalogue the collection.</span>
+              </div>
             </div>
-            <div className={styles.emptyStep}>
-              <span className={styles.emptyStepNum}>3</span>
-              <span>Hit <strong>Rescan</strong> in Settings to detect your games</span>
+          </section>
+
+          <section className={styles.emptyFolders} aria-labelledby="library-folders-title">
+            <div className={styles.emptyFoldersHeading}>
+              <div>
+                <div className={styles.emptyFoldersEyebrow}>Collection map</div>
+                <h2 id="library-folders-title">Configured folders</h2>
+              </div>
+              <span>Existing scan locations</span>
             </div>
+            <div className={styles.emptyFolderGrid}>
+              <div className={styles.emptyFolderRow}><code>F:\ArcadeGames\</code><span>TeknoParrot arcade</span></div>
+              <div className={styles.emptyFolderRow}><code>F:\MAME\roms\</code><span>MAME classics</span></div>
+              <div className={styles.emptyFolderRow}><code>F:\RetroArchGames\</code><span>NES, SNES, Genesis...</span></div>
+              <div className={styles.emptyFolderRow}><code>F:\N64Games\</code><span>Nintendo 64</span></div>
+              <div className={styles.emptyFolderRow}><code>F:\PS1Games\</code><span>PlayStation</span></div>
+              <div className={styles.emptyFolderRow}><code>F:\DreamcastGames\</code><span>Dreamcast</span></div>
+              <div className={styles.emptyFolderRow}><code>F:\PS2Games\</code><span>PlayStation 2</span></div>
+              <div className={styles.emptyFolderRow}><code>F:\PS3Games\</code><span>PlayStation 3</span></div>
+              <div className={styles.emptyFolderRow}><code>F:\Xbox360Games\</code><span>Xbox 360</span></div>
+              <div className={styles.emptyFolderRow}><code>F:\GCWiiGames\</code><span>GameCube / Wii</span></div>
+              <div className={styles.emptyFolderRow}><code>F:\SwitchGames\</code><span>Nintendo Switch</span></div>
+              <div className={styles.emptyFolderRow}><code>F:\PSPGames\</code><span>PSP</span></div>
+              <div className={styles.emptyFolderRow}><code>F:\WiiUGames\</code><span>Wii U</span></div>
+              <div className={styles.emptyFolderRow}><code>F:\PinballTables\</code><span>Visual Pinball X</span></div>
+            </div>
+          </section>
+          <div className={styles.emptyArchiveNote} aria-hidden="true">
+            Archive View remains dormant until a game enters the collection.
           </div>
-          <div className={styles.emptyFolders}>
-            <div className={styles.emptyFolderRow}><code>F:\ArcadeGames\</code> -- TeknoParrot arcade</div>
-            <div className={styles.emptyFolderRow}><code>F:\MAME\roms\</code> -- MAME classics</div>
-            <div className={styles.emptyFolderRow}><code>F:\RetroArchGames\</code> -- NES, SNES, Genesis...</div>
-            <div className={styles.emptyFolderRow}><code>F:\N64Games\</code> -- Nintendo 64</div>
-            <div className={styles.emptyFolderRow}><code>F:\PS1Games\</code> -- PlayStation</div>
-            <div className={styles.emptyFolderRow}><code>F:\DreamcastGames\</code> -- Dreamcast</div>
-            <div className={styles.emptyFolderRow}><code>F:\PS2Games\</code> -- PlayStation 2</div>
-            <div className={styles.emptyFolderRow}><code>F:\PS3Games\</code> -- PlayStation 3</div>
-            <div className={styles.emptyFolderRow}><code>F:\Xbox360Games\</code> -- Xbox 360</div>
-            <div className={styles.emptyFolderRow}><code>F:\GCWiiGames\</code> -- GameCube / Wii</div>
-            <div className={styles.emptyFolderRow}><code>F:\SwitchGames\</code> -- Nintendo Switch</div>
-            <div className={styles.emptyFolderRow}><code>F:\PSPGames\</code> -- PSP</div>
-            <div className={styles.emptyFolderRow}><code>F:\WiiUGames\</code> -- Wii U</div>
-            <div className={styles.emptyFolderRow}><code>F:\PinballTables\</code> -- Visual Pinball X</div>
-          </div>
-        </div>
+        </main>
       ) : filteredGames.length === 0 ? (
         <div className={styles.emptyState}>
           <div className={styles.emptyIcon}>
