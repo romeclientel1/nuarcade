@@ -316,8 +316,11 @@ export function useGameLibrary() {
           setGames([])
         }
       } else {
-        // Dev / Mac ? show samples
+        // Browser-only visual preview: no native library bridge means there
+        // are truthfully zero games, so finish in the real empty state rather
+        // than leaving Wheel behind its secondary Loading gate.
         setGames([])
+        setLibraryEmpty(true)
         setStats({ total: 0, visible: 0, hidden: 0, devMode: true })
       }
     } catch (err) {
