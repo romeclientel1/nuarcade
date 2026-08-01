@@ -2,7 +2,7 @@
 
 A modern arcade cabinet frontend built for serious collectors and venue operators.
 
-**Current version: v6.0.3**
+**Current version: v6.0.4**
 
 ---
 

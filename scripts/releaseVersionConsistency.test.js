@@ -35,8 +35,8 @@ test('package.json has a valid dotted X.Y.Z version', () => {
   assert.match(APP_VERSION, /^\d+\.\d+\.\d+$/)
 })
 
-test('package.json version is currently 6.0.3 (sanity check for this release pass)', () => {
-  assert.equal(APP_VERSION, '6.0.3')
+test('package.json version is currently 6.0.4 (sanity check for this release pass)', () => {
+  assert.equal(APP_VERSION, '6.0.4')
 })
 
 test('package-lock.json top-level version and packages[""] version both match package.json', () => {
