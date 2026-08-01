@@ -79,12 +79,12 @@ test('nsis artifactName template is still the dotted Vespara.Setup.${version}.${
   assert.equal(pkg.build.productName, 'Vespara')
 })
 
-test('substituting the current productName/version/ext resolves to exactly Vespara.Setup.6.0.3.exe', () => {
+test('substituting the current productName/version/ext resolves to exactly Vespara.Setup.6.0.4.exe', () => {
   const resolved = pkg.build.nsis.artifactName
     .replace('${productName}', pkg.build.productName)
     .replace('${version}', APP_VERSION)
     .replace('${ext}', 'exe')
-  assert.equal(resolved, 'Vespara.Setup.6.0.3.exe')
+  assert.equal(resolved, 'Vespara.Setup.6.0.4.exe')
 })
 
 // -- Identity fields this release pass must NOT have touched ----------------
