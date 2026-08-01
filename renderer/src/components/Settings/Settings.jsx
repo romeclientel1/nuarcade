@@ -57,6 +57,7 @@ const SETTINGS_STATIONS = {
   'section-display': { labelKey: 'controlRoom.station.displayPerformanceLabel', hintKey: 'controlRoom.station.displayPerformanceHint', purposeCopy: { en: 'Fullscreen, CRT effect, audio, and playback', es: 'Pantalla completa, efecto CRT, audio y reproducción' } },
   'section-language': { labelKey: 'controlRoom.station.preferencesLabel', hintKey: 'controlRoom.station.preferencesHint', purposeCopy: { en: 'Language, Pixelcade, links, and application details', es: 'Idioma, Pixelcade, enlaces y detalles de la aplicación' } },
   'section-library': { labelKey: 'controlRoom.station.systemsArchiveLabel', hintKey: 'controlRoom.station.systemsArchiveHint' },
+  'section-media-restoration': { labelKey: 'controlRoom.station.mediaRestorationLabel', hintKey: 'controlRoom.station.mediaRestorationHint' },
 }
 
 const EMULATORS_NOTE = {
@@ -1208,7 +1209,8 @@ const handleSave = async () => {
             />
           )}
 
-          <div className={stationSectionClass('section-library')}>
+          <div className={stationSectionClass('section-library', 'section-media-restoration')}>
+            <div className={stationSubsectionClass('section-library')}>
             <div className={styles.sectionTitle} id="section-library">{t("settings.sectionLibrary")}</div>
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>{t("settings.rescanGames")}</label>
@@ -1307,7 +1309,36 @@ const handleSave = async () => {
               </div>
             )}
 
-            <div className={styles.inputRow} id="section-media-restoration">
+            {rescanResult && (
+              <div className={styles.rescanResult}>
+                {rescanResult.error ? (
+                  <div style={{ color: "#ef4444", fontSize: 11 }}>Scan error: {rescanResult.error}</div>
+                ) : (
+                  <>
+                    <div className={styles.rescanTotal}>{rescanResult.total} games found</div>
+                    <div className={styles.rescanGrid}>
+                      {rescanResult.results?.map(r => (
+                        <div key={r.label} className={styles.rescanRow}>
+                          <span className={styles.rescanLabel}>{r.label}</span>
+                          <span className={styles.rescanCount + (r.count > 0 ? " " + styles.rescanCountHit : "")}>
+                            {r.error ? "ERR" : r.count}
+                          </span>
+                          {r.skippedCount > 0 && (
+                            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginLeft: 6 }}>
+                              ({r.skippedCount} skipped -- not games)
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+            </div>
+
+            <div className={stationSubsectionClass('section-media-restoration')} id="section-media-restoration">
+            <div className={styles.inputRow}>
               <label className={styles.inputLabel}>Orphaned media</label>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button className={styles.exportBtn} onClick={handleFindOrphans} disabled={orphanScanning}>
@@ -1341,32 +1372,6 @@ const handleSave = async () => {
                 {orphanCleanupDone.errors?.length > 0 && (' ' + orphanCleanupDone.errors.length + ' could not be removed.')}
               </div>
             )}
-            {rescanResult && (
-              <div className={styles.rescanResult}>
-                {rescanResult.error ? (
-                  <div style={{ color: "#ef4444", fontSize: 11 }}>Scan error: {rescanResult.error}</div>
-                ) : (
-                  <>
-                    <div className={styles.rescanTotal}>{rescanResult.total} games found</div>
-                    <div className={styles.rescanGrid}>
-                      {rescanResult.results?.map(r => (
-                        <div key={r.label} className={styles.rescanRow}>
-                          <span className={styles.rescanLabel}>{r.label}</span>
-                          <span className={styles.rescanCount + (r.count > 0 ? " " + styles.rescanCountHit : "")}>
-                            {r.error ? "ERR" : r.count}
-                          </span>
-                          {r.skippedCount > 0 && (
-                            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginLeft: 6 }}>
-                              ({r.skippedCount} skipped -- not games)
-                            </span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
             <div className={styles.inputRow}>
               <label className={styles.inputLabel}>{t("settings.backup")}</label>
               <button className={styles.exportBtn} onClick={handleBackup} disabled={backingUp}>
@@ -1384,6 +1389,7 @@ const handleSave = async () => {
               <button className={styles.exportBtn} onClick={handleExport} disabled={exporting}>
                 {exporting ? t("settings.exporting") : t("settings.exportToTxt")}
               </button>
+            </div>
             </div>
           </div>
 
