@@ -20,8 +20,28 @@ import { fileURLToPath } from "node:url"
 import { dirname, join } from "node:path"
 
 const HERE = dirname(fileURLToPath(import.meta.url))
-const jsx = readFileSync(join(HERE, "IntroVideo.jsx"), "utf8")
+const jsx = readFileSync(join(HERE, "IntroVideo.jsx"), "utf8").replace(/\r\n/g, "\n")
 const css = readFileSync(join(HERE, "IntroVideo.module.css"), "utf8")
+
+const buildVideoUrlSource = jsx.match(
+  /const buildVideoUrl = \(mediaPath, fileName\) => \{[\s\S]*?\n\}/
+)
+assert.ok(buildVideoUrlSource, "buildVideoUrl must remain extractable")
+const buildVideoUrl = Function(
+  `${buildVideoUrlSource[0]}\nreturn buildVideoUrl`
+)()
+
+test("buildVideoUrl produces encoded local file URLs", () => {
+  assert.equal(
+    buildVideoUrl("C:\\Vespara Media\\Arrival #1?", "sanctuary entry.mp4"),
+    "file:///C:/Vespara%20Media/Arrival%20%231%3F/sanctuary%20entry.mp4"
+  )
+})
+
+test("buildVideoUrl preserves its default path and trailing-slash behavior", () => {
+  assert.equal(buildVideoUrl(undefined, "intro.mp4"), "file:///C:/Media/intro.mp4")
+  assert.equal(buildVideoUrl("C:\\Media\\\\", "intro.mp4"), "file:///C:/Media/intro.mp4")
+})
 
 // -- 9 & 10. Approved symbol plus live world-facing identity ------------
 
