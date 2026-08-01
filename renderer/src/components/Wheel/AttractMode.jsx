@@ -1,92 +1,155 @@
 import { useState, useEffect, useRef, useCallback } from "react"
-import { useVersionCheck } from "../../hooks/useVersionCheck"
 import styles from "./AttractMode.module.css"
 import { useGamepad } from "../../hooks/useGamepad"
+import { useAttractAmbience } from "./useAttractAmbience.js"
+import vesparaSymbol from "../../assets/brand/vespara-symbol-simplified.svg"
 
-const CYCLE_INTERVAL = 6000
-const FADE_DURATION  = 600
+const RESOLVE_MS = 520
+const HOLD_START_MS = 1180
+const RECEDE_MS = 900
+const NEUTRAL_MS = 320
+const MIN_CYCLE_MS = 6000
 
-const GENRE_COLORS = {
-  Racing:    "#0066cc", Fighting: "#9900cc", Shooter:   "#cc0000",
-  Rhythm:    "#6600cc", Flying:   "#0099cc", Sports:    "#009900",
-  Pinball:   "#ff6600", Arcade:   "#ff6600", Retro:     "#9933ff",
-  N64:       "#e4000f", PS1:      "#003791", PSP:       "#0057a8",
-  Dreamcast: "#ff6600", WiiU:     "#009ac7", Model2:    "#0055aa",
-  Model3:    "#0088aa", PS3:      "#0070d1", Xbox360:   "#107c10",
-  GCWii:     "#6b21a8", PS2:      "#003791", Switch:    "#e4000f",
-  Other:     "#00ff88",
-}
+const gameKey = (game) => game?.id || game?.profile || game?.title || "unknown"
 
-function shuffle(arr) {
-  const a = [...arr]
-  for (let i = a.length - 1; i > 0; i--) {
+function shuffle(items) {
+  const next = [...items]
+  for (let i = next.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]]
+    [next[i], next[j]] = [next[j], next[i]]
   }
-  return a
+  return next
 }
 
-export default function AttractMode({ games, isActive, onWake, onSelect, artwork, attractConfig = {} }) {
-  const { currentVersion } = useVersionCheck()
+// A completed pass receives a fresh order. When possible, the item that just
+// receded cannot immediately become the first destination in the next pass.
+function reshuffle(items, avoidFirstKey) {
+  const next = shuffle(items)
+  if (next.length > 1 && gameKey(next[0]) === avoidFirstKey) {
+    const swapIndex = next.findIndex((item, index) => index > 0 && gameKey(item) !== avoidFirstKey)
+    if (swapIndex > 0) [next[0], next[swapIndex]] = [next[swapIndex], next[0]]
+  }
+  return next
+}
 
-  // Any gamepad button press wakes attract mode
-  useGamepad({
-    confirm:     onWake,
-    back:        onWake,
-    left:        onWake,
-    right:       onWake,
-    up:          onWake,
-    down:        onWake,
-    settings:    onWake,
-    filterLeft:  onWake,
-    filterRight: onWake,
-    random:      onWake,
-    launch:      onWake,
-    favorite:    onWake,
-    detail:      onWake,
-    enabled:     true,
+export default function AttractMode({ games, isActive, onWake, artwork, attractConfig = {} }) {
+  const [currentIdx, setCurrentIdx] = useState(0)
+  const [phase, setPhase] = useState("neutral")
+  const [videoErrors, setVideoErrors] = useState({})
+  const [shuffled, setShuffled] = useState([])
+  const overlayRef = useRef(null)
+  const videoRef = useRef(null)
+  const timersRef = useRef([])
+  const orderRef = useRef([])
+  const indexRef = useRef(0)
+  const activeSessionRef = useRef(false)
+  const hasActivatedRef = useRef(false)
+  const lastShownKeyRef = useRef(null)
+
+  const cycleMs = Math.max(
+    MIN_CYCLE_MS,
+    Math.max(2, attractConfig.cycleSpeed || 6) * 1000,
+  )
+
+  useAttractAmbience({
+    active: isActive && shuffled.length > 0,
+    enabled: attractConfig.musicEnabled !== false,
+    volume: attractConfig.ambientVolume ?? 35,
   })
-  const [currentIdx,  setCurrentIdx ] = useState(0)
-  const [visible,     setVisible    ] = useState(false)
-  const [phase,       setPhase      ] = useState("in") // "in" | "out"
-  const [videoError,  setVideoError ] = useState({})
-  const [shuffled,    setShuffled   ] = useState([])
-  const videoRef  = useRef(null)
-  const timerRef  = useRef(null)
-  const indexRef  = useRef(0)
 
-  // Build a shuffled list -- respect attractPreferArt config
+  const clearPhaseTimers = useCallback(() => {
+    timersRef.current.forEach(clearTimeout)
+    timersRef.current = []
+  }, [])
+
+  // Prefer artwork only when it can sustain a real pass. This preserves the
+  // existing six-item threshold while keeping one-game and small libraries
+  // truthful instead of fabricating destinations.
   useEffect(() => {
-    if (!games.length) return
-    const preferArt = attractConfig.preferArt !== false
-    const withArt = games.filter(g => artwork?.[g.id || g.profile]?.hero || artwork?.[g.id || g.profile]?.capsule)
-    const pool = (preferArt && withArt.length >= 6) ? withArt : games
-    setShuffled(shuffle(pool))
-  }, [games, artwork, attractConfig.preferArt])
-
-  const goToNext = useCallback(() => {
-    setPhase("out")
-    setTimeout(() => {
-      indexRef.current = (indexRef.current + 1) % (shuffled.length || 1)
-      setCurrentIdx(indexRef.current)
-      setPhase("in")
-    }, FADE_DURATION)
-  }, [shuffled.length])
-
-  useEffect(() => {
-    if (!isActive) {
-      clearInterval(timerRef.current)
-      setVisible(false)
+    if (!games.length) {
+      orderRef.current = []
+      setShuffled([])
+      setCurrentIdx(0)
+      indexRef.current = 0
       return
     }
-    setVisible(true)
+    const withArt = games.filter((game) => {
+      const art = artwork?.[game.id || game.profile]
+      return art?.hero || art?.capsule
+    })
+    const pool = attractConfig.preferArt !== false && withArt.length >= 6 ? withArt : games
+    const next = reshuffle(pool, lastShownKeyRef.current)
+    orderRef.current = next
     indexRef.current = 0
     setCurrentIdx(0)
-    setPhase("in")
-    const cycleMs = (attractConfig.cycleSpeed || 6) * 1000
-    timerRef.current = setInterval(goToNext, cycleMs)
-    return () => clearInterval(timerRef.current)
-  }, [isActive, goToNext])
+    setShuffled(next)
+    setVideoErrors({})
+  }, [games, artwork, attractConfig.preferArt])
+
+  const advance = useCallback(() => {
+    const order = orderRef.current
+    if (order.length <= 1) return
+    const current = order[indexRef.current]
+    lastShownKeyRef.current = gameKey(current)
+
+    if (indexRef.current + 1 < order.length) {
+      indexRef.current += 1
+      setCurrentIdx(indexRef.current)
+      return
+    }
+
+    const next = reshuffle(order, lastShownKeyRef.current)
+    orderRef.current = next
+    indexRef.current = 0
+    setShuffled(next)
+    setCurrentIdx(0)
+  }, [])
+
+  // One cancellable timeline per discovery: gateway, resolve, hold, recede,
+  // neutral interval, then advance. The configured cycle remains the pacing
+  // contract, with a six-second safety floor so its phases stay meaningful.
+  useEffect(() => {
+    clearPhaseTimers()
+    if (!isActive || shuffled.length === 0) {
+      activeSessionRef.current = false
+      setPhase("neutral")
+      return
+    }
+
+    const entering = !activeSessionRef.current
+    activeSessionRef.current = true
+    if (entering && hasActivatedRef.current) advance()
+    hasActivatedRef.current = true
+
+    let cancelled = false
+    const later = (fn, delay) => {
+      const id = setTimeout(() => { if (!cancelled) fn() }, delay)
+      timersRef.current.push(id)
+    }
+    const runCycle = () => {
+      setPhase("gateway")
+      later(() => setPhase("resolving"), RESOLVE_MS)
+      later(() => setPhase("hold"), HOLD_START_MS)
+      later(() => setPhase("receding"), cycleMs - RECEDE_MS)
+      later(() => setPhase("neutral"), cycleMs - NEUTRAL_MS)
+      later(() => {
+        advance()
+        runCycle()
+      }, cycleMs)
+    }
+    runCycle()
+
+    return () => {
+      cancelled = true
+      clearPhaseTimers()
+    }
+  }, [isActive, shuffled.length, cycleMs, advance, clearPhaseTimers])
+
+  useEffect(() => {
+    if (!isActive || shuffled.length === 0) return
+    const frame = requestAnimationFrame(() => overlayRef.current?.focus({ preventScroll: true }))
+    return () => cancelAnimationFrame(frame)
+  }, [isActive, shuffled.length])
 
   useEffect(() => {
     if (!videoRef.current || !isActive) return
@@ -94,143 +157,136 @@ export default function AttractMode({ games, isActive, onWake, onSelect, artwork
     videoRef.current.play().catch(() => {})
   }, [currentIdx, isActive])
 
-  // Keep video volume in sync with the "Attract volume" setting
+  const wakeFromKeyboard = useCallback((event) => {
+    if (!isActive) return
+    event.preventDefault()
+    event.stopPropagation()
+    event.stopImmediatePropagation?.()
+    onWake?.()
+  }, [isActive, onWake])
+
+  // Capture phase is intentional: the wake event is consumed before Wheel's
+  // normal Library shortcuts can navigate, open details, or launch.
   useEffect(() => {
-    if (!videoRef.current) return
-    const vol = Math.max(0, Math.min(1, (attractConfig.ambientVolume ?? 35) / 100))
-    videoRef.current.volume = vol
-  }, [attractConfig.ambientVolume, currentIdx])
+    if (!isActive) return
+    window.addEventListener("keydown", wakeFromKeyboard, true)
+    return () => window.removeEventListener("keydown", wakeFromKeyboard, true)
+  }, [isActive, wakeFromKeyboard])
 
-  useEffect(() => {
-    const wake = (e) => {
-      if (!isActive) return
-      // Arrow keys navigate while attract mode is active -- don't wake on those
-      if (e.type === "keydown" && ["ArrowLeft","ArrowRight","Enter"," "].includes(e.key)) return
-      // Snap wheel to the game currently showing in attract mode
-      if (onSelect && shuffled.length > 0) {
-        const showing = shuffled[indexRef.current]
-        if (showing) {
-          const realIdx = games.findIndex(g =>
-            (g.id && g.id === showing.id) || (g.profile && g.profile === showing.profile)
-          )
-          if (realIdx >= 0) onSelect(realIdx)
-        }
-      }
-      onWake()
-    }
-    window.addEventListener("keydown", wake)
-    window.addEventListener("gamepadconnected", onWake)
-    window.addEventListener("click",   wake)
-    return () => {
-      window.removeEventListener("keydown", wake)
-      window.removeEventListener("gamepadconnected", onWake)
-      window.removeEventListener("click",   wake)
-    }
-  }, [isActive, onWake, onSelect, shuffled, games])
+  const wakeFromPointer = useCallback((event) => {
+    if (!isActive) return
+    event?.preventDefault?.()
+    event?.stopPropagation?.()
+    onWake?.()
+  }, [isActive, onWake])
 
-  if (!isActive || !visible || shuffled.length === 0) return null
+  const wakeFromController = useCallback(() => onWake?.(), [onWake])
+  useGamepad({
+    confirm: wakeFromController,
+    back: wakeFromController,
+    left: wakeFromController,
+    right: wakeFromController,
+    up: wakeFromController,
+    down: wakeFromController,
+    settings: wakeFromController,
+    filterLeft: wakeFromController,
+    filterRight: wakeFromController,
+    random: wakeFromController,
+    launch: wakeFromController,
+    favorite: wakeFromController,
+    detail: wakeFromController,
+    enabled: isActive,
+  })
 
-  const game   = shuffled[currentIdx] || shuffled[0]
-  const gameId = game.id || game.profile?.replace(".xml","").replace(".vpx","")
-  const art    = artwork?.[game.id || game.profile] || {}
+  if (!isActive || shuffled.length === 0) return null
 
-  const videoUrl = window.nuarcade?.platform === "win32"
-    ? "file:///F:/Media/Videos/" + gameId + ".mp4"
+  const game = shuffled[currentIdx] || shuffled[0]
+  const key = gameKey(game)
+  const id = game.id || game.profile?.replace(".xml", "").replace(".vpx", "")
+  const art = artwork?.[game.id || game.profile] || {}
+  const legacyVideo = window.nuarcade?.platform === "win32" && id
+    ? `file:///F:/Media/Videos/${id}.mp4`
     : null
-
-  const hasVideo   = videoUrl && !videoError[currentIdx]
-  const heroUrl    = art.hero    || null
-  const capsuleUrl = art.capsule || null
-  const logoUrl    = art.logo    || null
-  const accent     = GENRE_COLORS[game.genre] || "#00ff88"
-  const fadeStyle  = { opacity: phase === "in" ? 1 : 0, transition: `opacity ${FADE_DURATION}ms ease` }
-
-  // Progress dots -- show max 16, use proportional active indicator
-  const totalDots = Math.min(shuffled.length, 16)
-  const activeDot = Math.floor((currentIdx / shuffled.length) * totalDots)
+  const videoUrl = game.videoPath || legacyVideo
+  const hasVideo = !!videoUrl && !videoErrors[key]
+  const heroUrl = art.hero || game.heroPath || null
+  const capsuleUrl = art.capsule || game.boxArtPath || null
+  const mediaKind = hasVideo ? "video" : heroUrl ? "hero" : capsuleUrl ? "capsule" : "none"
 
   return (
-    <div className={styles.overlay} onClick={onWake}>
+    <section
+      ref={overlayRef}
+      className={styles.overlay}
+      data-phase={phase}
+      data-media-kind={mediaKind}
+      tabIndex={-1}
+      role="region"
+      aria-label="Vespara Library discovery. Enter the Library to resume browsing."
+      onClick={wakeFromPointer}
+      onMouseMove={wakeFromPointer}
+    >
+      <div className={styles.atmosphere} aria-hidden="true" />
+      <div className={styles.reflection} aria-hidden="true" />
 
-      {/* Background */}
-      <div className={styles.bg} style={fadeStyle}>
-        {hasVideo && (
-          <video
-            ref={videoRef}
-            className={styles.bgVideo}
-            src={videoUrl}
-            loop playsInline autoPlay
-            onError={() => setVideoError(e => ({ ...e, [currentIdx]: true }))}
-          />
-        )}
-        {!hasVideo && heroUrl && (
-          <img src={heroUrl} alt="" className={styles.bgHero} />
-        )}
-        {!hasVideo && !heroUrl && capsuleUrl && (
-          <img src={capsuleUrl} alt="" className={styles.bgCapsule} />
-        )}
-        {!hasVideo && !heroUrl && !capsuleUrl && (
-          <div className={styles.bgColor}
-            style={{ background: "radial-gradient(ellipse at 40% 40%, " + accent + "30 0%, #000 65%)" }}
-          />
-        )}
-        <div className={styles.bgOverlay} />
-        <div className={styles.bgVignette} />
-      </div>
-
-      {/* Scanlines */}
-      <div className={styles.scanlines} />
-
-      {/* Capsule art overlay -- floats over hero art OR video, whichever
-          is the current background. Only fully suppressed when capsule art
-          is itself acting as the background (no video, no hero). */}
-      {(hasVideo || heroUrl) && capsuleUrl && (
-        <div className={styles.capsuleWrap} style={fadeStyle}>
-          <img src={capsuleUrl} alt="" className={styles.capsuleFloat} />
+      <header className={styles.identity} aria-hidden="true">
+        <img src={vesparaSymbol} alt="" />
+        <div>
+          <span className={styles.wordmark}>VESPARA</span>
+          <span className={styles.context}>FROM THE LIBRARY</span>
         </div>
-      )}
+      </header>
 
-      {/* Game info */}
-      <div className={styles.gameInfo} style={fadeStyle}>
-        <div className={styles.systemTag} style={{ background: accent + "22", borderColor: accent + "44", color: accent }}>
-          {game.system || game.genre}
-        </div>
-        {logoUrl ? (
-          <img src={logoUrl} alt={game.title} className={styles.gameLogo} />
-        ) : (
-          <div className={styles.gameTitle} style={{ color: "#fff", textShadow: "0 0 40px " + accent + "88" }}>
-            {game.title}
+      <div className={styles.gatewayStage} aria-hidden="true">
+        <div className={styles.gatewayCrown} />
+        <div className={styles.gatewayOuter}>
+          <div className={styles.gatewayInner}>
+            <div className={styles.thresholdGlow} />
+            <div className={styles.mediaViewport}>
+              {hasVideo && (
+                <video
+                  key={videoUrl}
+                  ref={videoRef}
+                  className={styles.portalMedia}
+                  src={videoUrl}
+                  muted
+                  loop
+                  playsInline
+                  autoPlay
+                  preload="metadata"
+                  onError={() => setVideoErrors((errors) => ({ ...errors, [key]: true }))}
+                />
+              )}
+              {!hasVideo && heroUrl && (
+                <img src={heroUrl} alt="" className={styles.portalMedia} />
+              )}
+              {!hasVideo && !heroUrl && capsuleUrl && (
+                <div className={styles.archivalImage}>
+                  <img src={capsuleUrl} alt="" />
+                </div>
+              )}
+              {!hasVideo && !heroUrl && !capsuleUrl && (
+                <div className={styles.noMediaGeometry}>
+                  <img src={vesparaSymbol} alt="" />
+                  <span>ARCHIVE RECORD</span>
+                </div>
+              )}
+              <div className={styles.mediaShade} />
+            </div>
+
+            <div className={styles.destinationLabel}>
+              <span className={styles.system}>{game.system || game.genre || "Library collection"}</span>
+              <h1>{game.title}</h1>
+            </div>
           </div>
-        )}
-        {game.genre && !logoUrl && (
-          <div className={styles.gameGenre} style={{ color: accent + "aa" }}>{game.genre}</div>
-        )}
-      </div>
-
-      {/* Bottom bar */}
-      <div className={styles.bottomBar}>
-        <div className={styles.nuarcadeBrand}>
-          <span className={styles.brandPrimary}>VESPARA</span>
         </div>
-        <div className={styles.insertCoin}>
-          <span className={styles.coinBlink}>INSERT COIN</span>
-        </div>
-        <div className={styles.gameCount}>{games.length} games</div>
+        <div className={styles.gatewayFoot} />
       </div>
 
-      {/* Progress dots */}
-      <div className={styles.dots}>
-        {Array.from({ length: totalDots }).map((_, i) => (
-          <div
-            key={i}
-            className={styles.dot + (i === activeDot ? " " + styles.dotActive : "")}
-            style={i === activeDot ? { background: accent } : {}}
-          />
-        ))}
+      <div className={styles.invitation} aria-hidden="true">
+        <span className={styles.invitationRule} />
+        <span>ENTER THE LIBRARY</span>
+        <span className={styles.invitationRule} />
       </div>
-
-      {/* Version */}
-      <div className={styles.version}>v{currentVersion}</div>
-    </div>
+    </section>
   )
 }

@@ -21,15 +21,15 @@ test("Attract Mode no longer renders a secondary 'by NuArcade' brand line", () =
   assert.doesNotMatch(attractMode, /by NuArcade/)
   // The primary Vespara brand mark itself must still render -- this is a
   // removal of the secondary attribution line only, not the brand block.
-  assert.match(attractMode, /<span className=\{styles\.brandPrimary\}>VESPARA<\/span>/)
+  assert.match(attractMode, /<span className=\{styles\.wordmark\}>VESPARA<\/span>/)
+  assert.match(attractMode, /<span className=\{styles\.context\}>FROM THE LIBRARY<\/span>/)
 })
 
-test("Attract Mode's bottom bar no longer contains a brandSecondary element", () => {
-  const bottomBarStart = attractMode.indexOf("{/* Bottom bar */}")
-  const bottomBarEnd = attractMode.indexOf("{/* Progress dots */}")
-  assert.ok(bottomBarStart > -1 && bottomBarEnd > bottomBarStart, "expected to locate the bottom bar JSX block")
-  const bottomBar = attractMode.slice(bottomBarStart, bottomBarEnd)
-  assert.doesNotMatch(bottomBar, /brandSecondary/)
+test("Attract Mode no longer renders the retired generic frontend HUD", () => {
+  assert.doesNotMatch(attractMode, /brandSecondary/)
+  assert.doesNotMatch(attractMode, /INSERT COIN/)
+  assert.doesNotMatch(attractMode, /gameCount/)
+  assert.doesNotMatch(attractMode, /Progress dots/)
 })
 
 test("Settings bezel help copy refers to Vespara, not NuArcade, as the visible product actor", () => {
@@ -45,9 +45,8 @@ test("no protected NuArcade compatibility identifier was touched by this brandin
   // These are source-identifier concerns, not visible-copy concerns, and must
   // never be renamed. AttractMode.jsx and Settings.jsx do not define any of
   // these identifiers themselves, so the correct assertion here is that
-  // renaming visible copy did not spill into a CSS class name, an import
-  // path, or any other source identifier in either file.
-  assert.match(attractMode, /className=\{styles\.nuarcadeBrand\}/, "the internal (non-user-visible) nuarcadeBrand CSS class name must remain unchanged by this milestone")
+  // renaming visible copy did not spill into a runtime compatibility bridge
+  // or other protected source identifier in either file.
   assert.doesNotMatch(attractMode, /window\.nuarcade\s*=/, "this file must not itself redefine window.nuarcade")
   assert.doesNotMatch(settings, /app\.setName/, "this file has no business touching app.setName")
 })

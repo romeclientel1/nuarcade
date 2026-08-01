@@ -51,7 +51,9 @@ test("no Sanctuary, environment, startup, audio, installer, preload, main-proces
   // Sanctuary (ambience pause/resume around a launch), so Sanctuary alone is
   // excluded here, following the same precedent Control Room C2 already
   // established for this helper.
-  const { offenders, packageJsonOffenders } = findProtectedScopeOffenders(import.meta.url, { excludeLabels: ["Sanctuary", "main-process"], allowPackageJsonVersionBump: true })
+  // The later Attract Mode milestone explicitly integrates with the shared
+  // Library music player so its dedicated loop cannot overlap Library music.
+  const { offenders, packageJsonOffenders } = findProtectedScopeOffenders(import.meta.url, { excludeLabels: ["Sanctuary", "main-process", "audio"], allowPackageJsonVersionBump: true })
   assert.deepEqual(offenders, [], `protected files were modified: ${offenders.join(", ")}`)
   assert.deepEqual(packageJsonOffenders, [], `protected package.json fields were modified: ${packageJsonOffenders.join(", ")}`)
 })

@@ -634,6 +634,7 @@ export default function Wheel({ onCRTChange, crtEnabled, activeProfile, onSwitch
     enabled: config?.musicEnabled !== false,
     volume:  config?.musicVolume ?? 60,
     hasBgVideo,
+    suspended: attractMode,
   })
   const { startSession, endSession, getPlaytime, formatTime, recordLaunch } = usePlaytime()
   const [artwork, setArtwork] = useState(() => {
@@ -657,6 +658,11 @@ export default function Wheel({ onCRTChange, crtEnabled, activeProfile, onSwitch
   const [cabinetMode, setCabinetMode] = useState(false)
   const [screenshotMode, setScreenshotMode] = useState(false)
   const idleTimer = useRef(null)
+  const attractModeRef = useRef(false)
+  const attractEligibleRef = useRef(false)
+  const attractRestoreFocusRef = useRef(null)
+  const selectedGameFocusRef = useRef(null)
+  attractModeRef.current = attractMode
 
   // categoryOverride lets launch-origin restoration resolve an arbitrary
   // category's list with this exact same filtering -- omitted everywhere
@@ -968,28 +974,108 @@ export default function Wheel({ onCRTChange, crtEnabled, activeProfile, onSwitch
     setSelectedIndex(resolution.index)
   }, [restorationRequest, loading, games])
 
-  const resetIdleTimer = useCallback(() => {
-    setAttractMode(false)
+  const attractGames = useMemo(() => games.filter(game => !game.isLauncher), [games])
+  const attractEligible =
+    attractGames.length > 0 &&
+    !libraryEmpty &&
+    !showDetail &&
+    currentDestination == null &&
+    !showAchievements &&
+    !showCollections &&
+    !showCoach &&
+    !showOperator &&
+    !showSort &&
+    !showVirtualKeyboard &&
+    !showSearch &&
+    !consoleOpen &&
+    !showRetroArchPopup &&
+    !showExitPopup &&
+    !exitConfirm &&
+    !showKonami &&
+    !needsControllerPrompt &&
+    !launching
+  attractEligibleRef.current = attractEligible
+
+  const restoreLibraryFocus = useCallback(() => {
+    const captured = attractRestoreFocusRef.current
+    attractRestoreFocusRef.current = null
+    requestAnimationFrame(() => {
+      const target = captured?.isConnected && !captured.disabled
+        ? captured
+        : selectedGameFocusRef.current
+      target?.focus?.({ preventScroll: true })
+    })
+  }, [])
+
+  const beginAttractMode = useCallback(() => {
+    if (!attractEligibleRef.current || attractModeRef.current) return
+    const active = document.activeElement
+    attractRestoreFocusRef.current =
+      active && active !== document.body && active !== document.documentElement
+        ? active
+        : selectedGameFocusRef.current
+    attractModeRef.current = true
+    setAttractMode(true)
+  }, [])
+
+  const scheduleIdle = useCallback(() => {
     clearTimeout(idleTimer.current)
-    const timeoutMs = ((config?.attractTimeout || 120)) * 1000
-    idleTimer.current = setTimeout(() => setAttractMode(true), timeoutMs)
-  }, [config?.attractTimeout])
+    idleTimer.current = null
+    if (!attractEligibleRef.current || attractModeRef.current) return
+    const timeoutMs = (config?.attractTimeout || 120) * 1000
+    idleTimer.current = setTimeout(beginAttractMode, timeoutMs)
+  }, [config?.attractTimeout, beginAttractMode])
+
+  const wakeAttractMode = useCallback(() => {
+    if (!attractModeRef.current) {
+      scheduleIdle()
+      return
+    }
+    attractModeRef.current = false
+    setAttractMode(false)
+    restoreLibraryFocus()
+    // Start the next idle window after the waking event has been consumed.
+    requestAnimationFrame(scheduleIdle)
+  }, [restoreLibraryFocus, scheduleIdle])
 
   useEffect(() => {
-    resetIdleTimer()
-    window.addEventListener("keydown", resetIdleTimer)
-    window.addEventListener("mousemove", resetIdleTimer)
-    window.addEventListener("click", resetIdleTimer)
+    clearTimeout(idleTimer.current)
+    if (!attractEligible) {
+      if (attractModeRef.current) {
+        attractModeRef.current = false
+        setAttractMode(false)
+        restoreLibraryFocus()
+      }
+      return
+    }
+    scheduleIdle()
+    return () => clearTimeout(idleTimer.current)
+  }, [attractEligible, scheduleIdle, restoreLibraryFocus])
+
+  useEffect(() => {
+    const resetFromLibraryInput = () => {
+      if (!attractModeRef.current) scheduleIdle()
+    }
+    window.addEventListener("keydown", resetFromLibraryInput)
+    window.addEventListener("mousemove", resetFromLibraryInput)
+    window.addEventListener("click", resetFromLibraryInput)
     return () => {
       clearTimeout(idleTimer.current)
-      window.removeEventListener("keydown", resetIdleTimer)
-      window.removeEventListener("mousemove", resetIdleTimer)
-      window.removeEventListener("click", resetIdleTimer)
+      window.removeEventListener("keydown", resetFromLibraryInput)
+      window.removeEventListener("mousemove", resetFromLibraryInput)
+      window.removeEventListener("click", resetFromLibraryInput)
     }
-  }, [resetIdleTimer])
+  }, [scheduleIdle])
 
   useEffect(() => {
     const handler = (e) => {
+      // Attract's capture-phase listener consumes the waking event first.
+      // This guard is a second safety boundary for synthetic/unusual events.
+      if (attractModeRef.current) {
+        e.preventDefault()
+        e.stopPropagation()
+        return
+      }
       // Never intercept when any text input or overlay is active
       // search removed
       if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return
@@ -1309,7 +1395,7 @@ export default function Wheel({ onCRTChange, crtEnabled, activeProfile, onSwitch
   if (!libraryEmpty && games.length === 0) return <div style={{ width:"100vw", height:"100vh", background:"#000", display:"flex", alignItems:"center", justifyContent:"center", color:"#888", fontFamily:"monospace", fontSize:14 }}>{t("common.loading")}</div>
 
   return (
-    <div className={styles.stage + (libraryEmpty ? " " + styles.libraryEmptyStage : "") + (cabinetMode ? " " + styles.cabinetMode : "") + (screenshotMode ? " " + styles.screenshotMode : "")}>
+    <div className={styles.stage + (libraryEmpty ? " " + styles.libraryEmptyStage : "") + (cabinetMode ? " " + styles.cabinetMode : "") + (screenshotMode ? " " + styles.screenshotMode : "") + (attractMode ? " " + styles.attractDormant : "")}>
       <img
         src={libraryEnvironment}
         alt=""
@@ -1372,23 +1458,17 @@ export default function Wheel({ onCRTChange, crtEnabled, activeProfile, onSwitch
       </aside>
 
       <AttractMode
-        games={games.filter(g => !g.isLauncher)}
+        games={attractGames}
         isActive={attractMode}
-        onSelect={setSelectedIndex}
-        onWake={resetIdleTimer}
+        onWake={wakeAttractMode}
         artwork={artwork}
         attractConfig={{
           cycleSpeed:    config?.attractCycleSpeed || 6,
           preferArt:     config?.attractPreferArt !== false,
           ambientVolume: config?.ambientVolume ?? 35,
+          musicEnabled:  config?.musicEnabled !== false,
         }}
       />
-
-      {attractMode && (
-        <div className={styles.attractBanner}>
-          <span>INSERT COIN</span>
-        </div>
-      )}
 
       <div className={styles.globalHeader}>
         <div className={styles.worldNav}>
@@ -1673,6 +1753,9 @@ export default function Wheel({ onCRTChange, crtEnabled, activeProfile, onSwitch
                   key={game.id || game.profile}
                   className={styles.cardSlot}
                   style={cardStyle}
+                  ref={index === selectedIndex ? selectedGameFocusRef : null}
+                  tabIndex={index === selectedIndex ? -1 : undefined}
+                  data-library-selected-game={index === selectedIndex ? "true" : undefined}
                 >
                   {/* getCardStyle already hides far cards via display:none,
                       but that alone doesn't stop the browser from loading
