@@ -49,8 +49,8 @@ function run(cmd, args, opts) {
 }
 
 test("real NSIS build: renderer builds and electron-builder --win --x64 succeeds", () => {
-  run("npm", ["run", "build:renderer"], { stdio: "pipe" })
-  const output = run("npx", ["electron-builder", "--win", "--x64"], {
+  run(process.execPath, [process.env.npm_execpath, "run", "build:renderer"], { stdio: "pipe" })
+  const output = run(process.execPath, [require.resolve("electron-builder/cli.js"), "--win", "--x64"], {
     stdio: "pipe",
     env: Object.assign({}, process.env, { DEBUG: "electron-builder" }),
     maxBuffer: 64 * 1024 * 1024,
@@ -78,7 +78,7 @@ test("real NSIS build: renderer builds and electron-builder --win --x64 succeeds
   // -- The real generated script actually includes OUR file, not a stale copy --
   const debugYml = path.join(ROOT, "dist", "builder-debug.yml")
   assert.ok(fs.existsSync(debugYml), "expected electron-builder's debug log at dist/builder-debug.yml (DEBUG=electron-builder should always emit it)")
-  const debugContent = fs.readFileSync(debugYml, "utf8")
+  const debugContent = fs.readFileSync(debugYml, "utf8").replace(/\\/g, "/")
   assert.match(debugContent, /!include "[^"]*assets\/installer\/folders\.nsh"/)
   assert.match(output, /Install:\s*5 pages/, "adding the Directory-page Leave hook must not add or remove a page")
 
