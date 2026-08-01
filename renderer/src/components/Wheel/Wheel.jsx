@@ -47,6 +47,7 @@ import { buildLibraryOriginContext } from "./libraryLaunchOrigin.js"
 import { applyPendingRecentlyPlayedCredit } from "../../launchSession/startupRecovery.js"
 import { consumeRestorationRequest } from "../../launchSession/restorationRequest.js"
 import { shouldConsumeRestoration, resolveLibraryRestoration } from "../../launchSession/restorationResolution.js"
+import { createArchivePreviewAttractMixController } from "./archivePreviewAttractMix.js"
 
 // "Retro" was removed from this list (was never populated by any scanner --
 // no genre/system value anywhere in src/main/scanner.js is ever 'Retro' --
@@ -390,6 +391,13 @@ export default function Wheel({ onCRTChange, crtEnabled, activeProfile, onSwitch
   const bgSelectionTimerRef = useRef(null)
   const bgReleaseTimerRef = useRef(null)
   const bgVideoVolumeRef = useRef(0.35)
+  const attractPreviewMixRef = useRef(null)
+  if (!attractPreviewMixRef.current) {
+    attractPreviewMixRef.current = createArchivePreviewAttractMixController({
+      getActiveSlot: () => bgActiveRef.current,
+      getVideo: slot => slot === 'a' ? bgVideoARef.current : bgVideoBRef.current,
+    })
+  }
 
   const releaseArchiveVideoSlot = useCallback((slot, clearState = true) => {
     const ref = slot === 'a' ? bgVideoARef : bgVideoBRef
@@ -459,6 +467,9 @@ export default function Wheel({ onCRTChange, crtEnabled, activeProfile, onSwitch
 
     pending.playRequested = true
     element.volume = bgVideoVolumeRef.current
+    // A source that becomes ready during Attract may still play for visual
+    // continuity, but it must remain inaudible beneath the dedicated theme.
+    element.muted = attractPreviewMixRef.current?.isSuspended() === true
 
     Promise.resolve(element.play()).then(() => {
       const latest = bgPendingRef.current
@@ -827,9 +838,19 @@ export default function Wheel({ onCRTChange, crtEnabled, activeProfile, onSwitch
     if (bgVideoBRef.current) bgVideoBRef.current.volume = vol
   }, [config?.ambientVolume, bgVideoA, bgVideoB])
 
+  // Attract Mode owns the Library soundscape. Pause and mute both Archive
+  // View slots on entry, then resume only the exact preview that was active
+  // before entry, at the same source and playback position, on wake.
+  useEffect(() => {
+    const controller = attractPreviewMixRef.current
+    if (attractMode) controller?.enter()
+    else controller?.leave()
+  }, [attractMode])
+
   // Stop decoding and release both file/network sources on unmount. The
   // request increment also makes any already-resolving play() promise stale.
   useEffect(() => () => {
+    attractPreviewMixRef.current?.cleanup()
     bgRequestIdRef.current += 1
     bgPendingRef.current = null
     bgActiveRef.current = null
