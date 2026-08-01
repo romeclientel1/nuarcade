@@ -69,6 +69,9 @@ export default function Settings({ games = [], onClose, onCRTChange, crtEnabled,
   const { t, locale, setLocale, supportedLocales } = useI18n()
   const scrollRef = useRef(null)
   const saveRef    = useRef(null)
+  const closeBtnRef = useRef(null)
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
   // Control Room direct-station navigation (R1): each station in the new
   // Systems Wing scrolls this still-single, still-unified settings document
   // to the anchor matching the destination the user picked, rather than
@@ -164,6 +167,33 @@ const [localBezelResult, setLocalBezelResult] = useState(null)
 const [tpConfiguring, setTpConfiguring] = useState(false)
 const [tpResult, setTpResult] = useState(null)
 const [showArtworkMgr, setShowArtworkMgr] = useState(false)
+
+  // Move native focus into the overlay once its asynchronously loaded
+  // content is mounted. The one-shot guard prevents ordinary config edits
+  // from pulling focus back to Close.
+  const hasFocusedOverlayRef = useRef(false)
+  useEffect(() => {
+    if (!config || hasFocusedOverlayRef.current) return
+    hasFocusedOverlayRef.current = true
+    const frame = requestAnimationFrame(() => closeBtnRef.current?.focus({ preventScroll: true }))
+    return () => cancelAnimationFrame(frame)
+  }, [config])
+
+  // Keyboard Back belongs to the deepest visible overlay. Settings only
+  // closes when none of its existing child overlays/confirmations is open;
+  // those children retain first refusal over Escape.
+  const nestedOverlayRef = useRef(false)
+  nestedOverlayRef.current = showRestartConfirm || showControllerTest || showArtworkMgr
+  useEffect(() => {
+    const handleEscape = (event) => {
+      if (event.key !== "Escape" || event.defaultPrevented || nestedOverlayRef.current) return
+      event.preventDefault()
+      event.stopPropagation()
+      onCloseRef.current?.()
+    }
+    window.addEventListener("keydown", handleEscape)
+    return () => window.removeEventListener("keydown", handleEscape)
+  }, [])
 const [biosResult, setBiosResult] = useState(null)
 const [checkingBios, setCheckingBios] = useState(false)
 const [marqueeOpen, setMarqueeOpen] = useState(false)
@@ -522,7 +552,7 @@ const handleSave = async () => {
             <div className={styles.title}>{t("settings.title")}</div>
             <div className={styles.sub}>{t("settings.subtitle")}</div>
           </div>
-          <button className={styles.closeBtn} onClick={onClose} title={t("common.close") + " (B)"}>X</button>
+          <button ref={closeBtnRef} className={styles.closeBtn} onClick={onClose} title={t("common.close") + " (B)"}>X</button>
         </div>
 
         <div className={styles.body} ref={scrollRef} data-active-section={activeSection}>

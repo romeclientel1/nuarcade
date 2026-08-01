@@ -174,6 +174,12 @@ export default function VesparaHome({
   const [focusZone, setFocusZone] = useState(hasRecents ? "recents" : "actions")
   const [recentIndex, setRecentIndex] = useState(0)
   const [actionIndex, setActionIndex] = useState(0)
+  const actionRefs = useRef({})
+  const departTriggerRef = useRef(null)
+  const setActionRef = useCallback((action, node) => {
+    if (node) actionRefs.current[action] = node
+    else delete actionRefs.current[action]
+  }, [])
 
   // Tracks whether the player has manually moved focus at least once.
   // Until then, background data settling (the async library load
@@ -256,7 +262,7 @@ export default function VesparaHome({
   }, [restorationRequest, loading, displayedRecentGames])
 
   // Returning-destination focus hint -- App passes this when the Traveler
-  // just came back from a live in-session destination (currently: Control
+  // just came back from a live in-session destination (Library or Control
   // Room) rather than a fresh arrival, so focus lands back on that
   // destination's own tile instead of the usual derived default. Distinct
   // from restorationRequest above (that one is startup/crash recovery);
@@ -297,7 +303,25 @@ export default function VesparaHome({
 
   const [showDepartConfirm, setShowDepartConfirm] = useState(false)
   const [departChoice, setDepartChoice] = useState(1) // 0 = Yes, 1 = No (default safe)
-  const departTriggerRef = useRef(null)
+
+  // Keep the browser's real focus synchronized with the existing Sanctuary
+  // navigation model. Keyboard/controller movement already owns focusZone and
+  // the two indexes; this effect only projects that same selection onto the
+  // mounted button. It deliberately yields while data is settling or a child
+  // prompt owns focus, and requestAnimationFrame lets React finish swapping
+  // conditional Recent content before resolving the selected ref.
+  useEffect(() => {
+    if (loading || showDepartConfirm || needsControllerPrompt) return
+    const frame = requestAnimationFrame(() => {
+      const action = ACTIONS[actionIndex]
+      const target = focusZone === "actions"
+        ? actionRefs.current[action]
+        : focusedRecentCardRef.current
+      if (!target || target.disabled || document.activeElement === target) return
+      target.focus({ preventScroll: true })
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [focusZone, recentIndex, actionIndex, loading, showDepartConfirm, needsControllerPrompt])
 
   const runAction = useCallback((action) => {
     if (action === "library") onEnterLibrary?.()
@@ -575,6 +599,7 @@ export default function VesparaHome({
                           key={id}
                           ref={focused ? focusedRecentCardRef : null}
                           className={styles.recentCard + (focused ? " " + styles.focused : "")}
+                          aria-current={focused ? "true" : undefined}
                           onClick={() => { acceptManualFocus(); setFocusZone("recents"); setRecentIndex(i); launch(g) }}
                           disabled={launching}
                         >
@@ -623,9 +648,14 @@ export default function VesparaHome({
                     ref={action === "depart" ? departTriggerRef : undefined}
                     className={styles.actionBtn + " " + styles[action + "Destination"] + (focused ? " " + styles.focused : "")}
                     style={{ "--destination-image": DESTINATION_VISUALS[action] }}
+                    aria-current={focused ? "true" : undefined}
                     onClick={() => { acceptManualFocus(); setFocusZone("actions"); setActionIndex(i); sounds.select(); activateAction(action) }}
                   >
-                    <span className={styles.destinationMarker} aria-hidden="true" />
+                    <span
+                      ref={(node) => setActionRef(action, node?.parentElement || null)}
+                      className={styles.destinationMarker}
+                      aria-hidden="true"
+                    />
                     <span className={styles.destinationCopy}>
                       <span className={styles.destinationName}>
                         {/* First-run onboarding now points to the Control

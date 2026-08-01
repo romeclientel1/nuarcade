@@ -322,13 +322,13 @@ export default function App() {
 
   const handleReturnHomeFromWheel = () => {
     clearPendingRestoration()
+    setHomeFocusHint("library")
     goToSurfaceRoot()
   }
 
-  // Same-session return from Control Room: unlike handleReturnHomeFromWheel,
-  // this also leaves a one-shot hint so Sanctuary focuses the Control Room
-  // tile it was entered from, rather than its usual derived default. See
-  // VesparaHome's "Returning-destination focus hint" effect.
+  // Same-session destination returns leave a one-shot hint so Sanctuary
+  // focuses the tile the Traveler entered from, rather than its usual derived
+  // default. See VesparaHome's "Returning-destination focus hint" effect.
   const handleReturnHomeFromControlRoom = () => {
     clearPendingRestoration()
     setHomeFocusHint("controlRoom")

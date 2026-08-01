@@ -49,6 +49,9 @@ const TAB_PRESENTATION = {
 export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdated, initialTab, onContextChange }) {
   const { t } = useI18n()
   const scrollRef = useRef(null)
+  const closeBtnRef = useRef(null)
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
   const [games, setGames] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState("all")
@@ -130,6 +133,38 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
   const [creatingFolders, setCreatingFolders] = useState(false)
   const [folderResult, setFolderResult] = useState(null)
   const [emMediaPath, setEmMediaPath] = useState('')
+
+  // The architectural Control Room remains mounted behind Media Manager, so
+  // explicitly move native focus to the visible overlay instead of leaving
+  // it on the originating Archives Wing station.
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => closeBtnRef.current?.focus({ preventScroll: true }))
+    return () => cancelAnimationFrame(frame)
+  }, [])
+
+  // Escape follows the same close callback as the visible Close control.
+  // Nested confirmation state and in-flight/cancellable operations keep
+  // first refusal so keyboard Back cannot bypass their existing workflow.
+  const escapeBlockedRef = useRef(false)
+  escapeBlockedRef.current = showRestartConfirm
+    || showArtworkMgr
+    || bulkRunning
+    || autoFilling
+    || importingAll
+    || bezelFetching
+    || emScanning
+    || creatingFolders
+    || Object.values(ytDownloading).includes('downloading')
+  useEffect(() => {
+    const handleEscape = (event) => {
+      if (event.key !== "Escape" || event.defaultPrevented || escapeBlockedRef.current) return
+      event.preventDefault()
+      event.stopPropagation()
+      onCloseRef.current?.()
+    }
+    window.addEventListener("keydown", handleEscape)
+    return () => window.removeEventListener("keydown", handleEscape)
+  }, [])
 
   // Prefill the path field once Settings' configured Media folder loads,
   // but only if the person hasn't already typed/browsed to something else.
@@ -754,7 +789,7 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
           </div>
           <div className={styles.headerActions}>
             <span className={styles.managerIdentity}>{t("mediaManager.title")}</span>
-            <button className={styles.closeBtn} onClick={onClose} title="Close (B)" aria-label="Close Media Manager">X</button>
+            <button ref={closeBtnRef} className={styles.closeBtn} onClick={onClose} title="Close (B)" aria-label="Close Media Manager">X</button>
           </div>
         </div>
 
