@@ -93,19 +93,22 @@ export default function ArtworkManager({ games, onClose, apiKey, onArtworkUpdate
             Already-fetched games are skipped automatically.
           </div>
 
-          <select
-            className={styles.systemFilterSelect}
-            style={{ marginBottom: 10, maxWidth: 220 }}
-            value={systemFilter}
-            onChange={e => setSystemFilter(e.target.value)}
-          >
-            <option value="all">All systems ({games.length})</option>
-            {availableSystems.map(sys => (
-              <option key={sys} value={sys}>
-                {sys} ({games.filter(g => gameSystemLabel(g) === sys).length})
-              </option>
-            ))}
-          </select>
+          <div className={styles.scopeRow}>
+            <label className={styles.scopeLabel} htmlFor="artwork-system-scope">System scope</label>
+            <select
+              id="artwork-system-scope"
+              className={styles.systemFilterSelect}
+              value={systemFilter}
+              onChange={e => setSystemFilter(e.target.value)}
+            >
+              <option value="all">All systems ({games.length})</option>
+              {availableSystems.map(sys => (
+                <option key={sys} value={sys}>
+                  {sys} ({games.filter(g => gameSystemLabel(g) === sys).length})
+                </option>
+              ))}
+            </select>
+          </div>
 
           {!canRun && (
             <div className={styles.noKey}>

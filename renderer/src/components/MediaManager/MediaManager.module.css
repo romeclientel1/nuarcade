@@ -1,611 +1,406 @@
 .overlay {
-  position: fixed;
+  position: absolute;
   inset: 0;
-  background: rgba(0,0,0,0.85);
   z-index: 100;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(4px);
+  min-width: 0;
+  min-height: 0;
+  background:
+    radial-gradient(circle at 82% 5%, rgba(157, 115, 47, 0.1), transparent 35%),
+    radial-gradient(circle at 14% 70%, rgba(23, 91, 80, 0.12), transparent 40%),
+    linear-gradient(135deg, rgba(3, 27, 24, 0.98), rgba(1, 14, 14, 0.99));
 }
 
-/* This panel is only ever mounted inside Control Room's .stationFrame
-   (see ControlRoom.jsx/.module.css), which already supplies the brass
-   console-frame border, corner radius, and depth shadow around the whole
-   station. Giving this inner panel its own competing border/glow made a
-   station read as "an app window inside a window" instead of a single
-   physically-activated surface -- so this panel now just fills that frame
-   with Vespara's own background tone, no second border or shadow. */
 .panel {
-  width: 900px;
-  max-width: 95vw;
-  max-height: 85vh;
-  background: #06070a;
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
   border: none;
   border-radius: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(194, 147, 69, 0.08), transparent 14%, transparent 86%, rgba(194, 147, 69, 0.05)),
+    linear-gradient(180deg, rgba(5, 29, 26, 0.96), rgba(1, 15, 15, 0.99));
   box-shadow: none;
+  color: #d8d8cf;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
 }
+
+.panel::before,
+.panel::after {
+  position: absolute;
+  z-index: 2;
+  width: 74px;
+  height: 2px;
+  content: "";
+  pointer-events: none;
+  background: linear-gradient(90deg, #c39a54, transparent);
+}
+.panel::before { top: 0; left: 0; }
+.panel::after { right: 0; bottom: 0; transform: rotate(180deg); }
 
 .header {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  padding: 24px 28px 0;
   flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  min-height: 112px;
+  padding: 20px 34px 18px;
+  border-bottom: 1px solid rgba(179, 138, 67, 0.28);
+  background:
+    radial-gradient(circle at 24% 0, rgba(197, 150, 68, 0.11), transparent 48%),
+    rgba(2, 21, 19, 0.72);
 }
 
-.headerLeft {}
-
-.title {
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  font-size: 18px;
-  font-weight: 700;
-  color: #cbd8e2;
-  letter-spacing: 0.05em;
-  margin-bottom: 4px;
-}
-
-.sub {
+.headerLeft { min-width: 0; }
+.eyebrow,
+.managerIdentity,
+.previewNoticeLabel {
+  color: #b99559;
   font-size: 11px;
-  color: #7c8890;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
 }
+.title {
+  margin: 3px 0 5px;
+  color: #cbd8e2;
+  font-family: "Times New Roman", Georgia, "Liberation Serif", serif;
+  font-size: clamp(28px, 2.2vw, 40px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.035em;
+}
+.sub {
+  max-width: 790px;
+  color: #b6b8b0;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.headerActions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 18px;
+}
+.managerIdentity { color: #8f927e; }
 
 .closeBtn {
-  background: rgba(10, 12, 16, 0.55);
-  border: 1px solid #3a4854;
-  color: #cbd8e2;
-  width: 32px;
-  height: 32px;
-  border-radius: 4px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid rgba(185, 144, 72, 0.48);
+  border-radius: 0;
+  background: rgba(4, 25, 22, 0.88);
+  color: #dfd6c4;
+  font-size: 15px;
   cursor: pointer;
-  font-size: 14px;
-  transition: border-color 0.15s ease, background 0.15s ease;
-  flex-shrink: 0;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
 }
-
-.closeBtn:hover {
-  border-color: #6c8ea6;
-  background: rgba(20, 26, 32, 0.7);
-}
+.closeBtn:hover { border-color: #c89b4f; background: rgba(94, 67, 27, 0.28); color: #fff1d1; }
 
 .tabs {
-  display: flex;
-  gap: 4px;
-  padding: 16px 28px 0;
-  border-bottom: 1px solid #232a32;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   flex-shrink: 0;
+  min-height: 58px;
+  padding: 0 34px;
+  border-bottom: 1px solid rgba(84, 112, 101, 0.34);
+  background: rgba(1, 16, 15, 0.84);
 }
-
 .tab {
-  padding: 8px 20px;
-  background: transparent;
-  border: none;
+  position: relative;
+  min-width: 0;
+  padding: 15px 12px 13px;
+  border: 0;
+  border-left: 1px solid rgba(78, 103, 94, 0.22);
   border-bottom: 2px solid transparent;
-  color: rgba(255,255,255,0.35);
-  font-size: 12px;
-  cursor: pointer;
+  background: transparent;
+  color: #8f9690;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  letter-spacing: 0.1em;
-  transition: all 0.15s;
-  margin-bottom: -1px;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0.07em;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
 }
-
-.tab:hover { color: rgba(255,255,255,0.6); }
-
+.tab:last-child { border-right: 1px solid rgba(78, 103, 94, 0.22); }
+.tab:hover { color: #d7d5c9; background: rgba(24, 61, 54, 0.24); }
 .tabActive {
-  color: #d6b274 !important;
-  border-bottom-color: #d6b274;
+  border-bottom-color: #c99b4e;
+  background: linear-gradient(180deg, rgba(151, 108, 42, 0.12), rgba(9, 42, 37, 0.34));
+  color: #f0dfb9;
 }
+.tabActive::after {
+  position: absolute;
+  bottom: -2px;
+  left: 35%;
+  width: 30%;
+  height: 2px;
+  content: "";
+  background: #e2bd73;
+  box-shadow: 0 0 16px rgba(207, 158, 72, 0.38);
+}
+
+.previewNotice {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 15px;
+  min-height: 42px;
+  padding: 9px 34px;
+  border-bottom: 1px solid rgba(180, 139, 70, 0.2);
+  background: linear-gradient(90deg, rgba(89, 64, 26, 0.25), rgba(4, 31, 27, 0.58));
+  color: #c5c2b7;
+  font-size: 13px;
+  line-height: 1.35;
+}
+.previewNoticeLabel { flex-shrink: 0; color: #d1aa65; }
 
 .body {
+  display: flex;
   flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
   overflow-y: auto;
-  padding: 20px 28px;
+  padding: 22px 34px 26px;
+  scrollbar-color: rgba(166, 128, 66, 0.54) rgba(0, 0, 0, 0.22);
+}
+.workspaceIntro { margin-bottom: 15px; }
+
+.panel[data-active-tab="artwork"] .body,
+.panel[data-active-tab="bezels"] .body,
+.panel[data-active-tab="emumovies"] .body,
+.panel[data-active-tab="about"] .body {
+  justify-content: center;
 }
 
 .statsRow {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 16px;
-  padding: 14px 16px;
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 4px;
+  gap: 18px;
+  margin-bottom: 14px;
+  padding: 14px 18px;
+  border-top: 1px solid rgba(180, 139, 70, 0.35);
+  border-bottom: 1px solid rgba(65, 98, 87, 0.38);
+  background: linear-gradient(105deg, rgba(9, 47, 41, 0.78), rgba(2, 22, 21, 0.8));
+  box-shadow: inset 14px 0 30px rgba(0, 0, 0, 0.18);
 }
+.stat { min-width: 84px; padding-right: 18px; border-right: 1px solid rgba(118, 111, 78, 0.25); text-align: left; }
+.statNum { margin-bottom: 2px; color: #ddbd7c; font-family: "Times New Roman", Georgia, serif; font-size: 26px; font-weight: 700; }
+.statLbl { color: #969c96; font-size: 11px; font-weight: 650; letter-spacing: 0.08em; text-transform: uppercase; }
 
-.stat { text-align: center; min-width: 60px; }
-
-.statNum {
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  font-size: 20px;
-  font-weight: 900;
-  color: #d6b274;
-  margin-bottom: 3px;
-}
-
-.statLbl {
-  font-size: 9px;
-  color: rgba(255,255,255,0.3);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-}
-
-.downloadAllBtn {
+.downloadAllBtn,
+.startBtn {
   margin-left: auto;
+  min-height: 42px;
   padding: 10px 20px;
-  border: 1px solid #d6b274;
-  background: rgba(168, 130, 63, 0.1);
-  color: #d6b274;
-  font-size: 11px;
-  cursor: pointer;
-  border-radius: 3px;
+  border: 1px solid rgba(201, 155, 78, 0.72);
+  border-radius: 0;
+  background: linear-gradient(180deg, rgba(127, 88, 31, 0.42), rgba(74, 48, 18, 0.42));
+  color: #f1dfba;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  letter-spacing: 0.1em;
-  transition: all 0.15s;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.045em;
+  cursor: pointer;
 }
-
-.downloadAllBtn:hover:not(:disabled) { background: rgba(168, 130, 63, 0.2); }
-.downloadAllBtn:disabled { opacity: 0.3; cursor: not-allowed; }
+.downloadAllBtn:hover:not(:disabled), .startBtn:hover:not(:disabled) { border-color: #dfb76b; background: rgba(136, 95, 36, 0.52); }
+.downloadAllBtn:disabled, .startBtn:disabled { opacity: 0.42; cursor: not-allowed; }
 
 .filterRow {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 8px;
   margin-bottom: 12px;
+  padding: 0 2px;
 }
-
-.filterPill {
-  padding: 5px 14px;
-  border: 1px solid rgba(255,255,255,0.1);
-  background: transparent;
-  color: rgba(255,255,255,0.35);
-  font-size: 10px;
-  cursor: pointer;
-  border-radius: 2px;
-  letter-spacing: 0.1em;
-  transition: all 0.15s;
-  font-family: 'Share Tech Mono', monospace;
-}
-
-.filterPill:hover { border-color: rgba(168, 130, 63, 0.3); color: rgba(214, 178, 116, 0.6); }
-
-.filterActive {
-  border-color: #d6b274 !important;
-  color: #d6b274 !important;
-  background: rgba(168, 130, 63, 0.08);
-}
-
-.scanBtn {
-  margin-left: auto;
-  padding: 5px 14px;
-  border: 1px solid rgba(255,255,255,0.1);
-  background: transparent;
-  color: rgba(255,255,255,0.35);
-  font-size: 10px;
-  cursor: pointer;
-  border-radius: 2px;
-  transition: all 0.15s;
-  font-family: 'Share Tech Mono', monospace;
-}
-
-.scanBtn:hover { border-color: rgba(255,255,255,0.3); color: rgba(255,255,255,0.6); }
-
-.loadingMsg {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 40px 0;
-  justify-content: center;
-  font-size: 12px;
-  color: rgba(214, 178, 116, 0.6);
+.filterPill,
+.scanBtn,
+.dlBtn,
+.browseBtn,
+.diagClear {
+  min-height: 36px;
+  padding: 7px 14px;
+  border: 1px solid rgba(133, 154, 144, 0.3);
+  border-radius: 0;
+  background: rgba(6, 35, 31, 0.72);
+  color: #c3c8c1;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  letter-spacing: 0.15em;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.035em;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
 }
-
-.spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(168, 130, 63, 0.2);
-  border-top-color: #d6b274;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  flex-shrink: 0;
+.filterPill:hover, .scanBtn:hover, .dlBtn:hover:not(:disabled), .browseBtn:hover, .diagClear:hover { border-color: rgba(196, 151, 76, 0.6); color: #f0dfbd; }
+.filterActive {
+  border-color: #bc914a;
+  background: rgba(115, 81, 30, 0.36);
+  color: #efd9aa;
 }
+.scanBtn { margin-left: auto; }
+.dlBtn:disabled, .scanBtn:disabled { opacity: 0.42; cursor: not-allowed; }
+.scanBtn[data-controller-focused="true"] { border-color: #e2b967; background: rgba(139, 98, 34, 0.4); box-shadow: 0 0 0 2px rgba(226, 185, 103, 0.18); }
 
+.loadingMsg { display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 180px; color: #b8aa8b; font-size: 14px; letter-spacing: 0.08em; }
+.spinner { width: 16px; height: 16px; flex-shrink: 0; border: 2px solid rgba(183, 142, 72, 0.24); border-top-color: #d2a85d; border-radius: 50%; animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .gameList {
   display: flex;
+  flex: 1;
   flex-direction: column;
-  gap: 6px;
+  gap: 7px;
+  min-height: 150px;
+  overflow-y: auto;
+  padding-right: 5px;
 }
-
 .gameRow {
-  display: flex;
+  display: grid;
+  grid-template-columns: 48px minmax(180px, 1fr) auto minmax(180px, 280px);
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 4px;
-  transition: border-color 0.15s;
+  gap: 14px;
+  min-height: 64px;
+  padding: 8px 13px;
+  border-left: 2px solid rgba(91, 127, 113, 0.34);
+  border-bottom: 1px solid rgba(65, 93, 83, 0.34);
+  background: linear-gradient(90deg, rgba(7, 43, 38, 0.74), rgba(2, 24, 22, 0.5));
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
+.gameRow:hover { border-left-color: #b68a45; background: linear-gradient(90deg, rgba(18, 56, 48, 0.84), rgba(5, 28, 25, 0.6)); }
+.gameThumb { display: grid; place-items: center; width: 46px; height: 46px; overflow: hidden; border: 1px solid rgba(158, 132, 79, 0.26); background: rgba(0, 0, 0, 0.26); }
+.gameThumb img { width: 100%; height: 100%; object-fit: cover; }
+.gameInfo { min-width: 0; }
+.gameName { overflow: hidden; color: #e4e0d6; font-family: "Times New Roman", Georgia, serif; font-size: 17px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.gameMeta { margin-top: 3px; color: #969d97; font-size: 12px; }
+.gameStatus { display: flex; gap: 6px; }
+.statusBadge { padding: 5px 10px; border: 1px solid; font-size: 11px; font-weight: 700; letter-spacing: 0.045em; }
+.badgeGreen { border-color: rgba(117, 154, 123, 0.48); background: rgba(72, 114, 79, 0.12); color: #adc2ad; }
+.badgeAmber { border-color: rgba(185, 135, 63, 0.52); background: rgba(129, 85, 29, 0.15); color: #d6b16d; }
+.badgeGray { border-color: rgba(130, 140, 134, 0.3); color: #8b938e; }
+.gameAction { min-width: 0; text-align: right; }
+.ytSource { max-width: 190px; overflow: hidden; color: #a8aaa4; font-size: 11px; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
+.readyLabel { color: #a9bea9; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; }
+.dlProgress { display: flex; align-items: center; justify-content: flex-end; gap: 7px; color: #c3ad80; font-size: 12px; }
+.searchResult { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.ytThumb { width: 64px; height: 36px; border: 1px solid rgba(160, 142, 103, 0.25); object-fit: cover; }
 
-.gameRow:hover { border-color: rgba(168, 130, 63, 0.15); }
-
-.gameThumb {
-  width: 36px;
-  height: 36px;
-  border-radius: 4px;
-  overflow: hidden;
-  background: rgba(255,255,255,0.04);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.gameThumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.gameInfo { flex: 1; min-width: 0; }
-
-.gameName {
-  font-size: 12px;
-  color: #fff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin-bottom: 3px;
-}
-
-.gameMeta {
-  font-size: 10px;
-  color: rgba(255,255,255,0.3);
-}
-
-.gameStatus {
-  display: flex;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-.statusBadge {
-  font-size: 9px;
-  padding: 2px 8px;
-  border-radius: 2px;
-  border: 1px solid;
-  letter-spacing: 0.08em;
-}
-
-.badgeGreen { border-color: rgba(0,255,136,0.3); color: #00ff88; background: rgba(0,255,136,0.05); }
-.badgeAmber { border-color: rgba(255,170,0,0.3); color: #ffaa00; background: rgba(255,170,0,0.05); }
-.badgeGray  { border-color: rgba(255,255,255,0.1); color: rgba(255,255,255,0.25); }
-
-.gameAction { flex-shrink: 0; min-width: 160px; text-align: right; }
-
-.ytSource {
-  font-size: 9px;
-  color: rgba(255,255,255,0.4);
-  max-width: 140px;
-  line-height: 1.3;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-.readyLabel {
-  font-size: 10px;
-  color: rgba(0,255,136,0.6);
-  letter-spacing: 0.1em;
-}
-
-.dlProgress {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 10px;
-  color: rgba(214, 178, 116, 0.6);
-  justify-content: flex-end;
-}
-
-.dlBtn {
-  padding: 5px 12px;
-  border: 1px solid rgba(168, 130, 63, 0.3);
-  background: transparent;
-  color: #d6b274;
-  font-size: 10px;
-  cursor: pointer;
-  border-radius: 2px;
-  transition: all 0.15s;
-  font-family: 'Share Tech Mono', monospace;
-}
-
-.dlBtn:hover:not(:disabled) { background: rgba(168, 130, 63, 0.1); }
-.dlBtn:disabled { opacity: 0.3; cursor: not-allowed; }
-
-/* Settings tab */
 .settingsSection {
-  margin-bottom: 28px;
-  padding-bottom: 28px;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 22px 24px;
+  border-top: 1px solid rgba(184, 142, 70, 0.34);
+  border-bottom: 1px solid rgba(70, 103, 91, 0.36);
+  background: linear-gradient(110deg, rgba(7, 43, 38, 0.72), rgba(2, 22, 21, 0.64));
 }
-
-.settingsSection:last-child { border-bottom: none; }
-
-.sectionTitle {
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  color: #fff;
-  margin-bottom: 8px;
-  letter-spacing: 0.05em;
-}
-
-.sectionSub {
-  font-size: 11px;
-  color: rgba(255,255,255,0.35);
-  line-height: 1.6;
-  margin-bottom: 16px;
-}
-
-.loggedInMsg {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 12px 16px;
-  border: 1px solid rgba(0,255,136,0.2);
-  border-radius: 4px;
-  background: rgba(0,255,136,0.04);
-  font-size: 12px;
-  color: rgba(0,255,136,0.8);
-}
-
-.logoutBtn {
-  margin-left: auto;
-  padding: 5px 12px;
-  border: 1px solid rgba(255,255,255,0.15);
-  background: transparent;
-  color: rgba(255,255,255,0.4);
-  font-size: 10px;
-  cursor: pointer;
-  border-radius: 2px;
-  transition: all 0.15s;
-}
-
-.loginForm { display: flex; flex-direction: column; gap: 12px; }
+.settingsSection + .settingsSection { margin-top: 14px; }
+.sectionTitle { margin-bottom: 8px; color: #dfbd7b; font-family: "Times New Roman", Georgia, serif; font-size: 20px; font-weight: 700; letter-spacing: 0.04em; }
+.sectionSub { max-width: 920px; margin-bottom: 16px; color: #b5b8b0; font-size: 14px; line-height: 1.58; }
 
 .inputRow { display: flex; align-items: center; gap: 12px; }
-
-.inputLabel {
-  font-size: 11px;
-  color: rgba(255,255,255,0.4);
-  min-width: 80px;
-}
-
-.input {
-  flex: 1;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(168, 130, 63, 0.2);
-  border-radius: 3px;
-  padding: 8px 12px;
-  color: #fff;
-  font-size: 12px;
-  outline: none;
-  font-family: 'Share Tech Mono', monospace;
-  max-width: 300px;
-}
-
-.input:focus { border-color: #d6b274; }
-
+.inputLabel { min-width: 110px; color: #b8b9b0; font-size: 13px; }
+.input,
 .systemFilterSelect {
-  background: #0a0e14;
-  border: 1px solid rgba(168, 130, 63, 0.2);
-  border-radius: 3px;
+  min-height: 40px;
   padding: 8px 12px;
-  color: #fff;
-  font-size: 12px;
+  border: 1px solid rgba(161, 132, 76, 0.44);
+  border-radius: 0;
   outline: none;
+  background: #061d1a;
+  color: #e0ded5;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
 }
-.systemFilterSelect option {
-  background: #0a0e14;
-  color: #fff;
-}
+.input { max-width: 560px; }
+.systemFilterSelect { max-width: 250px; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+.input option, .systemFilterSelect option { background: #061d1a; color: #e0ded5; }
 
-.loginBtn {
-  padding: 10px 24px;
-  border: 1px solid #d6b274;
-  background: rgba(168, 130, 63, 0.1);
-  color: #d6b274;
-  font-size: 11px;
-  cursor: pointer;
-  border-radius: 3px;
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  letter-spacing: 0.15em;
-  transition: all 0.15s;
-  align-self: flex-start;
-  margin-top: 4px;
-}
+.pathDisplay { display: grid; gap: 9px; margin-top: 13px; }
+.pathRow { display: grid; grid-template-columns: 110px minmax(0, 1fr); align-items: center; gap: 12px; padding: 11px 14px; border-left: 2px solid rgba(180, 139, 70, 0.38); background: rgba(1, 17, 16, 0.64); }
+.pathLabel { color: #a7aaa3; font-size: 12px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; }
+.pathValue { overflow-wrap: anywhere; color: #d0bb8d; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; }
 
-.loginBtn:hover { background: rgba(168, 130, 63, 0.2); }
+.warningBanner { padding: 11px 14px; margin-bottom: 12px; border: 1px solid rgba(191, 139, 57, 0.46); background: rgba(116, 75, 22, 0.17); color: #d4af6b; font-size: 13px; line-height: 1.5; }
+.loggedInMsg { display: flex; align-items: center; gap: 16px; padding: 12px 16px; border: 1px solid rgba(106, 143, 110, 0.42); background: rgba(58, 95, 64, 0.14); color: #a8bea9; font-size: 13px; }
+.logoutBtn, .loginBtn { min-height: 38px; padding: 8px 15px; border: 1px solid rgba(188, 145, 72, 0.52); border-radius: 0; background: rgba(84, 59, 25, 0.25); color: #dac18d; cursor: pointer; }
+.loginForm { display: flex; flex-direction: column; gap: 12px; }
+.pathNote { color: #969b95; font-size: 12px; line-height: 1.55; }
 
-.pathDisplay {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.pathRow {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 12px;
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 3px;
-}
-
-.pathLabel {
-  font-size: 10px;
-  color: rgba(255,255,255,0.35);
-  min-width: 60px;
-}
-
-.pathValue {
-  font-size: 11px;
-  color: rgba(214, 178, 116, 0.6);
-  font-family: 'Share Tech Mono', monospace;
-}
-
-.pathNote {
-  font-size: 10px;
-  color: rgba(255,255,255,0.25);
-  line-height: 1.6;
-}
-.warningBanner {
-  padding: 10px 14px;
-  margin-bottom: 12px;
-  border: 1px solid rgba(255,170,0,0.3);
-  border-radius: 4px;
-  background: rgba(255,170,0,0.06);
-  font-size: 11px;
-  color: #ffaa00;
-  line-height: 1.5;
-}
-
-.searchResult {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-.ytThumb {
-  width: 60px;
-  height: 34px;
-  object-fit: cover;
-  border-radius: 3px;
-  border: 1px solid rgba(255,255,255,0.1);
-}
-
-.ytTitle {
-  font-size: 9px;
-  color: rgba(255,255,255,0.4);
-  max-width: 120px;
-  line-height: 1.3;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-.settingsSection {
-  margin-bottom: 28px;
-  padding-bottom: 28px;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-}
-
-.settingsSection:last-child { border-bottom: none; }
-
-.sectionTitle {
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  color: #e8e2d4;
-  margin-bottom: 8px;
-  letter-spacing: 0.05em;
-}
-
-.sectionSub {
-  font-size: 11px;
-  color: rgba(255,255,255,0.35);
-  line-height: 1.7;
-}
-
-.pathDisplay {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.pathRow {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 12px;
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 3px;
-}
-
-.pathLabel {
-  font-size: 10px;
-  color: rgba(255,255,255,0.35);
-  min-width: 60px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-}
-
-.pathValue {
-  font-size: 11px;
-  color: rgba(214, 178, 116, 0.6);
-  font-family: Share Tech Mono, monospace;
-}
-
-/*  Diagnostic Log  */
 .diagPanel {
-  margin-top: 12px;
-  border: 1px solid rgba(168, 130, 63, 0.2);
-  border-radius: 6px;
-  background: rgba(0,0,0,0.4);
   flex-shrink: 0;
+  margin: 0 34px 18px;
+  border-top: 1px solid rgba(188, 145, 72, 0.38);
+  border-bottom: 1px solid rgba(70, 99, 89, 0.32);
+  background: rgba(0, 11, 11, 0.88);
 }
-.diagHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 12px;
-  font-size: 10px;
-  font-weight: 700;
-  color: rgba(214, 178, 116, 0.7);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  border-bottom: 1px solid rgba(168, 130, 63, 0.1);
+.diagHeader { display: flex; align-items: center; justify-content: space-between; min-height: 38px; padding: 7px 13px; border-bottom: 1px solid rgba(137, 113, 66, 0.23); color: #c7a565; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+.diagClear { min-height: 26px; padding: 3px 9px; font-size: 10px; }
+.diagBody { display: flex; flex-direction: column; gap: 3px; max-height: 145px; overflow-y: auto; padding: 8px 13px; }
+.diagLine { color: #aeb2ac; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11px; line-height: 1.45; overflow-wrap: anywhere; }
+.diagTs { margin-right: 9px; color: #68736d; }
+
+.panel button:focus-visible,
+.panel select:focus-visible,
+.panel input:focus-visible,
+.panel a:focus-visible {
+  outline: 2px solid #d9ad5d;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(217, 173, 93, 0.13);
 }
-.diagClear {
-  background: none;
-  border: 1px solid rgba(255,255,255,0.15);
-  color: rgba(255,255,255,0.4);
-  font-size: 9px;
-  padding: 2px 8px;
-  border-radius: 3px;
-  cursor: pointer;
+
+@media (max-width: 1440px), (max-height: 820px) {
+  .header { min-height: 92px; padding: 13px 24px 12px; }
+  .title { font-size: 28px; }
+  .sub { max-width: 690px; font-size: 12px; }
+  .managerIdentity { display: none; }
+  .tabs { min-height: 48px; padding: 0 24px; }
+  .tab { padding: 11px 8px 10px; font-size: 12px; }
+  .previewNotice { min-height: 36px; padding: 7px 24px; font-size: 11px; }
+  .body { padding: 14px 24px 18px; }
+  .statsRow { gap: 12px; margin-bottom: 10px; padding: 9px 12px; }
+  .stat { min-width: 70px; padding-right: 11px; }
+  .statNum { font-size: 21px; }
+  .statLbl { font-size: 9px; }
+  .downloadAllBtn { min-height: 36px; padding: 7px 13px; font-size: 10px; }
+  .filterRow { margin-bottom: 8px; }
+  .filterPill, .scanBtn, .dlBtn, .browseBtn { min-height: 32px; padding: 5px 10px; font-size: 10px; }
+  .gameRow { grid-template-columns: 40px minmax(160px, 1fr) auto minmax(150px, 230px); min-height: 55px; padding: 6px 10px; }
+  .gameThumb { width: 38px; height: 38px; }
+  .gameName { font-size: 14px; }
+  .gameMeta, .readyLabel, .dlProgress { font-size: 10px; }
+  .statusBadge { padding: 4px 7px; font-size: 9px; }
+  .settingsSection { padding: 14px 18px; }
+  .sectionTitle { font-size: 17px; }
+  .sectionSub { margin-bottom: 11px; font-size: 12px; }
+  .diagPanel { margin: 0 24px 12px; }
 }
-.diagClear:hover { color: #fff; border-color: rgba(255,255,255,0.4); }
-.diagBody {
-  max-height: 320px;
-  overflow-y: auto;
-  padding: 6px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
+
+@media (max-width: 900px) {
+  .header { gap: 14px; }
+  .headerActions { gap: 8px; }
+  .tabs { overflow-x: auto; grid-template-columns: repeat(5, minmax(120px, 1fr)); }
+  .previewNotice { align-items: flex-start; flex-direction: column; gap: 3px; }
+  .gameRow { grid-template-columns: 40px minmax(0, 1fr) auto; }
+  .gameAction { grid-column: 2 / -1; text-align: left; }
+  .searchResult, .dlProgress { justify-content: flex-start; }
+  .statsRow { flex-wrap: wrap; }
+  .downloadAllBtn { margin-left: 0; }
 }
-.diagLine {
-  font-size: 10px;
-  font-family: 'Courier New', monospace;
-  line-height: 1.4;
-  word-break: break-all;
-}
-.diagTs {
-  color: rgba(255,255,255,0.25);
-  margin-right: 8px;
-  flex-shrink: 0;
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner { animation: none; }
+  .tab, .closeBtn, .gameRow, .filterPill, .scanBtn, .dlBtn, .browseBtn { transition: none; }
 }

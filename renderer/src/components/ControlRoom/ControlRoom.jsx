@@ -51,6 +51,17 @@ const ARCHIVES_STATIONS = [
   { id: "mediaRestoration", module: "settings", section: "section-media-restoration", symbol: "↺", labelKey: "controlRoom.station.mediaRestorationLabel", hintKey: "controlRoom.station.mediaRestorationHint", advanced: true },
 ]
 
+// Media Manager owns its internal tab state, while Control Room owns the
+// architectural frame surrounding it. Keep the frame label synchronized
+// without changing any station id or station-to-tab mapping.
+const MEDIA_TAB_LABEL_KEYS = {
+  library: "controlRoom.station.videosLabel",
+  artwork: "controlRoom.station.artworkLabel",
+  emumovies: "controlRoom.station.scrapingLabel",
+  bezels: "controlRoom.station.bezelsLabel",
+  about: "settings.sectionAbout",
+}
+
 // Contextual-return contract (Milestone C3, Part 7): ControlRoom can be
 // entered from more than one place. Today only "sanctuary" is ever passed
 // (App.jsx's <ControlRoom> call site has no origin prop yet, so the default
@@ -80,6 +91,7 @@ export default function ControlRoom({
   const [archivesIdx, setArchivesIdx] = useState(0)
   const [activeModule, setActiveModule] = useState(null)      // null | "settings" | "media"
   const [activeStationId, setActiveStationId] = useState(null) // which station within activeModule is open
+  const [activeMediaTab, setActiveMediaTab] = useState(null)
   // True only while Continue Setup genuinely holds real DOM focus (native
   // Tab, not the arrow-key graph). Continue Setup deliberately has no
   // onFocus handler of its own (see continueSetup()'s comment) -- but that
@@ -137,6 +149,7 @@ export default function ControlRoom({
     restoreFocusRef.current = { zone: "root", column: columnRef.current }
     setActiveModule(station.module)
     setActiveStationId(station.id)
+    setActiveMediaTab(station.module === "media" ? station.tab : null)
   }
 
   const closeStation = () => {
@@ -144,6 +157,7 @@ export default function ControlRoom({
     setActiveStationId(null)
     const restore = restoreFocusRef.current
     if (restore) { setFocusZone(restore.zone); setColumn(restore.column) }
+    setActiveMediaTab(null)
   }
 
   const activateHeaderItem = () => {
@@ -529,7 +543,9 @@ export default function ControlRoom({
         <div className={styles.stationFrame} data-active-wing={activeWing}>
           <div className={styles.stationFrameHeader}>
             <span>{t("controlRoom.archivesWing")}</span>
-            <strong>{activeStation ? t(activeStation.labelKey) : t("controlRoom.title")}</strong>
+            <strong>{activeMediaTab && MEDIA_TAB_LABEL_KEYS[activeMediaTab]
+              ? t(MEDIA_TAB_LABEL_KEYS[activeMediaTab])
+              : activeStation ? t(activeStation.labelKey) : t("controlRoom.title")}</strong>
           </div>
           <div className={styles.stationViewport}>
             <MediaManager
@@ -537,6 +553,7 @@ export default function ControlRoom({
               onVideosUpdated={() => {}}
               onArtworkUpdated={() => {}}
               initialTab={ARCHIVES_STATIONS.find(s => s.id === activeStationId)?.tab}
+              onContextChange={setActiveMediaTab}
             />
           </div>
         </div>

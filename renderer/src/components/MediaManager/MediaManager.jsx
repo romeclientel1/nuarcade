@@ -18,7 +18,35 @@ const SAMPLE_GAMES = [
 
 const TABS = ['library', 'artwork', 'bezels', 'emumovies', 'about']
 
-export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdated, initialTab }) {
+const TAB_PRESENTATION = {
+  library: {
+    eyebrow: 'Media Wing',
+    title: 'Video Catalogue',
+    purpose: 'Review preview coverage, filter the collection, and manage existing video-fetch workflows.',
+  },
+  artwork: {
+    eyebrow: 'Media Wing',
+    title: 'Artwork Archive',
+    purpose: 'Review collection scope and retrieve existing SteamGridDB artwork through the configured workflow.',
+  },
+  bezels: {
+    eyebrow: 'Media Wing',
+    title: 'Display Treatments',
+    purpose: 'Select a supported system and use the existing bezel discovery and installation workflow.',
+  },
+  emumovies: {
+    eyebrow: 'Media Wing',
+    title: 'EmuMovies Import',
+    purpose: 'Prepare the media folder, scan an existing Sync collection, and confirm individual or batch imports.',
+  },
+  about: {
+    eyebrow: 'Media Wing',
+    title: 'Archive Record',
+    purpose: 'Reference the current video sources, storage locations, and manual file-naming contract.',
+  },
+}
+
+export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdated, initialTab, onContextChange }) {
   const { t } = useI18n()
   const scrollRef = useRef(null)
   const [games, setGames] = useState([])
@@ -47,6 +75,13 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
   useEffect(() => {
     if (tab !== 'emumovies') setEmFocused(null)
   }, [tab])
+
+  // Control Room renders the architectural frame outside this component,
+  // so publish only the active presentation tab to keep that frame's title
+  // truthful as internal tab navigation changes.
+  useEffect(() => {
+    onContextChange?.(tab)
+  }, [tab, onContextChange])
 
   useOverlayGamepad({
     onClose,
@@ -702,35 +737,52 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
     missing: games.filter(g => !g.hasVideo).length,
   }
 
+  // The same platform condition used by scanLibrary identifies the six
+  // built-in browser-only demonstration fixtures. This notice is purely
+  // presentational: it does not alter or persist the fixture collection.
+  const browserPreview = !(window.nuarcade && window.nuarcade.platform === "win32")
+  const activePresentation = TAB_PRESENTATION[tab]
+
   return (
     <div className={styles.overlay}>
-      <div className={styles.panel}>
+      <div className={styles.panel} data-active-tab={tab}>
         <div className={styles.header}>
           <div className={styles.headerLeft}>
-            <div className={styles.title}>{t("mediaManager.title")}</div>
-            <div className={styles.sub}>Artwork and video previews for your game library</div>
+            <div className={styles.eyebrow}>{activePresentation.eyebrow}</div>
+            <div className={styles.title}>{activePresentation.title}</div>
+            <div className={styles.sub}>{activePresentation.purpose}</div>
           </div>
-          <button className={styles.closeBtn} onClick={onClose} title="Close (B)">X</button>
+          <div className={styles.headerActions}>
+            <span className={styles.managerIdentity}>{t("mediaManager.title")}</span>
+            <button className={styles.closeBtn} onClick={onClose} title="Close (B)" aria-label="Close Media Manager">X</button>
+          </div>
         </div>
 
-        <div className={styles.tabs}>
-          <button className={styles.tab + (tab === "library" ? " " + styles.tabActive : "")} onClick={() => setTab("library")}>{t("home.library")}</button>
-          <button className={styles.tab + (tab === "artwork" ? " " + styles.tabActive : "")} onClick={() => setTab("artwork")}>{t("settings.sectionArtwork")}</button>
-          <button className={styles.tab + (tab === "bezels" ? " " + styles.tabActive : "")} onClick={() => setTab("bezels")}>{t("mediaManager.bezels")}</button>
-          <button className={styles.tab + (tab === "emumovies" ? " " + styles.tabActive : "")} onClick={() => setTab("emumovies")}>EmuMovies</button>
-          <button className={styles.tab + (tab === "about" ? " " + styles.tabActive : "")} onClick={() => setTab("about")}>{t("settings.sectionAbout")}</button>
+        <div className={styles.tabs} role="tablist" aria-label="Media Wing stations">
+          <button role="tab" aria-selected={tab === "library"} className={styles.tab + (tab === "library" ? " " + styles.tabActive : "")} onClick={() => setTab("library")}>{t("home.library")}</button>
+          <button role="tab" aria-selected={tab === "artwork"} className={styles.tab + (tab === "artwork" ? " " + styles.tabActive : "")} onClick={() => setTab("artwork")}>{t("settings.sectionArtwork")}</button>
+          <button role="tab" aria-selected={tab === "bezels"} className={styles.tab + (tab === "bezels" ? " " + styles.tabActive : "")} onClick={() => setTab("bezels")}>{t("mediaManager.bezels")}</button>
+          <button role="tab" aria-selected={tab === "emumovies"} className={styles.tab + (tab === "emumovies" ? " " + styles.tabActive : "")} onClick={() => setTab("emumovies")}>EmuMovies</button>
+          <button role="tab" aria-selected={tab === "about"} className={styles.tab + (tab === "about" ? " " + styles.tabActive : "")} onClick={() => setTab("about")}>{t("settings.sectionAbout")}</button>
         </div>
+
+        {browserPreview && (
+          <div className={styles.previewNotice} role="note">
+            <span className={styles.previewNoticeLabel}>Browser preview</span>
+            <span>The six visible entries are demonstration fixtures, not a scanned local library.</span>
+          </div>
+        )}
 
         {restartNeeded && (
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            gap: 12, padding: '8px 16px', background: '#2a1f00', border: '1px solid #ffaa00',
+            gap: 12, padding: '8px 16px', background: '#2a1f00', border: '1px solid #c19248',
             borderRadius: 6, margin: '0 16px 8px', position: 'sticky', top: 0, zIndex: 50,
             boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
           }}>
             <span style={{ color: '#fff', fontSize: 12 }}>Restart required for imported media to show up.</span>
             <button
-              style={{ padding: '6px 16px', background: '#ffaa00', color: '#000', border: 'none', borderRadius: 4, fontWeight: 'bold', cursor: 'pointer', fontSize: 12 }}
+              style={{ padding: '6px 16px', background: '#c19248', color: '#08130f', border: 'none', borderRadius: 0, fontWeight: 'bold', cursor: 'pointer', fontSize: 12 }}
               onClick={() => setShowRestartConfirm(true)}
             >
               Restart Now
@@ -740,8 +792,9 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
 
         {tab === "artwork" && (
           <div className={styles.body}>
-            <div style={{ padding: '12px 0 8px', color: 'rgba(255,255,255,0.5)', fontSize: 11 }}>
-              Download box art, hero images and logos for all your games using SteamGridDB -- no account needed.
+            <div className={styles.workspaceIntro}>
+              <div className={styles.sectionTitle}>Artwork collection scope</div>
+              <div className={styles.sectionSub}>Download box art, hero images and logos for all your games using SteamGridDB -- no account needed.</div>
             </div>
             <ArtworkManager
               games={games}
@@ -798,7 +851,7 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
                     <div style={{ color: "#ef4444" }}>{bezelSystemLabel}: {bezelResult.error}</div>
                   ) : (
                     <>
-                      <div style={{ color: '#00ff88' }}>
+                      <div style={{ color: '#a8bea9' }}>
                         {bezelSystemLabel}: {bezelResult.installed} of {bezelResult.total} games got bezels ({bezelResult.exact} exact, {bezelResult.fuzzy} fuzzy match) via {bezelResult.coreFolder}
                       </div>
                       {bezelResult.missed > 0 && (
@@ -828,12 +881,12 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
 
             <div style={{
               display: 'flex', alignItems: 'center', gap: 12,
-              background: 'rgba(0,200,255,0.06)', border: '1px solid rgba(0,200,255,0.25)',
+              background: 'rgba(63,103,91,0.12)', border: '1px solid rgba(141,160,148,0.3)',
               borderRadius: 6, padding: '10px 14px', marginBottom: 10,
             }}>
               <button
                 className={styles.scanBtn}
-                style={{ borderColor: 'rgba(0,200,255,0.5)', flexShrink: 0 }}
+                style={{ borderColor: 'rgba(192,148,76,0.58)', flexShrink: 0 }}
                 onClick={handleAutoFillEverything}
               >
                 {autoFilling ? 'Cancel auto-fill' : 'Auto-fill Everything'}
@@ -851,11 +904,11 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
                 <div className={styles.statLbl}>Total games</div>
               </div>
               <div className={styles.stat}>
-                <div className={styles.statNum} style={{ color: "#00ff88" }}>{stats.hasVideo}</div>
+                <div className={styles.statNum} style={{ color: "#a8bea9" }}>{stats.hasVideo}</div>
                 <div className={styles.statLbl}>Have video</div>
               </div>
               <div className={styles.stat}>
-                <div className={styles.statNum} style={{ color: "#ffaa00" }}>{stats.missing}</div>
+                <div className={styles.statNum} style={{ color: "#d8b16a" }}>{stats.missing}</div>
                 <div className={styles.statLbl}>Missing video</div>
               </div>
               <div style={{ marginLeft: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
@@ -869,7 +922,7 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
                 </button>
                 {bulkProgress && (
                   <div style={{ width: '100%', minWidth: 220 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: 'rgba(255,255,255,0.4)', marginBottom: 4, fontFamily: 'Share Tech Mono, monospace' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'rgba(225,225,216,0.62)', marginBottom: 4, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace' }}>
                       <span style={{ maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {bulkProgress.title}
                       </span>
@@ -879,13 +932,13 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
                       <div style={{
                         height: '100%',
                         width: `${(bulkProgress.current / bulkProgress.total) * 100}%`,
-                        background: bulkRunning ? '#00c8ff' : '#00ff88',
+                        background: bulkRunning ? '#b68b46' : '#91aa91',
                         borderRadius: 2,
                         transition: 'width 0.3s ease',
                       }} />
                     </div>
-                    <div style={{ display: 'flex', gap: 12, marginTop: 4, fontSize: 9, fontFamily: 'Share Tech Mono, monospace' }}>
-                      <span style={{ color: '#00ff88' }}>{bulkProgress.done} done</span>
+                    <div style={{ display: 'flex', gap: 12, marginTop: 4, fontSize: 11, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace' }}>
+                      <span style={{ color: '#a8bea9' }}>{bulkProgress.done} done</span>
                       {bulkProgress.failed > 0 && <span style={{ color: '#ff4444' }}>{bulkProgress.failed} failed</span>}
                     </div>
                   </div>
@@ -1017,6 +1070,7 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
         {tab === "emumovies" && (
           <div className={styles.body}>
             <div className={styles.settingsSection}>
+              <div className={styles.sectionTitle}>Import preparation</div>
               <div className={styles.sectionSub}>
                 Scans folders populated by EmuMovies' official Sync desktop app and matches
                 video/artwork files to your games. Run EmuMovies Sync first, pointed at
@@ -1049,9 +1103,8 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
                 disabled={creatingFolders}
                 style={{
                   marginBottom: 8,
-                  outline: emFocused === 'create' ? '2px solid #0ff' : 'none',
-                  boxShadow: emFocused === 'create' ? '0 0 12px rgba(0,255,255,0.6)' : 'none',
                 }}
+                data-controller-focused={emFocused === 'create' ? 'true' : undefined}
               >
                 {creatingFolders ? 'Creating...' : 'Create folder structure'}
               </button>
@@ -1073,9 +1126,8 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
                 disabled={emScanning}
                 style={{
                   marginTop: 10, marginBottom: 12,
-                  outline: emFocused === 'scan' ? '2px solid #0ff' : 'none',
-                  boxShadow: emFocused === 'scan' ? '0 0 12px rgba(0,255,255,0.6)' : 'none',
                 }}
+                data-controller-focused={emFocused === 'scan' ? 'true' : undefined}
               >
                 {emScanning ? 'Scanning...' : 'Scan EmuMovies folder'}
               </button>
@@ -1116,11 +1168,11 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
                     border: '1px solid rgba(255,255,255,0.12)', borderRadius: 6, padding: 10, marginBottom: 8,
                     background: status === 'done' ? 'rgba(0,255,136,0.08)' : 'rgba(255,255,255,0.03)',
                   }}>
-                    <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: '#fff', marginBottom: 2 }}>
+                    <div style={{ fontFamily: 'system-ui, sans-serif', fontSize: 13, color: '#e3dfd4', marginBottom: 2 }}>
                       {s.gameTitle} <span style={{ color: 'rgba(255,255,255,0.35)' }}>({slotLabel})</span>
                     </div>
                     {status === 'done' ? (
-                      <div style={{ color: '#00ff88', fontSize: 12 }}>Imported</div>
+                      <div style={{ color: '#a8bea9', fontSize: 12 }}>Imported</div>
                     ) : status === 'error' ? (
                       <div style={{ color: '#ff4444', fontSize: 12 }}>Import failed -- see log</div>
                     ) : (
@@ -1155,6 +1207,10 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
 
         {tab === "about" && (
           <div className={styles.body}>
+            <div className={styles.workspaceIntro}>
+              <div className={styles.sectionTitle}>Media archive record</div>
+              <div className={styles.sectionSub}>Current video behavior and the supported manual file contract.</div>
+            </div>
             <div className={styles.settingsSection}>
               <div className={styles.sectionTitle}>How videos work</div>
               <div className={styles.sectionSub}>
@@ -1194,7 +1250,7 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
                 <div key={i} className={styles.diagLine} style={{
                   color: entry.type === 'error' ? '#ef4444' :
                          entry.type === 'warn'  ? '#f59e0b' :
-                         entry.type === 'ok'    ? '#00ff88' :
+                         entry.type === 'ok'    ? '#a8bea9' :
                          'rgba(255,255,255,0.6)'
                 }}>
                   <span className={styles.diagTs}>{entry.ts}</span>
@@ -1212,15 +1268,15 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           zIndex: 10000, flexDirection: 'column', gap: 20,
         }}>
-          <div style={{ color: '#ffaa00', fontFamily: 'Orbitron, monospace', fontSize: 11, letterSpacing: 3 }}>VESPARA</div>
-          <div style={{ color: '#fff', fontFamily: 'Orbitron, monospace', fontSize: 20, letterSpacing: 2 }}>Restart Now?</div>
-          <div style={{ color: '#aaa', fontFamily: 'Share Tech Mono, monospace', fontSize: 12, textAlign: 'center', maxWidth: 360 }}>
+          <div style={{ color: '#d3aa61', fontFamily: 'Times New Roman, Georgia, serif', fontSize: 13, letterSpacing: 3 }}>VESPARA</div>
+          <div style={{ color: '#f0e3c8', fontFamily: 'Times New Roman, Georgia, serif', fontSize: 24, letterSpacing: 2 }}>Restart Now?</div>
+          <div style={{ color: '#b7b8b0', fontFamily: 'system-ui, sans-serif', fontSize: 13, textAlign: 'center', maxWidth: 360 }}>
             Vespara needs to restart to show the media you just imported.
           </div>
           <div style={{ display: 'flex', gap: 20, marginTop: 8 }}>
-            <button style={{ padding: '10px 32px', background: '#ffaa00', color: '#000', border: 'none', borderRadius: 6, fontFamily: 'Orbitron, monospace', fontSize: 14, cursor: 'pointer', fontWeight: 'bold' }}
+            <button style={{ padding: '10px 32px', background: '#c19248', color: '#08130f', border: 'none', borderRadius: 0, fontFamily: 'system-ui, sans-serif', fontSize: 14, cursor: 'pointer', fontWeight: 'bold' }}
               onClick={() => window.nuarcade?.restartApp?.()}>YES</button>
-            <button style={{ padding: '10px 32px', background: '#222', color: '#aaa', border: '1px solid #444', borderRadius: 6, fontFamily: 'Orbitron, monospace', fontSize: 14, cursor: 'pointer' }}
+            <button style={{ padding: '10px 32px', background: '#071d1a', color: '#c2c4bb', border: '1px solid #53665e', borderRadius: 0, fontFamily: 'system-ui, sans-serif', fontSize: 14, cursor: 'pointer' }}
               onClick={() => setShowRestartConfirm(false)}>NO</button>
           </div>
         </div>
