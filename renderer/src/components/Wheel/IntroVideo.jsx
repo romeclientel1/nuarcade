@@ -11,7 +11,9 @@ const buildVideoUrl = (mediaPath, fileName) => {
     .replace(/\\/g, "/")
     .replace(/\/+$/, "")
 
-  return `file:///${base}/${fileName}`
+  const url = new URL("file:///")
+  url.pathname = `${base}/${fileName}`
+  return url.href
 }
 
 export default function IntroVideo({
