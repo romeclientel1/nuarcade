@@ -9,11 +9,11 @@ const HERE = dirname(fileURLToPath(import.meta.url))
 const jsx = readFileSync(join(HERE, 'VesparaHome.jsx'), 'utf8').replace(/\r\n/g, '\n')
 const css = readFileSync(join(HERE, 'VesparaHome.module.css'), 'utf8').replace(/\r\n/g, '\n')
 const provenance = readFileSync(join(HERE, 'assets/README.md'), 'utf8')
-const platePath = join(HERE, 'assets/sanctuary-sunset-archway.png')
-const APPROVED_PLATE_SHA256 = '33ce9fe6d750bdb6f8a61e6750ccde4fcd8a5d12ed29fb54035599a854d96a75'
+const platePath = join(HERE, 'assets/sanctuary-arrival-hall.png')
+const APPROVED_PLATE_SHA256 = '03c99428214331b48c6ebb03cf330ee85969f15f313b12c791102591852c0fa5'
 
 test('Sanctuary Home imports and renders the local architectural environment plate', () => {
-  assert.match(jsx, /import sanctuaryBackground from "\.\/assets\/sanctuary-sunset-archway\.png"/)
+  assert.match(jsx, /import sanctuaryBackground from "\.\/assets\/sanctuary-arrival-hall\.png"/)
   assert.match(jsx, /import sanctuaryArrivalHall from "\.\/assets\/sanctuary-arrival-hall\.png"/)
   assert.match(jsx, /<img\s+src=\{sanctuaryBackground\}[\s\S]*className=\{styles\.sanctuaryPlate\}/)
   assert.equal(existsSync(platePath), true)
