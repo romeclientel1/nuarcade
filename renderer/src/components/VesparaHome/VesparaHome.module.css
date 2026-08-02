@@ -2109,15 +2109,15 @@
    existing selectors and compact fallbacks remain intact for regression
    coverage, while the live Sanctuary gains a coherent architectural frame. */
 .sanctuaryPlate {
-  filter: saturate(0.92) brightness(0.86) contrast(1.08);
+  filter: saturate(0.98) brightness(1.06) contrast(1.01);
   transform: scale(1.015);
 }
 
 .environmentVeil {
   background:
-    linear-gradient(180deg, rgba(1, 5, 6, 0.62) 0%, rgba(1, 7, 8, 0.12) 24%, rgba(1, 7, 8, 0.16) 58%, rgba(1, 4, 5, 0.88) 100%),
+    linear-gradient(180deg, rgba(1, 5, 6, 0.36) 0%, rgba(1, 7, 8, 0.05) 24%, rgba(1, 7, 8, 0.06) 58%, rgba(1, 4, 5, 0.58) 100%),
     radial-gradient(ellipse 44% 43% at 50% 43%, rgba(42, 130, 120, 0.08) 0%, transparent 63%),
-    linear-gradient(90deg, rgba(1, 5, 6, 0.7) 0%, transparent 26%, transparent 74%, rgba(1, 5, 6, 0.66) 100%);
+    linear-gradient(90deg, rgba(1, 5, 6, 0.4) 0%, transparent 26%, transparent 74%, rgba(1, 5, 6, 0.38) 100%);
 }
 
 .sanctuary {
@@ -2287,9 +2287,9 @@
   padding: clamp(18px, 1.6vw, 26px);
   border-left: 2px solid rgba(224, 184, 107, 0.54);
   background:
-    linear-gradient(135deg, rgba(12, 40, 40, 0.84), rgba(2, 13, 15, 0.88)),
+    linear-gradient(135deg, rgba(14, 49, 47, 0.86), rgba(3, 20, 21, 0.9)),
     radial-gradient(circle at 0 50%, rgba(36, 138, 123, 0.16), transparent 65%);
-  box-shadow: inset 0 0 34px rgba(0, 0, 0, 0.38), 12px 18px 38px rgba(0, 0, 0, 0.28);
+  box-shadow: inset 0 0 34px rgba(0, 0, 0, 0.26), 12px 18px 38px rgba(0, 0, 0, 0.22);
 }
 
 .statusHeading {
@@ -2513,8 +2513,8 @@
   min-height: 130px;
   padding: 13px 18px 12px;
   border-left: 1px solid rgba(215, 177, 104, 0.24);
-  background: linear-gradient(90deg, rgba(2, 15, 17, 0.88), rgba(4, 22, 23, 0.68) 52%, rgba(2, 12, 14, 0.82));
-  box-shadow: inset 0 -18px 30px rgba(0, 0, 0, 0.25);
+  background: linear-gradient(90deg, rgba(3, 22, 23, 0.84), rgba(7, 32, 31, 0.7) 52%, rgba(3, 18, 19, 0.8));
+  box-shadow: inset 0 -18px 30px rgba(0, 0, 0, 0.18);
   clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px));
 }
 
@@ -2537,7 +2537,7 @@
 
 .sectionSubtitle {
   margin-top: 3px;
-  color: rgba(218, 211, 188, 0.66);
+  color: rgba(226, 220, 200, 0.74);
   font-size: 8px;
 }
 
@@ -2594,7 +2594,7 @@
 }
 
 .recentSystem {
-  color: rgba(209, 218, 201, 0.62);
+  color: rgba(219, 225, 211, 0.7);
   font-size: 7px;
 }
 
@@ -2744,7 +2744,7 @@
 
 .destinationDetail {
   margin-top: 6px;
-  color: rgba(226, 225, 207, 0.7);
+  color: rgba(235, 233, 217, 0.78);
   font-size: clamp(7px, 0.58vw, 9px);
   line-height: 1.35;
   letter-spacing: 0.8px;
@@ -2976,9 +2976,9 @@
    retained first-pass regression styles above. */
 .home .sanctuary .body .arrivalConsole {
   background:
-    linear-gradient(90deg, rgba(0, 19, 21, 0.92) 0%, rgba(0, 18, 20, 0.38) 22%, rgba(0, 11, 13, 0.08) 50%, rgba(0, 18, 20, 0.4) 78%, rgba(0, 18, 20, 0.92) 100%),
-    radial-gradient(ellipse 27% 62% at 50% 62%, rgba(211, 157, 68, 0.075), transparent 76%);
-  box-shadow: inset 0 28px 62px rgba(0, 0, 0, 0.36), inset 0 -40px 72px rgba(0, 0, 0, 0.52), 0 20px 48px rgba(0, 0, 0, 0.3);
+    linear-gradient(90deg, rgba(0, 24, 25, 0.68) 0%, rgba(0, 22, 23, 0.2) 22%, rgba(0, 13, 14, 0.03) 50%, rgba(0, 22, 23, 0.22) 78%, rgba(0, 23, 24, 0.68) 100%),
+    radial-gradient(ellipse 27% 62% at 50% 62%, rgba(221, 169, 77, 0.1), transparent 76%);
+  box-shadow: inset 0 28px 62px rgba(0, 0, 0, 0.2), inset 0 -40px 72px rgba(0, 0, 0, 0.28), 0 20px 48px rgba(0, 0, 0, 0.2);
 }
 
 .home .destinationDeck .actionBtn {
@@ -2986,33 +2986,33 @@
   background-color: #021113;
   background-repeat: no-repeat;
   background-size: cover;
-  box-shadow: inset 0 -58px 64px rgba(0, 0, 0, 0.68), inset 0 1px rgba(229, 185, 103, 0.32), 0 16px 32px rgba(0, 0, 0, 0.34);
+  box-shadow: inset 0 -58px 64px rgba(0, 0, 0, 0.42), inset 0 1px rgba(229, 185, 103, 0.36), 0 16px 32px rgba(0, 0, 0, 0.24);
 }
 
 .destinationDeck .actionRow .libraryDestination {
   background-image:
-    linear-gradient(180deg, rgba(0, 19, 21, 0.12), rgba(0, 12, 14, 0.48) 48%, rgba(0, 7, 9, 0.97) 100%),
+    linear-gradient(180deg, rgba(0, 19, 21, 0.05), rgba(0, 12, 14, 0.25) 48%, rgba(0, 7, 9, 0.78) 100%),
     var(--destination-image);
   background-position: 25% 44%;
 }
 
 .destinationDeck .actionRow .controlRoomDestination {
   background-image:
-    linear-gradient(180deg, rgba(0, 25, 27, 0.08), rgba(0, 15, 17, 0.42) 48%, rgba(0, 7, 9, 0.97) 100%),
+    linear-gradient(180deg, rgba(0, 25, 27, 0.03), rgba(0, 15, 17, 0.22) 48%, rgba(0, 7, 9, 0.78) 100%),
     var(--destination-image);
   background-position: 50% 41%;
 }
 
 .destinationDeck .actionRow .switchPlayerDestination {
   background-image:
-    linear-gradient(180deg, rgba(0, 18, 21, 0.14), rgba(0, 12, 16, 0.48) 48%, rgba(0, 7, 10, 0.97) 100%),
+    linear-gradient(180deg, rgba(0, 18, 21, 0.06), rgba(0, 12, 16, 0.25) 48%, rgba(0, 7, 10, 0.78) 100%),
     var(--destination-image);
   background-position: 50% 56%;
 }
 
 .destinationDeck .actionRow .departDestination {
   background-image:
-    linear-gradient(180deg, rgba(12, 21, 20, 0.12), rgba(9, 13, 13, 0.46) 48%, rgba(5, 7, 8, 0.97) 100%),
+    linear-gradient(180deg, rgba(12, 21, 20, 0.05), rgba(9, 13, 13, 0.24) 48%, rgba(5, 7, 8, 0.78) 100%),
     var(--destination-image);
   background-position: 50% 52%;
 }
