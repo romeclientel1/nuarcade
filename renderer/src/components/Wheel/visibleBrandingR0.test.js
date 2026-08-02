@@ -19,10 +19,10 @@ const settings = readFileSync(join(HERE, "../Settings/Settings.jsx"), "utf8").re
 
 test("Attract Mode no longer renders a secondary 'by NuArcade' brand line", () => {
   assert.doesNotMatch(attractMode, /by NuArcade/)
-  // The primary Vespara brand mark itself must still render -- this is a
-  // removal of the secondary attribution line only, not the brand block.
-  assert.match(attractMode, /<span className=\{styles\.wordmark\}>VESPARA<\/span>/)
-  assert.match(attractMode, /<span className=\{styles\.context\}>FROM THE LIBRARY<\/span>/)
+  // The approved fixed scenes own the primary Vespara identity now; Attract
+  // must render that model rather than reintroducing a secondary live block.
+  assert.match(attractMode, /ATTRACT_SCENES\.map/)
+  assert.match(attractMode, /src=\{scene\.image\}/)
 })
 
 test("Attract Mode no longer renders the retired generic frontend HUD", () => {

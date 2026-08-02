@@ -20,6 +20,11 @@ function getActiveGamepad() {
   return null
 }
 
+export function dispatchGamepadActivity(activity, handler) {
+  activity?.()
+  handler?.()
+}
+
 export function useGamepad(handlers) {
   const handlersRef = useRef(handlers)
   const btnState    = useRef({})  // { [key]: { pressed, firstAt, lastRepeatAt } }
@@ -83,12 +88,12 @@ export function useGamepad(handlers) {
 
           if (pressed && !prev.pressed) {
             // Fresh press
-            if (handler) handler()
+            dispatchGamepadActivity(h.activity, handler)
             btnState.current[stateKey] = { pressed: true, firstAt: now, lastRepeatAt: now }
           } else if (pressed && prev.pressed) {
             // Hold -- repeat after delay
             if (now - prev.firstAt > REPEAT_DELAY && now - prev.lastRepeatAt > REPEAT_RATE) {
-              if (handler) handler()
+              dispatchGamepadActivity(h.activity, handler)
               btnState.current[stateKey] = { ...prev, lastRepeatAt: now }
             }
           } else if (!pressed && prev.pressed) {

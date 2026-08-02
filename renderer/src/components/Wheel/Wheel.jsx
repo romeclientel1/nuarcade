@@ -47,7 +47,10 @@ import { buildLibraryOriginContext } from "./libraryLaunchOrigin.js"
 import { applyPendingRecentlyPlayedCredit } from "../../launchSession/startupRecovery.js"
 import { consumeRestorationRequest } from "../../launchSession/restorationRequest.js"
 import { shouldConsumeRestoration, resolveLibraryRestoration } from "../../launchSession/restorationResolution.js"
-import { createArchivePreviewAttractMixController } from "./archivePreviewAttractMix.js"
+import {
+  createArchivePreviewAttractMixController,
+  holdArchivePreviewWhileAttract,
+} from "./archivePreviewAttractMix.js"
 
 // "Retro" was removed from this list (was never populated by any scanner --
 // no genre/system value anywhere in src/main/scanner.js is ever 'Retro' --
@@ -465,6 +468,12 @@ export default function Wheel({ onCRTChange, crtEnabled, activeProfile, onSwitch
     const element = ref.current
     if (!element || element.dataset.archiveRequest !== String(requestId)) return
 
+    // A newly assigned source can become ready after Attract has already
+    // silenced the Archive View. Keep it pending and silent; waking the
+    // Library retries only the still-current request after the captured
+    // preview and Library music have been restored.
+    if (holdArchivePreviewWhileAttract(attractPreviewMixRef.current, element)) return
+
     pending.playRequested = true
     element.volume = bgVideoVolumeRef.current
     // A source that becomes ready during Attract may still play for visual
@@ -844,8 +853,15 @@ export default function Wheel({ onCRTChange, crtEnabled, activeProfile, onSwitch
   useEffect(() => {
     const controller = attractPreviewMixRef.current
     if (attractMode) controller?.enter()
-    else controller?.leave()
-  }, [attractMode])
+    else {
+      controller?.leave()
+      const pending = bgPendingRef.current
+      const element = pending?.slot === 'a' ? bgVideoARef.current : bgVideoBRef.current
+      if (pending && element?.readyState >= 3) {
+        handleArchiveVideoReady(pending.slot, pending.requestId, pending.source)
+      }
+    }
+  }, [attractMode, handleArchiveVideoReady])
 
   // Stop decoding and release both file/network sources on unmount. The
   // request increment also makes any already-resolving play() promise stale.
@@ -1080,11 +1096,13 @@ export default function Wheel({ onCRTChange, crtEnabled, activeProfile, onSwitch
     window.addEventListener("keydown", resetFromLibraryInput)
     window.addEventListener("mousemove", resetFromLibraryInput)
     window.addEventListener("click", resetFromLibraryInput)
+    window.addEventListener("wheel", resetFromLibraryInput)
     return () => {
       clearTimeout(idleTimer.current)
       window.removeEventListener("keydown", resetFromLibraryInput)
       window.removeEventListener("mousemove", resetFromLibraryInput)
       window.removeEventListener("click", resetFromLibraryInput)
+      window.removeEventListener("wheel", resetFromLibraryInput)
     }
   }, [scheduleIdle])
 
@@ -1209,6 +1227,7 @@ export default function Wheel({ onCRTChange, crtEnabled, activeProfile, onSwitch
 
   useGamepad({
     enabled: !showDetailRef.current && currentDestinationRef.current !== "help" && currentDestinationRef.current !== "stats" && !attractMode && !needsControllerPrompt && !showVirtualKeyboardRef.current && !showSortRef.current && !showCollectionsRef.current && !showAchievementsRef.current && !showCoachRef.current && !showOperatorRef.current ,
+    activity: scheduleIdle,
     left: () => {
       if (showRetroArchPopupRef.current) { if (retroArchChoiceRef.current !== 0) { sounds.navigate(); setRetroArchChoice(0) } return }
       // D5, Part 9: this branch now fires ONLY while the Tools drawer is
@@ -1454,7 +1473,8 @@ export default function Wheel({ onCRTChange, crtEnabled, activeProfile, onSwitch
               preload="auto"
               loop
               playsInline
-              autoPlay
+              autoPlay={!attractMode}
+              muted={attractMode}
               tabIndex={-1}
               onCanPlay={() => handleArchiveVideoReady('a', bgVideoA.requestId, bgVideoA.source)}
               onError={() => handleArchiveVideoError('a', bgVideoA.requestId)}
@@ -1469,7 +1489,8 @@ export default function Wheel({ onCRTChange, crtEnabled, activeProfile, onSwitch
               preload="auto"
               loop
               playsInline
-              autoPlay
+              autoPlay={!attractMode}
+              muted={attractMode}
               tabIndex={-1}
               onCanPlay={() => handleArchiveVideoReady('b', bgVideoB.requestId, bgVideoB.source)}
               onError={() => handleArchiveVideoError('b', bgVideoB.requestId)}

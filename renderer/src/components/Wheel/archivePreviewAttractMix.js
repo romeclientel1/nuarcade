@@ -1,6 +1,13 @@
 // Keeps the Library's Archive View videos silent while Attract Mode owns the
 // soundscape. Only the preview that was active on entry may resume on wake;
 // the inactive slot stays paused so it cannot compete with Attract ambience.
+export function holdArchivePreviewWhileAttract(controller, video) {
+  if (!controller?.isSuspended() || !video) return false
+  video.pause?.()
+  video.muted = true
+  return true
+}
+
 export function createArchivePreviewAttractMixController({ getActiveSlot, getVideo }) {
   let suspended = false
   let snapshot = null

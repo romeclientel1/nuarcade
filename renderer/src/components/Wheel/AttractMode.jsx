@@ -2,6 +2,10 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import styles from "./AttractMode.module.css"
 import { useGamepad } from "../../hooks/useGamepad"
 import { useAttractAmbience } from "./useAttractAmbience.js"
+import { resolveAttractMedia } from "./attractMediaResolution.js"
+import { ATTRACT_SCENES } from "./attractScenes.js"
+import { nextAttractSceneIndex } from "./attractSceneCycle.js"
+import { getAttractReason } from "./attractReason.js"
 import vesparaSymbol from "../../assets/brand/vespara-symbol-simplified.svg"
 
 const RESOLVE_MS = 520
@@ -35,13 +39,18 @@ function reshuffle(items, avoidFirstKey) {
 export default function AttractMode({ games, isActive, onWake, artwork, attractConfig = {} }) {
   const [currentIdx, setCurrentIdx] = useState(0)
   const [phase, setPhase] = useState("neutral")
-  const [videoErrors, setVideoErrors] = useState({})
+  const [mediaErrors, setMediaErrors] = useState({})
+  const [reducedMotion, setReducedMotion] = useState(
+    () => window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false,
+  )
+  const [sceneIndex, setSceneIndex] = useState(0)
   const [shuffled, setShuffled] = useState([])
   const overlayRef = useRef(null)
   const videoRef = useRef(null)
   const timersRef = useRef([])
   const orderRef = useRef([])
   const indexRef = useRef(0)
+  const sceneIndexRef = useRef(0)
   const activeSessionRef = useRef(false)
   const hasActivatedRef = useRef(false)
   const lastShownKeyRef = useRef(null)
@@ -57,6 +66,19 @@ export default function AttractMode({ games, isActive, onWake, artwork, attractC
     volume: attractConfig.ambientVolume ?? 35,
   })
 
+  useEffect(() => {
+    const query = window.matchMedia?.("(prefers-reduced-motion: reduce)")
+    if (!query) return undefined
+    const update = () => setReducedMotion(query.matches)
+    update()
+    if (query.addEventListener) query.addEventListener("change", update)
+    else query.addListener?.(update)
+    return () => {
+      if (query.removeEventListener) query.removeEventListener("change", update)
+      else query.removeListener?.(update)
+    }
+  }, [])
+
   const clearPhaseTimers = useCallback(() => {
     timersRef.current.forEach(clearTimeout)
     timersRef.current = []
@@ -71,6 +93,8 @@ export default function AttractMode({ games, isActive, onWake, artwork, attractC
       setShuffled([])
       setCurrentIdx(0)
       indexRef.current = 0
+      sceneIndexRef.current = 0
+      setSceneIndex(0)
       return
     }
     const withArt = games.filter((game) => {
@@ -83,10 +107,15 @@ export default function AttractMode({ games, isActive, onWake, artwork, attractC
     indexRef.current = 0
     setCurrentIdx(0)
     setShuffled(next)
-    setVideoErrors({})
+    setMediaErrors({})
+    sceneIndexRef.current = 0
+    setSceneIndex(0)
   }, [games, artwork, attractConfig.preferArt])
 
   const advance = useCallback(() => {
+    sceneIndexRef.current = nextAttractSceneIndex(sceneIndexRef.current, ATTRACT_SCENES.length)
+    setSceneIndex(sceneIndexRef.current)
+
     const order = orderRef.current
     if (order.length <= 1) return
     const current = order[indexRef.current]
@@ -152,10 +181,10 @@ export default function AttractMode({ games, isActive, onWake, artwork, attractC
   }, [isActive, shuffled.length])
 
   useEffect(() => {
-    if (!videoRef.current || !isActive) return
+    if (!videoRef.current || !isActive || reducedMotion) return
     videoRef.current.currentTime = 0
     videoRef.current.play().catch(() => {})
-  }, [currentIdx, isActive])
+  }, [currentIdx, isActive, reducedMotion])
 
   const wakeFromKeyboard = useCallback((event) => {
     if (!isActive) return
@@ -202,16 +231,21 @@ export default function AttractMode({ games, isActive, onWake, artwork, attractC
 
   const game = shuffled[currentIdx] || shuffled[0]
   const key = gameKey(game)
-  const id = game.id || game.profile?.replace(".xml", "").replace(".vpx", "")
   const art = artwork?.[game.id || game.profile] || {}
-  const legacyVideo = window.nuarcade?.platform === "win32" && id
-    ? `file:///F:/Media/Videos/${id}.mp4`
-    : null
-  const videoUrl = game.videoPath || legacyVideo
-  const hasVideo = !!videoUrl && !videoErrors[key]
-  const heroUrl = art.hero || game.heroPath || null
-  const capsuleUrl = art.capsule || game.boxArtPath || null
-  const mediaKind = hasVideo ? "video" : heroUrl ? "hero" : capsuleUrl ? "capsule" : "none"
+  const errors = mediaErrors[key] || {}
+  const reason = getAttractReason(game)
+  const { mediaKind, videoUrl, heroUrl, capsuleUrl } = resolveAttractMedia({
+    game,
+    artwork: art,
+    errors,
+    reducedMotion,
+  })
+  const markMediaError = (kind) => {
+    setMediaErrors((current) => ({
+      ...current,
+      [key]: { ...current[key], [kind]: true },
+    }))
+  }
 
   return (
     <section
@@ -224,25 +258,24 @@ export default function AttractMode({ games, isActive, onWake, artwork, attractC
       aria-label="Vespara Library discovery. Enter the Library to resume browsing."
       onClick={wakeFromPointer}
       onMouseMove={wakeFromPointer}
+      onWheel={wakeFromPointer}
     >
-      <div className={styles.atmosphere} aria-hidden="true" />
-      <div className={styles.reflection} aria-hidden="true" />
+      <div className={styles.sceneStack} aria-hidden="true">
+        {ATTRACT_SCENES.map((scene, index) => (
+          <img
+            key={scene.id}
+            src={scene.image}
+            alt=""
+            className={`${styles.scene} ${index === sceneIndex ? styles.sceneActive : ""}`}
+          />
+        ))}
+      </div>
 
-      <header className={styles.identity} aria-hidden="true">
-        <img src={vesparaSymbol} alt="" />
-        <div>
-          <span className={styles.wordmark}>VESPARA</span>
-          <span className={styles.context}>FROM THE LIBRARY</span>
-        </div>
-      </header>
-
-      <div className={styles.gatewayStage} aria-hidden="true">
-        <div className={styles.gatewayCrown} />
-        <div className={styles.gatewayOuter}>
-          <div className={styles.gatewayInner}>
-            <div className={styles.thresholdGlow} />
-            <div className={styles.mediaViewport}>
-              {hasVideo && (
+      <div className={styles.portalStage}>
+        <div className={styles.portalFrame}>
+          <div className={styles.portalEdge} aria-hidden="true" />
+          <div className={styles.mediaViewport}>
+              {mediaKind === "video" && (
                 <video
                   key={videoUrl}
                   ref={videoRef}
@@ -253,33 +286,36 @@ export default function AttractMode({ games, isActive, onWake, artwork, attractC
                   playsInline
                   autoPlay
                   preload="metadata"
-                  onError={() => setVideoErrors((errors) => ({ ...errors, [key]: true }))}
+                  onError={() => markMediaError("video")}
                 />
               )}
-              {!hasVideo && heroUrl && (
-                <img src={heroUrl} alt="" className={styles.portalMedia} />
+              {mediaKind === "hero" && (
+                <img
+                  src={heroUrl}
+                  alt=""
+                  className={styles.portalMedia}
+                  onError={() => markMediaError("hero")}
+                />
               )}
-              {!hasVideo && !heroUrl && capsuleUrl && (
+              {mediaKind === "capsule" && (
                 <div className={styles.archivalImage}>
-                  <img src={capsuleUrl} alt="" />
+                  <img src={capsuleUrl} alt="" onError={() => markMediaError("capsule")} />
                 </div>
               )}
-              {!hasVideo && !heroUrl && !capsuleUrl && (
+              {mediaKind === "none" && (
                 <div className={styles.noMediaGeometry}>
                   <img src={vesparaSymbol} alt="" />
                   <span>ARCHIVE RECORD</span>
                 </div>
               )}
               <div className={styles.mediaShade} />
-            </div>
-
-            <div className={styles.destinationLabel}>
-              <span className={styles.system}>{game.system || game.genre || "Library collection"}</span>
-              <h1>{game.title}</h1>
-            </div>
           </div>
         </div>
-        <div className={styles.gatewayFoot} />
+
+        <div className={styles.discoveryCopy}>
+          <h1>{game.title}</h1>
+          <p>{reason}</p>
+        </div>
       </div>
 
       <div className={styles.invitation} aria-hidden="true">

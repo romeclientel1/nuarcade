@@ -3,6 +3,7 @@ import assert from "node:assert/strict"
 import { readFileSync, existsSync, statSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
+import { resolveAttractMedia } from "./attractMediaResolution.js"
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const attract = readFileSync(join(HERE, "AttractMode.jsx"), "utf8").replace(/\r\n/g, "\n")
@@ -36,13 +37,20 @@ test("keyboard wake is capture-phase, consumed, and blocked again at Wheel's act
   assert.doesNotMatch(attract, /onSelect|setShowDetail|launchGame|navigate\(/)
 })
 
-test("controller, click, and mouse movement are wake-only", () => {
+test("controller, click, mouse movement, and wheel input are wake-only", () => {
   assert.match(attract, /confirm: wakeFromController/)
   assert.match(attract, /launch: wakeFromController/)
   assert.match(attract, /enabled: isActive/)
   assert.match(attract, /onClick=\{wakeFromPointer\}/)
   assert.match(attract, /onMouseMove=\{wakeFromPointer\}/)
+  assert.match(attract, /onWheel=\{wakeFromPointer\}/)
   assert.match(wheel, /enabled: [^\n]*!attractMode/)
+})
+
+test("genuine Library controller and mouse-wheel activity reset the idle window", () => {
+  assert.match(wheel, /useGamepad\(\{\s*enabled: [^\n]*!attractMode[^\n]*,\s*activity: scheduleIdle,/)
+  assert.match(wheel, /window\.addEventListener\("wheel", resetFromLibraryInput\)/)
+  assert.match(wheel, /window\.removeEventListener\("wheel", resetFromLibraryInput\)/)
 })
 
 test("focus is captured before entry, moved into the semantic overlay, and restored exactly or to the selected game", () => {
@@ -74,9 +82,10 @@ test("selection reshuffles after a pass, avoids an immediate boundary repeat, an
   assert.doesNotMatch(wheel.slice(wheel.indexOf("<AttractMode"), wheel.indexOf("<div className={styles.globalHeader}")), /onSelect=/)
 })
 
-test("media resolution prefers real videoPath, then safe legacy video, hero, capsule, and truthful geometry", () => {
-  assert.match(attract, /const videoUrl = game\.videoPath \|\| legacyVideo/)
-  assert.match(attract, /const mediaKind = hasVideo \? "video" : heroUrl \? "hero" : capsuleUrl \? "capsule" : "none"/)
+test("media resolution uses only real videoPath, then hero, capsule, and truthful geometry", () => {
+  const media = readFileSync(join(HERE, "attractMediaResolution.js"), "utf8")
+  assert.match(media, /const videoUrl = game\.videoPath \|\| null/)
+  assert.doesNotMatch(attract + media, /F:\/Media\/Videos|legacyVideo/)
   assert.match(attract, /muted\s*\n\s*loop/)
   assert.match(attract, /className=\{styles\.archivalImage\}/)
   assert.match(attract, /className=\{styles\.noMediaGeometry\}/)
@@ -84,15 +93,38 @@ test("media resolution prefers real videoPath, then safe legacy video, hero, cap
   assert.doesNotMatch(attract, /GENRE_COLORS|bgColor|capsuleFloat/)
 })
 
-test("portal identity removes generic arcade HUD language and keeps restrained Library context", () => {
-  assert.match(attract, />FROM THE LIBRARY</)
+test("reduced motion behavior suppresses video playback and resolves a truthful still", () => {
+  const game = { videoPath: "game.mp4", heroPath: "hero.jpg", boxArtPath: "capsule.jpg" }
+  assert.deepEqual(
+    resolveAttractMedia({ game, reducedMotion: true }).mediaKind,
+    "hero",
+  )
+  assert.equal(resolveAttractMedia({ game: { videoPath: "game.mp4" }, reducedMotion: true }).mediaKind, "none")
+  assert.match(attract, /!videoRef\.current \|\| !isActive \|\| reducedMotion/)
+  assert.match(attract, /mediaKind === "video"/)
+})
+
+test("failed portal media advances from video to hero to capsule to geometry", () => {
+  const game = { videoPath: "game.mp4", heroPath: "hero.jpg", boxArtPath: "capsule.jpg" }
+  assert.equal(resolveAttractMedia({ game }).mediaKind, "video")
+  assert.equal(resolveAttractMedia({ game, errors: { video: true } }).mediaKind, "hero")
+  assert.equal(resolveAttractMedia({ game, errors: { video: true, hero: true } }).mediaKind, "capsule")
+  assert.equal(resolveAttractMedia({ game, errors: { video: true, hero: true, capsule: true } }).mediaKind, "none")
+  assert.match(attract, /onError=\{\(\) => markMediaError\("hero"\)\}/)
+  assert.match(attract, /onError=\{\(\) => markMediaError\("capsule"\)\}/)
+})
+
+test("the showcase keeps restrained discovery copy without generic arcade HUD language", () => {
+  assert.match(attract, /<h1>\{game\.title\}<\/h1>/)
+  assert.match(attract, /<p>\{reason\}<\/p>/)
   assert.match(attract, />ENTER THE LIBRARY</)
   assert.doesNotMatch(attract + css + wheelCss, /INSERT COIN|Press Any Button|Exit Attract Mode|@keyframes insertCoin/)
   assert.doesNotMatch(attract, /gameCount|currentVersion|dots|scanlines|Orbitron/)
 })
 
-test("Library architecture remains visible beneath a transparent portal and dormant controls are inert", () => {
-  assert.doesNotMatch(css.match(/\.overlay\s*\{[\s\S]*?\}/)?.[0] || "", /background:\s*#000/)
+test("the approved scene dominates while the mounted Library remains dormant and inert", () => {
+  assert.match(attract, /className=\{styles\.sceneStack\}/)
+  assert.match(css, /\.scene\s*\{[\s\S]*object-fit: cover/)
   assert.match(wheel, /attractMode \? " " \+ styles\.attractDormant/)
   assert.match(wheelCss, /\.attractDormant \.libraryEnvironment[\s\S]*brightness\(0\.52\)/)
   assert.match(wheelCss, /\.attractDormant \.globalHeader[\s\S]*pointer-events: none/)

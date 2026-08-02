@@ -1,6 +1,9 @@
 import { test } from "node:test"
 import assert from "node:assert/strict"
-import { createArchivePreviewAttractMixController } from "./archivePreviewAttractMix.js"
+import {
+  createArchivePreviewAttractMixController,
+  holdArchivePreviewWhileAttract,
+} from "./archivePreviewAttractMix.js"
 
 function makeVideo({ source, requestId, currentTime, paused = false, muted = false, volume = 0.35 }) {
   return {
@@ -85,6 +88,31 @@ test("Attract wake never revives a replaced source or a preview that was already
   await Promise.resolve()
   assert.equal(paused.playCalls, 0)
   assert.equal(paused.paused, true)
+})
+
+test("Archive media becoming ready after Attract entry is held silent until the current Library state wakes", async () => {
+  const active = makeVideo({ source: "active.mp4", requestId: 1, currentTime: 31 })
+  let incoming = null
+  const controller = createArchivePreviewAttractMixController({
+    getActiveSlot: () => "a",
+    getVideo: slot => slot === "a" ? active : incoming,
+  })
+
+  controller.enter()
+  incoming = makeVideo({ source: "incoming.mp4", requestId: 2, currentTime: 0, paused: false })
+
+  assert.equal(holdArchivePreviewWhileAttract(controller, incoming), true)
+  assert.equal(incoming.paused, true)
+  assert.equal(incoming.muted, true)
+  assert.equal(incoming.playCalls, 0)
+
+  // A replacement cannot be revived by the captured active-slot snapshot.
+  incoming = makeVideo({ source: "replacement.mp4", requestId: 3, currentTime: 0 })
+  controller.leave()
+  await Promise.resolve()
+
+  assert.equal(active.playCalls, 1)
+  assert.equal(incoming.playCalls, 0)
 })
 
 test("cleanup discards restoration state and leaves every preview silent", async () => {
