@@ -30,20 +30,15 @@ const jsx = read("PlayerSelect.jsx")
 const css = read("PlayerSelect.module.css")
 const appJsx = read("../../App.jsx")
 
-const BG_ASSET_PATH = join(HERE, "assets/celestial_observatory_with_cosmic_vista.png")
-// The exact MD5 of the approved production plate. Updated at Milestone 1.2
-// (Production Resolution and Cinematic Identity) to lock the new approved
-// 3840x2160 source, replacing the 1672x941 plate approved at Milestone 1 --
-// if this ever fails, the bundled asset itself changed without going
-// through that approval process again.
-const APPROVED_BG_MD5 = "ba687320ca3eb4a7b2a40477895c35cd"
+const BG_ASSET_PATH = join(HERE, "assets/traveler-recognition-observatory.png")
+const APPROVED_BG_SHA256 = "c78338aa1f569b49c38a97cbde64525ddd729191d1bd4ce84a7dc4a083ddbdc3"
 
 // -- 1. The approved bundled gateway asset remains unchanged -----------------
 
-test("the bundled gateway background is byte-identical to the approved Milestone 1.2 4K source (MD5 match)", () => {
+test("the bundled gateway background is byte-identical to the approved supplied source (SHA-256 match)", () => {
   assert.ok(existsSync(BG_ASSET_PATH))
-  const hash = createHash("md5").update(readFileSync(BG_ASSET_PATH)).digest("hex")
-  assert.equal(hash, APPROVED_BG_MD5, "the approved PNG must never be repainted, re-exported, or edited")
+  const hash = createHash("sha256").update(readFileSync(BG_ASSET_PATH)).digest("hex")
+  assert.equal(hash, APPROVED_BG_SHA256, "the approved PNG must never be repainted, re-exported, or edited")
 })
 
 // Milestone 1.2 added the gateway-music import/wiring elsewhere in this
@@ -51,8 +46,8 @@ test("the bundled gateway background is byte-identical to the approved Milestone
 // button's onClick to route through the new selectProfile() wrapper below
 // -- but the background import/render call sites this Milestone 1.1 test
 // originally locked remain untouched.
-test("the background import/render call sites from Milestone 1.1 remain untouched", () => {
-  assert.match(jsx, /import gatewayBackground from '\.\/assets\/celestial_observatory_with_cosmic_vista\.png'/)
+test("the approved replacement keeps the established local import/render path", () => {
+  assert.match(jsx, /import gatewayBackground from '\.\/assets\/traveler-recognition-observatory\.png'/)
   assert.match(jsx, /<img src=\{gatewayBackground\} alt="" aria-hidden="true" className=\{styles\.gatewayBg\} \/>/)
 })
 

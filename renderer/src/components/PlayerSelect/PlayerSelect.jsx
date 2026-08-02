@@ -4,7 +4,7 @@ import { useArcadeSounds } from '../../hooks/useArcadeSounds'
 import { useGatewayMusic } from './useGatewayMusic.js'
 import { useI18n } from '../../i18n/I18nContext.js'
 import styles from './PlayerSelect.module.css'
-import gatewayBackground from './assets/celestial_observatory_with_cosmic_vista.png'
+import gatewayBackground from './assets/traveler-recognition-observatory.png'
 import gatewayTheme from './assets/vespara-gateway-theme.mp3'
 import vesparaSeal from '../../assets/brand/vespara-symbol-simplified.svg'
 

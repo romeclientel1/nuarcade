@@ -22,6 +22,7 @@ import { useI18n } from "../../i18n/I18nContext.js"
 import { useSanctuaryAmbience } from "./useSanctuaryAmbience.js"
 import DepartConfirmation from "../Depart/DepartConfirmation.jsx"
 import styles from "./VesparaHome.module.css"
+import sanctuaryBackground from "./assets/sanctuary-sunset-archway.png"
 import sanctuaryArrivalHall from "./assets/sanctuary-arrival-hall.png"
 import destinationLibrary from "./assets/destination-library.png"
 import destinationControlRoom from "./assets/destination-control-room.png"
@@ -502,7 +503,7 @@ export default function VesparaHome({
     <div className={styles.home}>
       <div className={styles.worldLayer} aria-hidden="true">
         <img
-          src={sanctuaryArrivalHall}
+          src={sanctuaryBackground}
           alt=""
           aria-hidden="true"
           className={styles.sanctuaryPlate}

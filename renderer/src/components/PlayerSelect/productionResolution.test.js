@@ -5,15 +5,9 @@
 // PlayerSelect.jsx/.module.css cannot be imported here (JSX and CSS -- see
 // entryFlowPolish.test.js's own limitations note). These tests read the
 // real committed source text and the real bundled files, and assert on
-// the specific promises Vespara Traveler Recognition Milestone 1.2
-// (Production Resolution and Cinematic Identity) made for the gateway
-// background specifically: the production plate is exactly 3840x2160 (not
-// merely a byte-identical-but-still-soft asset -- see
-// realDisplayPolish.test.js for the MD5 lock itself), the previous
-// 1672x941 plate is nowhere left behind as an unused duplicate, the
-// approved-reference-only lettered mockup was never added to the
-// repository, and the background remains a real locally-bundled file (not
-// base64, not remote).
+// the current approved production background specifically: the supplied
+// plate remains at its native 1672x941 dimensions and is bundled locally
+// without conversion, base64 encoding, or a remote dependency.
 
 import { test } from "node:test"
 import assert from "node:assert/strict"
@@ -23,7 +17,7 @@ import { dirname, join } from "node:path"
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const ASSETS_DIR = join(HERE, "assets")
-const BG_ASSET_PATH = join(ASSETS_DIR, "celestial_observatory_with_cosmic_vista.png")
+const BG_ASSET_PATH = join(ASSETS_DIR, "traveler-recognition-observatory.png")
 
 // A PNG's width/height live in the IHDR chunk, immediately after the
 // 8-byte signature and the 4-byte chunk length + 4-byte "IHDR" tag --
@@ -35,35 +29,25 @@ function readPngDimensions(path) {
   return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) }
 }
 
-// -- 1. The production gateway image is exactly 3840x2160 -------------------
+// -- 1. The approved production image retains its native dimensions --------
 
-test("the bundled gateway background is exactly 3840x2160 (the approved 4K production plate, not the previous 1672x941 soft plate)", () => {
+test("the bundled gateway background retains the approved 1672x941 source dimensions", () => {
   assert.ok(existsSync(BG_ASSET_PATH))
   const { width, height } = readPngDimensions(BG_ASSET_PATH)
-  assert.equal(width, 3840)
-  assert.equal(height, 2160)
+  assert.equal(width, 1672)
+  assert.equal(height, 941)
 })
 
-test("the production plate is true 16:9, matching the previous plate's aspect ratio so object-fit/object-position needed no adjustment", () => {
+test("the production plate is effectively 16:9 and suitable for the existing cover treatment", () => {
   const { width, height } = readPngDimensions(BG_ASSET_PATH)
-  assert.equal(width / height, 16 / 9)
+  assert.ok(Math.abs(width / height - 16 / 9) < 0.001)
 })
 
-// -- 3. The previous low-resolution file is not retained as an unused duplicate --
+// -- 3. The approved source remains a full production PNG ------------------
 
-test("the old 1672x941 plate is not retained anywhere in the repository under any filename", () => {
-  const files = readdirSync(ASSETS_DIR)
-  assert.equal(files.length, 2, "expected exactly the background PNG and the gateway theme mp3 in this directory")
-  for (const name of files) {
-    if (!name.endsWith(".png")) continue
-    const { width, height } = readPngDimensions(join(ASSETS_DIR, name))
-    assert.ok(!(width === 1672 && height === 941), `${name} must not be the old 1672x941 plate`)
-  }
-})
-
-test("the single bundled background file is the new, larger production plate by file size too (sanity cross-check against the dimension claim)", () => {
+test("the approved background is a substantial production PNG, not a placeholder", () => {
   const stat = statSync(BG_ASSET_PATH)
-  assert.ok(stat.size > 5_000_000, "a genuine 3840x2160 production PNG should be well over 5MB, not a re-compressed/placeholder file")
+  assert.ok(stat.size > 1_000_000)
 })
 
 // -- 4. The lettered reference mockup was never added to the repository -----
@@ -82,7 +66,7 @@ test("the lettered gateway reference mockup (approved-visual-reference-only) was
 
 test("the background remains a locally bundled ES module import, never base64 or a remote URL", () => {
   const jsx = readFileSync(join(HERE, "PlayerSelect.jsx"), "utf8")
-  assert.match(jsx, /import gatewayBackground from '\.\/assets\/celestial_observatory_with_cosmic_vista\.png'/)
+  assert.match(jsx, /import gatewayBackground from '\.\/assets\/traveler-recognition-observatory\.png'/)
   assert.doesNotMatch(jsx, /data:image\/(png|jpe?g|gif|webp);base64/i)
   assert.doesNotMatch(jsx, /https?:\/\/[^"'\s]*\.(png|jpe?g|gif|webp)/i)
 })

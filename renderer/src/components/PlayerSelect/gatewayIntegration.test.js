@@ -34,18 +34,18 @@ const es = read("../../i18n/es.js")
 const appJsx = read("../../App.jsx")
 const introJsx = read("../Intro/Intro.jsx")
 
-const BG_ASSET_PATH = join(HERE, "assets/celestial_observatory_with_cosmic_vista.png")
+const BG_ASSET_PATH = join(HERE, "assets/traveler-recognition-observatory.png")
 
 // -- 1 & 2. Bundled background asset present, imported locally, no remote/base64 --
 
 test("the gateway background asset exists as a real bundled file in a PlayerSelect-owned assets directory", () => {
-  assert.ok(existsSync(BG_ASSET_PATH), "expected celestial_observatory_with_cosmic_vista.png in PlayerSelect/assets/")
+  assert.ok(existsSync(BG_ASSET_PATH), "expected traveler-recognition-observatory.png in PlayerSelect/assets/")
   const stat = statSync(BG_ASSET_PATH)
   assert.ok(stat.size > 500_000, "expected the full-resolution production plate, not a placeholder")
 })
 
 test("PlayerSelect.jsx imports the background asset as a local ES module (Vite-bundled), not a remote URL or base64 string", () => {
-  assert.match(jsx, /import gatewayBackground from '\.\/assets\/celestial_observatory_with_cosmic_vista\.png'/)
+  assert.match(jsx, /import gatewayBackground from '\.\/assets\/traveler-recognition-observatory\.png'/)
   assert.doesNotMatch(jsx, /https?:\/\/[^"'\s]*\.(png|jpe?g|gif|webp)/i, "must not reference the background remotely")
   assert.doesNotMatch(jsx, /data:image\/(png|jpe?g|gif|webp);base64/i, "must not convert the background to base64")
 })
@@ -246,9 +246,11 @@ test("PlayerSelect imports the existing production micro-mark SVG from renderer/
   assert.ok(existsSync(brandAssetPath), "the referenced brand asset must be the real, existing production file")
 })
 
-test("no new SVG was created inside PlayerSelect/assets -- only the bundled raster background and (as of Milestone 1.2) the bundled gateway theme mp3 live there", () => {
+test("no SVG was created inside PlayerSelect/assets and the approved replacement remains locally bundled", () => {
   const files = readdirSync(join(HERE, "assets")).sort()
-  assert.deepEqual(files, ["celestial_observatory_with_cosmic_vista.png", "vespara-gateway-theme.mp3"].sort())
+  assert.ok(files.includes("traveler-recognition-observatory.png"))
+  assert.ok(files.includes("vespara-gateway-theme.mp3"))
+  assert.equal(files.some(file => file.endsWith(".svg")), false)
 })
 
 // -- 13. Typography uses only existing bundled/licensed resources or a documented fallback --

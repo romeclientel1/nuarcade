@@ -3,25 +3,28 @@ import assert from 'node:assert/strict'
 import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { createHash } from 'node:crypto'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const jsx = readFileSync(join(HERE, 'VesparaHome.jsx'), 'utf8').replace(/\r\n/g, '\n')
 const css = readFileSync(join(HERE, 'VesparaHome.module.css'), 'utf8').replace(/\r\n/g, '\n')
 const provenance = readFileSync(join(HERE, 'assets/README.md'), 'utf8')
-const platePath = join(HERE, 'assets/sanctuary-arrival-hall.png')
+const platePath = join(HERE, 'assets/sanctuary-sunset-archway.png')
+const APPROVED_PLATE_SHA256 = '33ce9fe6d750bdb6f8a61e6750ccde4fcd8a5d12ed29fb54035599a854d96a75'
 
 test('Sanctuary Home imports and renders the local architectural environment plate', () => {
+  assert.match(jsx, /import sanctuaryBackground from "\.\/assets\/sanctuary-sunset-archway\.png"/)
   assert.match(jsx, /import sanctuaryArrivalHall from "\.\/assets\/sanctuary-arrival-hall\.png"/)
-  assert.match(jsx, /<img\s+src=\{sanctuaryArrivalHall\}[\s\S]*className=\{styles\.sanctuaryPlate\}/)
+  assert.match(jsx, /<img\s+src=\{sanctuaryBackground\}[\s\S]*className=\{styles\.sanctuaryPlate\}/)
   assert.equal(existsSync(platePath), true)
 })
 
-test('the production plate is the original 1672x941 RGB PNG, not a claimed native 4K upscale', () => {
+test('the production plate preserves the approved 1672x941 PNG bytes', () => {
   const png = readFileSync(platePath)
   assert.equal(png.subarray(1, 4).toString(), 'PNG')
   assert.equal(png.readUInt32BE(16), 1672)
   assert.equal(png.readUInt32BE(20), 941)
-  assert.match(provenance, /has not been upscaled and is not represented as native-detail 4K/)
+  assert.equal(createHash('sha256').update(png).digest('hex'), APPROVED_PLATE_SHA256)
 })
 
 test('the environment is local and contains no source-code remote image or base64 path', () => {
