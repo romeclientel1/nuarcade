@@ -133,7 +133,9 @@ For each system you want to play:
 3. Open **Game Paths** and point Vespara at the folder where that system's games live — for example, `<your games folder>\PS2Games\`, or any location you prefer.
 4. After changing any path, **rescan** from the Systems Archive station (or restart Vespara) — changing a path alone does not refresh the library automatically.
 
-Vespara does not require a particular drive letter. Initial configurations may contain C:\-based example paths — owners can replace those with folders on any drive they control.
+Vespara does not require a particular drive letter. Fresh defaults live beside the installed application; owners can replace them with folders on any drive, NAS, or removable disk they control.
+
+On a fresh install, Vespara creates its starter content structure beside the installed application (the folder selected in the installer): emulator roots, system game roots, `Media\Videos`, `Media\Artwork`, `Media\EmuMovies`, and the RetroArch per-system ROM folders. These are empty structural folders only; Vespara never moves or overwrites existing content. If you choose another location in Control Room, that configured path becomes authoritative and is repaired idempotently on startup.
 
 **RetroArch is structured differently from every other emulator Vespara supports:** it uses one folder per *system* (for example `nes`, `snes`, `genesis`), with ROM files placed directly inside that folder — not one folder per game. Placing individual game folders at the top level instead will cause Vespara to misread them as unrecognized systems.
 
@@ -167,13 +169,15 @@ Add your API key in the Control Room's Artwork station and Vespara fetches hero 
 
 1. Create an account at EmuMovies — a paid membership unlocks video content.
 2. Download the EmuMovies Sync desktop app from EmuMovies.
-3. In Media Manager's Scraping tab, use "Create folder structure" — this builds one folder per emulator inside your configured Media folder.
-4. Point Sync's destination at the specific emulator folder you're downloading for.
+3. In Media Manager's Scraping tab, use the configured EmuMovies output folder as Sync's destination. EmuMovies creates and owns its internal system/media folders.
+4. Point Sync at that output folder and let it create the structure it requires.
 5. In Sync, select the matching system and run the download.
 6. **Back in Vespara, click "Scan EmuMovies folder"** — this step is required. Downloading with Sync only places files on disk; nothing appears in Vespara until you scan and import.
 7. Review the matches, then import all (or import individually).
 
 **A note on TeknoParrot:** it covers many different arcade hardware platforms, and most of that hardware isn't in EmuMovies' catalog. The best-confirmed match is Konami e-AMUSEMENT titles. For everything else under TeknoParrot, use Vespara's own YouTube fetch instead (Media Manager's Library tab, per-game).
+
+When both sources contain a category, EmuMovies artwork and video are shown first. Vespara-scraped artwork or video fills only categories EmuMovies does not provide; changing paths never moves or deletes either source.
 
 ### System logos
 

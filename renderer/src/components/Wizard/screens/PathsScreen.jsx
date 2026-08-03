@@ -2,9 +2,9 @@ import { useState } from 'react'
 import styles from './Screen.module.css'
 
 const PATH_FIELDS = [
-  // -- TeknoParrot (defaults to F: convention) --
-  { key: 'teknoparrot',  label: 'TeknoParrot',          default: 'F:\\TeknoParrot\\',  hint: 'Folder containing TeknoParrotUI.exe' },
-  { key: 'arcadeGames',  label: 'Arcade Games',          default: 'F:\\ArcadeGames\\',  hint: 'Root folder containing your TP game subfolders' },
+  // Users choose these optional roots explicitly.
+  { key: 'teknoparrot',  label: 'TeknoParrot',          default: '',  hint: 'Folder containing TeknoParrotUI.exe' },
+  { key: 'arcadeGames',  label: 'Arcade Games',          default: '',  hint: 'Root folder containing your TP game subfolders' },
   // -- Xbox 360 --
   { key: 'xenia',        label: 'Xenia (emulator)',     default: '',  hint: 'Folder containing xenia.exe -- leave blank to skip' },
   { key: 'xbox360Games', label: 'Xbox 360 Games',        default: '',  hint: 'Folder containing Xbox 360 game subfolders -- leave blank to skip' },

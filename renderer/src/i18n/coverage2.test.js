@@ -78,8 +78,8 @@ test("Settings field-help text (notes) switches language and preserves technical
   const en = translate("en", "settings.musicNote")
   const es = translate("es", "settings.musicNote")
   assert.notEqual(en, es)
-  assert.ok(en.includes("F:/Media/Music/"))
-  assert.ok(es.includes("F:/Media/Music/"))
+  assert.ok(en.includes("configured Media/Music"))
+  assert.ok(es.includes("carpeta configurada Media/Music"))
 })
 
 test("Settings dynamic status messages preserve interpolated counts/paths exactly", () => {
