@@ -340,6 +340,17 @@ test("this milestone leaves Sanctuary ambience, startup, audio, installer, prelo
   assert.deepEqual(packageJsonOffenders, [], `protected package.json fields were modified: ${packageJsonOffenders.join(", ")}`)
 })
 
+test("Control Room entry uses a 400ms opacity-only standard-easing mount fade while preserving the existing exit fade", () => {
+  const stageRule = block(crCss, ".stage")
+  assert.match(stageRule, /animation:\s*controlRoomMountFade var\(--motion-atmosphere\) var\(--ease-standard\)/)
+  const entryKeyframes = crCss.slice(crCss.indexOf("@keyframes controlRoomMountFade"), crCss.indexOf(".stageExiting"))
+  assert.match(entryKeyframes, /from\s*\{\s*opacity:\s*0;\s*\}/)
+  assert.match(entryKeyframes, /to\s*\{\s*opacity:\s*1;\s*\}/)
+  assert.doesNotMatch(entryKeyframes, /transform|filter|scale|blur|position|width|height|inset|top|left/)
+  assert.match(crCss, /\.stageExiting\s*\{[\s\S]*?transition: opacity 180ms var\(--ease-standard/)
+  assert.match(crCss, /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.stage \{ animation: none; \}/)
+})
+
 test("Sanctuary's own protected behaviors -- ambience hook, Recently Played -- are untouched by the destination-routing edit", () => {
   assert.match(homeJsx, /import \{ useSanctuaryAmbience \} from "\.\/useSanctuaryAmbience\.js"/)
   assert.equal((homeJsx.match(/useSanctuaryAmbience\(\)/g) || []).length, 1)

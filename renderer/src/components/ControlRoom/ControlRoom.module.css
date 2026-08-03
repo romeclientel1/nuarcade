@@ -7,6 +7,12 @@
   color: #eee7d7;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
   isolation: isolate;
+  animation: controlRoomMountFade var(--motion-atmosphere) var(--ease-standard);
+}
+
+@keyframes controlRoomMountFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .stageExiting {
@@ -522,6 +528,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .stage { animation: none; }
   .stageExiting { transition: none; }
   .station, .readinessAction, .globalHeader.roomInactive, .titleRow.roomInactive, .chamber.roomInactive { transition: none; }
   .stationFocused,

@@ -100,6 +100,7 @@ export default function App() {
   } = useDestination()
   const [libraryReturnPhase, setLibraryReturnPhase] = useState("idle")
   const [controlRoomReturnPhase, setControlRoomReturnPhase] = useState("idle")
+  const [sanctuaryControlRoomExitPhase, setSanctuaryControlRoomExitPhase] = useState("idle")
   const [reducedMotion, setReducedMotion] = useState(
     () => window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false,
   )
@@ -107,6 +108,8 @@ export default function App() {
   const libraryExitActiveRef = useRef(false)
   const controlRoomExitTimerRef = useRef(null)
   const controlRoomExitActiveRef = useRef(false)
+  const sanctuaryControlRoomExitTimerRef = useRef(null)
+  const sanctuaryControlRoomExitActiveRef = useRef(false)
   const clearLibraryExit = () => {
     if (libraryExitTimerRef.current) {
       clearTimeout(libraryExitTimerRef.current)
@@ -122,6 +125,14 @@ export default function App() {
     }
     controlRoomExitActiveRef.current = false
     setControlRoomReturnPhase("idle")
+  }
+  const clearSanctuaryControlRoomExit = () => {
+    if (sanctuaryControlRoomExitTimerRef.current) {
+      clearTimeout(sanctuaryControlRoomExitTimerRef.current)
+      sanctuaryControlRoomExitTimerRef.current = null
+    }
+    sanctuaryControlRoomExitActiveRef.current = false
+    setSanctuaryControlRoomExitPhase("idle")
   }
   // Settings already persists this to the backend config under crtEffect --
   // this just loads that saved value on launch and mirrors live changes so
@@ -160,6 +171,8 @@ export default function App() {
       libraryExitActiveRef.current = false
       if (controlRoomExitTimerRef.current) clearTimeout(controlRoomExitTimerRef.current)
       controlRoomExitActiveRef.current = false
+      if (sanctuaryControlRoomExitTimerRef.current) clearTimeout(sanctuaryControlRoomExitTimerRef.current)
+      sanctuaryControlRoomExitActiveRef.current = false
     }
   }, [])
   useEffect(() => {
@@ -171,6 +184,9 @@ export default function App() {
     if (controlRoomExitActiveRef.current) {
       clearControlRoomExit()
       if (phase === "main" && reducedMotion) goToSurfaceRoot()
+    }
+    if (sanctuaryControlRoomExitActiveRef.current) {
+      clearSanctuaryControlRoomExit()
     }
   }, [phase, reducedMotion, goToSurfaceRoot])
 
@@ -370,9 +386,22 @@ export default function App() {
   }
 
   const handleEnterControlRoom = () => {
+    if (sanctuaryControlRoomExitActiveRef.current || currentSurface !== null) return
     clearPendingRestoration()
     setHomeFocusHint(null)
-    navigateSurface("controlRoom")
+    if (reducedMotion) {
+      navigateSurface("controlRoom")
+      return
+    }
+    sanctuaryControlRoomExitActiveRef.current = true
+    setSanctuaryControlRoomExitPhase("sanctuary-control-room-exit")
+    sanctuaryControlRoomExitTimerRef.current = setTimeout(() => {
+      sanctuaryControlRoomExitTimerRef.current = null
+      if (!sanctuaryControlRoomExitActiveRef.current || phase !== "main") return
+      sanctuaryControlRoomExitActiveRef.current = false
+      setSanctuaryControlRoomExitPhase("idle")
+      navigateSurface("controlRoom")
+    }, 180)
   }
 
   const handleReturnHomeFromWheel = () => {
@@ -419,7 +448,7 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <div style={{ position: 'relative', width: '100vw', height: '100vh', background: (libraryReturnPhase === "library-exit" || controlRoomReturnPhase === "control-room-exit") ? '#03100e' : '#000', overflow: 'hidden' }}>
+      <div style={{ position: 'relative', width: '100vw', height: '100vh', background: (libraryReturnPhase === "library-exit" || controlRoomReturnPhase === "control-room-exit" || sanctuaryControlRoomExitPhase === "sanctuary-control-room-exit") ? '#03100e' : '#000', overflow: 'hidden' }}>
 
         {phase === "launchVideo" && launchVideo && (
           <IntroVideo
@@ -482,6 +511,7 @@ export default function App() {
               restorationRequest={restorationRequest?.destination === "home" ? restorationRequest : null}
               initialFocusHint={homeFocusHint}
               onFocusHintConsumed={() => setHomeFocusHint(null)}
+              isExiting={sanctuaryControlRoomExitPhase === "sanctuary-control-room-exit"}
             />
           )
         )}

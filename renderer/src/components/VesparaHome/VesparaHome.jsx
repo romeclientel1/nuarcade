@@ -44,7 +44,7 @@ const DESTINATION_VISUALS = {
 export default function VesparaHome({
   onEnterLibrary, onEnterControlRoom, onSwitchPlayer, restorationRequest,
   initialFocusHint, onFocusHintConsumed,
-  uiSoundsEnabled, uiSoundVolume,
+  uiSoundsEnabled, uiSoundVolume, isExiting = false,
 }) {
   const { t } = useI18n()
   const [reducedMotion, setReducedMotion] = useState(
@@ -511,7 +511,7 @@ export default function VesparaHome({
       : "Empty"
 
   return (
-    <div className={styles.home}>
+    <div className={styles.home + (isExiting ? ` ${styles.homeExiting}` : "")}>
       <div className={styles.worldLayer} aria-hidden="true">
         <img
           src={sanctuaryBackground}

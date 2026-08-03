@@ -25,6 +25,7 @@ const HERE = dirname(fileURLToPath(import.meta.url))
 const jsx = readFileSync(join(HERE, "App.jsx"), "utf8").replace(/\r\n/g, "\n")
 const wheelCss = readFileSync(join(HERE, "components/Wheel/Wheel.module.css"), "utf8").replace(/\r\n/g, "\n")
 const controlRoomCss = readFileSync(join(HERE, "components/ControlRoom/ControlRoom.module.css"), "utf8").replace(/\r\n/g, "\n")
+const homeCss = readFileSync(join(HERE, "components/VesparaHome/VesparaHome.module.css"), "utf8").replace(/\r\n/g, "\n")
 
 // Extracts the substring between two anchors, throwing a descriptive error
 // instead of silently returning "" when an anchor is missing -- a missing
@@ -97,7 +98,7 @@ test("Library to Sanctuary uses a guarded 180ms Wheel exit before swapping surfa
   assert.match(jsx, /setLibraryReturnPhase\("library-exit"\)/)
   assert.match(jsx, /libraryExitTimerRef\.current = setTimeout\(\(\) => \{[\s\S]*?goToSurfaceRoot\(\)[\s\S]*?\}, 180\)/)
   assert.match(jsx, /isExiting=\{libraryReturnPhase === "library-exit"\}/)
-  assert.match(jsx, /background: \(libraryReturnPhase === "library-exit" \|\| controlRoomReturnPhase === "control-room-exit"\) \? '#03100e' : '#000'/)
+  assert.match(jsx, /background: \(libraryReturnPhase === "library-exit" \|\| controlRoomReturnPhase === "control-room-exit" \|\| sanctuaryControlRoomExitPhase === "sanctuary-control-room-exit"\) \? '#03100e' : '#000'/)
 })
 
 test("the Library handoff clears stale timers, ignores repeated returns, and skips immediately under reduced motion", () => {
@@ -121,7 +122,7 @@ test("Control Room to Sanctuary uses a guarded 180ms opacity-only exit and prese
   assert.match(jsx, /setControlRoomReturnPhase\("control-room-exit"\)/)
   assert.match(jsx, /controlRoomExitTimerRef\.current = setTimeout\(\(\) => \{[\s\S]*?setHomeFocusHint\("controlRoom"\)[\s\S]*?goToSurfaceRoot\(\)[\s\S]*?\}, 180\)/)
   assert.match(jsx, /isExiting=\{controlRoomReturnPhase === "control-room-exit"\}/)
-  assert.match(jsx, /background: \(libraryReturnPhase === "library-exit" \|\| controlRoomReturnPhase === "control-room-exit"\) \? '#03100e' : '#000'/)
+  assert.match(jsx, /background: \(libraryReturnPhase === "library-exit" \|\| controlRoomReturnPhase === "control-room-exit" \|\| sanctuaryControlRoomExitPhase === "sanctuary-control-room-exit"\) \? '#03100e' : '#000'/)
   const exitRule = controlRoomCss.slice(controlRoomCss.indexOf(".stageExiting"), controlRoomCss.indexOf(".stage::before"))
   assert.match(exitRule, /opacity: 0/)
   assert.match(exitRule, /transition: opacity 180ms/)
@@ -133,4 +134,25 @@ test("Control Room exit cleanup and reduced motion use the existing immediate Ho
   assert.match(jsx, /if \(!controlRoomExitActiveRef\.current \|\| phase !== "main"\) return/)
   assert.match(jsx, /if \(reducedMotion\) \{\s*setHomeFocusHint\("controlRoom"\)\s*goToSurfaceRoot\(\)/)
   assert.match(jsx, /if \(controlRoomExitActiveRef\.current\) \{[\s\S]*?clearControlRoomExit\(\)/)
+})
+
+test("Sanctuary to Control Room keeps Home mounted for a guarded 180ms opacity-only exit", () => {
+  assert.match(jsx, /const \[sanctuaryControlRoomExitPhase, setSanctuaryControlRoomExitPhase\] = useState\("idle"\)/)
+  assert.match(jsx, /if \(sanctuaryControlRoomExitActiveRef\.current \|\| currentSurface !== null\) return/)
+  assert.match(jsx, /setSanctuaryControlRoomExitPhase\("sanctuary-control-room-exit"\)/)
+  assert.match(jsx, /sanctuaryControlRoomExitTimerRef\.current = setTimeout\(\(\) => \{[\s\S]*?navigateSurface\("controlRoom"\)[\s\S]*?\}, 180\)/)
+  assert.match(jsx, /isExiting=\{sanctuaryControlRoomExitPhase === "sanctuary-control-room-exit"\}/)
+  assert.match(jsx, /sanctuaryControlRoomExitPhase === "sanctuary-control-room-exit"/)
+})
+
+test("Sanctuary exit clears safely, skips under reduced motion, and keeps other returns unchanged", () => {
+  assert.match(jsx, /if \(sanctuaryControlRoomExitTimerRef\.current\) clearTimeout\(sanctuaryControlRoomExitTimerRef\.current\)/)
+  assert.match(jsx, /if \(sanctuaryControlRoomExitActiveRef\.current\) \{[\s\S]*?clearSanctuaryControlRoomExit\(\)/)
+  assert.match(jsx, /if \(reducedMotion\) \{\s*navigateSurface\("controlRoom"\)\s*return\s*\}/)
+  const exitRule = homeCss.slice(homeCss.indexOf(".homeExiting"), homeCss.indexOf("@keyframes homeMountFade"))
+  assert.match(exitRule, /opacity: 0/)
+  assert.match(exitRule, /transition: opacity 180ms/)
+  assert.doesNotMatch(exitRule, /transform|filter|scale|blur|position:|width:|height:|inset:|top:|left:/)
+  assert.match(homeCss, /\.homeExiting\s*\{[\s\S]*?transition: none;/)
+  assert.match(jsx, /onReturnHome=\{handleReturnHomeFromControlRoom\}/)
 })
