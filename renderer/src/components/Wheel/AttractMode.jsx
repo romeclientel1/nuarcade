@@ -17,7 +17,19 @@ const SCENE_FADE_MS = 800
 const SCENE_SWAP_HOLD_MS = 16
 const SHOOTING_STAR_MIN_DELAY_MS = 28000
 const SHOOTING_STAR_DELAY_RANGE_MS = 27000
-const ATMOSPHERIC_SCENES = new Set(["open-sky", "ocean-overlook", "village"])
+const ATMOSPHERIC_SCENES = new Set([
+  "open-sky",
+  "ocean-overlook",
+  "village",
+  "coliseum",
+  "sunset-isle",
+])
+const SHOOTING_STAR_SCENES = new Set([
+  "open-sky",
+  "ocean-overlook",
+  "village",
+  "sunset-isle",
+])
 
 const gameKey = (game) => game?.id || game?.profile || game?.title || "unknown"
 
@@ -174,7 +186,7 @@ export default function AttractMode({ games, isActive, onWake, artwork, attractC
       || reducedMotion
       || !shootingStarArmedRef.current
       || shootingStarFiredRef.current
-      || !ATMOSPHERIC_SCENES.has(sceneIdRef.current)
+      || !SHOOTING_STAR_SCENES.has(sceneIdRef.current)
     ) return false
 
     shootingStarArmedRef.current = false

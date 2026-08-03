@@ -40,7 +40,7 @@
 .atmosphere {
   position: absolute;
   z-index: -2;
-  inset: 0 0 22% 20%;
+  inset: var(--atmosphere-inset, 0 0 22% 20%);
   overflow: hidden;
   pointer-events: none;
   opacity: 0;
@@ -48,8 +48,56 @@
 
 .overlay[data-scene="open-sky"] .atmosphere,
 .overlay[data-scene="ocean-overlook"] .atmosphere,
-.overlay[data-scene="village"] .atmosphere {
+.overlay[data-scene="village"] .atmosphere,
+.overlay[data-scene="coliseum"] .atmosphere,
+.overlay[data-scene="sunset-isle"] .atmosphere {
   opacity: 1;
+}
+
+/* Coliseum has one narrow, quiet sky pocket left of the arena roof. Keep
+   every live effect out of the lockup, portal, flags, and title band. */
+.overlay[data-scene="coliseum"] .atmosphere {
+  --atmosphere-inset: 0 66% 68% 20%;
+}
+
+.overlay[data-scene="coliseum"] .skyDrift {
+  animation: vesparaColiseumSkyDrift 92s ease-in-out infinite alternate;
+}
+
+.overlay[data-scene="coliseum"] .lightShimmer,
+.overlay[data-scene="coliseum"] .shootingStar {
+  display: none;
+}
+
+/* Palace is deliberately explicit here as a static scene. Its remaining sky
+   is fragmented by domes, towers, the portal, and high-contrast architecture. */
+.overlay[data-scene="palace"] .atmosphere {
+  display: none;
+  opacity: 0;
+}
+
+/* Sunset Isle has a broad upper-sky shelf. The shimmer is clipped above the
+   sun/horizon and the star stays in the clear upper-right sky. */
+.overlay[data-scene="sunset-isle"] .atmosphere {
+  --atmosphere-inset: 0 0 60% 20%;
+}
+
+.overlay[data-scene="sunset-isle"] .skyDrift {
+  animation: vesparaSunsetSkyDrift 90s ease-in-out infinite alternate;
+}
+
+.overlay[data-scene="sunset-isle"] .lightShimmer {
+  inset: 0 4% 78% 48%;
+  animation: vesparaSunsetLightShimmer 18s ease-in-out infinite alternate;
+}
+
+.overlay[data-scene="sunset-isle"] .shootingStar {
+  top: 9%;
+  right: 8%;
+}
+
+.overlay[data-scene="sunset-isle"] .shootingStar.shootingStarActive {
+  animation: vesparaSunsetShootingStar 1100ms ease-out both;
 }
 
 .skyDrift,
@@ -76,6 +124,16 @@
   to { transform: translate3d(1.6vw, 0.2vh, 0); opacity: 0.07; }
 }
 
+@keyframes vesparaColiseumSkyDrift {
+  from { transform: translate3d(-0.8vw, -0.1vh, 0); opacity: 0.018; }
+  to { transform: translate3d(0.8vw, 0.1vh, 0); opacity: 0.045; }
+}
+
+@keyframes vesparaSunsetSkyDrift {
+  from { transform: translate3d(-1.2vw, -0.15vh, 0); opacity: 0.02; }
+  to { transform: translate3d(1.2vw, 0.15vh, 0); opacity: 0.055; }
+}
+
 .lightShimmer {
   inset: 8% 5% 20% 30%;
   background: radial-gradient(ellipse at 72% 58%, rgba(245, 199, 124, 0.72), transparent 60%);
@@ -87,6 +145,11 @@
 @keyframes vesparaLightShimmer {
   from { opacity: 0.015; }
   to { opacity: 0.055; }
+}
+
+@keyframes vesparaSunsetLightShimmer {
+  from { opacity: 0.012; }
+  to { opacity: 0.035; }
 }
 
 .shootingStar {
@@ -112,6 +175,12 @@
   0%, 18% { transform: rotate(-24deg) translate3d(0, 0, 0); opacity: 0; }
   38% { opacity: 0.36; }
   82%, 100% { transform: rotate(-24deg) translate3d(-18vw, 0.35vh, 0); opacity: 0; }
+}
+
+@keyframes vesparaSunsetShootingStar {
+  0%, 18% { transform: rotate(-24deg) translate3d(0, 0, 0); opacity: 0; }
+  38% { opacity: 0.32; }
+  82%, 100% { transform: rotate(-24deg) translate3d(-12vw, 0.2vh, 0); opacity: 0; }
 }
 
 .portalStage {

@@ -205,10 +205,64 @@ test("restrained atmosphere is inert, scene-scoped, and layered below all portal
   assert.match(attract, /data-scene=\{ATTRACT_SCENES\[sceneIndex\]\.id\}/)
   assert.match(attract, /className=\{styles\.atmosphere\} aria-hidden="true"/)
   assert.match(css, /\.atmosphere\s*\{[\s\S]*?z-index: -2;[\s\S]*?pointer-events: none;/)
-  for (const id of ["open-sky", "ocean-overlook", "village"]) {
+  for (const id of ["open-sky", "ocean-overlook", "village", "coliseum", "sunset-isle"]) {
     assert.match(css, new RegExp(`data-scene="${id}"`))
   }
-  assert.doesNotMatch(css, /data-scene="(?:coliseum|palace|sunset-isle)"/)
+  assert.match(css, /\.overlay\[data-scene="palace"\] \.atmosphere[\s\S]*display: none/)
+  assert.match(attract, /ATMOSPHERIC_SCENES = new Set\(\[[\s\S]*"coliseum"[\s\S]*"sunset-isle"/)
+  assert.doesNotMatch(attract, /ATMOSPHERIC_SCENES = new Set\(\[[\s\S]*"palace"/)
+})
+
+test("the second-pass scene profiles split atmosphere and shooting-star eligibility", () => {
+  assert.match(attract, /const ATMOSPHERIC_SCENES = new Set\(\[[\s\S]*"open-sky"[\s\S]*"coliseum"[\s\S]*"sunset-isle"[\s\S]*\]\)/)
+  assert.match(attract, /const SHOOTING_STAR_SCENES = new Set\(\[[\s\S]*"open-sky"[\s\S]*"sunset-isle"[\s\S]*\]\)/)
+  assert.match(attract, /!SHOOTING_STAR_SCENES\.has\(sceneIdRef\.current\)/)
+  assert.doesNotMatch(attract, /SHOOTING_STAR_SCENES = new Set\(\[[\s\S]*"coliseum"/)
+  assert.doesNotMatch(attract, /SHOOTING_STAR_SCENES = new Set\(\[[\s\S]*"palace"/)
+  assert.doesNotMatch(attract, /ATMOSPHERIC_SCENES = SHOOTING_STAR_SCENES/)
+})
+
+test("Coliseum and Sunset Isle expose bounded scene-specific profiles while Palace stays static", () => {
+  assert.match(css, /\.overlay\[data-scene="coliseum"\] \.atmosphere[\s\S]*--atmosphere-inset: 0 66% 68% 20%/)
+  assert.match(css, /\.overlay\[data-scene="coliseum"\] \.skyDrift[\s\S]*vesparaColiseumSkyDrift 92s/)
+  assert.match(css, /\.overlay\[data-scene="coliseum"\] \.lightShimmer,[\s\S]*\.overlay\[data-scene="coliseum"\] \.shootingStar[\s\S]*display: none/)
+  assert.match(css, /\.overlay\[data-scene="sunset-isle"\] \.atmosphere[\s\S]*--atmosphere-inset: 0 0 60% 20%/)
+  assert.match(css, /\.overlay\[data-scene="sunset-isle"\] \.skyDrift[\s\S]*vesparaSunsetSkyDrift 90s/)
+  assert.match(css, /\.overlay\[data-scene="sunset-isle"\] \.lightShimmer[\s\S]*inset: 0 4% 78% 48%[\s\S]*vesparaSunsetLightShimmer 18s/)
+  assert.match(css, /\.overlay\[data-scene="sunset-isle"\] \.shootingStar[\s\S]*top: 9%[\s\S]*right: 8%/)
+  assert.match(css, /\.overlay\[data-scene="palace"\] \.atmosphere[\s\S]*display: none[\s\S]*opacity: 0/)
+})
+
+test("reduced motion disables every atmosphere-capable scene, while Palace has no render eligibility", () => {
+  const reduced = css.slice(css.indexOf("@media (prefers-reduced-motion: reduce)"))
+  for (const id of ["open-sky", "ocean-overlook", "village", "coliseum", "sunset-isle"]) {
+    assert.match(attract, new RegExp(`ATMOSPHERIC_SCENES[\\s\\S]*"${id}"`))
+  }
+  assert.match(attract, /!reducedMotion && ATMOSPHERIC_SCENES\.has\(ATTRACT_SCENES\[sceneIndex\]\.id\)/)
+  assert.doesNotMatch(attract, /ATMOSPHERIC_SCENES[\\s\\S]*"palace"/)
+  assert.match(reduced, /\.atmosphere[\s\S]*display: none;[\s\S]*animation: none;/)
+})
+
+test("all atmosphere profiles remain opacity/transform-only and preserve the existing three profiles", () => {
+  for (const name of [
+    "vesparaSkyDrift",
+    "vesparaLightShimmer",
+    "vesparaShootingStar",
+    "vesparaColiseumSkyDrift",
+    "vesparaSunsetSkyDrift",
+    "vesparaSunsetLightShimmer",
+    "vesparaSunsetShootingStar",
+  ]) {
+    const start = css.indexOf(`@keyframes ${name}`)
+    const end = css.indexOf("\n}\n", start)
+    const keyframes = css.slice(start, end + 3)
+    assert.ok(start >= 0, name)
+    assert.match(keyframes, /opacity/)
+    assert.doesNotMatch(keyframes, /filter|background-position|width|height|\btop\b|\bleft\b/)
+  }
+  assert.match(css, /animation: vesparaSkyDrift 84s[^;]*alternate/)
+  assert.match(css, /animation: vesparaLightShimmer 16s[^;]*alternate/)
+  assert.match(css, /animation: vesparaShootingStar 1100ms/)
 })
 
 test("atmosphere never animates scene images, portal content, or baked-text UI", () => {
@@ -254,7 +308,7 @@ test("shooting star keeps one randomized delay and one scheduling gate per activ
 
 test("timer expiry arms the star and triggers immediately on a supported scene", () => {
   assert.match(attract, /shootingStarTimerRef\.current = setTimeout\(\(\) => \{[\s\S]*shootingStarArmedRef\.current = true[\s\S]*triggerArmedShootingStar\(\)/)
-  assert.match(attract, /!ATMOSPHERIC_SCENES\.has\(sceneIdRef\.current\)[\s\S]*\) return false/)
+  assert.match(attract, /!SHOOTING_STAR_SCENES\.has\(sceneIdRef\.current\)[\s\S]*\) return false/)
   assert.match(attract, /shootingStarArmedRef\.current = false[\s\S]*shootingStarFiredRef\.current = true[\s\S]*setShootingStarActive\(true\)/)
 })
 
@@ -263,7 +317,7 @@ test("unsupported expiry stays armed until the next supported scene", () => {
     attract.indexOf("const triggerArmedShootingStar"),
     attract.indexOf("// The randomized delay arms"),
   )
-  assert.ok(trigger.indexOf("!ATMOSPHERIC_SCENES.has(sceneIdRef.current)") < trigger.indexOf("shootingStarArmedRef.current = false"))
+  assert.ok(trigger.indexOf("!SHOOTING_STAR_SCENES.has(sceneIdRef.current)") < trigger.indexOf("shootingStarArmedRef.current = false"))
   assert.doesNotMatch(trigger.slice(0, trigger.indexOf("shootingStarArmedRef.current = false")), /shootingStarArmedRef\.current = false/)
   assert.match(attract, /useEffect\(\(\) => \{\s*if \(isActive && !reducedMotion\) triggerArmedShootingStar\(\)\s*\}, \[sceneIndex,/)
 })
