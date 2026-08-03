@@ -503,12 +503,12 @@ export default function VesparaHome({
     ? t("common.loading")
     : hasRecents
       ? t("home.memorySubtitle")
-      : "None yet"
+      : t("home.statusNone")
   const libraryStatusText = loading
     ? t("common.loading")
     : games.length > 0
-      ? "Ready"
-      : "Empty"
+      ? t("home.statusReady")
+      : t("home.statusEmpty")
 
   return (
     <div className={styles.home + (isExiting ? ` ${styles.homeExiting}` : "")}>

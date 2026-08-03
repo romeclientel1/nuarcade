@@ -80,3 +80,17 @@ test("Switch Player uses Sanctuary world-language in both locales without changi
   assert.match(jsx, /const ACTIONS = \["library", "controlRoom", "switchPlayer", "depart"\]/)
   assert.match(jsx, /t\("home\.switchPlayerSubtitle"\)/)
 })
+
+test("Sanctuary status values are localized without changing their loading or populated-state conditions", () => {
+  assert.match(en, /"home\.statusNone":\s*"None yet"/)
+  assert.match(en, /"home\.statusReady":\s*"Ready"/)
+  assert.match(en, /"home\.statusEmpty":\s*"Empty"/)
+  assert.match(es, /"home\.statusNone":\s*"Aún no hay"/)
+  assert.match(es, /"home\.statusReady":\s*"Lista"/)
+  assert.match(es, /"home\.statusEmpty":\s*"Vacía"/)
+  assert.match(jsx, /: t\("home\.statusNone"\)/)
+  assert.match(jsx, /games\.length > 0\s*\n\s*\? t\("home\.statusReady"\)\s*\n\s*: t\("home\.statusEmpty"\)/)
+  assert.match(jsx, /loading\s*\n\s*\? t\("common\.loading"\)/)
+  assert.match(jsx, /hasRecents\s*\n\s*\? t\("home\.memorySubtitle"\)/)
+  assert.doesNotMatch(jsx, /"None yet"|"Ready"|"Empty"/)
+})
