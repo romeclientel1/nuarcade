@@ -233,6 +233,18 @@ test("Coliseum and Sunset Isle expose bounded scene-specific profiles while Pala
   assert.match(css, /\.overlay\[data-scene="palace"\] \.atmosphere[\s\S]*display: none[\s\S]*opacity: 0/)
 })
 
+test("Ocean Overlook and Village expose distinct calibrated profiles while Open Sky remains the fallback", () => {
+  assert.match(css, /\.overlay\[data-scene="ocean-overlook"\] \.atmosphere[\s\S]*--atmosphere-inset: 0 0 52% 20%/)
+  assert.match(css, /\.overlay\[data-scene="ocean-overlook"\] \.skyDrift[\s\S]*--sky-duration: 96s[\s\S]*--sky-x-from: -1vw[\s\S]*--sky-x-to: 1vw[\s\S]*--sky-y-from: -0\.1vh[\s\S]*--sky-y-to: 0\.1vh[\s\S]*--sky-opacity-from: 0\.018[\s\S]*--sky-opacity-to: 0\.05/)
+  assert.match(css, /\.overlay\[data-scene="ocean-overlook"\] \.lightShimmer[\s\S]*inset: 10% 6% 48% 30%[\s\S]*--shimmer-duration: 20s[\s\S]*--shimmer-opacity-from: 0\.012[\s\S]*--shimmer-opacity-to: 0\.04/)
+  assert.match(css, /\.overlay\[data-scene="village"\] \.atmosphere[\s\S]*--atmosphere-inset: 0 0 44% 20%/)
+  assert.match(css, /\.overlay\[data-scene="village"\] \.skyDrift[\s\S]*--sky-duration: 100s[\s\S]*--sky-x-from: -0\.7vw[\s\S]*--sky-x-to: 0\.7vw[\s\S]*--sky-y-from: -0\.08vh[\s\S]*--sky-y-to: 0\.08vh[\s\S]*--sky-opacity-from: 0\.018[\s\S]*--sky-opacity-to: 0\.045/)
+  assert.match(css, /\.overlay\[data-scene="village"\] \.lightShimmer[\s\S]*inset: 8% 12% 48% 34%[\s\S]*--shimmer-duration: 19s[\s\S]*--shimmer-opacity-from: 0\.01[\s\S]*--shimmer-opacity-to: 0\.035/)
+  assert.match(css, /\.atmosphere\s*\{[\s\S]*inset: var\(--atmosphere-inset, 0 0 22% 20%\)/)
+  assert.match(css, /\.skyDrift\s*\{[\s\S]*animation: vesparaSkyDrift var\(--sky-duration, 84s\)/)
+  assert.match(css, /\.lightShimmer\s*\{[\s\S]*animation: vesparaLightShimmer var\(--shimmer-duration, 16s\)/)
+})
+
 test("reduced motion disables every atmosphere-capable scene, while Palace has no render eligibility", () => {
   const reduced = css.slice(css.indexOf("@media (prefers-reduced-motion: reduce)"))
   for (const id of ["open-sky", "ocean-overlook", "village", "coliseum", "sunset-isle"]) {
@@ -260,8 +272,8 @@ test("all atmosphere profiles remain opacity/transform-only and preserve the exi
     assert.match(keyframes, /opacity/)
     assert.doesNotMatch(keyframes, /filter|background-position|width|height|\btop\b|\bleft\b/)
   }
-  assert.match(css, /animation: vesparaSkyDrift 84s[^;]*alternate/)
-  assert.match(css, /animation: vesparaLightShimmer 16s[^;]*alternate/)
+  assert.match(css, /animation: vesparaSkyDrift var\(--sky-duration, 84s\)[^;]*alternate/)
+  assert.match(css, /animation: vesparaLightShimmer var\(--shimmer-duration, 16s\)[^;]*alternate/)
   assert.match(css, /animation: vesparaShootingStar 1100ms/)
 })
 
@@ -288,9 +300,11 @@ test("atmospheric keyframes animate only transform and opacity within restrained
     assert.match(keyframes, /opacity/)
     assert.doesNotMatch(keyframes, /filter|background-position|width|height|\btop\b|\bleft\b/)
   }
-  assert.match(css, /animation: vesparaSkyDrift 84s[^;]*alternate/)
-  assert.match(css, /translate3d\(-1\.6vw, -0\.2vh[\s\S]*translate3d\(1\.6vw, 0\.2vh/)
-  assert.match(css, /animation: vesparaLightShimmer 16s[^;]*alternate/)
+  assert.match(css, /animation: vesparaSkyDrift var\(--sky-duration, 84s\)[^;]*alternate/)
+  assert.match(css, /--sky-x-from, -1\.6vw[\s\S]*--sky-y-from, -0\.2vh[\s\S]*--sky-x-to, 1\.6vw[\s\S]*--sky-y-to, 0\.2vh/)
+  assert.match(css, /--sky-opacity-from, 0\.025[\s\S]*--sky-opacity-to, 0\.07/)
+  assert.match(css, /animation: vesparaLightShimmer var\(--shimmer-duration, 16s\)[^;]*alternate/)
+  assert.match(css, /--shimmer-opacity-from, 0\.015[\s\S]*--shimmer-opacity-to, 0\.055/)
   assert.match(css, /animation: vesparaShootingStar 1100ms/)
   assert.match(css, /width: 120px/)
   assert.match(css, /opacity: 0\.36/)

@@ -54,6 +54,50 @@
   opacity: 1;
 }
 
+/* Ocean Overlook uses a slower, narrower horizon envelope. */
+.overlay[data-scene="ocean-overlook"] .atmosphere {
+  --atmosphere-inset: 0 0 52% 20%;
+}
+
+.overlay[data-scene="ocean-overlook"] .skyDrift {
+  --sky-duration: 96s;
+  --sky-x-from: -1vw;
+  --sky-x-to: 1vw;
+  --sky-y-from: -0.1vh;
+  --sky-y-to: 0.1vh;
+  --sky-opacity-from: 0.018;
+  --sky-opacity-to: 0.05;
+}
+
+.overlay[data-scene="ocean-overlook"] .lightShimmer {
+  inset: 10% 6% 48% 30%;
+  --shimmer-duration: 20s;
+  --shimmer-opacity-from: 0.012;
+  --shimmer-opacity-to: 0.04;
+}
+
+/* Village keeps the movement softer, warmer, and closer to its upper sky. */
+.overlay[data-scene="village"] .atmosphere {
+  --atmosphere-inset: 0 0 44% 20%;
+}
+
+.overlay[data-scene="village"] .skyDrift {
+  --sky-duration: 100s;
+  --sky-x-from: -0.7vw;
+  --sky-x-to: 0.7vw;
+  --sky-y-from: -0.08vh;
+  --sky-y-to: 0.08vh;
+  --sky-opacity-from: 0.018;
+  --sky-opacity-to: 0.045;
+}
+
+.overlay[data-scene="village"] .lightShimmer {
+  inset: 8% 12% 48% 34%;
+  --shimmer-duration: 19s;
+  --shimmer-opacity-from: 0.01;
+  --shimmer-opacity-to: 0.035;
+}
+
 /* Coliseum has one narrow, quiet sky pocket left of the arena roof. Keep
    every live effect out of the lockup, portal, flags, and title band. */
 .overlay[data-scene="coliseum"] .atmosphere {
@@ -115,13 +159,19 @@
     radial-gradient(ellipse 40% 16% at 72% 44%, rgba(190, 207, 211, 0.24), transparent 74%);
   filter: blur(38px);
   opacity: 0.045;
-  animation: vesparaSkyDrift 84s ease-in-out infinite alternate;
+  animation: vesparaSkyDrift var(--sky-duration, 84s) ease-in-out infinite alternate;
   will-change: transform, opacity;
 }
 
 @keyframes vesparaSkyDrift {
-  from { transform: translate3d(-1.6vw, -0.2vh, 0); opacity: 0.025; }
-  to { transform: translate3d(1.6vw, 0.2vh, 0); opacity: 0.07; }
+  from {
+    transform: translate3d(var(--sky-x-from, -1.6vw), var(--sky-y-from, -0.2vh), 0);
+    opacity: var(--sky-opacity-from, 0.025);
+  }
+  to {
+    transform: translate3d(var(--sky-x-to, 1.6vw), var(--sky-y-to, 0.2vh), 0);
+    opacity: var(--sky-opacity-to, 0.07);
+  }
 }
 
 @keyframes vesparaColiseumSkyDrift {
@@ -138,13 +188,13 @@
   inset: 8% 5% 20% 30%;
   background: radial-gradient(ellipse at 72% 58%, rgba(245, 199, 124, 0.72), transparent 60%);
   opacity: 0.03;
-  animation: vesparaLightShimmer 16s ease-in-out infinite alternate;
+  animation: vesparaLightShimmer var(--shimmer-duration, 16s) ease-in-out infinite alternate;
   will-change: opacity;
 }
 
 @keyframes vesparaLightShimmer {
-  from { opacity: 0.015; }
-  to { opacity: 0.055; }
+  from { opacity: var(--shimmer-opacity-from, 0.015); }
+  to { opacity: var(--shimmer-opacity-to, 0.055); }
 }
 
 @keyframes vesparaSunsetLightShimmer {
