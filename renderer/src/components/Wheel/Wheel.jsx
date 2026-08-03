@@ -255,7 +255,7 @@ function KonamiCelebration({ onClose }) {
   )
 }
 
-export default function Wheel({ onCRTChange, crtEnabled, activeProfile, onSwitchPlayer, onReturnHome, restorationRequest, uiSoundsEnabled, onUiSoundsChange, uiSoundVolume, onUiSoundVolumeChange }) {
+export default function Wheel({ onCRTChange, crtEnabled, activeProfile, onSwitchPlayer, onReturnHome, isExiting = false, restorationRequest, uiSoundsEnabled, onUiSoundsChange, uiSoundVolume, onUiSoundVolumeChange }) {
   const { t } = useI18n()
   const {
     games, loading, libraryEmpty, config,
@@ -1435,7 +1435,7 @@ export default function Wheel({ onCRTChange, crtEnabled, activeProfile, onSwitch
   if (!libraryEmpty && games.length === 0) return <div style={{ width:"100vw", height:"100vh", background:"#000", display:"flex", alignItems:"center", justifyContent:"center", color:"#888", fontFamily:"monospace", fontSize:14 }}>{t("common.loading")}</div>
 
   return (
-    <div className={styles.stage + (libraryEmpty ? " " + styles.libraryEmptyStage : "") + (cabinetMode ? " " + styles.cabinetMode : "") + (screenshotMode ? " " + styles.screenshotMode : "") + (attractMode ? " " + styles.attractDormant : "")}>
+    <div className={styles.stage + (libraryEmpty ? " " + styles.libraryEmptyStage : "") + (cabinetMode ? " " + styles.cabinetMode : "") + (screenshotMode ? " " + styles.screenshotMode : "") + (attractMode ? " " + styles.attractDormant : "") + (isExiting ? " " + styles.stageExiting : "")}>
       <img
         src={libraryEnvironment}
         alt=""

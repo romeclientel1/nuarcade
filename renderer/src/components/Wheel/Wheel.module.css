@@ -11,6 +11,12 @@
   animation: stageMountFade var(--motion-atmosphere) var(--ease-standard);
 }
 
+.stageExiting {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms var(--ease-standard, cubic-bezier(0.25, 0.46, 0.45, 0.94));
+}
+
 /* Attract is the dormant Library, not a replacement screen. Keep the real
    environment legible while quieting every interactive Library layer beneath
    the portal. The Attract overlay itself lives in its own CSS module and is
@@ -48,6 +54,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .stage { animation: none; }
+  .stageExiting { transition: none; }
   .attractDormant .globalHeader,
   .attractDormant .placeIdentity,
   .attractDormant .categoryStrip,

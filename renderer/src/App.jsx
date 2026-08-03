@@ -98,6 +98,20 @@ export default function App() {
     navigate: navigateSurface,
     goHome: goToSurfaceRoot,
   } = useDestination()
+  const [libraryReturnPhase, setLibraryReturnPhase] = useState("idle")
+  const [reducedMotion, setReducedMotion] = useState(
+    () => window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false,
+  )
+  const libraryExitTimerRef = useRef(null)
+  const libraryExitActiveRef = useRef(false)
+  const clearLibraryExit = () => {
+    if (libraryExitTimerRef.current) {
+      clearTimeout(libraryExitTimerRef.current)
+      libraryExitTimerRef.current = null
+    }
+    libraryExitActiveRef.current = false
+    setLibraryReturnPhase("idle")
+  }
   // Settings already persists this to the backend config under crtEffect --
   // this just loads that saved value on launch and mirrors live changes so
   // the CRT overlay actually reflects what's configured instead of being
@@ -120,6 +134,27 @@ export default function App() {
       setUiSoundVolume(normalizeUiSoundVolume(cfg.uiSoundVolume))
     }).catch(() => setStartupConfig(null))
   }, [])
+
+  useEffect(() => {
+    const query = window.matchMedia?.("(prefers-reduced-motion: reduce)")
+    if (!query) return undefined
+    const update = () => setReducedMotion(query.matches)
+    update()
+    if (query.addEventListener) query.addEventListener("change", update)
+    return () => query.removeEventListener?.("change", update)
+  }, [])
+  useEffect(() => {
+    return () => {
+      if (libraryExitTimerRef.current) clearTimeout(libraryExitTimerRef.current)
+      libraryExitActiveRef.current = false
+    }
+  }, [])
+  useEffect(() => {
+    if (phase === "main" && !reducedMotion) return
+    if (!libraryExitActiveRef.current) return
+    clearLibraryExit()
+    if (phase === "main" && reducedMotion) goToSurfaceRoot()
+  }, [phase, reducedMotion, goToSurfaceRoot])
 
   // The full sanctuary-entry film is Vespara's primary opening.
   // A configured Media-folder file can override the bundled product default.
@@ -300,6 +335,8 @@ export default function App() {
   }
 
   const handleReturnToPlayerSelect = () => {
+    if (libraryExitActiveRef.current) return
+    clearLibraryExit()
     // Reset the surface to Home so selecting a different player next
     // cannot land them directly inside the previous player's Library view.
     clearPendingRestoration()
@@ -321,9 +358,22 @@ export default function App() {
   }
 
   const handleReturnHomeFromWheel = () => {
+    if (libraryExitActiveRef.current || currentSurface !== "library") return
     clearPendingRestoration()
     setHomeFocusHint("library")
-    goToSurfaceRoot()
+    if (reducedMotion) {
+      goToSurfaceRoot()
+      return
+    }
+    libraryExitActiveRef.current = true
+    setLibraryReturnPhase("library-exit")
+    libraryExitTimerRef.current = setTimeout(() => {
+      libraryExitTimerRef.current = null
+      if (!libraryExitActiveRef.current || phase !== "main") return
+      libraryExitActiveRef.current = false
+      setLibraryReturnPhase("idle")
+      goToSurfaceRoot()
+    }, 180)
   }
 
   // Same-session destination returns leave a one-shot hint so Sanctuary
@@ -337,7 +387,7 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <div style={{ position: 'relative', width: '100vw', height: '100vh', background: '#000', overflow: 'hidden' }}>
+      <div style={{ position: 'relative', width: '100vw', height: '100vh', background: libraryReturnPhase === "library-exit" ? '#03100e' : '#000', overflow: 'hidden' }}>
 
         {phase === "launchVideo" && launchVideo && (
           <IntroVideo
@@ -369,6 +419,7 @@ export default function App() {
               activeProfile={activeProfile}
               onSwitchPlayer={handleReturnToPlayerSelect}
               onReturnHome={handleReturnHomeFromWheel}
+              isExiting={libraryReturnPhase === "library-exit"}
               crtEnabled={crtEnabled}
               onCRTChange={setCrtEnabled}
               uiSoundsEnabled={uiSoundsEnabled}

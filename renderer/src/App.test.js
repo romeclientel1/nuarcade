@@ -23,6 +23,7 @@ const HERE = dirname(fileURLToPath(import.meta.url))
 // out as CRLF, which would silently break any indexOf/slice anchor further
 // down that (incorrectly) embedded a literal "\n".
 const jsx = readFileSync(join(HERE, "App.jsx"), "utf8").replace(/\r\n/g, "\n")
+const wheelCss = readFileSync(join(HERE, "components/Wheel/Wheel.module.css"), "utf8").replace(/\r\n/g, "\n")
 
 // Extracts the substring between two anchors, throwing a descriptive error
 // instead of silently returning "" when an anchor is missing -- a missing
@@ -87,4 +88,28 @@ test("sliceBetween fails loudly (not with a silent empty string) when an anchor 
 
 test("this wiring introduces no new main-process/preload API -- getConfig/setConfig are the only IPC surface touched, and setConfig is untouched here (Settings.jsx owns writes)", () => {
   assert.doesNotMatch(jsx, /window\.nuarcade\.setConfig|window\.nuarcade\?\.setConfig/)
+})
+
+test("Library to Sanctuary uses a guarded 180ms Wheel exit before swapping surfaces", () => {
+  assert.match(jsx, /const \[libraryReturnPhase, setLibraryReturnPhase\] = useState\("idle"\)/)
+  assert.match(jsx, /if \(libraryExitActiveRef\.current \|\| currentSurface !== "library"\) return/)
+  assert.match(jsx, /setLibraryReturnPhase\("library-exit"\)/)
+  assert.match(jsx, /libraryExitTimerRef\.current = setTimeout\(\(\) => \{[\s\S]*?goToSurfaceRoot\(\)[\s\S]*?\}, 180\)/)
+  assert.match(jsx, /isExiting=\{libraryReturnPhase === "library-exit"\}/)
+  assert.match(jsx, /background: libraryReturnPhase === "library-exit" \? '#03100e' : '#000'/)
+})
+
+test("the Library handoff clears stale timers, ignores repeated returns, and skips immediately under reduced motion", () => {
+  assert.match(jsx, /const \[reducedMotion, setReducedMotion\] = useState\(/)
+  assert.match(jsx, /if \(reducedMotion\) \{\s*goToSurfaceRoot\(\)\s*return\s*\}/)
+  assert.match(jsx, /if \(libraryExitTimerRef\.current\) clearTimeout\(libraryExitTimerRef\.current\)/)
+  assert.match(jsx, /if \(!libraryExitActiveRef\.current\) return/)
+  assert.match(jsx, /return \(\) => query\.removeEventListener\?\.\("change", update\)/)
+})
+
+test("the Wheel exit is an opacity-only 180ms transition with no geometry animation", () => {
+  const exitRule = wheelCss.slice(wheelCss.indexOf(".stageExiting"), wheelCss.indexOf("/* Attract"))
+  assert.match(exitRule, /opacity: 0/)
+  assert.match(exitRule, /transition: opacity 180ms/)
+  assert.doesNotMatch(exitRule, /transform|filter|scale|blur|position:/)
 })
