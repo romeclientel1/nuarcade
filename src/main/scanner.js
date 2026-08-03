@@ -2501,20 +2501,23 @@ async function importEmuMoviesFile({ sourceFile, gameId, slot, mediaPath }) {
   if (!fs.existsSync(sourceFile)) {
     return { success: false, error: 'Source file no longer exists: ' + sourceFile }
   }
+  if (!mediaPath) return { success: false, error: 'A configured media root is required' }
 
   try {
     if (slot === 'video') {
-      const videosDir = path.join(mediaPath || 'F:\\Media\\', 'Videos')
+      const videosDir = path.join(mediaPath || 'Media', 'Videos')
       if (!fs.existsSync(videosDir)) fs.mkdirSync(videosDir, { recursive: true })
       const destPath = path.join(videosDir, gameId + '.mp4')
+      if (fs.existsSync(destPath)) return { success: false, error: 'A fallback video already exists; EmuMovies source remains untouched', destPath }
       fs.copyFileSync(sourceFile, destPath)
       return { success: true, destPath }
     } else {
       // slot is 'capsule' or 'hero' -- both are artwork, kept as separate files
-      const artworkDir = path.join(mediaPath || 'F:\\Media\\', 'Artwork')
+      const artworkDir = path.join(mediaPath || 'Media', 'Artwork')
       if (!fs.existsSync(artworkDir)) fs.mkdirSync(artworkDir, { recursive: true })
       const ext = path.extname(sourceFile) || '.png'
       const destPath = path.join(artworkDir, gameId + '_' + slot + ext)
+      if (fs.existsSync(destPath)) return { success: false, error: 'A fallback artwork file already exists; EmuMovies source remains untouched', destPath }
       fs.copyFileSync(sourceFile, destPath)
       return { success: true, destPath, fileUrl: 'file:///' + destPath.replace(/\\/g, '/'), slot }
     }

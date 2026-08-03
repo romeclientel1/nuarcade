@@ -1,5 +1,5 @@
 // useMusicPlayer -- background music player using Howler
-// Scans F:/Media/Music/ for mp3/ogg/wav files, shuffles and plays them.
+// Scans the configured Media/Music folder for mp3/ogg/wav files.
 // Fades down when gameplay video is active, fades back up after.
 
 import { useState, useEffect, useRef, useCallback } from 'react'

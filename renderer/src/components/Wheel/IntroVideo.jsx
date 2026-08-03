@@ -7,7 +7,8 @@ import vesparaSymbol from "../../assets/brand/vespara-symbol-simplified.svg"
 const FADE_DURATION = 400
 
 const buildVideoUrl = (mediaPath, fileName) => {
-  const base = (mediaPath || "C:\\Media\\")
+  if (!mediaPath) return ""
+  const base = mediaPath
     .replace(/\\/g, "/")
     .replace(/\/+$/, "")
 

@@ -110,6 +110,16 @@ test('shortcut target, duplicate prevention, and uninstall cleanup remain owned 
   assert.equal(pkg.build.executableName, 'NuArcade')
 })
 
+test('custom uninstaller cleanup is defined for BUILD_UNINSTALLER and never falls back to recursive $INSTDIR deletion', () => {
+  const macroStart = nsis.indexOf('!macro customRemoveFiles')
+  const guardEnd = nsis.lastIndexOf('!endif')
+  assert.ok(macroStart > guardEnd - 2000, 'customRemoveFiles should be defined outside the installer-only guard')
+  const macro = nsis.slice(macroStart, nsis.indexOf('!macroend', macroStart))
+  assert.doesNotMatch(macro, /RMDir \/r "\$INSTDIR"/)
+  const uninstallerTemplate = fs.readFileSync(path.join(ROOT, 'node_modules', 'app-builder-lib', 'templates', 'nsis', 'uninstaller.nsh'), 'utf8')
+  assert.match(uninstallerTemplate, /!ifmacrodef customRemoveFiles[\s\S]*?!insertmacro customRemoveFiles[\s\S]*?RMDir \/r \$INSTDIR/)
+})
+
 test('installer header and sidebar are correctly sized local 24-bit bitmaps', () => {
   assert.deepEqual(bmpInfo(path.join(ROOT, pkg.build.nsis.installerHeader)), {
     signature: 'BM', width: 150, height: 57, bits: 24,

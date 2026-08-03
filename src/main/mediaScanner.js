@@ -1,16 +1,14 @@
 const fs = require('fs')
 const path = require('path')
+const { resolveMediaAsset } = require('./mediaResolution')
 
 // ---
 // mediaScanner.js
-// Scans F:\Media\ folder tree and patches media paths onto game objects.
+// Scans the configured media folder tree and patches media paths onto games.
 //
 // Media folder layout (created by ensure-media-folders IPC handler):
-//   F:\Media\{System}\Video\{name}.mp4
-//   F:\Media\{System}\Images\Snap\{name}.png/.jpg
-//   F:\Media\{System}\Images\Box Art\{name}.png/.jpg
-//   F:\Media\{System}\Images\Marquee\{name}.png/.jpg
-//   F:\Media\{System}\Images\Wheel\{name}.png/.jpg
+//   <media>\{System}\Video\{name}.mp4
+//   <media>\{System}\Images\Snap\{name}.png/.jpg
 // ---
 
 // Map emulator IDs to media folder names
@@ -98,7 +96,7 @@ function scanMedia(games, mediaRoot) {
   // Build lookup tables per system per asset type
   const cache = {}
 
-  function getEmMoviesLookup(emulatorKey, assetType, exts, mediaRoot) {
+  function getEmMoviesLookup(emulatorKey, assetType, exts) {
     const sysName = EMUMOVIES_FOLDER[emulatorKey?.toLowerCase()] || ''
     if (!sysName) return {}
     const emDir = path.join(mediaRoot, 'EmuMovies', sysName, assetType)
@@ -126,12 +124,23 @@ function scanMedia(games, mediaRoot) {
     const marquees = getLookup(system, 'Images\\Marquee',   IMAGE_EXTS)
     const wheels   = getLookup(system, 'Images\\Wheel',     IMAGE_EXTS)
 
+    const emu = {
+      videoPath: getEmMoviesLookup(emulator, 'Video_MP4_HI_QUAL', VIDEO_EXTS)[key] || getEmMoviesLookup(emulator, 'Video_MP4_HD', VIDEO_EXTS)[key] || getEmMoviesLookup(emulator, 'Video_MP4', VIDEO_EXTS)[key],
+      snapPath: getEmMoviesLookup(emulator, 'Snap', IMAGE_EXTS)[key],
+      boxArtPath: getEmMoviesLookup(emulator, 'Box_3D', IMAGE_EXTS)[key] || getEmMoviesLookup(emulator, 'Box', IMAGE_EXTS)[key] || getEmMoviesLookup(emulator, 'Cart', IMAGE_EXTS)[key],
+      marqueePath: getEmMoviesLookup(emulator, 'Logos', IMAGE_EXTS)[key] || getEmMoviesLookup(emulator, 'Title', IMAGE_EXTS)[key],
+      wheelPath: getEmMoviesLookup(emulator, 'Box_Full', IMAGE_EXTS)[key],
+    }
     const patch = {}
-    if (videos[key]   && !game.videoPath)    patch.videoPath    = videos[key]
-    if (snaps[key]    && !game.snapPath)     patch.snapPath     = snaps[key]
-    if (boxart[key]   && !game.boxArtPath)   patch.boxArtPath   = boxart[key]
-    if (marquees[key] && !game.marqueePath)  patch.marqueePath  = marquees[key]
-    if (wheels[key]   && !game.wheelPath)    patch.wheelPath    = wheels[key]
+    const choose = (field, scraped) => resolveMediaAsset({ emuMovies: emu[field], scraped, existing: game[field] })
+    const chosen = {
+      videoPath: choose('videoPath', videos[key]), snapPath: choose('snapPath', snaps[key]),
+      boxArtPath: choose('boxArtPath', boxart[key]), marqueePath: choose('marqueePath', marquees[key]),
+      wheelPath: choose('wheelPath', wheels[key]),
+    }
+    for (const [field, value] of Object.entries(chosen)) {
+      if (value && value !== game[field]) patch[field] = value
+    }
 
     return Object.keys(patch).length ? { ...game, ...patch } : game
   })

@@ -1734,20 +1734,20 @@ export default function Wheel({ onCRTChange, crtEnabled, activeProfile, onSwitch
               <span>Existing scan locations</span>
             </div>
             <div className={styles.emptyFolderGrid}>
-              <div className={styles.emptyFolderRow}><code>F:\ArcadeGames\</code><span>TeknoParrot arcade</span></div>
-              <div className={styles.emptyFolderRow}><code>F:\MAME\roms\</code><span>MAME classics</span></div>
-              <div className={styles.emptyFolderRow}><code>F:\RetroArchGames\</code><span>NES, SNES, Genesis...</span></div>
-              <div className={styles.emptyFolderRow}><code>F:\N64Games\</code><span>Nintendo 64</span></div>
-              <div className={styles.emptyFolderRow}><code>F:\PS1Games\</code><span>PlayStation</span></div>
-              <div className={styles.emptyFolderRow}><code>F:\DreamcastGames\</code><span>Dreamcast</span></div>
-              <div className={styles.emptyFolderRow}><code>F:\PS2Games\</code><span>PlayStation 2</span></div>
-              <div className={styles.emptyFolderRow}><code>F:\PS3Games\</code><span>PlayStation 3</span></div>
-              <div className={styles.emptyFolderRow}><code>F:\Xbox360Games\</code><span>Xbox 360</span></div>
-              <div className={styles.emptyFolderRow}><code>F:\GCWiiGames\</code><span>GameCube / Wii</span></div>
-              <div className={styles.emptyFolderRow}><code>F:\SwitchGames\</code><span>Nintendo Switch</span></div>
-              <div className={styles.emptyFolderRow}><code>F:\PSPGames\</code><span>PSP</span></div>
-              <div className={styles.emptyFolderRow}><code>F:\WiiUGames\</code><span>Wii U</span></div>
-              <div className={styles.emptyFolderRow}><code>F:\PinballTables\</code><span>Visual Pinball X</span></div>
+              <div className={styles.emptyFolderRow}><code>Configured ArcadeGames</code><span>TeknoParrot arcade</span></div>
+              <div className={styles.emptyFolderRow}><code>Configured MAME roms</code><span>MAME classics</span></div>
+              <div className={styles.emptyFolderRow}><code>Configured RetroArchGames</code><span>NES, SNES, Genesis...</span></div>
+              <div className={styles.emptyFolderRow}><code>Configured N64Games</code><span>Nintendo 64</span></div>
+              <div className={styles.emptyFolderRow}><code>Configured PS1Games</code><span>PlayStation</span></div>
+              <div className={styles.emptyFolderRow}><code>Configured DreamcastGames</code><span>Dreamcast</span></div>
+              <div className={styles.emptyFolderRow}><code>Configured PS2Games</code><span>PlayStation 2</span></div>
+              <div className={styles.emptyFolderRow}><code>Configured PS3Games</code><span>PlayStation 3</span></div>
+              <div className={styles.emptyFolderRow}><code>Configured Xbox360Games</code><span>Xbox 360</span></div>
+              <div className={styles.emptyFolderRow}><code>Configured GCWiiGames</code><span>GameCube / Wii</span></div>
+              <div className={styles.emptyFolderRow}><code>Configured SwitchGames</code><span>Nintendo Switch</span></div>
+              <div className={styles.emptyFolderRow}><code>Configured PSPGames</code><span>PSP</span></div>
+              <div className={styles.emptyFolderRow}><code>Configured WiiUGames</code><span>Wii U</span></div>
+              <div className={styles.emptyFolderRow}><code>Configured PinballTables</code><span>Visual Pinball X</span></div>
             </div>
           </section>
           <div className={styles.emptyArchiveNote} aria-hidden="true">

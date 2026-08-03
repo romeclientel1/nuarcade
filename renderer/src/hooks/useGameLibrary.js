@@ -282,7 +282,7 @@ export function useGameLibrary() {
           const prevCount = parseInt(localStorage.getItem('nuarcade_last_game_count') || '0')
           const libraryEmpty = allGames.length === 0
 
-          // Load video map from disk (F:/Media/Videos/*.mp4 + videos.json registry)
+          // Load the configured Media/Videos map from disk.
           let videosMap = {}
           try {
             if (window.nuarcade.getVideos) {

@@ -51,12 +51,12 @@ class ErrorBoundary extends Component {
 }
 
 const buildMediaVideoPath = (mediaPath, fileName) => {
-  const base = (mediaPath || "C:\\Media\\").replace(/[\\/]+$/, "")
+  const base = (mediaPath || "").replace(/[\\/]+$/, "")
   return `${base}\\${fileName}`
 }
 
 const resolveCinematicMediaPath = async (fileName, configuredMediaPath) => {
-  const mediaPath = configuredMediaPath || "C:\\Media\\"
+  const mediaPath = configuredMediaPath || ""
 
   // A user-supplied file remains the first-choice override on Windows.
   if (
@@ -205,7 +205,7 @@ export default function App() {
       return () => clearTimeout(fallback)
     }
 
-    const mediaPath = startupConfig?.mediaPath || "C:\\Media\\"
+    const mediaPath = startupConfig?.mediaPath || ""
     let cancelled = false
 
     const resolveLaunchVideo = async () => {

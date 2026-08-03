@@ -236,13 +236,13 @@ const [ytdlpError, setYtdlpError] = useState(null)
       }
     } else {
       setConfig({
-        teknoParrotPath: "F:/TeknoParrot/",
-        gamesFolderPath: "F:/ArcadeGames/",
+        teknoParrotPath: "",
+        gamesFolderPath: "",
         steamPath:       "C:/Program Files (x86)/Steam/steamapps",
-        pcGamesPath:     "F:/PCGames/",
-        pinballPath:     "F:/vPinball/",
-        tablesPath:      "F:/PinballTables/",
-        mediaPath:       "F:/Media/",
+        pcGamesPath:     "",
+        pinballPath:     "",
+        tablesPath:      "",
+        mediaPath:       "",
         displayMode:     "fullscreen",
         attractTimeout:  120,
         ambientVolume:   35,
@@ -1100,7 +1100,7 @@ const handleSave = async () => {
                 ) : (
                   <div className={styles.rescanTotal}>
                     {t("settings.gamesConfigured", { count: tpResult.configured })}
-                    {tpResult.notFound > 0 ? " " + t("settings.notFoundCheckPath", { count: tpResult.notFound, path: "F:\\ArcadeGames\\" }) : " " + t("settings.hitRescanToLoad")}
+                    {tpResult.notFound > 0 ? " " + t("settings.notFoundCheckPath", { count: tpResult.notFound, path: config.gamesFolderPath || "your configured games folder" }) : " " + t("settings.hitRescanToLoad")}
                   </div>
                 )}
               </div>
@@ -1160,9 +1160,9 @@ const handleSave = async () => {
               <label className={styles.inputLabel}>yt-dlp path</label>
               <input
                 className={styles.textInput}
-                value={config.ytdlpPath || "F:/Tools/yt-dlp.exe"}
+                value={config.ytdlpPath || ""}
                 onChange={e => update("ytdlpPath", e.target.value)}
-                placeholder="F:/Tools/yt-dlp.exe"
+                placeholder="Path to yt-dlp.exe"
               />
             </div>
             <div className={styles.inputRow}>

@@ -33,13 +33,8 @@ export function useMediaFolders() {
   const [result, setResult] = useState(null)
 
   useEffect(() => {
-    const STORAGE_KEY = 'nuarcade_media_folders_created'
-    const already = localStorage.getItem(STORAGE_KEY)
-    if (already) return
-
-    // Browser-preview support: initializeMediaFolders explicitly recognizes a
-    // missing preload bridge and skips native folder creation without claiming
-    // success or persisting the Electron-only completion flag.
+    // Filesystem state is authoritative. A stale renderer flag must never
+    // suppress startup verification or repair.
     initializeMediaFolders({
       nativeBridge: window.nuarcade,
       storage: localStorage,

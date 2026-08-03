@@ -107,7 +107,7 @@ test("7 RA_SYSTEM_MAP labels intentionally alias onto fixed CATEGORIES ids (shar
 // -- 3. Logo folder path, extension whitelist, case-insensitivity ------------
 
 test("logo folder is `<mediaPath>/SystemLogos` and the extension whitelist is exactly the audited 5", () => {
-  assert.match(mainIndexSrc, /path\.join\(cfg\.mediaPath \|\| 'F:\\\\Media\\\\', 'SystemLogos'\)/)
+  assert.match(mainIndexSrc, /path\.join\(cfg\.mediaPath \|\| installContentPath\('Media'\), 'SystemLogos'\)/)
   const extMatch = mainIndexSrc.match(/const IMG_EXTS = \[([^\]]+)\]/)
   assert.ok(extMatch, "expected IMG_EXTS whitelist in get-system-logos handler")
   const exts = extMatch[1].match(/'([^']*)'/g).map(s => s.slice(1, -1))

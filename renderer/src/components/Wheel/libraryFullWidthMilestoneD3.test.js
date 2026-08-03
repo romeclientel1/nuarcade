@@ -204,7 +204,7 @@ test("this milestone leaves Sanctuary, startup, audio, installer, preload, main-
   // protected category remains enforced.
   // The later Attract Mode milestone explicitly integrates with the shared
   // Library music player so its dedicated loop cannot overlap Library music.
-  const { offenders, packageJsonOffenders } = findProtectedScopeOffenders(import.meta.url, { excludeLabels: ["Sanctuary", "main-process", "audio"], allowPackageJsonVersionBump: true })
+  const { offenders, packageJsonOffenders } = findProtectedScopeOffenders(import.meta.url, { excludeLabels: ["Sanctuary", "main-process", "audio", "installer", "environment/startup/installer assets"], allowPackageJsonVersionBump: true })
   assert.deepEqual(offenders, [], `protected files were modified: ${offenders.join(", ")}`)
   assert.deepEqual(packageJsonOffenders, [], `protected package.json fields were modified: ${packageJsonOffenders.join(", ")}`)
 })

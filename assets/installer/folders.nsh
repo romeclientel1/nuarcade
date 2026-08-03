@@ -108,48 +108,41 @@ FunctionEnd
     System::Call 'shell32::SHChangeNotify(i, i, i, i) v (0x08000000, 0, 0, 0)'
   ${EndIf}
 
-  IfFileExists "F:\" 0 Done
-    CreateDirectory "F:\TeknoParrot"
-    CreateDirectory "F:\MAME"
-    CreateDirectory "F:\MAME\roms"
-    CreateDirectory "F:\Model2"
-    CreateDirectory "F:\Supermodel"
-    CreateDirectory "F:\RetroArch"
-    CreateDirectory "F:\RetroArch\system"
-    CreateDirectory "F:\Project64"
-    CreateDirectory "F:\DuckStation"
-    CreateDirectory "F:\Flycast"
-    CreateDirectory "F:\Xemu"
-    CreateDirectory "F:\Cxbx-Reloaded"
-    CreateDirectory "F:\PPSSPP"
-    CreateDirectory "F:\PCSX2"
-    CreateDirectory "F:\RPCS3"
-    CreateDirectory "F:\Xenia"
-    CreateDirectory "F:\Dolphin"
-    CreateDirectory "F:\Cemu"
-    CreateDirectory "F:\Ryujinx"
-    CreateDirectory "F:\vPinball"
-    CreateDirectory "F:\ArcadeGames"
-    CreateDirectory "F:\RetroArchGames"
-    CreateDirectory "F:\N64Games"
-    CreateDirectory "F:\PS1Games"
-    CreateDirectory "F:\DreamcastGames"
-    CreateDirectory "F:\XboxGames"
-    CreateDirectory "F:\PSPGames"
-    CreateDirectory "F:\PS2Games"
-    CreateDirectory "F:\PS3Games"
-    CreateDirectory "F:\Xbox360Games"
-    CreateDirectory "F:\GCWiiGames"
-    CreateDirectory "F:\WiiUGames"
-    CreateDirectory "F:\SwitchGames"
-    CreateDirectory "F:\Model2Games"
-    CreateDirectory "F:\Model3Games"
-    CreateDirectory "F:\PinballTables"
-    CreateDirectory "F:\PCGames"
-    CreateDirectory "F:\Media"
-    CreateDirectory "F:\Media\Videos"
-    CreateDirectory "F:\Media\Artwork"
-  Done:
+  # The main process is the authoritative schema and repairs the complete
+  # tree on first launch. These base directories are a best-effort installer
+  # hint under the user-selected install root; no legacy F: content is moved.
+  CreateDirectory "$INSTDIR\Media"
+  CreateDirectory "$INSTDIR\Media\Videos"
+  CreateDirectory "$INSTDIR\Media\Artwork"
+  CreateDirectory "$INSTDIR\Media\EmuMovies"
+  CreateDirectory "$INSTDIR\RetroArchGames"
+  CreateDirectory "$INSTDIR\PCGames"
 !macroend
 
 !endif
+
+# electron-builder inserts customRemoveFiles before its destructive fallback
+# in uninstaller.nsh. Keep this macro outside BUILD_UNINSTALLER so it is
+# defined when the generated uninstaller is compiled.
+!macro customRemoveFiles
+  # Preserve user content rooted beside the application. Remove only files
+  # installed by Electron; never recursively remove $INSTDIR.
+  Delete "$INSTDIR\NuArcade.exe"
+  Delete "$INSTDIR\chrome_100_percent.pak"
+  Delete "$INSTDIR\chrome_200_percent.pak"
+  Delete "$INSTDIR\d3dcompiler_47.dll"
+  Delete "$INSTDIR\ffmpeg.dll"
+  Delete "$INSTDIR\icudtl.dat"
+  Delete "$INSTDIR\libEGL.dll"
+  Delete "$INSTDIR\libGLESv2.dll"
+  Delete "$INSTDIR\LICENSE.electron.txt"
+  Delete "$INSTDIR\LICENSES.chromium.html"
+  Delete "$INSTDIR\resources.pak"
+  Delete "$INSTDIR\snapshot_blob.bin"
+  Delete "$INSTDIR\v8_context_snapshot.bin"
+  Delete "$INSTDIR\vk_swiftshader_icd.json"
+  Delete "$INSTDIR\vk_swiftshader.dll"
+  Delete "$INSTDIR\vulkan-1.dll"
+  RMDir /r "$INSTDIR\locales"
+  RMDir /r "$INSTDIR\resources"
+!macroend
