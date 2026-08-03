@@ -20,16 +20,19 @@
   pointer-events: none;
 }
 
-.sceneStack { z-index: -3; }
+.sceneStack {
+  z-index: -3;
+  background: #03100e;
+}
 
 .scene {
   object-fit: cover;
   object-position: center;
   opacity: 0;
-  transition: opacity 1600ms ease-in-out;
+  transition: opacity 800ms ease-in-out;
 }
 
-.sceneActive { opacity: 1; }
+.sceneVisible { opacity: 1; }
 
 /* Atmospheric motion is deliberately confined to the unobstructed sky. The
    left edge protects the baked Vespara lockup and the lower edge protects the

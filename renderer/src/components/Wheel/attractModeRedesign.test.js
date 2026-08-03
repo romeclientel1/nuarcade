@@ -130,6 +130,64 @@ test("the approved scene dominates while the mounted Library remains dormant and
   assert.match(wheelCss, /\.attractDormant \.globalHeader[\s\S]*pointer-events: none/)
 })
 
+test("scene plates use a non-overlapping 800ms out, hidden swap, and 800ms in sequence", () => {
+  const transition = attract.slice(
+    attract.indexOf("const startSceneTransition"),
+    attract.indexOf("const clearShootingStarTimer"),
+  )
+  const fadeOutAt = transition.indexOf('setSceneTransitionPhase("fade-out")')
+  const swapAt = transition.indexOf("advanceScene()", fadeOutAt)
+  const hiddenAt = transition.indexOf('setSceneTransitionPhase("swap")', swapAt)
+  const fadeInAt = transition.indexOf('setSceneTransitionPhase("fade-in")', hiddenAt)
+  const idleAt = transition.indexOf('setSceneTransitionPhase("idle")', fadeInAt)
+
+  assert.match(attract, /const SCENE_FADE_MS = 800/)
+  assert.match(attract, /const SCENE_SWAP_HOLD_MS = 16/)
+  assert.ok(fadeOutAt < swapAt && swapAt < hiddenAt && hiddenAt < fadeInAt && fadeInAt < idleAt)
+  assert.match(attract, /sceneTransition !== "fade-out" \? styles\.sceneVisible/)
+  assert.doesNotMatch(attract + css, /sceneActive|opacity 1600ms/)
+})
+
+test("outgoing scene is fully hidden before the index swap and incoming reveal", () => {
+  const sceneRule = css.slice(css.indexOf(".scene {"), css.indexOf(".sceneVisible"))
+  assert.match(sceneRule, /opacity: 0;/)
+  assert.match(sceneRule, /transition: opacity 800ms ease-in-out;/)
+  assert.doesNotMatch(sceneRule, /transform|filter|blur|scale|animation:/)
+  assert.match(css, /\.sceneVisible \{ opacity: 1; \}/)
+  assert.match(attract, /setTimeout\(\(\) => \{[\s\S]*advanceScene\(\)[\s\S]*setSceneTransitionPhase\("swap"\)[\s\S]*setTimeout\(\(\) => \{[\s\S]*setSceneTransitionPhase\("fade-in"\)/)
+})
+
+test("scene transitions cannot overlap and all transition callbacks are cancellable", () => {
+  assert.match(attract, /sceneTransitionRef\.current !== "idle"\) return false/)
+  assert.match(attract, /sceneTransitionTimersRef\.current\.forEach\(clearTimeout\)/)
+  assert.match(attract, /if \(!activeSessionRef\.current \|\| !sceneSwapPendingRef\.current\) return/)
+  assert.match(attract, /if \(!activeSessionRef\.current \|\| !sceneAdvancePendingRef\.current\) return/)
+  assert.match(attract, /if \(!isActive\) \{[\s\S]*clearSceneTransition\(\)[\s\S]*return clearSceneTransition/)
+  assert.match(attract, /return clearSceneTransitionTimers/)
+})
+
+test("reduced motion swaps scenes immediately without transition phases or pending timers", () => {
+  const transition = attract.slice(
+    attract.indexOf("const startSceneTransition"),
+    attract.indexOf("const clearShootingStarTimer"),
+  )
+  assert.ok(transition.indexOf("if (reducedMotionRef.current)") < transition.indexOf("const swapTimer = setTimeout"))
+  assert.match(transition, /if \(reducedMotionRef\.current\) \{\s*advanceScene\(\)\s*return true/)
+  assert.match(attract, /if \(reducedMotion\) \{\s*const shouldAdvance = sceneSwapPendingRef\.current\s*clearSceneTransition\(\)\s*if \(shouldAdvance\) advanceScene\(\)/)
+  assert.match(css.slice(css.indexOf("@media (prefers-reduced-motion: reduce)")), /\.scene,[\s\S]*transition: none;/)
+})
+
+test("the teal-black dip stays below a continuous atmospheric sibling", () => {
+  const sceneStackAt = attract.indexOf('className={styles.sceneStack}')
+  const atmosphereAt = attract.indexOf('className={styles.atmosphere}')
+  const sceneStackRuleAt = css.indexOf(".sceneStack {")
+  const sceneStackRule = css.slice(sceneStackRuleAt, css.indexOf("\n.scene {", sceneStackRuleAt))
+  assert.ok(sceneStackAt < atmosphereAt)
+  assert.match(sceneStackRule, /background: #03100e;/)
+  assert.doesNotMatch(attract.slice(sceneStackAt, atmosphereAt), /className=\{styles\.atmosphere\}/)
+  assert.equal((attract.match(/className=\{styles\.atmosphere\}/g) || []).length, 1)
+})
+
 test("reduced motion removes portal transitions and continuous motion", () => {
   const reduced = css.slice(css.indexOf("@media (prefers-reduced-motion: reduce)"))
   assert.match(reduced, /transition: none/)

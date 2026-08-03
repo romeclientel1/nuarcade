@@ -13,6 +13,8 @@ const HOLD_START_MS = 1180
 const RECEDE_MS = 900
 const NEUTRAL_MS = 320
 const MIN_CYCLE_MS = 6000
+const SCENE_FADE_MS = 800
+const SCENE_SWAP_HOLD_MS = 16
 const SHOOTING_STAR_MIN_DELAY_MS = 28000
 const SHOOTING_STAR_DELAY_RANGE_MS = 27000
 const ATMOSPHERIC_SCENES = new Set(["open-sky", "ocean-overlook", "village"])
@@ -47,6 +49,7 @@ export default function AttractMode({ games, isActive, onWake, artwork, attractC
     () => window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false,
   )
   const [sceneIndex, setSceneIndex] = useState(0)
+  const [sceneTransition, setSceneTransition] = useState("idle")
   const [shuffled, setShuffled] = useState([])
   const [shootingStarActive, setShootingStarActive] = useState(false)
   const overlayRef = useRef(null)
@@ -60,6 +63,11 @@ export default function AttractMode({ games, isActive, onWake, artwork, attractC
   const orderRef = useRef([])
   const indexRef = useRef(0)
   const sceneIndexRef = useRef(0)
+  const sceneTransitionRef = useRef("idle")
+  const sceneTransitionTimersRef = useRef([])
+  const sceneAdvancePendingRef = useRef(false)
+  const sceneSwapPendingRef = useRef(false)
+  const reducedMotionRef = useRef(reducedMotion)
   const activeSessionRef = useRef(false)
   const hasActivatedRef = useRef(false)
   const lastShownKeyRef = useRef(null)
@@ -89,6 +97,64 @@ export default function AttractMode({ games, isActive, onWake, artwork, attractC
   }, [])
 
   sceneIdRef.current = ATTRACT_SCENES[sceneIndex].id
+  reducedMotionRef.current = reducedMotion
+
+  const setSceneTransitionPhase = useCallback((nextPhase) => {
+    sceneTransitionRef.current = nextPhase
+    setSceneTransition(nextPhase)
+  }, [])
+
+  const clearSceneTransitionTimers = useCallback(() => {
+    sceneTransitionTimersRef.current.forEach(clearTimeout)
+    sceneTransitionTimersRef.current = []
+  }, [])
+
+  const advanceScene = useCallback(() => {
+    sceneIndexRef.current = nextAttractSceneIndex(sceneIndexRef.current, ATTRACT_SCENES.length)
+    setSceneIndex(sceneIndexRef.current)
+  }, [])
+
+  const clearSceneTransition = useCallback(() => {
+    clearSceneTransitionTimers()
+    sceneAdvancePendingRef.current = false
+    sceneSwapPendingRef.current = false
+    sceneTransitionRef.current = "idle"
+  }, [clearSceneTransitionTimers])
+
+  const startSceneTransition = useCallback(() => {
+    if (!activeSessionRef.current || sceneTransitionRef.current !== "idle") return false
+
+    if (reducedMotionRef.current) {
+      advanceScene()
+      return true
+    }
+
+    clearSceneTransitionTimers()
+    sceneAdvancePendingRef.current = true
+    sceneSwapPendingRef.current = true
+    setSceneTransitionPhase("fade-out")
+    const swapTimer = setTimeout(() => {
+      if (!activeSessionRef.current || !sceneSwapPendingRef.current) return
+      advanceScene()
+      sceneSwapPendingRef.current = false
+      setSceneTransitionPhase("swap")
+
+      const revealTimer = setTimeout(() => {
+        if (!activeSessionRef.current || !sceneAdvancePendingRef.current) return
+        setSceneTransitionPhase("fade-in")
+
+        const finishTimer = setTimeout(() => {
+          if (!activeSessionRef.current || !sceneAdvancePendingRef.current) return
+          sceneAdvancePendingRef.current = false
+          setSceneTransitionPhase("idle")
+        }, SCENE_FADE_MS)
+        sceneTransitionTimersRef.current.push(finishTimer)
+      }, SCENE_SWAP_HOLD_MS)
+      sceneTransitionTimersRef.current.push(revealTimer)
+    }, SCENE_FADE_MS)
+    sceneTransitionTimersRef.current.push(swapTimer)
+    return true
+  }, [advanceScene, setSceneTransitionPhase])
 
   const clearShootingStarTimer = useCallback(() => {
     if (shootingStarTimerRef.current !== null) {
@@ -174,6 +240,8 @@ export default function AttractMode({ games, isActive, onWake, artwork, attractC
       indexRef.current = 0
       sceneIndexRef.current = 0
       setSceneIndex(0)
+      clearSceneTransition()
+      setSceneTransition("idle")
       return
     }
     const withArt = games.filter((game) => {
@@ -189,12 +257,11 @@ export default function AttractMode({ games, isActive, onWake, artwork, attractC
     setMediaErrors({})
     sceneIndexRef.current = 0
     setSceneIndex(0)
-  }, [games, artwork, attractConfig.preferArt])
+    clearSceneTransition()
+    setSceneTransition("idle")
+  }, [games, artwork, attractConfig.preferArt, clearSceneTransition])
 
   const advance = useCallback(() => {
-    sceneIndexRef.current = nextAttractSceneIndex(sceneIndexRef.current, ATTRACT_SCENES.length)
-    setSceneIndex(sceneIndexRef.current)
-
     const order = orderRef.current
     if (order.length <= 1) return
     const current = order[indexRef.current]
@@ -213,6 +280,23 @@ export default function AttractMode({ games, isActive, onWake, artwork, attractC
     setCurrentIdx(0)
   }, [])
 
+  useEffect(() => {
+    if (!isActive) {
+      clearSceneTransition()
+      setSceneTransition("idle")
+      return clearSceneTransition
+    }
+
+    if (reducedMotion) {
+      const shouldAdvance = sceneSwapPendingRef.current
+      clearSceneTransition()
+      if (shouldAdvance) advanceScene()
+      setSceneTransition("idle")
+    }
+
+    return clearSceneTransitionTimers
+  }, [isActive, reducedMotion, advanceScene, clearSceneTransition, clearSceneTransitionTimers])
+
   // One cancellable timeline per discovery: gateway, resolve, hold, recede,
   // neutral interval, then advance. The configured cycle remains the pacing
   // contract, with a six-second safety floor so its phases stay meaningful.
@@ -226,7 +310,10 @@ export default function AttractMode({ games, isActive, onWake, artwork, attractC
 
     const entering = !activeSessionRef.current
     activeSessionRef.current = true
-    if (entering && hasActivatedRef.current) advance()
+    if (entering && hasActivatedRef.current) {
+      advanceScene()
+      advance()
+    }
     hasActivatedRef.current = true
 
     let cancelled = false
@@ -241,6 +328,7 @@ export default function AttractMode({ games, isActive, onWake, artwork, attractC
       later(() => setPhase("receding"), cycleMs - RECEDE_MS)
       later(() => setPhase("neutral"), cycleMs - NEUTRAL_MS)
       later(() => {
+        startSceneTransition()
         advance()
         runCycle()
       }, cycleMs)
@@ -251,7 +339,7 @@ export default function AttractMode({ games, isActive, onWake, artwork, attractC
       cancelled = true
       clearPhaseTimers()
     }
-  }, [isActive, shuffled.length, cycleMs, advance, clearPhaseTimers])
+  }, [isActive, shuffled.length, cycleMs, advance, advanceScene, clearPhaseTimers, startSceneTransition])
 
   useEffect(() => {
     if (!isActive || shuffled.length === 0) return
@@ -333,6 +421,7 @@ export default function AttractMode({ games, isActive, onWake, artwork, attractC
       data-phase={phase}
       data-media-kind={mediaKind}
       data-scene={ATTRACT_SCENES[sceneIndex].id}
+      data-scene-transition={sceneTransition}
       tabIndex={-1}
       role="region"
       aria-label="Vespara Library discovery. Enter the Library to resume browsing."
@@ -346,7 +435,7 @@ export default function AttractMode({ games, isActive, onWake, artwork, attractC
             key={scene.id}
             src={scene.image}
             alt=""
-            className={`${styles.scene} ${index === sceneIndex ? styles.sceneActive : ""}`}
+            className={`${styles.scene} ${index === sceneIndex && sceneTransition !== "fade-out" ? styles.sceneVisible : ""}`}
           />
         ))}
       </div>
