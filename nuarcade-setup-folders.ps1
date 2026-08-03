@@ -1,28 +1,16 @@
-# NuArcade v3.2.1 - Cabinet Folder Setup Script
-# Run this on your cabinet PC to create all required folders on F: drive
+# NuArcade content-folder setup helper
+# Supply an explicit root; no drive is assumed.
 # Right-click PowerShell -> Run as Administrator
 # Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
-# .\nuarcade-setup-folders.ps1
+# .\nuarcade-setup-folders.ps1 -Root 'C:\NuArcadeContent'
 
-Write-Host "NuArcade Cabinet Folder Setup" -ForegroundColor Cyan
+param([Parameter(Mandatory=$true)][string]$Root)
+
+Write-Host "NuArcade Content Folder Setup" -ForegroundColor Cyan
 Write-Host "==============================" -ForegroundColor Cyan
 Write-Host ""
 
-$folders = @(
-    "F:\TeknoParrot", "F:\MAME", "F:\MAME\roms",
-    "F:\Model2", "F:\Supermodel",
-    "F:\RetroArch", "F:\RetroArch\system",
-    "F:\Project64", "F:\DuckStation", "F:\Flycast", "F:\Xemu", "F:\Cxbx-Reloaded",
-    "F:\PPSSPP", "F:\PCSX2", "F:\RPCS3",
-    "F:\Xenia", "F:\Dolphin", "F:\Cemu", "F:\Ryujinx", "F:\vPinball",
-    "F:\ArcadeGames", "F:\RetroArchGames",
-    "F:\N64Games", "F:\PS1Games", "F:\DreamcastGames", "F:\XboxGames",
-    "F:\PSPGames", "F:\PS2Games", "F:\PS3Games",
-    "F:\Xbox360Games", "F:\GCWiiGames", "F:\WiiUGames",
-    "F:\SwitchGames", "F:\Model2Games", "F:\Model3Games",
-    "F:\PinballTables", "F:\PCGames",
-    "F:\Media", "F:\Media\Videos", "F:\Media\Artwork"
-)
+$folders = @('TeknoParrot','MAME','MAME\roms','RetroArch','RetroArch\system','Project64','DuckStation','Flycast','Xemu','Cxbx-Reloaded','PPSSPP','PCSX2','RPCS3','Xenia','Dolphin','Cemu','Ryujinx','vPinball','ArcadeGames','RetroArchGames','N64Games','PS1Games','DreamcastGames','XboxGames','PSPGames','PS2Games','PS3Games','Xbox360Games','GCWiiGames','WiiUGames','SwitchGames','Model2Games','Model3Games','PinballTables','PCGames','SteamGames','Media','Media\Videos','Media\Artwork','Media\EmuMovies') | ForEach-Object { Join-Path $Root $_ }
 
 $created = 0; $existing = 0
 foreach ($folder in $folders) {
@@ -59,6 +47,6 @@ Write-Host "  VPX          https://github.com/vpinball/vpinball/releases"
 Write-Host "  Steam        https://store.steampowered.com/about"
 Write-Host ""
 Write-Host "NOTE: Steam games are scanned from C:\Program Files (x86)\Steam\steamapps" -ForegroundColor Yellow
-Write-Host "      PC games go in F:\PCGames (one subfolder per game with a single .exe)" -ForegroundColor Yellow
+Write-Host "      PC games go in the configured PCGames folder (one subfolder per game with a single .exe)" -ForegroundColor Yellow
 Write-Host ""
 Read-Host "Press Enter to close"
