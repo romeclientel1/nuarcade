@@ -17,7 +17,8 @@
 
 .worldLayer,
 .sanctuaryPlate,
-.environmentVeil {
+.environmentVeil,
+.horizonShimmer {
   position: absolute;
   inset: 0;
   pointer-events: none;
@@ -50,6 +51,25 @@
     linear-gradient(180deg, rgba(2, 5, 6, 0.52) 0%, rgba(2, 5, 6, 0.08) 31%, rgba(2, 5, 6, 0.2) 56%, rgba(2, 4, 5, 0.78) 100%),
     linear-gradient(90deg, rgba(2, 5, 6, 0.42) 0%, transparent 24%, transparent 76%, rgba(2, 5, 6, 0.38) 100%),
     radial-gradient(ellipse 34% 28% at 50% 43%, transparent 0 58%, rgba(2, 5, 6, 0.12) 100%);
+}
+
+.horizonShimmer {
+  z-index: 0;
+  inset: 18% 22% 52% 22%;
+  background: radial-gradient(
+    ellipse 72% 48% at 50% 68%,
+    rgba(239, 193, 104, 0.028),
+    rgba(214, 178, 116, 0.012) 46%,
+    transparent 100%
+  );
+  opacity: 0.008;
+  animation: sanctuaryHorizonShimmer 18s ease-in-out infinite alternate;
+  will-change: opacity;
+}
+
+@keyframes sanctuaryHorizonShimmer {
+  from { opacity: 0.008; }
+  to { opacity: 0.028; }
 }
 
 .sanctuary {
@@ -2080,6 +2100,12 @@
 
 @media (prefers-reduced-motion: reduce) {
   .home {
+    animation: none;
+  }
+
+  .horizonShimmer {
+    display: none;
+    opacity: 0;
     animation: none;
   }
 }

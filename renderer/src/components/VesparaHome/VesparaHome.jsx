@@ -47,6 +47,17 @@ export default function VesparaHome({
   uiSoundsEnabled, uiSoundVolume,
 }) {
   const { t } = useI18n()
+  const [reducedMotion, setReducedMotion] = useState(
+    () => window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false,
+  )
+  useEffect(() => {
+    const query = window.matchMedia?.("(prefers-reduced-motion: reduce)")
+    if (!query) return undefined
+    const update = () => setReducedMotion(query.matches)
+    update()
+    if (query.addEventListener) query.addEventListener("change", update)
+    return () => query.removeEventListener?.("change", update)
+  }, [])
   const ACTION_LABELS = {
     library: t("home.libraryDestination"),
     controlRoom: t("home.controlRoomDestination"),
@@ -509,6 +520,7 @@ export default function VesparaHome({
           className={styles.sanctuaryPlate}
         />
         <div className={styles.environmentVeil} />
+        {!reducedMotion && <div className={styles.horizonShimmer} aria-hidden="true" />}
       </div>
 
       <main className={styles.sanctuary}>

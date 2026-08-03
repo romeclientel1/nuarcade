@@ -39,7 +39,7 @@ test('the plate remains decorative, aria-hidden, and non-interactive', () => {
   const sanctuaryRule = css.match(/\.sanctuary\s*\{([^}]*)\}/)?.[1] || ''
   assert.match(world, /aria-hidden="true"/)
   assert.match(world, /alt=""/)
-  assert.match(css, /\.worldLayer,\s*\n\.sanctuaryPlate,\s*\n\.environmentVeil\s*\{[\s\S]*pointer-events:\s*none/)
+  assert.match(css, /\.worldLayer,\s*\n\.sanctuaryPlate,\s*\n\.environmentVeil,\s*\n\.horizonShimmer\s*\{[\s\S]*pointer-events:\s*none/)
   assert.match(worldRule, /z-index:\s*0/)
   assert.doesNotMatch(worldRule, /z-index:\s*-/)
   assert.match(sanctuaryRule, /z-index:\s*1/)
@@ -57,6 +57,32 @@ test('the contrast veil is a separate decorative layer, never baked UI', () => {
   assert.match(jsx, /<div className=\{styles\.environmentVeil\} \/>/)
   assert.match(css, /\.environmentVeil\s*\{[\s\S]*linear-gradient/)
   assert.match(provenance, /No live UI, game cards, buttons/)
+})
+
+test('the horizon shimmer is a reduced-motion-safe decorative layer below Sanctuary UI', () => {
+  const world = jsx.slice(jsx.indexOf('<div className={styles.worldLayer}'), jsx.indexOf('<main className={styles.sanctuary}>'))
+  assert.match(world, /<div className=\{styles\.environmentVeil\} \/>\s*\{!reducedMotion && <div className=\{styles\.horizonShimmer\} aria-hidden="true" \/>\}/)
+  assert.match(css, /\.worldLayer,\s*\n\.sanctuaryPlate,\s*\n\.environmentVeil,\s*\n\.horizonShimmer\s*\{[\s\S]*pointer-events:\s*none/)
+  assert.match(css, /\.horizonShimmer\s*\{[\s\S]*z-index:\s*0[\s\S]*inset:\s*18% 22% 52% 22%/)
+  assert.match(css, /\.sanctuary\s*\{[\s\S]*z-index:\s*1/)
+  assert.match(css, /animation:\s*sanctuaryHorizonShimmer 18s ease-in-out infinite alternate/)
+  assert.match(css, /@keyframes sanctuaryHorizonShimmer[\s\S]*from\s*\{\s*opacity:\s*0\.008;\s*\}[\s\S]*to\s*\{\s*opacity:\s*0\.028;/)
+  const keyframes = css.slice(css.indexOf('@keyframes sanctuaryHorizonShimmer'), css.indexOf('\n}\n', css.indexOf('@keyframes sanctuaryHorizonShimmer')) + 3)
+  assert.doesNotMatch(keyframes, /transform|filter|background-position|width|height|inset|\btop\b|\bleft\b/)
+  const reduced = css.slice(css.indexOf('@media (prefers-reduced-motion: reduce)'))
+  assert.match(reduced, /\.horizonShimmer[\s\S]*display:\s*none[\s\S]*opacity:\s*0[\s\S]*animation:\s*none/)
+  assert.match(jsx, /const \[reducedMotion, setReducedMotion\] = useState\(/)
+  assert.match(jsx, /prefers-reduced-motion: reduce/)
+})
+
+test('the shimmer does not add media, rendering surfaces, movement utilities, or a new dependency', () => {
+  assert.doesNotMatch(jsx, /<canvas|<video|WebGL|getContext\(/i)
+  assert.doesNotMatch(jsx, /AttractMode|atmosphere/i)
+  const plateRule = css.match(/\.sanctuaryPlate\s*\{([^}]*)\}/)?.[1] || ''
+  const shimmerRule = css.match(/\.horizonShimmer\s*\{([^}]*)\}/)?.[1] || ''
+  assert.doesNotMatch(css, /mix-blend-mode/)
+  assert.doesNotMatch(plateRule, /animation|transform|background-position/)
+  assert.doesNotMatch(shimmerRule, /transform|filter|background-position|width|height|top|left/)
 })
 
 test('the old abstract star, planet, sun, and moon layers are no longer active or retained', () => {
