@@ -13,6 +13,9 @@ const HOLD_START_MS = 1180
 const RECEDE_MS = 900
 const NEUTRAL_MS = 320
 const MIN_CYCLE_MS = 6000
+const SHOOTING_STAR_MIN_DELAY_MS = 28000
+const SHOOTING_STAR_DELAY_RANGE_MS = 27000
+const ATMOSPHERIC_SCENES = new Set(["open-sky", "ocean-overlook", "village"])
 
 const gameKey = (game) => game?.id || game?.profile || game?.title || "unknown"
 
@@ -45,8 +48,14 @@ export default function AttractMode({ games, isActive, onWake, artwork, attractC
   )
   const [sceneIndex, setSceneIndex] = useState(0)
   const [shuffled, setShuffled] = useState([])
+  const [shootingStarActive, setShootingStarActive] = useState(false)
   const overlayRef = useRef(null)
   const videoRef = useRef(null)
+  const shootingStarTimerRef = useRef(null)
+  const shootingStarScheduledRef = useRef(false)
+  const shootingStarArmedRef = useRef(false)
+  const shootingStarFiredRef = useRef(false)
+  const sceneIdRef = useRef(ATTRACT_SCENES[0].id)
   const timersRef = useRef([])
   const orderRef = useRef([])
   const indexRef = useRef(0)
@@ -78,6 +87,76 @@ export default function AttractMode({ games, isActive, onWake, artwork, attractC
       else query.removeListener?.(update)
     }
   }, [])
+
+  sceneIdRef.current = ATTRACT_SCENES[sceneIndex].id
+
+  const clearShootingStarTimer = useCallback(() => {
+    if (shootingStarTimerRef.current !== null) {
+      clearTimeout(shootingStarTimerRef.current)
+      shootingStarTimerRef.current = null
+    }
+  }, [])
+
+  const clearPendingShootingStar = useCallback(() => {
+    clearShootingStarTimer()
+    shootingStarArmedRef.current = false
+  }, [clearShootingStarTimer])
+
+  const triggerArmedShootingStar = useCallback(() => {
+    if (
+      !isActive
+      || reducedMotion
+      || !shootingStarArmedRef.current
+      || shootingStarFiredRef.current
+      || !ATMOSPHERIC_SCENES.has(sceneIdRef.current)
+    ) return false
+
+    shootingStarArmedRef.current = false
+    shootingStarFiredRef.current = true
+    setShootingStarActive(true)
+    return true
+  }, [isActive, reducedMotion])
+
+  // The randomized delay arms exactly one event per Attract activation. If
+  // it expires over an unsupported scene, the event remains armed until the
+  // normal scene cycle reaches its next safe sky; no polling timer is needed.
+  useEffect(() => {
+
+    if (!isActive) {
+      clearPendingShootingStar()
+      shootingStarScheduledRef.current = false
+      shootingStarFiredRef.current = false
+      setShootingStarActive(false)
+      return clearPendingShootingStar
+    }
+
+    if (reducedMotion || shuffled.length === 0) {
+      clearPendingShootingStar()
+      setShootingStarActive(false)
+      return clearPendingShootingStar
+    }
+
+    if (shootingStarScheduledRef.current) return clearPendingShootingStar
+    shootingStarScheduledRef.current = true
+    const delay = SHOOTING_STAR_MIN_DELAY_MS + Math.random() * SHOOTING_STAR_DELAY_RANGE_MS
+    shootingStarTimerRef.current = setTimeout(() => {
+      shootingStarTimerRef.current = null
+      shootingStarArmedRef.current = true
+      triggerArmedShootingStar()
+    }, delay)
+
+    return clearPendingShootingStar
+  }, [
+    isActive,
+    reducedMotion,
+    shuffled.length,
+    clearPendingShootingStar,
+    triggerArmedShootingStar,
+  ])
+
+  useEffect(() => {
+    if (isActive && !reducedMotion) triggerArmedShootingStar()
+  }, [sceneIndex, isActive, reducedMotion, triggerArmedShootingStar])
 
   const clearPhaseTimers = useCallback(() => {
     timersRef.current.forEach(clearTimeout)
@@ -253,6 +332,7 @@ export default function AttractMode({ games, isActive, onWake, artwork, attractC
       className={styles.overlay}
       data-phase={phase}
       data-media-kind={mediaKind}
+      data-scene={ATTRACT_SCENES[sceneIndex].id}
       tabIndex={-1}
       role="region"
       aria-label="Vespara Library discovery. Enter the Library to resume browsing."
@@ -270,6 +350,21 @@ export default function AttractMode({ games, isActive, onWake, artwork, attractC
           />
         ))}
       </div>
+
+      {!reducedMotion && ATMOSPHERIC_SCENES.has(ATTRACT_SCENES[sceneIndex].id) && (
+        <div className={styles.atmosphere} aria-hidden="true">
+          <span className={styles.skyDrift} />
+          <span className={styles.lightShimmer} />
+          <span
+            className={
+              shootingStarActive
+                ? `${styles.shootingStar} ${styles.shootingStarActive}`
+                : styles.shootingStar
+            }
+            onAnimationEnd={() => setShootingStarActive(false)}
+          />
+        </div>
+      )}
 
       <div className={styles.portalStage}>
         <div className={styles.portalFrame}>

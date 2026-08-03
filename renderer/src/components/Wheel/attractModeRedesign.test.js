@@ -134,8 +134,113 @@ test("reduced motion removes portal transitions and continuous motion", () => {
   const reduced = css.slice(css.indexOf("@media (prefers-reduced-motion: reduce)"))
   assert.match(reduced, /transition: none/)
   assert.match(reduced, /transform: none/)
-  assert.doesNotMatch(css, /animation:|@keyframes/)
+  assert.doesNotMatch(css, /\.scene\s*\{[^}]*animation:/)
   assert.match(css, /@media \(max-width: 1280px\), \(max-height: 870px\)/)
+})
+
+test("restrained atmosphere is inert, scene-scoped, and layered below all portal UI", () => {
+  const sceneStackAt = attract.indexOf('className={styles.sceneStack}')
+  const atmosphereAt = attract.indexOf('className={styles.atmosphere}')
+  const portalAt = attract.indexOf('className={styles.portalStage}')
+  const invitationAt = attract.indexOf('className={styles.invitation}')
+  assert.ok(sceneStackAt < atmosphereAt && atmosphereAt < portalAt && portalAt < invitationAt)
+  assert.match(attract, /data-scene=\{ATTRACT_SCENES\[sceneIndex\]\.id\}/)
+  assert.match(attract, /className=\{styles\.atmosphere\} aria-hidden="true"/)
+  assert.match(css, /\.atmosphere\s*\{[\s\S]*?z-index: -2;[\s\S]*?pointer-events: none;/)
+  for (const id of ["open-sky", "ocean-overlook", "village"]) {
+    assert.match(css, new RegExp(`data-scene="${id}"`))
+  }
+  assert.doesNotMatch(css, /data-scene="(?:coliseum|palace|sunset-isle)"/)
+})
+
+test("atmosphere never animates scene images, portal content, or baked-text UI", () => {
+  const animationRules = [...css.matchAll(/([^{}]+)\{[^{}]*animation:\s*vespara[^;}]+[;}]/g)]
+    .map((match) => match[1])
+    .join("\n")
+  assert.doesNotMatch(animationRules, /\.scene(?:Active)?|\.portalStage|\.portalFrame|\.discoveryCopy|\.invitation/)
+  assert.doesNotMatch(css, /\.scene\s*\{[^}]*animation:/)
+  assert.doesNotMatch(css, /mix-blend-mode|background-position[^:]*:/)
+  assert.doesNotMatch(attract, /<canvas|webgl|getContext\(/i)
+  const atmosphereMarkup = attract.slice(
+    attract.indexOf("<div className={styles.atmosphere}"),
+    attract.indexOf("<div className={styles.portalStage}"),
+  )
+  assert.doesNotMatch(atmosphereMarkup, /<video/)
+})
+
+test("atmospheric keyframes animate only transform and opacity within restrained bounds", () => {
+  for (const name of ["vesparaSkyDrift", "vesparaLightShimmer", "vesparaShootingStar"]) {
+    const start = css.indexOf(`@keyframes ${name}`)
+    const nextRule = css.indexOf("\n}\n", start)
+    const keyframes = css.slice(start, nextRule + 3)
+    assert.match(keyframes, /opacity/)
+    assert.doesNotMatch(keyframes, /filter|background-position|width|height|\btop\b|\bleft\b/)
+  }
+  assert.match(css, /animation: vesparaSkyDrift 84s[^;]*alternate/)
+  assert.match(css, /translate3d\(-1\.6vw, -0\.2vh[\s\S]*translate3d\(1\.6vw, 0\.2vh/)
+  assert.match(css, /animation: vesparaLightShimmer 16s[^;]*alternate/)
+  assert.match(css, /animation: vesparaShootingStar 1100ms/)
+  assert.match(css, /width: 120px/)
+  assert.match(css, /opacity: 0\.36/)
+  assert.match(css, /translate3d\(-18vw, 0\.35vh/)
+})
+
+test("shooting star keeps one randomized delay and one scheduling gate per activation", () => {
+  assert.match(attract, /SHOOTING_STAR_MIN_DELAY_MS = 28000/)
+  assert.match(attract, /SHOOTING_STAR_DELAY_RANGE_MS = 27000/)
+  assert.match(attract, /if \(shootingStarScheduledRef\.current\) return clearPendingShootingStar/)
+  assert.match(attract, /shootingStarScheduledRef\.current = true/)
+  assert.equal((attract.match(/shootingStarTimerRef\.current = setTimeout/g) || []).length, 1)
+  assert.doesNotMatch(attract, /setInterval/)
+})
+
+test("timer expiry arms the star and triggers immediately on a supported scene", () => {
+  assert.match(attract, /shootingStarTimerRef\.current = setTimeout\(\(\) => \{[\s\S]*shootingStarArmedRef\.current = true[\s\S]*triggerArmedShootingStar\(\)/)
+  assert.match(attract, /!ATMOSPHERIC_SCENES\.has\(sceneIdRef\.current\)[\s\S]*\) return false/)
+  assert.match(attract, /shootingStarArmedRef\.current = false[\s\S]*shootingStarFiredRef\.current = true[\s\S]*setShootingStarActive\(true\)/)
+})
+
+test("unsupported expiry stays armed until the next supported scene", () => {
+  const trigger = attract.slice(
+    attract.indexOf("const triggerArmedShootingStar"),
+    attract.indexOf("// The randomized delay arms"),
+  )
+  assert.ok(trigger.indexOf("!ATMOSPHERIC_SCENES.has(sceneIdRef.current)") < trigger.indexOf("shootingStarArmedRef.current = false"))
+  assert.doesNotMatch(trigger.slice(0, trigger.indexOf("shootingStarArmedRef.current = false")), /shootingStarArmedRef\.current = false/)
+  assert.match(attract, /useEffect\(\(\) => \{\s*if \(isActive && !reducedMotion\) triggerArmedShootingStar\(\)\s*\}, \[sceneIndex,/)
+})
+
+test("shooting star cannot fire more than once per activation", () => {
+  assert.match(attract, /\|\| shootingStarFiredRef\.current/)
+  assert.match(attract, /shootingStarFiredRef\.current = true/)
+  assert.match(attract, /if \(!isActive\)[\s\S]*shootingStarFiredRef\.current = false/)
+})
+
+test("deactivation and cleanup clear both the timer and armed event", () => {
+  assert.match(attract, /const clearPendingShootingStar = useCallback\(\(\) => \{\s*clearShootingStarTimer\(\)\s*shootingStarArmedRef\.current = false/)
+  assert.match(attract, /if \(!isActive\)[\s\S]*shootingStarScheduledRef\.current = false/)
+  assert.match(attract, /if \(!isActive\)[\s\S]*clearPendingShootingStar\(\)[\s\S]*return clearPendingShootingStar/)
+  assert.match(attract, /return clearPendingShootingStar/)
+})
+
+test("reduced motion prevents scheduling and clears pending or armed star state", () => {
+  assert.match(attract, /if \(reducedMotion \|\| shuffled\.length === 0\)[\s\S]*clearPendingShootingStar\(\)[\s\S]*setShootingStarActive\(false\)/)
+  assert.ok(attract.indexOf("if (reducedMotion || shuffled.length === 0)") < attract.indexOf("shootingStarTimerRef.current = setTimeout"))
+  assert.match(attract, /!reducedMotion && ATMOSPHERIC_SCENES\.has/)
+})
+
+test("unmount cleanup cancels a late timeout and discards an armed event", () => {
+  assert.match(attract, /return clearPendingShootingStar\s*\n\s*\}, \[/)
+  assert.match(attract, /clearTimeout\(shootingStarTimerRef\.current\)/)
+  assert.match(attract, /shootingStarTimerRef\.current = null/)
+})
+
+test("reduced-motion fallback hides and disables every atmospheric effect", () => {
+  const reduced = css.slice(css.indexOf("@media (prefers-reduced-motion: reduce)"))
+  for (const selector of [".atmosphere", ".skyDrift", ".lightShimmer", ".shootingStar", ".shootingStarActive"]) {
+    assert.match(reduced, new RegExp(selector.replace(".", "\\.")))
+  }
+  assert.match(reduced, /display: none;[\s\S]*animation: none;[\s\S]*opacity: 0;/)
 })
 
 test("dedicated ambience is local, uses shared mute/ambient volume, and Library music is suspended rather than restarted", () => {
