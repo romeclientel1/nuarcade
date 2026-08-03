@@ -220,8 +220,8 @@ test("switching locale via translate() does not require or mutate any stored pro
 test("representative Home strings switch between locales", () => {
   assert.equal(translate("en", "home.recentlyPlayed"), "Recently Played")
   assert.equal(translate("es", "home.recentlyPlayed"), "Jugados recientemente")
-  assert.equal(translate("en", "home.switchPlayer"), "Switch Player")
-  assert.equal(translate("es", "home.switchPlayer"), "Cambiar jugador")
+  assert.equal(translate("en", "home.switchPlayer"), "Traveler Gate")
+  assert.equal(translate("es", "home.switchPlayer"), "Portal del Viajero")
   assert.equal(translate("en", "home.depart"), "Depart")
   assert.equal(translate("es", "home.depart"), "Partir")
 })

@@ -69,3 +69,14 @@ test("Depart language is Vespara-facing in both locales", () => {
   assert.match(en, /"home\.confirmDepartTitle":\s*"LEAVE VESPARA\?"/)
   assert.match(es, /"home\.confirmDepartTitle":\s*"¿ABANDONAR VESPARA\?"/)
 })
+
+test("Switch Player uses Sanctuary world-language in both locales without changing its action key", () => {
+  assert.match(en, /"home\.switchPlayer":\s*"Traveler Gate"/)
+  assert.match(en, /"home\.switchPlayerSubtitle":\s*"Choose another traveler"/)
+  assert.match(es, /"home\.switchPlayer":\s*"Portal del Viajero"/)
+  assert.match(es, /"home\.switchPlayerSubtitle":\s*"Elige a otro viajero"/)
+  assert.doesNotMatch(en, /"home\.switchPlayer":\s*"Switch Player"/)
+  assert.doesNotMatch(es, /"home\.switchPlayer":\s*"Cambiar jugador"/)
+  assert.match(jsx, /const ACTIONS = \["library", "controlRoom", "switchPlayer", "depart"\]/)
+  assert.match(jsx, /t\("home\.switchPlayerSubtitle"\)/)
+})
