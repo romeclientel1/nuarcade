@@ -99,11 +99,14 @@ export default function App() {
     goHome: goToSurfaceRoot,
   } = useDestination()
   const [libraryReturnPhase, setLibraryReturnPhase] = useState("idle")
+  const [controlRoomReturnPhase, setControlRoomReturnPhase] = useState("idle")
   const [reducedMotion, setReducedMotion] = useState(
     () => window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false,
   )
   const libraryExitTimerRef = useRef(null)
   const libraryExitActiveRef = useRef(false)
+  const controlRoomExitTimerRef = useRef(null)
+  const controlRoomExitActiveRef = useRef(false)
   const clearLibraryExit = () => {
     if (libraryExitTimerRef.current) {
       clearTimeout(libraryExitTimerRef.current)
@@ -111,6 +114,14 @@ export default function App() {
     }
     libraryExitActiveRef.current = false
     setLibraryReturnPhase("idle")
+  }
+  const clearControlRoomExit = () => {
+    if (controlRoomExitTimerRef.current) {
+      clearTimeout(controlRoomExitTimerRef.current)
+      controlRoomExitTimerRef.current = null
+    }
+    controlRoomExitActiveRef.current = false
+    setControlRoomReturnPhase("idle")
   }
   // Settings already persists this to the backend config under crtEffect --
   // this just loads that saved value on launch and mirrors live changes so
@@ -147,13 +158,20 @@ export default function App() {
     return () => {
       if (libraryExitTimerRef.current) clearTimeout(libraryExitTimerRef.current)
       libraryExitActiveRef.current = false
+      if (controlRoomExitTimerRef.current) clearTimeout(controlRoomExitTimerRef.current)
+      controlRoomExitActiveRef.current = false
     }
   }, [])
   useEffect(() => {
     if (phase === "main" && !reducedMotion) return
-    if (!libraryExitActiveRef.current) return
-    clearLibraryExit()
-    if (phase === "main" && reducedMotion) goToSurfaceRoot()
+    if (libraryExitActiveRef.current) {
+      clearLibraryExit()
+      if (phase === "main" && reducedMotion) goToSurfaceRoot()
+    }
+    if (controlRoomExitActiveRef.current) {
+      clearControlRoomExit()
+      if (phase === "main" && reducedMotion) goToSurfaceRoot()
+    }
   }, [phase, reducedMotion, goToSurfaceRoot])
 
   // The full sanctuary-entry film is Vespara's primary opening.
@@ -380,14 +398,28 @@ export default function App() {
   // focuses the tile the Traveler entered from, rather than its usual derived
   // default. See VesparaHome's "Returning-destination focus hint" effect.
   const handleReturnHomeFromControlRoom = () => {
+    if (controlRoomExitActiveRef.current || currentSurface !== "controlRoom") return
     clearPendingRestoration()
-    setHomeFocusHint("controlRoom")
-    goToSurfaceRoot()
+    if (reducedMotion) {
+      setHomeFocusHint("controlRoom")
+      goToSurfaceRoot()
+      return
+    }
+    controlRoomExitActiveRef.current = true
+    setControlRoomReturnPhase("control-room-exit")
+    controlRoomExitTimerRef.current = setTimeout(() => {
+      controlRoomExitTimerRef.current = null
+      if (!controlRoomExitActiveRef.current || phase !== "main") return
+      controlRoomExitActiveRef.current = false
+      setHomeFocusHint("controlRoom")
+      setControlRoomReturnPhase("idle")
+      goToSurfaceRoot()
+    }, 180)
   }
 
   return (
     <ErrorBoundary>
-      <div style={{ position: 'relative', width: '100vw', height: '100vh', background: libraryReturnPhase === "library-exit" ? '#03100e' : '#000', overflow: 'hidden' }}>
+      <div style={{ position: 'relative', width: '100vw', height: '100vh', background: (libraryReturnPhase === "library-exit" || controlRoomReturnPhase === "control-room-exit") ? '#03100e' : '#000', overflow: 'hidden' }}>
 
         {phase === "launchVideo" && launchVideo && (
           <IntroVideo
@@ -432,6 +464,7 @@ export default function App() {
             <ControlRoom
               activeProfile={activeProfile}
               onReturnHome={handleReturnHomeFromControlRoom}
+              isExiting={controlRoomReturnPhase === "control-room-exit"}
               crtEnabled={crtEnabled}
               onCRTChange={setCrtEnabled}
               uiSoundsEnabled={uiSoundsEnabled}

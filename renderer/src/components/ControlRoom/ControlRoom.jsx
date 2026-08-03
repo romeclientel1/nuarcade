@@ -76,7 +76,7 @@ const RETURN_LABEL_BY_ORIGIN = {
 }
 
 export default function ControlRoom({
-  activeProfile, onReturnHome, entryOrigin = "sanctuary",
+  activeProfile, onReturnHome, entryOrigin = "sanctuary", isExiting = false,
   crtEnabled, onCRTChange,
   uiSoundsEnabled, onUiSoundsChange, uiSoundVolume, onUiSoundVolumeChange,
 }) {
@@ -370,7 +370,7 @@ export default function ControlRoom({
   const activeStation = [...SYSTEMS_STATIONS, ...ARCHIVES_STATIONS].find(station => station.id === activeStationId)
 
   return (
-    <div className={styles.stage}>
+      <div className={styles.stage + (isExiting ? " " + styles.stageExiting : "")}>
       <img src={controlRoomEnvironment} alt="" aria-hidden="true" className={styles.environment} />
 
       <div className={styles.globalHeader + (stationOpen ? " " + styles.roomInactive : "")}>
