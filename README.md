@@ -21,7 +21,10 @@ Vespara is designed to feel like a place to return to, not a wall of software me
 
 ## Vespara 6.0.5 — Sanctuary and Attract Mode polish
 
+**Current version: v6.0.5**
+
 The current release refines environmental motion, cinematic transitions, Sanctuary language, and Spanish status values.
+The installation and release details below are verified against Vespara 6.0.5.
 
 Download it from the [GitHub release](https://github.com/romeclientel1/nuarcade/releases/tag/v6.0.5):
 
