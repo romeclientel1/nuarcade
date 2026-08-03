@@ -1,5 +1,8 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { initializeMediaFolders } from './useMediaFolders.js'
 
 function createHarness() {
@@ -80,4 +83,10 @@ test('preserves real Electron bridge failures as errors', async () => {
   assert.deepEqual(harness.writes, [])
   assert.equal(harness.errors.length, 1)
   assert.deepEqual(harness.errors[0], ['[MediaFolders] IPC error:', failure])
+})
+
+test('a stale renderer completion flag cannot suppress filesystem verification', () => {
+  const source = fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'useMediaFolders.js'), 'utf8')
+  assert.equal(source.includes('localStorage.getItem'), false)
+  assert.equal(source.includes('ensureMediaFolders'), true)
 })

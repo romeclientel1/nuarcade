@@ -1,10 +1,11 @@
 const fs = require('fs')
 const path = require('path')
 const { app } = require('electron')
+const { resolveInstallContentRoot, defaultContentPaths } = require('./contentProvisioning')
 
 const CONFIG_PATH = path.join(app.getPath('userData'), 'nuarcade-config.json')
 
-const DEFAULTS = {
+const LEGACY_DEFAULTS = {
   teknoParrotPath:    'C:\\TeknoParrot\\',
   gamesFolderPath:    'C:\\ArcadeGames\\',
   rpcs3Path:          'C:\\RPCS3\\',
@@ -22,7 +23,7 @@ const DEFAULTS = {
   bezelSourcePath:    '',
   hideNotWorkingMame: true,
   retroarchPath:      'C:\\RetroArch\\',
-  retroarchGamesPath: 'C:\\RetroArchGames\\',
+  retroarchGamesPath: '',
   project64Path:      'C:\\Project64\\',
   n64GamesPath:       'C:\\N64Games\\',
   duckstationPath:    'C:\\DuckStation\\',
@@ -46,7 +47,7 @@ const DEFAULTS = {
   tablesPath:         'C:\\PinballTables\\',
   steamGamesPath:     'C:\\SteamGames\\',
   pcGamesPath:        'C:\\PCGames\\',
-  mediaPath:          'C:\\Media\\',
+  mediaPath:          '',
   ytdlpPath:          'C:\\Tools\\yt-dlp.exe',
   anthropicApiKey:    '',
   musicEnabled:       true,
@@ -109,6 +110,13 @@ const DEFAULTS = {
   }
 }
 
+// Content defaults are derived from the executable's directory for packaged
+// installs. Development uses an isolated userData child, never the checkout.
+// Existing config values are merged over these defaults and therefore remain
+// authoritative across upgrades.
+const INSTALL_CONTENT_ROOT = resolveInstallContentRoot({ appRef: app })
+const DEFAULTS = { ...LEGACY_DEFAULTS, ...defaultContentPaths(INSTALL_CONTENT_ROOT) }
+
 function load() {
   try {
     if (fs.existsSync(CONFIG_PATH)) {
@@ -117,6 +125,18 @@ function load() {
     }
   } catch (e) {}
   return { ...DEFAULTS }
+}
+
+function exists() {
+  return fs.existsSync(CONFIG_PATH)
+}
+
+function hasExplicitContentPaths() {
+  try {
+    const raw = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'))
+    const excluded = new Set(['steamPath', 'ytdlpPath', 'bezelSourcePath', 'emuMoviesPath'])
+    return Object.keys(raw).some(key => !excluded.has(key) && /Path$/.test(key) && typeof raw[key] === 'string' && raw[key].length > 0)
+  } catch (e) { return false }
 }
 
 function save(config) {
@@ -146,4 +166,4 @@ function update(updates) {
   return save(config)
 }
 
-module.exports = { load, save, get, set, update, CONFIG_PATH }
+module.exports = { load, save, get, set, update, exists, hasExplicitContentPaths, CONFIG_PATH, INSTALL_CONTENT_ROOT, DEFAULTS }

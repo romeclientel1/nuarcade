@@ -23,10 +23,12 @@ const { presentWindow, detectAutoLaunch } = require('./windowPresentation')
 const singleInstanceLockAcquired = app.requestSingleInstanceLock()
 
 const config = require('./config')
+const provisioning = require('./contentProvisioning')
 const { scanMedia } = require('./mediaScanner')
 const launchRegistry = require('./launchRegistry')
 
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged
+const installContentPath = (name) => path.join(config.INSTALL_CONTENT_ROOT, name)
 
 let mainWin = null
 let startupFallbackTimer = null
@@ -327,7 +329,7 @@ ipcMain.handle('launch-game', async (event, profilePath, sessionId) => {
 // -- Launch RPCS3 game -------------------------------------------------------
 ipcMain.handle('launch-ps3-game', async (event, gamePath, sessionId) => {
   const cfg = config.load()
-  const rpcs3Exe = path.join(cfg.rpcs3Path || 'F:\\RPCS3\\', 'rpcs3.exe')
+  const rpcs3Exe = path.join(cfg.rpcs3Path || installContentPath('RPCS3'), 'rpcs3.exe')
   try {
     await launchWithReturn(rpcs3Exe, ['--no-gui', gamePath], { sessionId })
     return { success: true }
@@ -372,7 +374,7 @@ ipcMain.handle('scan-pinball', async (event, tablesPath) => {
 // -- VPX launch --------------------------------------------------------------
 ipcMain.handle('launch-vpx-table', async (event, tablePath, sessionId) => {
   const cfg = config.load()
-  const vpxDir  = cfg.pinballPath || 'F:\\vPinball\\'
+  const vpxDir  = cfg.pinballPath || installContentPath('vPinball')
   const vpxExe  = require('path').join(vpxDir, 'VPinballX64.exe')
   try {
     launchDetachedFireAndForget(vpxExe, ['-play', tablePath], {
@@ -387,7 +389,7 @@ ipcMain.handle('launch-vpx-table', async (event, tablePath, sessionId) => {
 
 ipcMain.handle('launch-xbox360-game', async (event, gamePath, sessionId) => {
   const cfg = config.load()
-  const xeniaExe = path.join(cfg.xeniaPath || 'F:\\Xenia\\', 'xenia.exe')
+  const xeniaExe = path.join(cfg.xeniaPath || installContentPath('Xenia'), 'xenia.exe')
   try {
     await launchWithReturn(xeniaExe, [gamePath], { sessionId })
     return { success: true }
@@ -399,7 +401,7 @@ ipcMain.handle('launch-xbox360-game', async (event, gamePath, sessionId) => {
 // -- Launch Dolphin / GC+Wii -------------------------------------------------
 ipcMain.handle('launch-gcwii-game', async (event, gamePath, sessionId) => {
   const cfg = config.load()
-  const dolphinExe = path.join(cfg.dolphinPath || 'F:\\Dolphin\\', 'Dolphin.exe')
+  const dolphinExe = path.join(cfg.dolphinPath || installContentPath('Dolphin'), 'Dolphin.exe')
   try {
     await launchWithReturn(dolphinExe, ['-e', gamePath, '--batch'], { sessionId })
     return { success: true }
@@ -411,7 +413,7 @@ ipcMain.handle('launch-gcwii-game', async (event, gamePath, sessionId) => {
 // -- Launch PCSX2 / PS2 ------------------------------------------------------
 ipcMain.handle('launch-ps2-game', async (event, gamePath, sessionId) => {
   const cfg = config.load()
-  const pcsx2Exe = path.join(cfg.pcsx2Path || 'F:\\PCSX2\\', 'pcsx2-qt.exe')
+  const pcsx2Exe = path.join(cfg.pcsx2Path || installContentPath('PCSX2'), 'pcsx2-qt.exe')
   try {
     await launchWithReturn(pcsx2Exe, ['-nogui', '--', gamePath], { sessionId })
     return { success: true }
@@ -443,7 +445,7 @@ ipcMain.handle('scan-ps2-games', async (event, ps2GamesPath) => {
 // -- Launch Ryujinx / Switch --------------------------------------------------
 ipcMain.handle('launch-switch-game', async (event, gamePath, sessionId) => {
   const cfg = config.load()
-  const ryujinxExe = path.join(cfg.ryujinxPath || 'F:\\Ryujinx\\', 'Ryujinx.exe')
+  const ryujinxExe = path.join(cfg.ryujinxPath || installContentPath('Ryujinx'), 'Ryujinx.exe')
   try {
     await launchWithReturn(ryujinxExe, [gamePath], { sessionId })
     return { success: true }
@@ -459,65 +461,13 @@ ipcMain.handle('scan-switch-games', async (event, switchGamesPath) => {
 })
 
 
-// -- Create F: drive folder structure ----------------------------------------
+// -- Create/repair the configured content structure --------------------------
 ipcMain.handle('create-folder-structure', async () => {
-  const fs = require('fs')
-  const folders = [
-    'F:\\TeknoParrot',
-    'F:\\ArcadeGames',
-    'F:\\RPCS3',
-    'F:\\PS3Games',
-    'F:\\Xenia',
-    'F:\\Xbox360Games',
-    'F:\\Dolphin',
-    'F:\\GCWiiGames',
-    'F:\\PCSX2',
-    'F:\\PCSX2\\bios',
-    'F:\\PS2Games',
-    'F:\\Ryujinx',
-    'F:\\Ryujinx\\system',
-    'F:\\SwitchGames',
-    'F:\\MAME',
-    'F:\\MAME\\roms',
-    'F:\\RetroArch',
-    'F:\\RetroArchGames',
-    'F:\\RetroArchGames\\NES',
-    'F:\\RetroArchGames\\SNES',
-    'F:\\RetroArchGames\\Genesis',
-    'F:\\RetroArchGames\\GBA',
-    'F:\\RetroArchGames\\N64',
-    'F:\\RetroArchGames\\PS1',
-    'F:\\Project64',
-    'F:\\N64Games',
-    'F:\\DuckStation',
-    'F:\\PS1Games',
-    'F:\\Flycast',
-    'F:\\DreamcastGames',
-    'F:\\Model2',
-    'F:\\Model2Games',
-    'F:\\Supermodel',
-    'F:\\Model3Games',
-    'F:\\PPSSPP',
-    'F:\\PSPGames',
-    'F:\\Cemu',
-    'F:\\WiiUGames',
-    'F:\\vPinball',
-    'F:\\PinballTables',
-    'F:\\NuArcade',
-    'F:\\Media',
-    'F:\\Media\\Videos',
-    'F:\\Media\\Artwork',
-  ]
-  const results = []
-  for (const folder of folders) {
-    try {
-      fs.mkdirSync(folder, { recursive: true })
-      results.push({ folder, created: true })
-    } catch (e) {
-      results.push({ folder, created: false, error: e.message })
-    }
-  }
-  return { success: true, results }
+  const cfg = config.load()
+  const fresh = !config.exists() || !config.hasExplicitContentPaths()
+  const root = fresh ? config.INSTALL_CONTENT_ROOT : (cfg.mediaPath || path.join(config.INSTALL_CONTENT_ROOT, 'Media'))
+  const result = provisioning.provisionDirectories(root, fresh ? {} : { profile: 'media' })
+  return { success: result.success, results: result.created.map(folder => ({ folder, created: true })), failures: result.failures }
 })
 
 
@@ -872,7 +822,7 @@ ipcMain.handle('get-displays', () => {
 
 app.whenReady().then(() => {
   if (!singleInstanceLockAcquired) return
-  ensureCabinetFolders()
+  provisionStartupContent()
   if (process.platform === 'darwin') {
     app.dock.setIcon(path.join(__dirname, '../../assets/icons/icon.png'))
   }
@@ -897,7 +847,7 @@ app.whenReady().then(() => {
 ipcMain.handle('launch-mame-game', async (event, gamePath, sessionId) => {
   const fs = require('fs')
   const cfg = config.load()
-  const mameDir = cfg.mamePath || 'F:\\MAME\\'
+  const mameDir = cfg.mamePath || installContentPath('MAME')
 
   // Find mame exe -- could be mame.exe, mame64.exe, mame0270.exe etc
   let mameExe = path.join(mameDir, 'mame.exe')
@@ -929,7 +879,7 @@ ipcMain.handle('scan-mame-games', async (event, mameGamesPath) => {
 // -- RetroArch ---------------------------------------------------------------
 ipcMain.handle('launch-retroarch', async (event, sessionId) => {
   const cfg = config.load()
-  const retroDir = cfg.retroarchPath || 'F:\\RetroArch\\'
+  const retroDir = cfg.retroarchPath || installContentPath('RetroArch')
   const retroExe = path.join(retroDir, 'retroarch.exe')
   if (!require('fs').existsSync(retroExe)) return { success: false, error: 'RetroArch not found at: ' + retroExe }
   try { await launchWithReturn(retroExe, [], { spawnOpts: { cwd: retroDir }, sessionId }); return { success: true } }
@@ -1070,7 +1020,7 @@ const BEZEL_CORE_FOLDER_MAP = {
 ipcMain.handle('launch-retroarch-game', async (event, gamePath, system, sessionId) => {
   const fs = require('fs')
   const cfg = config.load()
-  const retroDir = cfg.retroarchPath || 'F:\\RetroArch\\'
+  const retroDir = cfg.retroarchPath || installContentPath('RetroArch')
   const retroExe = path.join(retroDir, 'retroarch.exe')
   const ext = path.extname(gamePath).toLowerCase()
 
@@ -1139,7 +1089,7 @@ ipcMain.handle('launch-retroarch-game', async (event, gamePath, system, sessionI
 ipcMain.handle('prune-mame-artwork', async (event, dryRun) => {
   const cfg = config.load()
   const { pruneMameArtwork } = require('./scanner')
-  const artworkPath = path.join(cfg.mamePath || 'F:\\MAME\\', 'artwork')
+  const artworkPath = path.join(cfg.mamePath || installContentPath('MAME'), 'artwork')
   try {
     const result = await pruneMameArtwork(cfg.mameGamesPath, artworkPath, dryRun)
     return { success: true, total: result.total, kept: result.kept, removed: result.removed, removedNames: result.removedNames, dryRun: result.dryRun }
@@ -1151,7 +1101,7 @@ ipcMain.handle('prune-mame-artwork', async (event, dryRun) => {
 ipcMain.handle('install-local-bezels', async (event, dryRun) => {
   const cfg = config.load()
   const { installLocalBezels } = require('./scanner')
-  const artworkPath = path.join(cfg.mamePath || 'F:\\MAME\\', 'artwork')
+  const artworkPath = path.join(cfg.mamePath || installContentPath('MAME'), 'artwork')
   try {
     const result = await installLocalBezels(cfg.mameGamesPath, artworkPath, cfg.bezelSourcePath, cfg.mamePath, dryRun)
     return {
@@ -1175,7 +1125,7 @@ ipcMain.handle('install-local-bezels', async (event, dryRun) => {
 ipcMain.handle('fetch-bezels-for-system', async (event, system) => {
   const cfg = config.load()
   const fs = require('fs')
-  const retroDir = cfg.retroarchPath || 'F:\\RetroArch\\'
+  const retroDir = cfg.retroarchPath || installContentPath('RetroArch')
   const repo = BEZEL_SYSTEM_REPO[system]
   if (!repo) return { success: false, error: 'Bezel matching not yet supported for "' + system + '"' }
 
@@ -1243,7 +1193,7 @@ ipcMain.handle('scan-retroarch-games', async (event, retroarchGamesPath) => {
 // -- Project64 / N64 ---------------------------------------------------------
 ipcMain.handle('launch-n64-game', async (event, gamePath, sessionId) => {
   const cfg = config.load()
-  const p64Exe = path.join(cfg.project64Path || 'F:\\Project64\\', 'Project64.exe')
+  const p64Exe = path.join(cfg.project64Path || installContentPath('Project64'), 'Project64.exe')
   try {
     await launchWithReturn(p64Exe, [gamePath], { sessionId })
     return { success: true }
@@ -1260,7 +1210,7 @@ ipcMain.handle('scan-n64-games', async (event, n64GamesPath) => {
 // -- DuckStation / PS1 -------------------------------------------------------
 ipcMain.handle('launch-ps1-game', async (event, gamePath, sessionId) => {
   const cfg = config.load()
-  const dsExe = path.join(cfg.duckstationPath || 'F:\\DuckStation\\', 'duckstation-qt-x64-ReleaseLTCG.exe')
+  const dsExe = path.join(cfg.duckstationPath || installContentPath('DuckStation'), 'duckstation-qt-x64-ReleaseLTCG.exe')
   try {
     await launchWithReturn(dsExe, [gamePath], { sessionId })
     return { success: true }
@@ -1277,7 +1227,7 @@ ipcMain.handle('scan-ps1-games', async (event, ps1GamesPath) => {
 // -- Flycast / Dreamcast -----------------------------------------------------
 ipcMain.handle('launch-flycast-game', async (event, gamePath, sessionId) => {
   const cfg = config.load()
-  const flyExe = path.join(cfg.flycastPath || 'F:\\Flycast\\', 'flycast.exe')
+  const flyExe = path.join(cfg.flycastPath || installContentPath('Flycast'), 'flycast.exe')
   try {
     await launchWithReturn(flyExe, [gamePath], { sessionId })
     return { success: true }
@@ -1293,7 +1243,7 @@ ipcMain.handle('scan-dreamcast-games', async (event, dreamcastGamesPath) => {
 
 ipcMain.handle('launch-xemu-game', async (event, gamePath, sessionId) => {
   const cfg = config.load()
-  const xemuExe = path.join(cfg.xemuPath || 'F:\\Xemu\\', 'xemu.exe')
+  const xemuExe = path.join(cfg.xemuPath || installContentPath('Xemu'), 'xemu.exe')
   try {
     await launchWithReturn(xemuExe, [gamePath], { sessionId })
     return { success: true }
@@ -1320,7 +1270,7 @@ function findCxbxExe(cxbxDir) {
 
 ipcMain.handle('launch-cxbx-game', async (event, gamePath, sessionId) => {
   const cfg = config.load()
-  const cxbxDir = cfg.cxbxPath || 'F:\\Cxbx-Reloaded\\'
+  const cxbxDir = cfg.cxbxPath || installContentPath('Cxbx-Reloaded')
   const cxbxExe = findCxbxExe(cxbxDir)
   if (!cxbxExe) return { success: false, error: 'Cxbx-Reloaded executable not found in ' + cxbxDir }
   try {
@@ -1345,19 +1295,19 @@ ipcMain.handle('check-bios', async () => {
   const results = {}
 
   // PCSX2 - needs any file in bios folder
-  const pcsx2Bios = path.join(cfg.pcsx2Path || 'F:\\PCSX2\\', 'bios')
+  const pcsx2Bios = path.join(cfg.pcsx2Path || installContentPath('PCSX2'), 'bios')
   try {
     const files = fs.readdirSync(pcsx2Bios).filter(f => f.toLowerCase().endsWith('.bin'))
     results.pcsx2 = { found: files.length > 0, files, folder: pcsx2Bios }
   } catch (e) { results.pcsx2 = { found: false, files: [], folder: pcsx2Bios } }
 
   // Ryujinx - needs prod.keys in system folder
-  const ryujinxSystem = path.join(cfg.ryujinxPath || 'F:\\Ryujinx\\', 'system')
+  const ryujinxSystem = path.join(cfg.ryujinxPath || installContentPath('Ryujinx'), 'system')
   const prodKeys = path.join(ryujinxSystem, 'prod.keys')
   results.ryujinx = { found: fs.existsSync(prodKeys), files: fs.existsSync(prodKeys) ? ['prod.keys'] : [], folder: ryujinxSystem }
 
   // DuckStation - needs any .bin in a bios subfolder or scph*.bin anywhere under duckstation path
-  const dsPath = cfg.duckstationPath || 'F:\\DuckStation\\'
+  const dsPath = cfg.duckstationPath || installContentPath('DuckStation')
   const dsBios = path.join(dsPath, 'bios')
   try {
     const files = fs.readdirSync(dsBios).filter(f => f.toLowerCase().endsWith('.bin'))
@@ -1371,7 +1321,7 @@ ipcMain.handle('check-bios', async () => {
   }
 
   // Flycast - needs dc_boot.bin in data folder
-  const flycastData = path.join(cfg.flycastPath || 'F:\\Flycast\\', 'data')
+  const flycastData = path.join(cfg.flycastPath || installContentPath('Flycast'), 'data')
   const dcBoot = path.join(flycastData, 'dc_boot.bin')
   results.flycast = { found: fs.existsSync(dcBoot), files: fs.existsSync(dcBoot) ? ['dc_boot.bin'] : [], folder: flycastData }
 
@@ -1379,7 +1329,7 @@ ipcMain.handle('check-bios', async () => {
   // real Xbox. Xemu lets these be named/placed anywhere via its own
   // xemu.toml, so this checks its install folder for anything that looks
   // right rather than one fixed filename like the checks above.
-  const xemuPath = cfg.xemuPath || 'F:\\Xemu\\'
+  const xemuPath = cfg.xemuPath || installContentPath('Xemu')
   let xemuFiles = []
   try { xemuFiles = fs.readdirSync(xemuPath).filter(f => f.toLowerCase().endsWith('.bin')) } catch (e) {}
   const hasMcpx = xemuFiles.some(f => f.toLowerCase().includes('mcpx'))
@@ -1392,7 +1342,7 @@ ipcMain.handle('check-bios', async () => {
 // -- Model 2 Emulator --------------------------------------------------------
 ipcMain.handle('launch-model2-game', async (event, gamePath, sessionId) => {
   const cfg = config.load()
-  const m2Exe = path.join(cfg.model2Path || 'F:\\Model2\\', 'emulator_multicpu.exe')
+  const m2Exe = path.join(cfg.model2Path || installContentPath('Model2'), 'emulator_multicpu.exe')
   const romName = path.basename(gamePath, path.extname(gamePath))
   try {
     await launchWithReturn(m2Exe, [romName], { cwd: path.dirname(m2Exe), sessionId })
@@ -1410,7 +1360,7 @@ ipcMain.handle('scan-model2-games', async (event, model2GamesPath) => {
 // -- Model 3 / Supermodel ----------------------------------------------------
 ipcMain.handle('launch-model3-game', async (event, gamePath, sessionId) => {
   const cfg = config.load()
-  const m3Exe = path.join(cfg.model3Path || 'F:\\Supermodel\\', 'Supermodel.exe')
+  const m3Exe = path.join(cfg.model3Path || installContentPath('Supermodel'), 'Supermodel.exe')
   try {
     await launchWithReturn(m3Exe, [gamePath, '-fullscreen'], { sessionId })
     return { success: true }
@@ -1441,7 +1391,7 @@ ipcMain.handle('save-txt', async (event, { content, defaultName }) => {
 // -- PPSSPP / PSP ------------------------------------------------------------
 ipcMain.handle('launch-psp-game', async (event, gamePath, sessionId) => {
   const cfg = config.load()
-  const ppssppExe = path.join(cfg.ppssppPath || 'F:\\PPSSPP\\', 'PPSSPPWindows64.exe')
+  const ppssppExe = path.join(cfg.ppssppPath || installContentPath('PPSSPP'), 'PPSSPPWindows64.exe')
   try {
     await launchWithReturn(ppssppExe, [gamePath], { sessionId })
     return { success: true }
@@ -1458,7 +1408,7 @@ ipcMain.handle('scan-psp-games', async (event, pspGamesPath) => {
 // -- Cemu / Wii U ------------------------------------------------------------
 ipcMain.handle('launch-wiiu-game', async (event, gamePath, sessionId) => {
   const cfg = config.load()
-  const cemuExe = path.join(cfg.cemuPath || 'F:\\Cemu\\', 'Cemu.exe')
+  const cemuExe = path.join(cfg.cemuPath || installContentPath('Cemu'), 'Cemu.exe')
   try {
     await launchWithReturn(cemuExe, ['-f', '-g', gamePath], { sessionId })
     return { success: true }
@@ -1506,30 +1456,41 @@ ipcMain.handle('find-exe-in-folder', async (event, folderPath, keyword) => {
     return { found: false, error: e.message }
   }
 })
-// Creates all required F: drive folders on first launch if they don't exist.
-// Mirrors the NSIS installer script as a belt-and-suspenders fallback.
-function ensureCabinetFolders() {
-  const fs = require('fs')
-  if (!fs.existsSync('F:\\')) return // not a cabinet PC
-  const folders = [
-    'F:\\TeknoParrot', 'F:\\MAME', 'F:\\MAME\\roms',
-    'F:\\Model2', 'F:\\Supermodel',
-    'F:\\RetroArch', 'F:\\RetroArch\\system',
-    'F:\\Project64', 'F:\\DuckStation', 'F:\\Flycast',
-    'F:\\PPSSPP', 'F:\\PCSX2', 'F:\\RPCS3',
-    'F:\\Xenia', 'F:\\Dolphin', 'F:\\Cemu', 'F:\\Ryujinx',
-    'F:\\vPinball',
-    'F:\\ArcadeGames', 'F:\\RetroArchGames',
-    'F:\\N64Games', 'F:\\PS1Games', 'F:\\DreamcastGames',
-    'F:\\PSPGames', 'F:\\PS2Games', 'F:\\PS3Games',
-    'F:\\Xbox360Games', 'F:\\GCWiiGames', 'F:\\WiiUGames',
-    'F:\\SwitchGames', 'F:\\Model2Games', 'F:\\Model3Games',
-    'F:\\PinballTables',
-    'F:\\Media', 'F:\\Media\\Videos', 'F:\\Media\\Artwork',
-  ]
-  folders.forEach(f => {
-    try { fs.mkdirSync(f, { recursive: true }) } catch (e) {}
-  })
+// Main-process filesystem authority. Existing config values are preserved;
+// only a genuine first run receives install-root defaults and the complete
+// structural tree. Subsequent starts repair the active configured media root.
+function provisionStartupContent() {
+  const root = config.INSTALL_CONTENT_ROOT
+  const fresh = !config.exists() || !config.hasExplicitContentPaths()
+  const cfg = config.load()
+  const target = fresh ? root : (cfg.mediaPath || path.join(root, 'Media'))
+  const result = provisioning.provisionDirectories(target, fresh ? {} : { profile: 'media' })
+  if (!fresh && cfg.retroarchGamesPath) {
+    const ra = provisioning.provisionDirectories(path.join(cfg.retroarchGamesPath, 'roms'), { profile: 'retroarch' })
+    result.created.push(...ra.created); result.skipped.push(...ra.skipped); result.failures.push(...ra.failures)
+    result.success = result.success && ra.success
+  }
+  if (!fresh) {
+    const roots = provisioning.provisionConfiguredRoots(cfg)
+    result.created.push(...roots.created); result.skipped.push(...roots.skipped); result.failures.push(...roots.failures)
+    result.success = result.success && roots.success
+  }
+  // A custom media root remains authoritative. Only prepare the default
+  // EmuMovies parent for a genuine first run (or when the user explicitly
+  // configured a non-default EmuMovies output path); do not create a second
+  // install-root tree beside an existing custom library.
+  const defaultEmuMoviesPath = path.join(root, 'Media', 'EmuMovies')
+  const emuMoviesIsDefault = cfg.emuMoviesPath &&
+    path.resolve(cfg.emuMoviesPath) === path.resolve(defaultEmuMoviesPath)
+  if (cfg.emuMoviesPath && (fresh || !emuMoviesIsDefault)) {
+    const emuRoot = provisioning.ensureDirectory(cfg.emuMoviesPath)
+    if (emuRoot.created) result.created.push(emuRoot.path)
+    if (!emuRoot.created) result.skipped.push(emuRoot.path)
+    if (!emuRoot.success) { result.success = false; result.failures.push(emuRoot) }
+  }
+  if (result.success && fresh) config.save({ ...cfg, ...provisioning.defaultContentPaths(root), setupComplete: false, mediaFoldersVersion: provisioning.FOLDER_SCHEMA_VERSION })
+  if (!result.success) console.error('[content-provisioning] startup incomplete:', JSON.stringify(result.failures))
+  return result
 }
 
 
@@ -1657,11 +1618,11 @@ ipcMain.handle('get-videos', async () => {
   try {
     const fs = require('fs')
     const cfg = config.load()
-    const videosDir = path.join(cfg.mediaPath || 'F:\\Media\\', 'Videos')
+    const videosDir = path.join(cfg.mediaPath || installContentPath('Media'), 'Videos')
     const result = {}
 
     // Merge persisted download registry
-    const registryPath = path.join(cfg.mediaPath || 'F:\\Media\\', 'videos.json')
+    const registryPath = path.join(cfg.mediaPath || installContentPath('Media'), 'videos.json')
     if (fs.existsSync(registryPath)) {
       try {
         const reg = JSON.parse(fs.readFileSync(registryPath, 'utf8'))
@@ -1704,8 +1665,8 @@ ipcMain.handle('find-orphaned-media', async (event, validIds) => {
   const cfg = config.load()
   const validSet = new Set(validIds)
 
-  const videosDir = path.join(cfg.mediaPath || 'F:\\Media\\', 'Videos')
-  const artworkDir = path.join(cfg.mediaPath || 'F:\\Media\\', 'Artwork')
+  const videosDir = path.join(cfg.mediaPath || installContentPath('Media'), 'Videos')
+  const artworkDir = path.join(cfg.mediaPath || installContentPath('Media'), 'Artwork')
 
   const orphanedVideos = []
   const staleFragments = []
@@ -1772,7 +1733,7 @@ ipcMain.handle('delete-orphaned-media', async (event, filePaths) => {
 ipcMain.handle('get-system-logos', async () => {
   const fs = require('fs')
   const cfg = config.load()
-  const logosDir = path.join(cfg.mediaPath || 'F:\\Media\\', 'SystemLogos')
+  const logosDir = path.join(cfg.mediaPath || installContentPath('Media'), 'SystemLogos')
   const logos = {}
 
   try {
@@ -1798,7 +1759,7 @@ ipcMain.handle('ensure-ytdlp', async (event) => {
   const fs = require('fs')
   const https = require('https')
   const cfg = config.load()
-  const ytdlpExe = cfg.ytdlpPath || 'F:\\Tools\\yt-dlp.exe'
+  const ytdlpExe = cfg.ytdlpPath || path.join(installContentPath('Tools'), 'yt-dlp.exe')
 
   // Already present -- nothing to do
   if (fs.existsSync(ytdlpExe)) {
@@ -1849,7 +1810,7 @@ ipcMain.handle('ytdlp-search', async (event, { gameTitle, gameId, system, emulat
   const https = require('https')
   const { spawn } = require('child_process')
   const cfg = config.load()
-  const ytdlpExe = cfg.ytdlpPath || 'F:\\Tools\\yt-dlp.exe'
+  const ytdlpExe = cfg.ytdlpPath || path.join(installContentPath('Tools'), 'yt-dlp.exe')
 
   // Auto-download yt-dlp if missing
   if (!fs.existsSync(ytdlpExe)) {
@@ -2033,8 +1994,8 @@ ipcMain.handle('ytdlp-download', async (event, { videoId, gameId }) => {
   if (!videoId || !/^[a-zA-Z0-9_-]{11}$/.test(videoId)) {
     return { success: false, error: 'Invalid video ID: "' + String(videoId).slice(0, 20) + '"' }
   }
-  const ytdlpExe = cfg.ytdlpPath || 'F:\\Tools\\yt-dlp.exe'
-  const videosDir = path.join(cfg.mediaPath || 'F:\\Media\\', 'Videos')
+  const ytdlpExe = cfg.ytdlpPath || path.join(installContentPath('Tools'), 'yt-dlp.exe')
+  const videosDir = path.join(cfg.mediaPath || installContentPath('Media'), 'Videos')
   const outputFile = path.join(videosDir, gameId + '.mp4')
 
   // Auto-download yt-dlp if missing using https.get
@@ -2075,7 +2036,7 @@ ipcMain.handle('ytdlp-download', async (event, { videoId, gameId }) => {
 
   const saveRegistry = () => {
     try {
-      const registryPath = path.join(cfg.mediaPath || 'F:\\Media\\', 'videos.json')
+      const registryPath = path.join(cfg.mediaPath || installContentPath('Media'), 'videos.json')
       const videos = JSON.parse(fs.existsSync(registryPath) ? fs.readFileSync(registryPath, 'utf8') : '{}')
       videos[gameId] = outputFile
       fs.writeFileSync(registryPath, JSON.stringify(videos))
@@ -2180,11 +2141,11 @@ ipcMain.handle('ytdlp-download', async (event, { videoId, gameId }) => {
 })
 
 
-// -- Music: scan F:/Media/Music/ for mp3 files ----------------------------
+// -- Music: scan the configured Media/Music folder -------------------------
 ipcMain.handle('get-music-tracks', async () => {
   const fs = require('fs')
   const cfg = config.load()
-  const musicDir = path.join(cfg.mediaPath || 'F:\\Media\\', 'Music')
+  const musicDir = path.join(cfg.mediaPath || installContentPath('Media'), 'Music')
   if (!fs.existsSync(musicDir)) return { tracks: [], dir: musicDir }
   try {
     const files = fs.readdirSync(musicDir)
@@ -2361,8 +2322,8 @@ ipcMain.on('get-version', (event) => {
 ipcMain.handle('tp-auto-configure', async () => {
   const fs = require('fs')
   const cfg = config.load()
-  const tpPath        = cfg.teknoParrotPath || 'F:\\TeknoParrot\\'
-  const gamesFolders  = cfg.gamesFolderPath || 'F:\\ArcadeGames\\'
+  const tpPath        = cfg.teknoParrotPath || installContentPath('TeknoParrot')
+  const gamesFolders  = cfg.gamesFolderPath || installContentPath('ArcadeGames')
   const profilesDir   = path.join(tpPath, 'GameProfiles')
   const userProfiles  = path.join(tpPath, 'UserProfiles')
 
@@ -2466,7 +2427,7 @@ ipcMain.handle('pick-folder', async (event) => {
 ipcMain.handle('link-snaps-folder', async (event, srcFolder) => {
   const fs = require('fs')
   const cfg = config.load()
-  const mediaRoot = cfg.mediaPath || 'F:\\Media'
+  const mediaRoot = cfg.mediaPath || installContentPath('Media')
   const systems = [
     'MAME', 'TeknoParrot', 'RPCS3', 'Xenia', 'Dolphin',
     'PCSX2', 'Ryujinx', 'DuckStation', 'Flycast', 'PPSSPP',
@@ -2493,7 +2454,7 @@ ipcMain.handle('link-snaps-folder', async (event, srcFolder) => {
 // STEP 1: Ensure media folder structure -- STEP 2: Scan media folders and patch game objects
 ipcMain.handle('scan-media', async (event, games) => {
   const cfg = config.load()
-  const mediaRoot = cfg.mediaPath || 'F:\\Media'
+  const mediaRoot = cfg.mediaPath || path.join(config.INSTALL_CONTENT_ROOT, 'Media')
   try {
     const patched = scanMedia(games, mediaRoot)
     return { success: true, games: patched }
@@ -2503,178 +2464,22 @@ ipcMain.handle('scan-media', async (event, games) => {
 })
 
 ipcMain.handle('ensure-media-folders', async (event, customPath) => {
-  const fs = require('fs')
   const cfg = config.load()
-  const mediaRoot = customPath || cfg.mediaPath || 'F:\\Media'
-  const FOLDER_SCHEMA_VERSION = '4.4.7'
-
-  // Version-stamped: re-run whenever schema version advances
-  const storedVersion = cfg.mediaFoldersVersion || '0'
-  const alreadyDone = storedVersion === FOLDER_SCHEMA_VERSION
-
-  const created = []
-  const skipped = []
-
-  const ensure = (dir) => {
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true })
-      created.push(dir)
-    } else {
-      skipped.push(dir)
-    }
-  }
-
+  const mediaRoot = customPath || cfg.mediaPath || path.join(config.INSTALL_CONTENT_ROOT, 'Media')
   try {
-    // Dead-code note: an earlier "Images\\Box Art" / "Images\\Cabinet Art"
-    // per-system folder scheme used to be built here (Step 1), using its own
-    // stale systems list that included individual RetroArch sub-systems like
-    // NES/SNES/Amiga. Confirmed nothing anywhere in the codebase ever reads
-    // from that structure -- it was pure dead weight, and the direct source
-    // of confusing extra folders. Removed. Only the root folder itself needs
-    // creating before the real EmuMovies-compatible structure below.
-    ensure(mediaRoot)
-
-    // Real EmuMovies Sync folder names (confirmed against the live Sync app's
-    // "Available Media" dropdown). Sync uses underscores in place of spaces
-    // throughout its own system folder names (e.g. Microsoft_Xbox_360).
-    const emumoviesSubFolders = [
-      'Video_MP4_HI_QUAL',
-      'Video_MP4_HD',
-      'Video_MP4',
-      'Video_AVI_HI_QUAL',
-      'Video_AVI_HD',
-      'Video_AVI',
-      'Snap',
-      'Title',
-      'Background',
-      'Box',
-      'Box_25D',
-      'Box_3D',
-      'Box_Full',
-      'Box_Spine',
-      'BoxBack',
-      'Cart',
-      'Logos',
-      'Manual',
-      'System_Logo',
-    ]
-
-    // One folder per emulator NuArcade actually knows how to launch --
-    // matches the exact names shown in Settings' Emulators grid, so what
-    // Rome sees here lines up with what he sees there. RetroArch and MAME
-    // excluded: MAME's own arcade catalog lives entirely inside RetroArch,
-    // and RetroArch itself is multi-system by nature -- EmuMovies media for
-    // those older/retro systems should live under the specific console
-    // folders instead, not a single "RetroArch" or "MAME" bucket. Folder
-    // names include every system each emulator actually plays, verified
-    // against each emulator's own documentation, so it's clear at a glance
-    // what belongs in each folder without needing to open a README first.
-    const emumoviesSystems = [
-      'TeknoParrot', 'RPCS3 - PS3', 'Xenia - Xbox 360', 'Dolphin - GameCube - Wii - Triforce',
-      'PCSX2 - PS2', 'Ryubing - Switch', 'Project64 - N64', 'DuckStation - PS1',
-      'Flycast - Dreamcast - Naomi - Atomiswave', 'Model 2 - Sega Model 2', 'Supermodel - Sega Model 3',
-      'PPSSPP - PSP', 'Cemu - Wii U', 'Visual Pinball X',
-    ]
-
-    const emumoviesRoot = path.join(mediaRoot, 'EmuMovies')
-    ensure(emumoviesRoot)
-
-    // What system(s) each emulator actually plays -- written into a README
-    // inside each folder so it's obvious which one to point EmuMovies Sync
-    // at, without needing to remember or look it up separately.
-    const emumoviesSystemDescriptions = {
-      'RPCS3 - PS3':                              'Sony PlayStation 3',
-      'Xenia - Xbox 360':                         'Microsoft Xbox 360',
-      'Dolphin - GameCube - Wii - Triforce':      'Nintendo GameCube, Nintendo Wii, and the Sega/Namco Triforce arcade system',
-      'PCSX2 - PS2':                              'Sony Playstation 2',
-      'Ryubing - Switch':                         'Nintendo Switch',
-      'Project64 - N64':                          'Nintendo N64',
-      'DuckStation - PS1':                        'Sony Playstation (PS1)',
-      'Flycast - Dreamcast - Naomi - Atomiswave': 'Sega Dreamcast, Sega Naomi, Sega Naomi 2, and Sammy Atomiswave arcade',
-      'Model 2 - Sega Model 2':                   'Sega Model 2 arcade games',
-      'Supermodel - Sega Model 3':                'Sega Model 3 arcade games',
-      'PPSSPP - PSP':                             'Sony PSP',
-      'Cemu - Wii U':                             'Nintendo Wii U',
-      'Visual Pinball X':                         'Visual Pinball (EmuMovies drops the "X" in its own system name)',
-    }
-
-    // TeknoParrot is not one system, and EmuMovies genuinely does not catalog
-    // most of the arcade hardware it actually runs (SEGA Lindbergh, RingEdge,
-    // RingWide, ALL.Net/NU/ALLS, Namco System 357/369/ES-series, Taito Type X
-    // are all absent from EmuMovies' system list as of this writing). The one
-    // confirmed real match is "Konami e-AMUSEMENT" for Bemani-adjacent titles.
-    // For everything else in the TeknoParrot library, use NuArcade's YouTube
-    // video pipeline (Media > Library tab) instead -- EmuMovies won't have it.
-    const teknoParrotReadme = 'TeknoParrot runs many different arcade hardware platforms, not one system.\r\n\r\n' +
-      'Checked against EmuMovies Sync\'s own system list: most of what TeknoParrot\r\n' +
-      'actually emulates -- SEGA Lindbergh, RingEdge, RingWide, ALL.Net/NU/ALLS,\r\n' +
-      'Namco System 357/369/ES-series, Taito Type X -- is NOT in EmuMovies\' catalog.\r\n' +
-      'That covers most racing, lightgun, and rhythm titles (Initial D, Wangan\r\n' +
-      'Midnight, Mario Kart Arcade GP, House of the Dead, etc.) -- EmuMovies simply\r\n' +
-      'will not have media for these regardless of which category you pick.\r\n\r\n' +
-      'The one confirmed real match: select "Konami e-AMUSEMENT" in Sync for any\r\n' +
-      'Konami/Bemani-adjacent titles in your TeknoParrot library.\r\n\r\n' +
-      'For everything else, use Vespara\'s own YouTube video pipeline instead --\r\n' +
-      'open Media > Library tab and use "Find video" per game. That has real\r\n' +
-      'coverage for popular arcade racing/lightgun titles EmuMovies does not.'
-
-    for (const sys of emumoviesSystems) {
-      for (const sub of emumoviesSubFolders) {
-        ensure(path.join(emumoviesRoot, sys, sub))
-      }
-      const readmePath = path.join(emumoviesRoot, sys, 'README.txt')
-      if (!fs.existsSync(readmePath)) {
-        let readmeText
-        if (sys === 'TeknoParrot') {
-          readmeText = teknoParrotReadme
-        } else {
-          const description = emumoviesSystemDescriptions[sys] || 'See Vespara Settings for details.'
-          readmeText = sys + ' plays: ' + description + '.\r\n\r\n' +
-            'How to use this folder:\r\n' +
-            '1. Point EmuMovies Sync\'s destination folder here.\r\n' +
-            '2. In Sync, select the matching system and run a download.\r\n' +
-            '   Sync creates its own system-named subfolder inside this one --\r\n' +
-            '   that is normal, Sync always names things its own way.\r\n' +
-            '3. In Vespara, go to Media > EmuMovies tab and click "Scan EmuMovies\r\n' +
-            '   folder". Vespara finds whatever Sync created and shows a review\r\n' +
-            '   list -- click Import per item. No manual file copying needed;\r\n' +
-            '   Vespara handles moving the right file to the right place for you.'
-        }
-        try { fs.writeFileSync(readmePath, readmeText) } catch (e) { /* non-fatal */ }
-      }
-    }
-
-    // --- STEP 3: RetroArch roms folder structure ---
-    const retroarchRoms = cfg.retroarchGamesPath || 'F:\\RetroArch\\roms'
-    const raSystems = [
-      'nes', 'snes', 'n64', 'gba', 'gbc', 'gb', 'nds', 'virtualboy',
-      'gamecube', 'wii', 'genesis', 'megadrive', 'mastersystem', 'gamegear',
-      'saturn', 'segacd', 'sega32x', 'psx', 'psp', 'atari2600', 'atari7800',
-      'atarijaguar', 'atarilynx', 'pcengine', 'neogeo', 'neogeopocket',
-      'arcade', 'fba', 'dos', 'scummvm', 'amstradcpc', 'zxspectrum',
-      'c64', 'amiga', 'vectrex', 'wonderswan'
-    ]
-    ensure(retroarchRoms)
-    for (const sys of raSystems) {
-      ensure(path.join(retroarchRoms, sys))
-    }
-
-    // --- Save version stamp and config ---
+    const result = provisioning.provisionDirectories(mediaRoot, { profile: 'media' })
+    if (!result.success) return { success: false, mediaRoot, error: result.failures.map(f => f.path + ': ' + f.error).join('; '), failures: result.failures }
     cfg.mediaPath = mediaRoot
-    cfg.mediaFoldersVersion = FOLDER_SCHEMA_VERSION
-    config.save(cfg)
-
-    return {
-      success: true,
-      mediaRoot,
-      created: created.length,
-      skipped: skipped.length,
-      version: FOLDER_SCHEMA_VERSION
-    }
-  } catch (e) {
-    return { success: false, error: e.message }
+    cfg.mediaFoldersVersion = provisioning.FOLDER_SCHEMA_VERSION
+    if (!config.save(cfg)) return { success: false, mediaRoot, error: 'Unable to save configuration after provisioning' }
+    return { success: true, mediaRoot, created: result.created.length, skipped: result.skipped.length, version: result.version }
+  } catch (error) {
+    console.error('[content-provisioning] media request failed:', error)
+    return { success: false, mediaRoot, error: error.message }
   }
 })
+
+// The obsolete legacy media-provisioning IPC channel and duplicate EmuMovies schema were removed.
 
 
 // -- TP Folder Renamer --------------------------------------------------
@@ -2769,6 +2574,7 @@ module.exports = {
   trackLaunchLifecycle,
   emitLaunchLifecycleTerminal,
   handleSecondInstance,
+  provisionStartupContent,
   runAddExclusions,
   DEFENDER_EXCLUSION_SCRIPT,
   isExactRequestShape,

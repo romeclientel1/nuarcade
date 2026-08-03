@@ -23,7 +23,7 @@ const NORMALIZED_KEYS = [
   "running", "sessionId", "signal", "startedAt", "success", "trackedToExit",
 ].sort()
 
-function createElectronMock(appOverrides) {
+function createElectronMock(appOverrides, BrowserWindowOverride) {
   return {
     app: Object.assign({
       isPackaged: true,
@@ -39,7 +39,7 @@ function createElectronMock(appOverrides) {
       requestSingleInstanceLock: () => true,
       getLoginItemSettings: () => ({ wasOpenedAtLogin: false }),
     }, appOverrides || {}),
-    BrowserWindow: class { static getAllWindows() { return [] } },
+    BrowserWindow: BrowserWindowOverride || class { static getAllWindows() { return [] } },
     ipcMain: {
       handle: (name, fn) => { ipcHandlers.set(name, fn) },
       on: () => {},
@@ -69,8 +69,8 @@ function createElectronMock(appOverrides) {
 
 const ipcHandlers = new Map()
 
-function loadMainIndex(appOverrides) {
-  const electronMock = createElectronMock(appOverrides)
+function loadMainIndex(appOverrides, BrowserWindowOverride) {
+  const electronMock = createElectronMock(appOverrides, BrowserWindowOverride)
   const originalLoad = Module._load
   Module._load = function(request, parent, isMain) {
     if (request === "electron") return electronMock
@@ -86,6 +86,7 @@ function loadMainIndex(appOverrides) {
 
 const mainIndex = loadMainIndex()
 const launchRegistry = require("./launchRegistry.js")
+const provisioning = require("./contentProvisioning.js")
 
 function fakeChild() {
   const emitter = new EventEmitter()
@@ -99,6 +100,54 @@ function fakeChild() {
 beforeEach(() => {
   launchRegistry._internal._clear()
   mainIndex._internal.setMainWindowForTest(null)
+})
+
+test("startup provisions before BrowserWindow creation", async () => {
+  const order = []
+  class WindowMock {
+    static getAllWindows() { return [] }
+    constructor() {
+      order.push("window")
+      this.webContents = { on() {}, send() {}, insertCSS() {} }
+    }
+    once(event, callback) { if (event === "ready-to-show") callback() }
+    setFullScreen() {}
+    minimize() {}
+    restore() {}
+    focus() {}
+    show() {}
+    loadFile() {}
+    loadURL() {}
+  }
+  const originalProvision = provisioning.provisionDirectories
+  provisioning.provisionDirectories = (...args) => {
+    order.push("provision")
+    return originalProvision(...args)
+  }
+  try {
+    const deferredMain = loadMainIndex({ whenReady: () => ({ then: callback => callback() }) }, WindowMock)
+    assert.equal(order[0], "provision")
+    assert.equal(order.includes("window"), true)
+    assert.ok(deferredMain)
+  } finally {
+    provisioning.provisionDirectories = originalProvision
+  }
+})
+
+test("startup provisioning failures are logged and are not reported as success", () => {
+  const originalProvision = provisioning.provisionDirectories
+  const originalError = console.error
+  const logs = []
+  provisioning.provisionDirectories = () => ({ success: false, created: [], skipped: [], failures: [{ path: "test-root", error: "denied" }] })
+  console.error = (...args) => logs.push(args.join(" "))
+  try {
+    const result = mainIndex.provisionStartupContent()
+    assert.equal(result.success, false)
+    assert.match(logs.join("\n"), /startup incomplete/)
+  } finally {
+    provisioning.provisionDirectories = originalProvision
+    console.error = originalError
+  }
 })
 
 test("tracked registration happens before spawn is invoked", () => {
