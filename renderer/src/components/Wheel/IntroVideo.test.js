@@ -38,8 +38,8 @@ test("buildVideoUrl produces encoded local file URLs", () => {
   )
 })
 
-test("buildVideoUrl preserves its default path and trailing-slash behavior", () => {
-  assert.equal(buildVideoUrl(undefined, "intro.mp4"), "file:///C:/Media/intro.mp4")
+test("buildVideoUrl does not invent a drive-root fallback when no configured media path exists", () => {
+  assert.equal(buildVideoUrl(undefined, "intro.mp4"), "")
   assert.equal(buildVideoUrl("C:\\Media\\\\", "intro.mp4"), "file:///C:/Media/intro.mp4")
 })
 

@@ -206,7 +206,7 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
     log('Scanning EmuMovies folder against ' + games.length + ' games...', 'info')
     try {
       const result = await window.nuarcade.scanEmuMoviesMedia({
-        mediaPath: mmConfig?.mediaPath,
+        mediaPath: mmConfig?.emuMoviesPath || mmConfig?.mediaPath,
         games,
       })
       setEmScanResult(result)
@@ -481,7 +481,7 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
       // readable synchronously here. Still mirror it into emScanResult so
       // the EmuMovies tab shows the same results if visited afterward.
       setAutoFillStage('Scanning EmuMovies folder...')
-      const emResult = await window.nuarcade.scanEmuMoviesMedia({ mediaPath: mmConfig?.mediaPath, games })
+      const emResult = await window.nuarcade.scanEmuMoviesMedia({ mediaPath: mmConfig?.emuMoviesPath || mmConfig?.mediaPath, games })
       setEmScanResult(emResult)
 
       if (emResult?.suggestions?.length) {
@@ -1109,7 +1109,7 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
               <div className={styles.sectionSub}>
                 Scans folders populated by EmuMovies' official Sync desktop app and matches
                 video/artwork files to your games. Run EmuMovies Sync first, pointed at
-                {mmConfig?.mediaPath || 'F:\\Media\\'}EmuMovies. Nothing imports without your confirmation.
+                {mmConfig?.emuMoviesPath || ((mmConfig?.mediaPath || 'Media') + '/EmuMovies')}. Nothing imports without your confirmation.
               </div>
 
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 10, marginBottom: 4 }}>
@@ -1117,7 +1117,7 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
                   className={styles.input}
                   style={{ flex: 1 }}
                   value={emMediaPath}
-                  placeholder="F:\\Media"
+                  placeholder="Configured Media root"
                   onChange={e => setEmMediaPath(e.target.value)}
                   spellCheck={false}
                 />
@@ -1250,7 +1250,7 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
               <div className={styles.sectionTitle}>How videos work</div>
               <div className={styles.sectionSub}>
                 Vespara uses YouTube for video previews and SteamGridDB for artwork.
-                Videos are saved to F:/Media/Videos/ and play on the center card when you select a game.
+                Videos are saved to your configured Media/Videos folder and play on the center card when you select a game.
                 No account needed. No manual setup required.
               </div>
             </div>
@@ -1258,12 +1258,12 @@ export default function MediaManager({ onClose, onVideosUpdated, onArtworkUpdate
             <div className={styles.settingsSection}>
               <div className={styles.sectionTitle}>Manual video drop</div>
               <div className={styles.sectionSub}>
-                You can also drop any .mp4 file into F:/Media/Videos/ named after the game profile.
+                You can also drop any .mp4 file into your configured Media/Videos folder named after the game profile.
               </div>
               <div className={styles.pathDisplay}>
                 <div className={styles.pathRow}>
                   <span className={styles.pathLabel}>{t("mediaManager.videos")}</span>
-                  <span className={styles.pathValue}>F:/Media/Videos/</span>
+                  <span className={styles.pathValue}>Configured Media/Videos/</span>
                 </div>
                 <div className={styles.pathRow}>
                   <span className={styles.pathLabel}>Example</span>
