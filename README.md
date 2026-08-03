@@ -19,20 +19,20 @@ Vespara is designed to feel like a place to return to, not a wall of software me
 - Control Room systems, archives, media restoration, emulator, path, controller, and display tools.
 - English and Spanish localization.
 
-## Vespara 6.0.5 — Sanctuary and Attract Mode polish
+## Vespara 6.0.6 — Install-root content architecture
 
-**Current version: v6.0.5**
+**Current version: v6.0.6**
 
-The current release refines environmental motion, cinematic transitions, Sanctuary language, and Spanish status values.
-The installation and release details below are verified against Vespara 6.0.5.
+The current release restores install-root content provisioning and improves media priority and user-data safety.
+The installation and release details below are verified against Vespara 6.0.6.
 
-Download it from the [GitHub release](https://github.com/romeclientel1/nuarcade/releases/tag/v6.0.5):
+Download it from the [GitHub release](https://github.com/romeclientel1/nuarcade/releases/tag/v6.0.6):
 
-`Vespara.Setup.6.0.5.exe`
+`Vespara.Setup.6.0.6.exe`
 
 ## Installation
 
-1. Download `Vespara.Setup.6.0.5.exe` from [Releases](https://github.com/romeclientel1/nuarcade/releases).
+1. Download `Vespara.Setup.6.0.6.exe` from [Releases](https://github.com/romeclientel1/nuarcade/releases).
 2. Run the installer and choose an installation directory if needed.
 3. Launch Vespara and complete Traveler Recognition.
 4. Configure emulator and game paths in the Control Room.
@@ -43,9 +43,7 @@ Vespara does not include games, ROMs, BIOS files, firmware, keys, or emulator bi
 
 Vespara’s Windows installer is currently unsigned. Windows may display a SmartScreen warning. Download releases only from this repository and verify the published SHA-256 checksum before running the installer. Do not treat bypassing SmartScreen as automatically safe.
 
-For 6.0.5, the published SHA-256 is:
-
-`027954439A5523AADBE5847BCB15C5619F7B1AAB3CD49D40535CA960F1856CAA`
+For 6.0.6, verify the SHA-256 published alongside the installer in the GitHub release.
 
 ## Current scope
 

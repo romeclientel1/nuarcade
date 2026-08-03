@@ -1,7 +1,7 @@
 const fs = require('fs')
 const path = require('path')
 
-const FOLDER_SCHEMA_VERSION = '6.0.5'
+const FOLDER_SCHEMA_VERSION = '6.0.6'
 
 const RETROARCH_SYSTEMS = [
   'nes', 'snes', 'n64', 'gba', 'gbc', 'gb', 'nds', 'virtualboy', 'gamecube', 'wii',

@@ -35,8 +35,8 @@ test('package.json has a valid dotted X.Y.Z version', () => {
   assert.match(APP_VERSION, /^\d+\.\d+\.\d+$/)
 })
 
-test('package.json version is currently 6.0.5 (sanity check for this release pass)', () => {
-  assert.equal(APP_VERSION, '6.0.5')
+test('package.json version is currently 6.0.6 (sanity check for this release pass)', () => {
+  assert.equal(APP_VERSION, '6.0.6')
 })
 
 test('package-lock.json top-level version and packages[""] version both match package.json', () => {
@@ -79,12 +79,12 @@ test('nsis artifactName template is still the dotted Vespara.Setup.${version}.${
   assert.equal(pkg.build.productName, 'Vespara')
 })
 
-test('substituting the current productName/version/ext resolves to exactly Vespara.Setup.6.0.5.exe', () => {
+test('substituting the current productName/version/ext resolves to exactly Vespara.Setup.6.0.6.exe', () => {
   const resolved = pkg.build.nsis.artifactName
     .replace('${productName}', pkg.build.productName)
     .replace('${version}', APP_VERSION)
     .replace('${ext}', 'exe')
-  assert.equal(resolved, 'Vespara.Setup.6.0.5.exe')
+  assert.equal(resolved, 'Vespara.Setup.6.0.6.exe')
 })
 
 // -- Identity fields this release pass must NOT have touched ----------------
