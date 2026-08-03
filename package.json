@@ -1,6 +1,6 @@
 {
   "name": "nuarcade",
-  "version": "6.0.4",
+  "version": "6.0.5",
   "description": "Vespara by NuArcade \u2014 A living arcade sanctuary for discovering, restoring, and experiencing your game collection",
   "main": "src/main/index.js",
   "author": "Rome Clientel",
